@@ -1,0 +1,266 @@
+##################   Provenance    #############
+int run
+int lumiblock
+Long64_t event
+int type
+bool stitch
+
+####################   Global   ###################
+int npv
+float ht
+float met
+float met_phi
+float met_calo
+float met_tru
+float met_tru_phi
+float mt
+float mt_tru
+
+###################   Higgsinos   ##################
+std::vector<float> hig_cand_dm
+std::vector<float> hig_cand_am
+std::vector<float> hig_cand_drmax
+
+std::vector<float> hig_df_cand_dm
+std::vector<float> hig_df_cand_am
+std::vector<float> hig_df_cand_drmax
+
+bool low_dphi
+
+###################   Jets   ##################
+int njet
+int nbl
+int nbm
+int nbt
+
+int nbdfl
+int nbdfm
+int nbdft
+
+std::vector<float> jet_pt
+std::vector<float> jet_eta
+std::vector<float> jet_phi
+std::vector<float> jet_m
+std::vector<float> jet_deepcsv
+std::vector<float> jet_deepflav
+std::vector<float> jet_qgl
+std::vector<bool>  jet_islep
+std::vector<bool>  jet_isphoton
+std::vector<bool>  jet_id
+std::vector<int>   jet_hflavor
+std::vector<int>   jet_pflavor
+std::vector<float> jet_met_dphi
+std::vector<bool>  jet_h1d
+std::vector<bool>  jet_h2d
+std::vector<int>   jet_fjet_idx
+
+###################   AK8 Jets   ##################
+int nfjet
+
+std::vector<float> fjet_pt
+std::vector<float> fjet_eta
+std::vector<float> fjet_phi
+std::vector<float> fjet_m
+std::vector<float> fjet_msoftdrop
+std::vector<float> fjet_deep_md_hbb_btv
+std::vector<float> fjet_mva_hbb_btv
+std::vector<float> fjet_deep_md_hbb_jme
+
+###################   ISR related   ##################
+
+int nisr
+
+float jetsys_pt
+float jetsys_eta
+float jetsys_phi
+float jetsys_m
+float jetsys_nob_pt
+float jetsys_nob_eta
+float jetsys_nob_phi
+float jetsys_nob_m
+
+##################   Leptons   ################
+int nlep
+int nvlep
+
+int nmu
+int nvmu
+std::vector<float> mu_pt
+std::vector<float> mu_eta
+std::vector<float> mu_phi
+std::vector<float> mu_miniso
+std::vector<float> mu_reliso
+std::vector<float> mu_dz
+std::vector<float> mu_dxy
+std::vector<float> mu_ip3d
+std::vector<float> mu_sip3d
+std::vector<bool> mu_id
+std::vector<bool> mu_sig
+std::vector<int> mu_charge
+std::vector<int> mu_pflavor
+
+int nel
+int nvel
+std::vector<float> el_pt
+std::vector<float> el_eta
+std::vector<float> el_phi
+std::vector<float> el_miniso
+std::vector<float> el_reliso
+std::vector<float> el_dz
+std::vector<float> el_dxy
+std::vector<float> el_ip3d
+std::vector<float> el_sip3d
+std::vector<float> el_idmva
+std::vector<bool> el_id
+std::vector<bool> el_sig
+std::vector<bool> el_ispf
+std::vector<int> el_charge
+std::vector<int> el_pflavor
+
+##################   Di-Leptons   ################
+std::vector<float> elel_m
+std::vector<float> elel_pt
+std::vector<float> elel_eta
+std::vector<float> elel_phi
+
+std::vector<float> mumu_m
+std::vector<float> mumu_pt
+std::vector<float> mumu_eta
+std::vector<float> mumu_phi
+
+##################   Photons   ###################
+int nphoton
+std::vector<float> photon_pt
+std::vector<float> photon_eta
+std::vector<float> photon_phi
+std::vector<float> photon_reliso
+std::vector<float> photon_r9
+std::vector<float> photon_drmin
+std::vector<int>  photon_pflavor
+std::vector<bool> photon_id
+std::vector<bool> photon_elveto
+std::vector<bool> photon_sig
+
+###################   Tracks    ##################
+int ntk
+
+std::vector<float> tk_pt
+std::vector<float> tk_eta
+std::vector<float> tk_phi
+std::vector<float> tk_dxy
+std::vector<float> tk_dz
+std::vector<int> tk_pdgid
+std::vector<float> tk_miniso_chg
+std::vector<float> tk_reliso_chg
+std::vector<float> tk_mt
+
+
+###################   Quality   ##################
+bool pass_jets
+bool pass_hbhe
+bool pass_hbheiso
+bool pass_goodv
+bool pass_cschalo_tight
+bool pass_eebadsc
+bool pass_ecaldeadcell
+bool pass_fsjets
+bool pass_badpfmu
+bool pass_mubadtrk
+bool pass_badchhad
+bool pass_ra2_badmu
+bool pass_badcalib
+bool pass
+
+################  Truth   ##################
+std::vector<float> mc_pt
+std::vector<float> mc_eta
+std::vector<float> mc_phi
+std::vector<float> mc_mass
+std::vector<int>   mc_id
+std::vector<int>   mc_mom
+std::vector<int>   mc_momidx
+std::vector<int>   mc_status
+
+int ntrulep
+int ntrumu
+int ntruel
+int ntrutauh
+int ntrutaul
+
+float isr_tru_pt
+float isr_tru_eta
+float isr_tru_phi
+int mprod
+int mlsp
+
+################  Weights   ##################
+float weight
+float w_lumi
+float w_lep
+float w_fs_lep
+float w_btag
+float w_btag_df
+float w_bhig
+float w_bhig_df
+float w_isr
+float w_pu
+float w_prefire
+float eff_trig
+
+################  Triggers copy straight from Nano, same names   ##################
+# Single lepton triggers
+bool HLT_IsoMu24
+bool HLT_IsoMu27
+bool HLT_Mu50
+bool HLT_Ele27_WPTight_Gsf
+bool HLT_Ele35_WPTight_Gsf
+bool HLT_Ele115_CaloIdVT_GsfTrkIdT
+
+# MET triggers
+bool HLT_PFMET110_PFMHT110_IDTight
+bool HLT_PFMET120_PFMHT120_IDTight
+bool HLT_PFMETNoMu110_PFMHTNoMu110_IDTight
+bool HLT_PFMETNoMu120_PFMHTNoMu120_IDTight
+bool HLT_PFMET120_PFMHT120_IDTight_PFHT60
+bool HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60
+
+# Jet trigger
+bool HLT_PFJet500
+
+# ZGamma triggers
+bool HLT_Mu17_Photon30_IsoCaloId
+bool HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ
+bool HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL
+bool HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ
+
+################  Systematic variations  - to be implemented as needed  ##################
+
+# +/- variations are index 0 and 1
+std::vector<float> sys_lep
+std::vector<float> sys_fs_lep
+
+std::vector<float> sys_bchig
+std::vector<float> sys_udsghig
+std::vector<float> sys_fs_bchig
+std::vector<float> sys_fs_udsghig
+
+std::vector<float> sys_trig
+std::vector<float> sys_isr
+std::vector<float> sys_pu
+
+# std::vector<float> sys_mur
+# std::vector<float> sys_muf
+# std::vector<float> sys_murf
+
+# variations have index 0 (JER smearing), 1 (JEC up) and 2 (JEC down)
+# std::vector<float> sys_ht
+# std::vector<int>   sys_njets
+# std::vector<int>   sys_nbm
+# std::vector<int>   sys_nbdl
+# std::vector<int>   sys_nbdm
+# std::vector<int>   sys_nbdt
+# std::vector<float> sys_met
+# std::vector<float> sys_mt
+# std::vector<float> sys_higd_am
+# std::vector<float> sys_higd_dm
+# std::vector<float> sys_higd_drmax
