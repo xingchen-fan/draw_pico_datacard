@@ -72,35 +72,6 @@ int main(int argc, char *argv[]){
   }
   all_bkg.insert(mctags["other"].begin(), mctags["other"].end());
 
-  NamedFunc base_filters = HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
-
-  auto proc_bkg = Process::MakeShared<Baby_pico>("Background", Process::Type::background, kGreen+1,
-                  attach_folder(foldermc, all_bkg),base_filters && "stitch");
-  // auto proc_bkg = Process::MakeShared<Baby_pico>("Background", Process::Type::background, kGreen+1,
-  //                 {foldermc+"*TTJets_*SingleLeptFromT_genM*root"},pass);
-  // procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGreen+1,
-  //                 attach_folder(foldermc, mctags["other"]),pass));
-  // procs.push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background, colors("other"),
-  //                 attach_folder(foldermc, mctags["qcd"]),pass)); 
-  // procs.push_back(Process::MakeShared<Baby_pico>("V+jets", Process::Type::background, kOrange+1,
-  //                 attach_folder(foldermc,mctags["vjets"]),pass));
-  // procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X", Process::Type::background,colors("tt_1l"),
-  //                 attach_folder(foldermc, mctags["ttx"]),pass));
-
-  // if (doSignal) {
-  //   vector<pair<string, string> > sigm;
-  //   HigUtilities::parseMassPoints(mass_points_string, sigm);
-  //   for (unsigned isig(0); isig<sigm.size(); isig++)
-  //     procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigm[isig].first+",1)", 
-  //       Process::Type::signal, 1, {foldersig+"*TChiHH_mChi-"+sigm[isig].first+"*.root"}, pass_sig));
-  // }
-  auto proc_sig700 = Process::MakeShared<Baby_pico>("TChiHH(700,1)", 
-        Process::Type::signal, 1, {foldersig+"*TChiHH_mChi-700*.root"}, base_filters);
-  auto proc_sig1000 = Process::MakeShared<Baby_pico>("TChiHH(1000,1)", 
-        Process::Type::signal, 1, {foldersig+"*TChiHH_mChi-1000*.root"}, base_filters);
-
-  vector<shared_ptr<Process> > procs = {proc_bkg, proc_sig700, proc_sig1000};
-
   NamedFunc lowDphi("lowDphi",[](const Baby &b) -> NamedFunc::ScalarType{
     bool lowDphi(false);
     if (b.jet_pt()->size()<4) return false;
@@ -127,7 +98,7 @@ int main(int argc, char *argv[]){
     float bb_wp = 0.3;
     if (b.met()<300) bb_wp = 0.6;
     // 0 = D, 1 = B1, 2 = B2, 3 = C, 4 = A1, 5 = A2
-    if (b.fjet_pt()->size()<2) return 0;
+    // if (b.fjet_pt()->size()<2) return 0;
     bool j1mass = b.fjet_msoftdrop()->at(0)>85 && b.fjet_msoftdrop()->at(0)<=135;
     bool j2mass = b.fjet_msoftdrop()->at(1)>85 && b.fjet_msoftdrop()->at(1)<=135;
     bool j1bb = b.fjet_mva_hbb_btv()->at(0)>bb_wp;
@@ -155,7 +126,6 @@ int main(int argc, char *argv[]){
   //    Useful boosted cut definitions
   //------------------------------------------
   NamedFunc boo_SR = boo_base && boostedRegionIdx>=4;
-  NamedFunc boo_CR = boo_base && boostedRegionIdx>=0. && boostedRegionIdx<=3;
 
   //    Useful resolved cut definitions
   //------------------------------------------
@@ -168,7 +138,31 @@ int main(int argc, char *argv[]){
                              c_2b+"&&"+hig, c_3b+"&&"+hig, c_4b+"&&"+hig};
 
   NamedFunc res_SR = res_base && ("nbm>=3 &&"+hig);
-  NamedFunc res_CR = res_base && ("(nbm==2 &&"+hig+") || ("+sbd+")");
+
+  //    Define processes, including intersections
+  //--------------------------------------------------
+  string anaA(res_view?"Res":"Boo"), anaB(res_view?"Boo":"Res");
+  NamedFunc base_filters = HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
+
+  auto proc_bkg_anaA = Process::MakeShared<Baby_pico>("MC bkg", 
+    Process::Type::background, kGreen+1,attach_folder(foldermc, all_bkg),
+    base_filters && "stitch" && (res_view ? res_base : boo_base));
+  auto proc_bkg_anaA_anaB_crsr = Process::MakeShared<Baby_pico>("MC bkg $\\cap$ "+anaB+" (CR+SR)", 
+    Process::Type::background, kGreen+1, attach_folder(foldermc, all_bkg),
+    base_filters && "stitch" && res_base && boo_base);
+  auto proc_bkg_anaA_anaB_sr = Process::MakeShared<Baby_pico>("MC bkg $\\cap$ "+anaB+" SR only", 
+    Process::Type::background, kGreen+1, attach_folder(foldermc, all_bkg),
+    base_filters && "stitch" && (res_view ? (res_base && boo_SR) : (boo_base && res_SR)));
+  auto proc_sig_anaA = Process::MakeShared<Baby_pico>("TChiHH(700,1)", 
+    Process::Type::signal, 1, {foldersig+"*TChiHH_mChi-700*.root"}, 
+    base_filters && (res_view ? res_base : boo_base));
+  auto proc_sig_anaA_anaB_sr = Process::MakeShared<Baby_pico>("TChiHH(700,1) $\\cap$ "+anaB+" SR only", 
+    Process::Type::signal, 1, {foldersig+"*TChiHH_mChi-700*.root"}, 
+    base_filters && "stitch" && (res_view ? (res_base && boo_SR) : (boo_base && res_SR)));
+
+  vector<shared_ptr<Process> > procs = {proc_bkg_anaA, proc_bkg_anaA_anaB_crsr, proc_bkg_anaA_anaB_sr, 
+                                        proc_sig_anaA, proc_sig_anaA_anaB_sr};
+
 
   //    Useful binning definitions
   //------------------------------------------
@@ -190,25 +184,17 @@ int main(int argc, char *argv[]){
 
   //        Define and fill tables
   //------------------------------------
-  TString anaA(res_view?"resolved":"boosted"), anaB(res_view?"boosted":"resolved");
   PlotMaker pm;
-  vector<vector<TableRow>> tablerows;
-  tablerows.resize(3, vector<TableRow>());
-  // Table 0: Analysis A
-  // Table 1: Analysis B SR yields in the Analysis A regions
-  // Table 2: Analysis B CR yields in the Analysis A regions
+  vector<TableRow> tablerows;
   unsigned nbins(0), nheads(0);
   if (res_view) {
     nheads = vc_met.size()*vc_drmax.size();
     for (auto &imet: vc_met) {
       for (auto &idrmax: vc_drmax) {
-        for (auto &itab: tablerows)
-          itab.push_back(TableRow("$"+CodeToLatex((imet+"&&"+idrmax).Data())+"$"));
+        tablerows.push_back(TableRow("$"+CodeToLatex((imet+"&&"+idrmax).Data())+"$"));
         for (auto &iabcd: res_abcd) {
-          NamedFunc res_reg_ = res_base && (imet+"&&"+idrmax+"&&"+iabcd);
-          tablerows[0].push_back(TableRow("$"+CodeToLatex(iabcd)+"$", res_reg_, 0,0, wgt));
-          tablerows[1].push_back(TableRow("$"+CodeToLatex(iabcd)+"\\cap$ Boo (CR+SR)", res_reg_ && (boo_CR || boo_SR), 0,0, wgt));
-          tablerows[2].push_back(TableRow("$"+CodeToLatex(iabcd)+"\\cap$ Boo SR", res_reg_ && boo_SR, 0,0, wgt));
+          NamedFunc res_reg_ = imet+"&&"+idrmax+"&&"+iabcd;
+          tablerows.push_back(TableRow("$"+CodeToLatex(iabcd)+"$", res_reg_, 0,0, wgt));
           nbins++;
         }
       }
@@ -216,20 +202,16 @@ int main(int argc, char *argv[]){
   } else { //boosted priority
     nheads = vc_met.size();
     for (auto &imet: vc_met) {
-      for (auto &itab: tablerows)
-        itab.push_back(TableRow("$"+CodeToLatex(imet.Data())+"$"));
+      tablerows.push_back(TableRow("$"+CodeToLatex(imet.Data())+"$"));
       for (unsigned ireg(0); ireg<6; ireg++) {
-        NamedFunc boo_reg_ = boo_base && imet && boostedRegionIdx==ireg;
-        tablerows[0].push_back(TableRow(to_string(ireg), boo_reg_, 0,0, wgt));
-        tablerows[1].push_back(TableRow(to_string(ireg)+"$\\cap$ Res (CR+SR)", boo_reg_ && (res_CR || res_SR), 0,0, wgt));
-        tablerows[2].push_back(TableRow(to_string(ireg)+"$\\cap$ Res SR", boo_reg_ && res_SR, 0,0, wgt));
+        NamedFunc boo_reg_ = imet && boostedRegionIdx==ireg;
+        tablerows.push_back(TableRow(to_string(ireg), boo_reg_, 0,0, wgt));
         nbins++;
       }
     }
   }
-
-  for (unsigned itab(0); itab<tablerows.size(); itab++) 
-    pm.Push<Table>("table_"+to_string(itab)+"_"+anaA.Data(), tablerows[itab], procs, 0);
+  TString tabname = "table_"; tabname += (res_view ? "resolved" : "boosted");
+  pm.Push<Table>(tabname.Data(), tablerows, procs, 0);
 
   pm.min_print_ = true;
   pm.MakePlots(lumi);
@@ -237,27 +219,12 @@ int main(int argc, char *argv[]){
   //     Retrieve the relevant yields
   //-----------------------------------------
   vector<vector<GammaParams>> yields; 
-  vector<TString> labels;
-  // 0: Analysis A background -> tab 0 bkg 
-  labels.push_back("MC bkg.");
   Table* itable = static_cast<Table*>(pm.Figures()[0].get());
-  yields.push_back(itable->BackgroundYield(lumi)); 
-  // 1: Analysis B - CR bkg -> tab 2 bkg
-  labels.push_back("#cap "+anaB+" (CR+SR), MC bkg.");
-  itable = static_cast<Table*>(pm.Figures()[1].get());
-  yields.push_back(itable->BackgroundYield(lumi)); 
-  // 2: Analysis B - SR bkg -> tab 1 bkg 
-  labels.push_back("#cap "+anaB+" SR only, MC bkg.");
-  itable = static_cast<Table*>(pm.Figures()[2].get());
-  yields.push_back(itable->BackgroundYield(lumi)); 
-  // 3: Analysis A signal -> tab 0 sig
-  labels.push_back(proc_sig700.get()->name_);
-  itable = static_cast<Table*>(pm.Figures()[0].get()); 
-  yields.push_back(itable->Yield(proc_sig700.get(), lumi)); 
-  // 4: Analysis B - SR sig -> tab 1 sig
-  labels.push_back("#cap "+anaB+" SR only, "+proc_sig700.get()->name_);
-  itable = static_cast<Table*>(pm.Figures()[2].get());
-  yields.push_back(itable->Yield(proc_sig700.get(), lumi)); 
+  yields.push_back(itable->Yield(proc_bkg_anaA.get(), lumi)); 
+  yields.push_back(itable->Yield(proc_bkg_anaA_anaB_crsr.get(), lumi)); 
+  yields.push_back(itable->Yield(proc_bkg_anaA_anaB_sr.get(), lumi)); 
+  yields.push_back(itable->Yield(proc_sig_anaA.get(), lumi)); 
+  yields.push_back(itable->Yield(proc_sig_anaA_anaB_sr.get(), lumi)); 
 
   //      Make the plot
   //-------------------------------------
@@ -281,42 +248,37 @@ int main(int argc, char *argv[]){
   for (unsigned ihist(0); ihist<yields.size(); ihist++) {
     histo.push_back(TH1D("", htitle+"; ; Events", nbins, 0.5, nbins+0.5));
   }
-  // histo[0].SetMinimum(miny);
-  // histo[0].SetMaximum(maxy);
-  // histo[0].GetXaxis()->SetLabelOffset(0.008);
-  // histo[0].GetXaxis()->SetLabelSize(0.055);
   histo[0].SetTitleOffset(0.6,"y");
   histo[0].SetLabelOffset(10,"x");
   histo[0].SetTitleSize(0.06,"y");
   histo[0].SetMinimum(0.1);
   histo[0].GetYaxis()->CenterTitle(true);
-  // histo[0].GetYaxis()->SetLabelOffset(0.4);
-  // histo[0].GetYaxis()->SetLabelSize(0.06);
-  // histo[0].GetXaxis()->SetTickLength(0);
   for (unsigned ihist(0); ihist<yields.size(); ihist++) {
+    TString label = procs[ihist].get()->name_;
+    label.ReplaceAll("\\cap", "#cap").ReplaceAll("$", "");
     for (unsigned ibin(0); ibin<nbins; ibin++){
       int iyield = ibin+ibin/(nbins/nheads)+1; //skip header rows
       // cout<<iyield<<"\t"<<yields[ihist][iyield]<<endl;
       histo[ihist].SetBinContent(ibin+1, yields[ihist][iyield].Yield());
       histo[ihist].SetBinError(ibin+1, yields[ihist][iyield].Uncertainty());   
     }
-    if (labels[ihist].Contains("TChi")) {
-      if (labels[ihist].Contains(anaB)) histo[ihist].SetLineStyle(2);
-      histo[ihist].SetLineWidth(2);
-    }
     histo[ihist].SetLineColor(colors[ihist]);
     histo[ihist].SetFillColor(colors[ihist]);
-    if (ihist==0) histo[ihist].SetFillStyle(3003);
-    if (labels[ihist].Contains("TChi")) histo[ihist].SetFillStyle(0);
-  }
-  TString draw_opt = "hist";
-  histo[0].SetMaximum(histo[0].GetMaximum()*15);
-  for (unsigned ihist(0); ihist<yields.size(); ihist++){
+    if (label.Contains("TChi")) {
+      if (label.Contains(anaB)) histo[ihist].SetLineStyle(2);
+      histo[ihist].SetLineWidth(2);
+      histo[ihist].SetFillStyle(0);
+    }
+    if (ihist==0) {
+      histo[0].SetMaximum(histo[0].GetMaximum()*15);
+      histo[ihist].SetFillStyle(3003);
+    }
+    TString draw_opt = "hist";
     histo[ihist].Draw(draw_opt+(ihist==0?"":"same"));
-    if (labels[ihist].Contains(anaB))
-      legB.AddEntry(&histo[ihist], labels[ihist], labels[ihist].Contains("TChi") ? "L":"LF");
+    if (label.Contains(anaB))
+      legB.AddEntry(&histo[ihist], label, label.Contains("TChi") ? "L":"LF");
     else
-      legA.AddEntry(&histo[ihist], labels[ihist], labels[ihist].Contains("TChi") ? "L":"LF");
+      legA.AddEntry(&histo[ihist], label, label.Contains("TChi") ? "L":"LF");
   }
   legA.Draw("same");
   legB.Draw("same");
@@ -327,17 +289,17 @@ int main(int argc, char *argv[]){
   unsigned nbin_per_met = res_view ? 12 : 6;
   unsigned nbin_per_drmax = 6;
   float space = (1-opts.LeftMargin() - opts.RightMargin())/nmet;
-  TLatex label; label.SetNDC();
-  label.SetTextAlign(21);
+  TLatex latex; latex.SetNDC();
+  latex.SetTextAlign(21);
   TLine line; line.SetNDC();
   line.SetLineStyle(3); line.SetLineWidth(2);
   for (unsigned i(0); i<nmet; i++) { 
     TString metlabel = vc_met[i];
-    // metlabel.ReplaceAll("&&","-").ReplaceAll("met","").ReplaceAll("<=","").ReplaceAll(">","");
-    label.SetTextSize(0.045);
+    // metlatex.ReplaceAll("&&","-").ReplaceAll("met","").ReplaceAll("<=","").ReplaceAll(">","");
+    latex.SetTextSize(0.045);
     float met_pos_ = opts.LeftMargin()+(i+0.5)*space;
-    label.SetTextColor(kBlack);
-    label.DrawLatex(met_pos_, 0.05, CodeToRootTex(metlabel.Data()).c_str());
+    latex.SetTextColor(kBlack);
+    latex.DrawLatex(met_pos_, 0.05, CodeToRootTex(metlabel.Data()).c_str());
     if (i>0) {
       line.SetLineColor(kBlack);
       line.DrawLine(i*nbin_per_met+0.5, 0, i*nbin_per_met+0.5, histo[0].GetMaximum()/15);
@@ -345,8 +307,8 @@ int main(int argc, char *argv[]){
     if (res_view){
       for (unsigned j(0); j<vc_drmax.size();j++){
         float pos_ = met_pos_ + (j-0.5)*space/2;
-        label.SetTextColor(j ? kOrange:kOrange-3);
-        label.DrawLatex(pos_, 0.12, CodeToRootTex(vc_drmax[j].Data()).c_str());
+        latex.SetTextColor(j ? kOrange:kOrange-3);
+        latex.DrawLatex(pos_, 0.12, CodeToRootTex(vc_drmax[j].Data()).c_str());
         if (j>0) {
           line.SetLineColor(j ? kOrange:kOrange-3);
           line.DrawLine(i*nbin_per_met+j*nbin_per_drmax+0.5, 0,
@@ -355,11 +317,12 @@ int main(int argc, char *argv[]){
       }
     }
   }
-  label.SetTextSize(0.045);
+  latex.SetTextSize(0.045);
   // label.DrawLatex(nbins/2, 0.0005, "p_{T}^{miss} [GeV]");
 
-  TString pdfname = tag+"_"+anaA+".pdf";
-  if (tag=="") pdfname = anaA+".pdf";
+  TString recotag = (res_view ? "resolved" : "boosted");
+  TString pdfname = tag+"_"+recotag+".pdf";
+  if (tag=="") pdfname = recotag+".pdf";
   can.SaveAs(pdfname);
   can.SetLogy(); 
   can.SaveAs(pdfname.ReplaceAll(".pdf","_log.pdf"));
