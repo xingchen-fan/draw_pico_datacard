@@ -1,4 +1,4 @@
-draw_baby - inherited from https://github.com/ald77/ra4_draw
+draw_pico
 ========
 
 For examples of functionality see: [src/core/test.cxx](src/core/test.cxx)

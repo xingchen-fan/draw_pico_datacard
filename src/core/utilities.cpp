@@ -107,10 +107,13 @@ string CodeToPlainText(string code){
   ReplaceAll(code, "nbt>=2&&nbm==3&&nbl==3","3b");
   ReplaceAll(code, "nbt>=2&&nbm>=3&&nbl>=4","4b");
   ReplaceAll(code, "nbt>=2&&nbm>=3","ge3b");
+  ReplaceAll(code, "nbm==2","2b");
+  ReplaceAll(code, "nbm==3&&nbl==3","3b");
+  ReplaceAll(code, "nbm>=3&&nbl>=4","4b");
+  ReplaceAll(code, "nbm>=3","ge3b");
   ReplaceAll(code, "nbt>=2","ge2b");
-  ReplaceAll(code, "pass&&stitch&&nvleps==0&&ntks==0&&!low_dphi&&njet>=4&&njet<=5","preseln");
-  ReplaceAll(code, "hig_am[0]>100&&hig_am[0]<=140&&hig_dm[0]<=40","HIG");
-  ReplaceAll(code, "(hig_am[0]<=100||(hig_am[0]>140&&hig_am[0]<=200))&&hig_dm[0]<=40","SBD");
+  ReplaceAll(code, "hig_cand_am[0]>100&&hig_cand_am[0]<=140","HIG");
+  ReplaceAll(code, "!(hig_cand_am[0]>100&&hig_cand_am[0]<=140)","SBD");
   
   ReplaceAll(code, ".", "p");
   ReplaceAll(code, "(", "");
@@ -156,16 +159,26 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "nbt>=2&&nbm>=3&&nbl>=4","4b");
   ReplaceAll(code, "nbt>=2&&nbm>=3","#geq3b");
   ReplaceAll(code, "nbt>=2","#geq2b");
-  ReplaceAll(code, "hig_dm[0]","#Deltam");
+  ReplaceAll(code, "nbm==2","2b");
+  ReplaceAll(code, "nbm==3&&nbl==3","3b");
+  ReplaceAll(code, "nbm>=3&&nbl>=4","4b");
+  ReplaceAll(code, "nbm>=3","#geq3b");
+  ReplaceAll(code, "hig_cand_drmax[0]<=1.1", "lo-#DeltaR_{bb}");
+  ReplaceAll(code, "hig_cand_drmax[0]>1.1", "hi-#DeltaR_{bb}");
+  ReplaceAll(code, "hig_cand_drmax[0]>2.2", "#DeltaR_{max}> 2.2");
+  ReplaceAll(code, "!(hig_cand_am[0]>100&&hig_cand_am[0]<=140)","SBD");
+  ReplaceAll(code, "hig_cand_am[0]>100&&hig_cand_am[0]<=140","HIG");
 
-  ReplaceAll(code, "met>50&&met<=100", "50<met#leq 100");
-  ReplaceAll(code, "met>75&&met<=150", "75<met#leq 150");
-  ReplaceAll(code, "met>100&&met<=150", "100<met#leq 150");
-  ReplaceAll(code, "met>150&&met<=200", "150<met#leq 200");
-  ReplaceAll(code, "met>200&&met<=300", "200<met#leq 300");
-  ReplaceAll(code, "met>300&&met<=450", "300<met#leq 450");
-  ReplaceAll(code, "met>200&&met<=500", "200<met#leq 500");
-
+  ReplaceAll(code, "met>50&&met<=100", "50<p_{T}^{miss}#leq 100");
+  ReplaceAll(code, "met>75&&met<=150", "75<p_{T}^{miss}#leq 150");
+  ReplaceAll(code, "met>100&&met<=150", "100<p_{T}^{miss}#leq 150");
+  ReplaceAll(code, "met>150&&met<=200", "150<p_{T}^{miss}#leq 200");
+  ReplaceAll(code, "met>200&&met<=300", "200<p_{T}^{miss}#leq 300");
+  ReplaceAll(code, "met>300&&met<=450", "300<p_{T}^{miss}#leq 450");
+  ReplaceAll(code, "met>300&&met<=500", "300<p_{T}^{miss}#leq 500");
+  ReplaceAll(code, "met>450&&met<=700", "450<p_{T}^{miss}#leq 700");
+  ReplaceAll(code, "met>500&&met<=700", "500<p_{T}^{miss}#leq 700");
+  ReplaceAll(code, "met>200&&met<=500", "200<p_{T}^{miss}#leq 500");
 
   ReplaceAll(code, "!low_dphi", "high #Delta#phi");
   ReplaceAll(code, "low_dphi", "low #Delta#phi");
