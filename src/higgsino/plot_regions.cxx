@@ -74,7 +74,7 @@ int main(int argc, char *argv[]){
 
   NamedFunc lowDphi("lowDphi",[](const Baby &b) -> NamedFunc::ScalarType{
     bool lowDphi(false);
-    if (b.jet_pt()->size()<4) return false;
+    if (b.jet_pt()->size()<3) return false;
     for (unsigned i(0); i<b.jet_pt()->size(); i++){
       if (i>3) break;
       if (i<=1 && b.jet_met_dphi()->at(i)<0.5) lowDphi = true;
@@ -98,7 +98,6 @@ int main(int argc, char *argv[]){
     float bb_wp = 0.3;
     if (b.met()<300) bb_wp = 0.6;
     // 0 = D, 1 = B1, 2 = B2, 3 = C, 4 = A1, 5 = A2
-    // if (b.fjet_pt()->size()<2) return 0;
     bool j1mass = b.fjet_msoftdrop()->at(0)>85 && b.fjet_msoftdrop()->at(0)<=135;
     bool j2mass = b.fjet_msoftdrop()->at(1)>85 && b.fjet_msoftdrop()->at(1)<=135;
     bool j1bb = b.fjet_mva_hbb_btv()->at(0)>bb_wp;
@@ -121,7 +120,7 @@ int main(int argc, char *argv[]){
   NamedFunc common = !lowDphi && "nvlep==0 && ntk==0";
   string higtrim = "hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200 && hig_cand_dm[0] <= 40";
   NamedFunc res_base = common && "nbt>=2 && njet>=4 && njet<=5 &&"+higtrim;
-  NamedFunc boo_base = common && nGoodFatJets>=2 && "ht>300";
+  NamedFunc boo_base = common && nGoodFatJets>=2 && "ht>300 && njet>=3";
 
   //    Useful boosted cut definitions
   //------------------------------------------
