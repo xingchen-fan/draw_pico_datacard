@@ -135,8 +135,8 @@ def genSubdirMake(dirs):
 
 def build(dirs, verbosity):
     genSubdirs(dirs)
-    
-    command = ["make","-j",str(multiprocessing.cpu_count()),"-k","-r","-R",
+    rpath = "DYLD_LIBRARY_PATH="+os.popen('echo $ROOTSYS/lib').read().split('\n')[0]
+    command = ["make","-j",str(multiprocessing.cpu_count()),"-k","-r","-R", rpath,
                "SRCDIR="+dirs.src, "INCDIR="+dirs.inc,
                "MAKEDIR="+dirs.make, "OBJDIR="+dirs.obj, "EXEDIR="+dirs.exe]
     if verbosity < 1:
