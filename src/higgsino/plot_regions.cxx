@@ -72,59 +72,19 @@ int main(int argc, char *argv[]){
   }
   all_bkg.insert(mctags["other"].begin(), mctags["other"].end());
 
-  NamedFunc lowDphi("lowDphi",[](const Baby &b) -> NamedFunc::ScalarType{
-    bool lowDphi(false);
-    if (b.jet_pt()->size()<3) return false;
-    for (unsigned i(0); i<b.jet_pt()->size(); i++){
-      if (i>3) break;
-      if (i<=1 && b.jet_met_dphi()->at(i)<0.5) lowDphi = true;
-      else if (i>=2 && b.jet_met_dphi()->at(i)<0.3) lowDphi = true;
-    }
-    return lowDphi;
-  });
 
-  NamedFunc nGoodFatJets("nGoodFatJets",[](const Baby &b) -> NamedFunc::ScalarType{ // AR = SR+CR
-    int pass_pt_m_loose(0);
-    for (unsigned i(0); i<b.fjet_pt()->size(); i++){
-      if (i>1) break;
-      if (b.fjet_pt()->at(i)<=300) continue;
-      if (b.fjet_msoftdrop()->at(i)<=50 || b.fjet_msoftdrop()->at(i)>250) continue;
-      pass_pt_m_loose++;
-    } 
-    return pass_pt_m_loose;
-  });
-
-  NamedFunc boostedRegionIdx("boostedRegionIdx",[](const Baby &b) -> NamedFunc::ScalarType{
-    float bb_wp = 0.3;
-    if (b.met()<300) bb_wp = 0.6;
-    // 0 = D, 1 = B1, 2 = B2, 3 = C, 4 = A1, 5 = A2
-    bool j1mass = b.fjet_msoftdrop()->at(0)>85 && b.fjet_msoftdrop()->at(0)<=135;
-    bool j2mass = b.fjet_msoftdrop()->at(1)>85 && b.fjet_msoftdrop()->at(1)<=135;
-    bool j1bb = b.fjet_mva_hbb_btv()->at(0)>bb_wp;
-    bool j2bb = b.fjet_mva_hbb_btv()->at(1)>bb_wp;
-
-    if (j1mass && j2mass) {
-      if (j1bb && j2bb) return 5; 
-      else if (j1bb || j2bb) return 4; 
-      else return 3;
-    } else { 
-      if (j1bb && j2bb) return 2;
-      else if (j1bb || j2bb) return 1;
-      else return 0;
-    }
-  });
 
   //    Baseline definitions
   //-----------------------------------------
   NamedFunc wgt = "w_lumi";//"weight"; 
-  NamedFunc common = !lowDphi && "nvlep==0 && ntk==0";
-  string higtrim = "hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200 && hig_cand_dm[0] <= 40";
-  NamedFunc res_base = common && "nbt>=2 && njet>=4 && njet<=5 &&"+higtrim;
-  NamedFunc boo_base = common && nGoodFatJets>=2 && "ht>300 && njet>=3";
+  string common = "!lowDphiFix && nvlep==0 && ntk==0";
+  string higtrim = "hig_cand_drmax[0]<=2.2 && hig_cand_dm[0] <= 40 && hig_cand_am[0]<=200";
+  string res_base = common+"&& njet>=4 && njet<=5 && nbt>=2 && "+higtrim;
+  string boo_base = common+"&& nGoodFatJets>=2 && ht>300 && njet>=3";
 
   //    Useful boosted cut definitions
   //------------------------------------------
-  NamedFunc boo_SR = boo_base && boostedRegionIdx>=4;
+  string boo_SR = boo_base+"&& boostedRegionIdx>=4";
 
   //    Useful resolved cut definitions
   //------------------------------------------
@@ -136,7 +96,7 @@ int main(int argc, char *argv[]){
   vector<string> res_abcd = {c_2b+"&&"+sbd, c_3b+"&&"+sbd, c_4b+"&&"+sbd, 
                              c_2b+"&&"+hig, c_3b+"&&"+hig, c_4b+"&&"+hig};
 
-  NamedFunc res_SR = res_base && ("nbm>=3 &&"+hig);
+  string res_SR = res_base+"&& nbm>=3 &&"+hig;
 
   //    Define processes, including intersections
   //--------------------------------------------------
@@ -148,16 +108,16 @@ int main(int argc, char *argv[]){
     base_filters && "stitch" && (res_view ? res_base : boo_base));
   auto proc_bkg_anaA_anaB_crsr = Process::MakeShared<Baby_pico>("MC bkg $\\cap$ "+anaB+" (CR+SR)", 
     Process::Type::background, kGreen+1, attach_folder(foldermc, all_bkg),
-    base_filters && "stitch" && res_base && boo_base);
+    base_filters && "stitch &&"+res_base+"&&"+boo_base);
   auto proc_bkg_anaA_anaB_sr = Process::MakeShared<Baby_pico>("MC bkg $\\cap$ "+anaB+" SR only", 
     Process::Type::background, kGreen+1, attach_folder(foldermc, all_bkg),
-    base_filters && "stitch" && (res_view ? (res_base && boo_SR) : (boo_base && res_SR)));
+    base_filters && "stitch" && (res_view ? (res_base+"&&"+boo_SR) : (boo_base+"&&"+res_SR)));
   auto proc_sig_anaA = Process::MakeShared<Baby_pico>("TChiHH(700,1)", 
     Process::Type::signal, 1, {foldersig+"*TChiHH_mChi-700*.root"}, 
     base_filters && (res_view ? res_base : boo_base));
   auto proc_sig_anaA_anaB_sr = Process::MakeShared<Baby_pico>("TChiHH(700,1) $\\cap$ "+anaB+" SR only", 
     Process::Type::signal, 1, {foldersig+"*TChiHH_mChi-700*.root"}, 
-    base_filters && "stitch" && (res_view ? (res_base && boo_SR) : (boo_base && res_SR)));
+    base_filters && "stitch" && (res_view ? (res_base+"&&"+boo_SR) : (boo_base+"&&"+res_SR)));
 
   vector<shared_ptr<Process> > procs = {proc_bkg_anaA, proc_bkg_anaA_anaB_crsr, proc_bkg_anaA_anaB_sr, 
                                         proc_sig_anaA, proc_sig_anaA_anaB_sr};
@@ -203,7 +163,7 @@ int main(int argc, char *argv[]){
     for (auto &imet: vc_met) {
       tablerows.push_back(TableRow("$"+CodeToLatex(imet.Data())+"$"));
       for (unsigned ireg(0); ireg<6; ireg++) {
-        NamedFunc boo_reg_ = imet && boostedRegionIdx==ireg;
+        NamedFunc boo_reg_ = imet && "boostedRegionIdx=="+to_string(ireg);
         tablerows.push_back(TableRow(to_string(ireg), boo_reg_, 0,0, wgt));
         nbins++;
       }

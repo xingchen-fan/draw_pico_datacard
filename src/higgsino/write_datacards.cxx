@@ -32,12 +32,13 @@ using namespace std;
 namespace 
 {
   string outFolder = getenv("PWD");
-  string mass_points_string = "127_1";
+  string mass_points_string = "700_1";
   string years_string = "2016";
-  //float luminosity = 137.;
-  float luminosity = 35.9;
+  float luminosity = 137.;
+  // float luminosity = 35.9;
   string dimensionFilePath = "";
-  bool use_data = true;
+  bool unblind = false;
+  string tag = "resolved";
 }
 
 int main(int argc, char *argv[])
@@ -54,71 +55,76 @@ int main(int argc, char *argv[])
   vector<pair<string, string> > massPoints;
   HigUtilities::parseMassPoints(mass_points_string, massPoints);
 
-  enum Btagger_type { deepcsv, deepflav };
-  //Btagger_type btagger_type = deepcsv;
-  Btagger_type btagger_type = deepflav;
-  
-  string baseline = "ntk==0&&njet>=4&&njet<=5&&!low_dphi&&nvlep==0";
-  if (btagger_type == deepcsv) baseline += "&&hig_cand_drmax[0]<2.2";
-  if (btagger_type == deepflav) baseline += "&&hig_df_cand_drmax[0]<2.2";
-  NamedFunc * filters;
-  if (btagger_type == deepcsv) filters = new NamedFunc(HigUtilities::pass_2016 && HigUtilities::pass_nhig_cand);
-  if (btagger_type == deepflav) filters = new NamedFunc(HigUtilities::pass_2016 && HigUtilities::pass_nhig_df_cand);
-  //NamedFunc weight = "w_lumi" * Higfuncs::eff_higtrig;
-  NamedFunc weight = "w_lumi";
-
   set<int> years;
   HigUtilities::parseYears(years_string, years);
 
   map<string, string> samplePaths;
-  samplePaths["mc_2016"] = baseFolder + "/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higloose/";
+  samplePaths["mc_2016"] = baseFolder + "/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higtight/";
   samplePaths["data_2016"] = baseFolder + "/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higloose/";
-  samplePaths["signal_2016"] = baseFolder + "/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/TChiHH/merged_higmc_higloose/";
+  samplePaths["signal_2016"] = baseFolder + "/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/TChiHH/merged_higmc_higtight/";
+
+  NamedFunc filters = HigUtilities::pass_2016;
 
   // sampleProcesses[mc, data, signal]
   map<string, vector<shared_ptr<Process> > > sampleProcesses;
-  HigUtilities::setMcProcesses(years, samplePaths, (*filters)&&"stitch", sampleProcesses);
+  HigUtilities::setMcProcesses(years, samplePaths, filters && "stitch", sampleProcesses);
   // Higfuncs::trig_hig will only work for 2016
-  //HigUtilities::setDataProcesses(years, samplePaths, (*filters)&&Higfuncs::trig_hig>0., sampleProcesses);
-  HigUtilities::setDataProcesses(years, samplePaths, (*filters), sampleProcesses);
-  HigUtilities::setSignalProcesses(massPoints, years, samplePaths, (*filters), sampleProcesses);
+  //HigUtilities::setDataProcesses(years, samplePaths, filters&&Higfuncs::trig_hig>0., sampleProcesses);
+  HigUtilities::setDataProcesses(years, samplePaths, filters, sampleProcesses);
+  HigUtilities::setSignalProcesses(massPoints, years, samplePaths, filters, sampleProcesses);
+  
+  NamedFunc weight = "w_lumi";
+  string baseline = "!lowDphiFix && nvlep==0 && ntk==0";
+  string higtrim = "hig_cand_drmax[0]<=2.2 && hig_cand_dm[0] <= 40 && hig_cand_am[0]<=200";
+  if (tag=="resolved") baseline += "&& njet>=4 && njet<=5 && nbt>=2 && "+higtrim;
+  else if (tag=="boosted") baseline += "&& nGoodFatJets>=2 && ht>300 && njet>=3";
 
   // Set ABCDbins
   // "bkg" and "sig" should be kept for setDataCardBackground()
   map<string, string> xBins;
-  if (btagger_type == deepcsv)
-  {
-    xBins["bkg"] = "!(hig_cand_am[0]>100&&hig_cand_am[0]<140)&&hig_cand_dm[0]<40&&hig_cand_am[0]<200";
-    xBins["sig"] = "hig_cand_am[0]>100&&hig_cand_am[0]<140&&hig_cand_dm[0]<40";
+  if (tag=="resolved") {
+    xBins["bkg"] = "nbm==2";
+    xBins["sig0"] = "nbm==3&&nbl==3";
+    xBins["sig1"] = "nbm>=3&&nbl>=4";
+  } else if (tag=="boosted") {
+    string j1bb = "((met<=300 && fjet_mva_hbb_btv[0]>0.6)||(met>300 && fjet_mva_hbb_btv[0]>0.3))";
+    string j2bb = "((met<=300 && fjet_mva_hbb_btv[1]>0.6)||(met>300 && fjet_mva_hbb_btv[1]>0.3))";
+    xBins["bkg"] = "(!"+j1bb+"&& !"+j2bb+")";
+    xBins["sig0"] = "((!"+j1bb+"&&"+j2bb+")||("+j1bb+"&& !"+j2bb+"))";
+    xBins["sig1"] = j1bb+"&&"+j2bb;
   }
-  if (btagger_type == deepflav)
-  {
-    xBins["bkg"] = "!(hig_df_cand_am[0]>100&&hig_df_cand_am[0]<140)&&hig_df_cand_dm[0]<40&&hig_df_cand_am[0]<200";
-    xBins["sig"] = "hig_df_cand_am[0]>100&&hig_df_cand_am[0]<140&&hig_df_cand_dm[0]<40";
-  }
+  
   map<string, string> yBins; // Shares sideband
-  yBins["bkg"] = "nbt==2&&nbm==2";
-  yBins["sig1"] = "nbt>=2&&nbm==3&&nbl==3";
-  yBins["sig2"] = "nbt>=2&&nbm>=3&&nbl>=4";
+  if (tag=="resolved") {
+    yBins["sig"] = "hig_cand_am[0]>100 && hig_cand_am[0]<=140";
+    yBins["bkg"] = "!("+yBins["sig"]+")";
+  } else if (tag=="boosted") {
+    yBins["sig"] = "fjet_msoftdrop[0]>85 && fjet_msoftdrop[0]<=135 && fjet_msoftdrop[1]>85 && fjet_msoftdrop[1]<=135";
+    yBins["bkg"] = "!("+yBins["sig"]+")";
+  }
+  
   map<string, vector<pair<string, string> > > dimensionBins;
-  if (dimensionFilePath=="")
-  {
-    dimensionBins["met"].push_back({"met0", "met>150&&met<=200"});
-    dimensionBins["met"].push_back({"met1", "met>200&&met<=300"});
-    dimensionBins["met"].push_back({"met2", "met>300&&met<=450"});
-    dimensionBins["met"].push_back({"met3", "met>450"});
-    //dimensionBins["drmax"].push_back({"drmaxL", "higd_drmax<=1.5"});
-    //dimensionBins["drmax"].push_back({"drmaxH", "higd_drmax>1.5"});
-  } 
-  else 
-  {
+  if (dimensionFilePath==""){
+    if (tag=="resolved") {
+      dimensionBins["met"].push_back({"met0", "met>150 && met<=200"});
+      dimensionBins["met"].push_back({"met1", "met>200 && met<=300"});
+      dimensionBins["met"].push_back({"met2", "met>300 && met<=450"});
+      dimensionBins["met"].push_back({"met3", "met>450"});
+      dimensionBins["drmax"].push_back({"drmax0", "hig_cand_drmax[0]<=1.1"});
+      dimensionBins["drmax"].push_back({"drmax1", "hig_cand_drmax[0]>1.1"});
+    } else {
+      dimensionBins["met"].push_back({"met0", "met>150 && met<=200"});
+      dimensionBins["met"].push_back({"met1", "met>200 && met<=300"});
+      dimensionBins["met"].push_back({"met2", "met>300 && met<=450"});
+      dimensionBins["met"].push_back({"met3", "met>450 && met<=700"});
+      dimensionBins["met"].push_back({"met4", "met>700"});
+    }
+  } else {
     HigWriteDataCards::readDimensionFile(dimensionFilePath, dimensionBins);
-    for (auto & dimension : dimensionBins)
-    {
+    for (auto & dimension : dimensionBins){
       cout<<"dimension bins"<<endl;
       cout<<dimension.first<<endl;
-      for (auto & entry : dimension.second)
-      {
+      for (auto & entry : dimension.second){
         cout<<" "<<entry.first<<" "<<entry.second<<endl;
       }
     }
@@ -155,19 +161,18 @@ int main(int argc, char *argv[])
   HigUtilities::fillSignalYieldsProcesses(pm, luminosity, sampleProcesses["signal"], cutTable["signal"], mYields);
   HigUtilities::fillAverageGenMetYields(sampleProcesses["signal"], sampleBins, "signal", "signalGenMet", "signalAverageGenMet", mYields, true);
 
-  for (auto & process : sampleProcesses["signal"])
-  {
+  for (auto & process : sampleProcesses["signal"]){
     cout<<"Process name: "<<process->name_<<endl;
     string model;
     int mGluino=0, mLSP=0;
     HigUtilities::getInfoFromProcessName(process->name_, model, mGluino, mLSP);
-    TString outPath = outFolder+"/datacard-"+HigUtilities::setProcessNameLong(model, mGluino, mLSP)+"_"+years_string+".txt";
+    TString outPath = outFolder+"/datacard-"+HigUtilities::setProcessNameLong(model, mGluino, mLSP)+"_"+years_string+"_"+tag+".txt";
     cout<<"open "<<outPath<<endl;
     ofstream cardFile(outPath);
     HigWriteDataCards::writeDataCardHeader(sampleBins,cardFile);
 
     vector<vector<string> > tableValues;
-    if (use_data) HigWriteDataCards::setDataCardObserved(mYields, sampleBins, "data", tableValues);
+    if (unblind) HigWriteDataCards::setDataCardObserved(mYields, sampleBins, "data", tableValues);
     else HigWriteDataCards::setDataCardObserved(mYields, sampleBins, "mc", tableValues);
     HigWriteDataCards::setDataCardSignalBackground(process->name_, "signalAverageGenMet", mYields, sampleBins, tableValues);
     HigWriteDataCards::setDataCardSignalStatistics(process->name_, "signalAverageGenMet", mYields, sampleBins, tableValues);
@@ -186,15 +191,12 @@ int main(int argc, char *argv[])
 }
 
 namespace HigWriteDataCards{
-  void readDimensionFile(std::string const & dimensionFilePath, std::map<std::string, std::vector<std::pair<std::string, std::string> > > & dimensionBins)
-  {
+  void readDimensionFile(std::string const & dimensionFilePath, std::map<std::string, std::vector<std::pair<std::string, std::string> > > & dimensionBins){
     map<string, int> dimensionIndex;
     ifstream dimensionFile(dimensionFilePath.c_str());
-    if (dimensionFile.is_open())
-    {
+    if (dimensionFile.is_open()){
       string dimension, dimensionCut;
-      while (dimensionFile >> dimension >> dimensionCut)
-      {
+      while (dimensionFile >> dimension >> dimensionCut){
         dimensionBins[dimension].push_back(std::make_pair(dimension+to_string(dimensionIndex[dimension]), dimensionCut));
         dimensionIndex[dimension]++;
       }
@@ -210,21 +212,18 @@ namespace HigWriteDataCards{
     cardFile<<"shapes * * FAKE\n\n";
   }
 
-  void setDataCardObserved(map<string, pair<GammaParams, TableRow> > & mYields, vector<pair<string, string> > sampleBins, string const & dataTag, vector<vector<string> > & tableValues)
-  {
+  void setDataCardObserved(map<string, pair<GammaParams, TableRow> > & mYields, vector<pair<string, string> > sampleBins, string const & dataTag, vector<vector<string> > & tableValues){
     // title + type + nBins * 2
     vector<string> row(2+2*sampleBins.size());
     row[0] = "bin";
-    for (unsigned iBin=0;iBin<sampleBins.size();++iBin)
-    {
+    for (unsigned iBin=0;iBin<sampleBins.size();++iBin){
       row[iBin*2+3] = sampleBins[iBin].first;
     }
     tableValues.push_back(row);
     setRow(row,"");
   
     row[0] = "Observation";
-    for (unsigned iBin=0;iBin<sampleBins.size();++iBin)
-    {
+    for (unsigned iBin=0;iBin<sampleBins.size();++iBin){
       row[iBin*2+3] = to_string(mYields.at(dataTag+"_"+sampleBins[iBin].first).first.Yield());
     }
     tableValues.push_back(row);
@@ -233,13 +232,11 @@ namespace HigWriteDataCards{
     tableValues.push_back(row);
   }
 
-  void setDataCardSignalBackground(string const & processName, string const & signalAverageGenMetTag, map<string, pair<GammaParams, TableRow> > & mYields, vector<pair<string, string> > sampleBins, vector<vector<string> > & tableValues)
-  {
+  void setDataCardSignalBackground(string const & processName, string const & signalAverageGenMetTag, map<string, pair<GammaParams, TableRow> > & mYields, vector<pair<string, string> > sampleBins, vector<vector<string> > & tableValues){
     // title + type + nBins * 2
     vector<string> row(2+2*sampleBins.size());
     row[0] = "bin";
-    for (unsigned iBin=0;iBin<sampleBins.size();++iBin)
-    {
+    for (unsigned iBin=0;iBin<sampleBins.size();++iBin){
       row[iBin*2+2] = sampleBins[iBin].first;
       row[iBin*2+3] = sampleBins[iBin].first;
     }
@@ -247,8 +244,7 @@ namespace HigWriteDataCards{
     setRow(row,"");
   
     row[0] = "process";
-    for (unsigned iBin=0;iBin<sampleBins.size();++iBin)
-    {
+    for (unsigned iBin=0;iBin<sampleBins.size();++iBin){
       row[iBin*2+2] = "sig";
       row[iBin*2+3] = "bkg";
     }
@@ -256,8 +252,7 @@ namespace HigWriteDataCards{
     setRow(row,"");
   
     row[0] = "process";
-    for (unsigned iBin=0;iBin<sampleBins.size();++iBin)
-    {
+    for (unsigned iBin=0;iBin<sampleBins.size();++iBin){
       row[iBin*2+2] = "0";
       row[iBin*2+3] = "1";
     }
@@ -265,8 +260,7 @@ namespace HigWriteDataCards{
     setRow(row,"");
   
     row[0] = "rate";
-    for (unsigned iBin=0;iBin<sampleBins.size();++iBin)
-    {
+    for (unsigned iBin=0;iBin<sampleBins.size();++iBin){
       string label = processName + "_"+signalAverageGenMetTag+"_" +sampleBins[iBin].first;
       row[iBin*2+2] = to_string(mYields.at(label).first.Yield());
       row[iBin*2+3] = "1";
@@ -388,29 +382,29 @@ namespace HigWriteDataCards{
   {
     string blah;
     while(true){
-      static struct option long_options[] = 
-      {
+      static struct option long_options[] = {
         {"output_folder", required_argument, 0, 'o'},
         {"mass_points", required_argument, 0, 'p'},
         {"years", required_argument, 0, 'y'},
         {"luminosity", required_argument, 0, 'l'},
         {"dimension", required_argument, 0, 'd'},
-        {"no_data", no_argument, 0, 'n'},
+        {"tag", required_argument, 0, 't'},
+        {"unblind", no_argument, 0, 'u'},
         {0, 0, 0, 0}
       };
   
       char opt = -1;
       int option_index;
-      opt = getopt_long(argc, argv, "o:p:y:l:d:n", long_options, &option_index);
+      opt = getopt_long(argc, argv, "o:p:y:l:d:t:n", long_options, &option_index);
       if( opt == -1) break;
   
       string optname;
-      switch(opt)
-      {
+      switch(opt){
         case 'o': outFolder = optarg; break;
         case 'p': mass_points_string = optarg; break;
         case 'y': years_string = optarg; break;
         case 'l': luminosity = atof(optarg); break;
+        case 't': tag = optarg; break;
         case 'd': 
           dimensionFilePath = optarg; 
           if (!FileExists(dimensionFilePath)) 
@@ -419,8 +413,8 @@ namespace HigWriteDataCards{
             exit(EXIT_FAILURE);
           }
           break;
-        case 'n':
-          use_data = false;
+        case 'u':
+          unblind = true;
           break;
         case 0:
           optname = long_options[option_index].name;

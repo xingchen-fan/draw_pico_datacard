@@ -9,6 +9,9 @@
  
 namespace Functions{
   
+  extern const NamedFunc lowDphiFix;
+  extern const NamedFunc nGoodFatJets;
+  extern const NamedFunc boostedRegionIdx;
   extern const NamedFunc ntrub;
 
   bool IsGoodJet(const Baby &b, std::size_t ijet);

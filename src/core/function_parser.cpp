@@ -181,8 +181,12 @@ void FunctionParser::ResolveVariables() const{
     if(token.type_ == Token::Type::variable_name){
       // if(Functions::func_map.find(token.string_rep_) != Functions::func_map.end()){
       // 	token = Functions::func_map.at(token.string_rep_);
-      if(token.string_rep_ == "ntrub"){
-        token = Functions::ntrub;
+      if(token.string_rep_ == "lowDphiFix"){
+        token = Functions::lowDphiFix;
+      } else if(token.string_rep_ == "nGoodFatJets"){
+        token = Functions::nGoodFatJets;
+      } else if(token.string_rep_ == "boostedRegionIdx"){
+        token = Functions::boostedRegionIdx;
       }
       else {
         token.function_ = Baby::GetFunction(token.string_rep_);

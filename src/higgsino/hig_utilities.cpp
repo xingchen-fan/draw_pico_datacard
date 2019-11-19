@@ -172,7 +172,7 @@ namespace HigUtilities {
   std::string setProcessNameLong(std::string const & model, int const & mGluino, int const & mLSP)
   {
     // Tune is added for utilites::parseMasses
-    return model+"_mGluino-"+to_string(mGluino)+"_mLSP-"+to_string(mLSP)+"_Tune";
+    return model+"_mChi-"+to_string(mGluino)+"_mLSP-"+to_string(mLSP)+"_Tune";
   }
 
   void getInfoFromProcessName(std::string const & processName, std::string & model, int & mGluino, int & mLSP)
@@ -292,7 +292,7 @@ namespace HigUtilities {
      for (auto year : years)
      {
        signalPaths[HigUtilities::setProcessName("TChiHH",atoi(massPoint.first.c_str()),atoi(massPoint.second.c_str()))].insert(samplePaths["signal_"+to_string(year)]+"*mChi-"+massPoint.first+"_mLSP-"+massPoint.second+"_*.root");
-       cout<<"Adding "<<samplePaths["signal_"+to_string(year)]+"*mGluino-"+massPoint.first+"_mLSP-"+massPoint.second+"_*.root"<<endl;
+       cout<<"Adding "<<samplePaths["signal_"+to_string(year)]+"*mChi-"+massPoint.first+"_mLSP-"+massPoint.second+"_*.root"<<endl;
      }
     }
   
