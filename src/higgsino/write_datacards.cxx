@@ -395,7 +395,7 @@ namespace HigWriteDataCards{
   
       char opt = -1;
       int option_index;
-      opt = getopt_long(argc, argv, "o:p:y:l:d:t:n", long_options, &option_index);
+      opt = getopt_long(argc, argv, "o:p:y:l:d:t:nu", long_options, &option_index);
       if( opt == -1) break;
   
       string optname;
