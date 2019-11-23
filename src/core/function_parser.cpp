@@ -183,8 +183,6 @@ void FunctionParser::ResolveVariables() const{
       // 	token = Functions::func_map.at(token.string_rep_);
       if(token.string_rep_ == "lowDphiFix"){
         token = Functions::lowDphiFix;
-      } else if(token.string_rep_ == "nGoodFatJets"){
-        token = Functions::nGoodFatJets;
       } else if(token.string_rep_ == "boostedRegionIdx"){
         token = Functions::boostedRegionIdx;
       }

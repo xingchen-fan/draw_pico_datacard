@@ -32,7 +32,7 @@ namespace{
   string tag = "";
 
   PlotOpt opts("txt/plot_styles.txt", "Std1D");
-  const double hh4b_bf = 0.5824*0.5824;
+  const double hh4b_bf = 1;//0.5824*0.5824;
 }
 
 void GetOptions(int argc, char *argv[]);
@@ -142,6 +142,7 @@ int main(int argc, char *argv[]){
   histo.GetXaxis()->SetLabelOffset(0.01);
   histo.SetXTitle("Higgsino mass "+mass_+chi1n+"}}} [GeV]");
   histo.SetYTitle("#sigma_{excl}^{95% CL}/#sigma_{theory}");
+  if (hh4b_bf>.99) histo.SetYTitle("#sigma_{excl}^{95% CL}/#sigma_{theory}*BR");
   histo.Draw();
 
   int thcolor = kRed+1, thwidth = 3;
@@ -266,6 +267,8 @@ int main(int argc, char *argv[]){
   histo.SetMinimum(miny/2.);
   histo.SetMaximum(maxXsec);
   histo.SetYTitle("#sigma [fb]");
+  if (hh4b_bf>.99) histo.SetYTitle("#sigma [fb]#times BR(HH#rightarrow 4b)");
+
   histo.Draw();
   TGraphAsymmErrors gexp2(vmx.size(), &(vmx[0]), &(vexp[0]), &(zeroes[0]), &(zeroes[0]), &(v2down[0]), &(v2up[0]));
   gexp2.SetLineColor(1); gexp2.SetFillColor(cyellow); gexp2.SetLineWidth(3); gexp2.SetLineStyle(2);

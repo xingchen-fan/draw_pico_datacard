@@ -151,7 +151,7 @@ string CodeToPlainText(string code){
 
 string CodeToRootTex(string code){
   ReplaceAll(code, " ", "");
-  ReplaceAll(code, "stitch &&", "");
+  ReplaceAll(code, "stitch&&", "");
   ReplaceAll(code, "pass&&stitch", "ps");
   ReplaceAll(code, "&&1", "");
   ReplaceAll(code, "weight", "w");
@@ -180,7 +180,13 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "met>500&&met<=700", "500<p_{T}^{miss}#leq 700");
   ReplaceAll(code, "met>200&&met<=500", "200<p_{T}^{miss}#leq 500");
 
-  ReplaceAll(code, "!low_dphi", "high #Delta#phi");
+  ReplaceAll(code, "fjet_pt[0]>300&&fjet_pt[1]>300", "p_{T,J1},p_{T,J2}> 300");
+  ReplaceAll(code, "((met<=300&&fjet_mva_hbb_btv[0]>0.6&&fjet_mva_hbb_btv[1]>0.6)||(met>300&&fjet_mva_hbb_btv[0]>0.3&&fjet_mva_hbb_btv[1]>0.3))", "DDB_{J1},DDB_{J2}> 0.3 (0.6)");
+  ReplaceAll(code, "fjet_msoftdrop[0]>50&&fjet_msoftdrop[0]<=250&&fjet_msoftdrop[1]>50&&fjet_msoftdrop[1]<=250", "50<m_{J1},m_{J2}#leq 250");
+  ReplaceAll(code, "fjet_msoftdrop[0]>85&&fjet_msoftdrop[0]<=135&&fjet_msoftdrop[1]>85&&fjet_msoftdrop[1]<=135", "85<m_{J1},m_{J2}#leq 135");
+  ReplaceAll(code, "fjet_mva_hbb_btv[0]>0.3&&fjet_mva_hbb_btv[1]>0.3", "DDB_{J1},DDB_{J2}> 0.3");
+  ReplaceAll(code, "!lowDphiFix", "hi-#Delta#phi");
+  ReplaceAll(code, "!low_dphi", "hi-#Delta#phi");
   ReplaceAll(code, "low_dphi", "low #Delta#phi");
   ReplaceAll(code, "hig_drmax", "#DeltaR^{max}_{bb}");
   ReplaceAll(code, "ntk", "N_{tks}");
@@ -194,6 +200,7 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "npv", "N_{PV}");
 
   ReplaceAll(code, "njet","N_{jet}");
+  ReplaceAll(code, "nfjet","N_{J}");
   ReplaceAll(code, "abs(lep_id)==13&&","");
   ReplaceAll(code, ">=", " #geq ");
   ReplaceAll(code, ">", " > ");

@@ -53,8 +53,7 @@ int main(int argc, char *argv[]){
     bfolder = "/net/cms29"; // In laptops, you can't create a /net folder
 
   string foldermc(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higtight/");
-  string foldersig(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/TChiHH/merged_higmc_higtight/");
-  string folderdata(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/data/merged_higmc_higtight/");
+  string foldersig(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/TChiHH/merged_higmc_unskimmed/");
 
   map<string, set<string>> mctags; 
   mctags["ttx"]     = set<string>({"*TTJets_*Lept*", "*_TTZ*.root", "*_TTW*.root",
@@ -76,11 +75,13 @@ int main(int argc, char *argv[]){
 
   //    Baseline definitions
   //-----------------------------------------
-  NamedFunc wgt = "w_lumi";//"weight"; 
+  NamedFunc wgt = "w_lumi*w_isr";//"weight"; 
   string common = "!lowDphiFix && nvlep==0 && ntk==0";
   string higtrim = "hig_cand_drmax[0]<=2.2 && hig_cand_dm[0] <= 40 && hig_cand_am[0]<=200";
   string res_base = common+"&& njet>=4 && njet<=5 && nbt>=2 && "+higtrim;
-  string boo_base = common+"&& nGoodFatJets>=2 && ht>300 && njet>=3";
+  string boo_base = common+"&& nfjet>1 && fjet_pt[0]>300 && fjet_pt[1]>300 && ht>600";
+  boo_base += " && fjet_msoftdrop[0]>50 && fjet_msoftdrop[0]<=250 && fjet_msoftdrop[1]>50 && fjet_msoftdrop[1]<=250";
+
 
   //    Useful boosted cut definitions
   //------------------------------------------
@@ -131,13 +132,16 @@ int main(int argc, char *argv[]){
 
   // assume common MET binning
   vector<TString> vc_met;
-  vc_met.push_back("met>150 && met<=200");
-  vc_met.push_back("met>200 && met<=300");
-  vc_met.push_back("met>300 && met<=450");
   if (res_view) {
+    vc_met.push_back("met>150 && met<=200");
+    vc_met.push_back("met>200 && met<=300");
+    vc_met.push_back("met>300 && met<=450");
     vc_met.push_back("met>450");
   } else {
-    vc_met.push_back("met>450 && met<=700");
+    vc_met.push_back("met>150 && met<=200");
+    vc_met.push_back("met>200 && met<=300");
+    vc_met.push_back("met>300 && met<=500");
+    vc_met.push_back("met>500 && met<=700");
     vc_met.push_back("met>700");
   }   
 

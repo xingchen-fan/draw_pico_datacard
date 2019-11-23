@@ -11,24 +11,12 @@ namespace Functions{
 
   const NamedFunc lowDphiFix("lowDphiFix",[](const Baby &b) -> NamedFunc::ScalarType{
     bool lowDphi(false);
-    if (b.jet_pt()->size()<3) return false;
     for (unsigned i(0); i<b.jet_pt()->size(); i++){
       if (i>3) break;
-      if (i<=1 && b.jet_met_dphi()->at(i)<0.5) lowDphi = true;
-      else if (i>=2 && b.jet_met_dphi()->at(i)<0.3) lowDphi = true;
+      if (i<=1 && b.jet_met_dphi()->at(i)<=0.5) lowDphi = true;
+      else if (i>=2 && b.jet_met_dphi()->at(i)<=0.3) lowDphi = true;
     }
     return lowDphi;
-  });
-
-  const NamedFunc nGoodFatJets("nGoodFatJets",[](const Baby &b) -> NamedFunc::ScalarType{ // AR = SR+CR
-    int pass_pt_m_loose(0);
-    for (unsigned i(0); i<b.fjet_pt()->size(); i++){
-      if (i>1) break;
-      if (b.fjet_pt()->at(i)<=300) continue;
-      if (b.fjet_msoftdrop()->at(i)<=50 || b.fjet_msoftdrop()->at(i)>250) continue;
-      pass_pt_m_loose++;
-    } 
-    return pass_pt_m_loose;
   });
 
   const NamedFunc boostedRegionIdx("boostedRegionIdx",[](const Baby &b) -> NamedFunc::ScalarType{

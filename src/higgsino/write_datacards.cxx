@@ -32,13 +32,14 @@ using namespace std;
 namespace 
 {
   string outFolder = getenv("PWD");
-  string mass_points_string = "700_1";
+  string mass_points_string = ""; // run over all the points, otherwise specify, e.g. "175_1,200_1"
   string years_string = "2016";
   float luminosity = 137.;
   // float luminosity = 35.9;
   string dimensionFilePath = "";
   bool unblind = false;
   string tag = "resolved";
+  bool do_met_average = true;
 }
 
 int main(int argc, char *argv[])
@@ -60,8 +61,8 @@ int main(int argc, char *argv[])
 
   map<string, string> samplePaths;
   samplePaths["mc_2016"] = baseFolder + "/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higtight/";
-  samplePaths["data_2016"] = baseFolder + "/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higloose/";
-  samplePaths["signal_2016"] = baseFolder + "/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/TChiHH/merged_higmc_higtight/";
+  samplePaths["signal_2016"] = baseFolder + "/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/TChiHH/merged_higmc_unskimmed/";
+  // samplePaths["data_2016"] = baseFolder + "/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higloose/";
 
   NamedFunc filters = HigUtilities::pass_2016;
 
@@ -73,11 +74,14 @@ int main(int argc, char *argv[])
   HigUtilities::setDataProcesses(years, samplePaths, filters, sampleProcesses);
   HigUtilities::setSignalProcesses(massPoints, years, samplePaths, filters, sampleProcesses);
   
-  NamedFunc weight = "w_lumi";
+  NamedFunc weight = "w_lumi*w_isr";
   string baseline = "!lowDphiFix && nvlep==0 && ntk==0";
   string higtrim = "hig_cand_drmax[0]<=2.2 && hig_cand_dm[0] <= 40 && hig_cand_am[0]<=200";
   if (tag=="resolved") baseline += "&& njet>=4 && njet<=5 && nbt>=2 && "+higtrim;
-  else if (tag=="boosted") baseline += "&& nGoodFatJets>=2 && ht>300 && njet>=3";
+  else if (tag=="boosted") {
+    baseline += " && ht>600 && nfjet>1 && fjet_pt[0]>300 && fjet_pt[1]>300";
+    baseline += " && fjet_msoftdrop[0]>50 && fjet_msoftdrop[0]<=250 && fjet_msoftdrop[1]>50 && fjet_msoftdrop[1]<=250";
+  }
 
   // Set ABCDbins
   // "bkg" and "sig" should be kept for setDataCardBackground()
@@ -113,11 +117,12 @@ int main(int argc, char *argv[])
       dimensionBins["drmax"].push_back({"drmax0", "hig_cand_drmax[0]<=1.1"});
       dimensionBins["drmax"].push_back({"drmax1", "hig_cand_drmax[0]>1.1"});
     } else {
-      dimensionBins["met"].push_back({"met0", "met>150 && met<=200"});
-      dimensionBins["met"].push_back({"met1", "met>200 && met<=300"});
-      dimensionBins["met"].push_back({"met2", "met>300 && met<=450"});
-      dimensionBins["met"].push_back({"met3", "met>450 && met<=700"});
-      dimensionBins["met"].push_back({"met4", "met>700"});
+      // dimensionBins["met"].push_back({"met0", "met>150 && met<=200"});
+      // dimensionBins["met"].push_back({"met1", "met>200 && met<=300"});
+      // dimensionBins["met"].push_back({"met2", "met>300 && met<=500"});
+      // dimensionBins["met"].push_back({"met3", "met>500 && met<=700"});
+      // dimensionBins["met"].push_back({"met4", "met>700"});
+      dimensionBins["met"].push_back({"met4", "met>150"});
     }
   } else {
     HigWriteDataCards::readDimensionFile(dimensionFilePath, dimensionBins);
@@ -161,6 +166,8 @@ int main(int argc, char *argv[])
   HigUtilities::fillSignalYieldsProcesses(pm, luminosity, sampleProcesses["signal"], cutTable["signal"], mYields);
   HigUtilities::fillAverageGenMetYields(sampleProcesses["signal"], sampleBins, "signal", "signalGenMet", "signalAverageGenMet", mYields, true);
 
+  cout<<cutTable["signal"].tableRows[5].cut_.Name()<<endl;
+
   for (auto & process : sampleProcesses["signal"]){
     cout<<"Process name: "<<process->name_<<endl;
     string model;
@@ -174,8 +181,13 @@ int main(int argc, char *argv[])
     vector<vector<string> > tableValues;
     if (unblind) HigWriteDataCards::setDataCardObserved(mYields, sampleBins, "data", tableValues);
     else HigWriteDataCards::setDataCardObserved(mYields, sampleBins, "mc", tableValues);
-    HigWriteDataCards::setDataCardSignalBackground(process->name_, "signalAverageGenMet", mYields, sampleBins, tableValues);
-    HigWriteDataCards::setDataCardSignalStatistics(process->name_, "signalAverageGenMet", mYields, sampleBins, tableValues);
+    if (do_met_average) {
+      HigWriteDataCards::setDataCardSignalBackground(process->name_, "signalAverageGenMet", mYields, sampleBins, tableValues);
+      HigWriteDataCards::setDataCardSignalStatistics(process->name_, "signalAverageGenMet", mYields, sampleBins, tableValues);
+    } else {
+      HigWriteDataCards::setDataCardSignalBackground(process->name_, "signal", mYields, sampleBins, tableValues);
+      HigWriteDataCards::setDataCardSignalStatistics(process->name_, "signal", mYields, sampleBins, tableValues);      
+    }
     HigWriteDataCards::writeTableValues(tableValues,cardFile);
     tableValues.clear();
     HigWriteDataCards::setDataCardBackground(mYields, sampleBins, "mc", tableValues);
@@ -390,6 +402,7 @@ namespace HigWriteDataCards{
         {"dimension", required_argument, 0, 'd'},
         {"tag", required_argument, 0, 't'},
         {"unblind", no_argument, 0, 'u'},
+        {"recomet", no_argument, 0, 0},
         {0, 0, 0, 0}
       };
   
@@ -418,7 +431,11 @@ namespace HigWriteDataCards{
           break;
         case 0:
           optname = long_options[option_index].name;
-          printf("Bad option! Found option name %s\n", optname.c_str());
+          if(optname == "recomet"){
+            do_met_average = false;
+          }else{
+            printf("Bad option! Found option name %s\n", optname.c_str());
+          }
           break;
         default: 
           printf("Bad option! getopt_long returned character code 0%o\n", opt); 

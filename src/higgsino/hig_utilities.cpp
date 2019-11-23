@@ -16,6 +16,7 @@ namespace HigUtilities {
   using std::endl;
   using std::shared_ptr;
   using std::max;
+  using std::make_pair;
 
   int stringToVectorString(std::string const& inString, std::vector<std::string>& outputVector, std::string const & delimiter)
   {
@@ -128,8 +129,7 @@ namespace HigUtilities {
 
   void parseMassPoints(string mass_points_string, vector<pair<string, string> > & mass_points)
   {
-    if (mass_points_string!="") 
-    {
+    if (mass_points_string!="") {
       size_t found = mass_points_string.find(",");
       size_t start = 0;
       string _tmp = "";
@@ -143,7 +143,12 @@ namespace HigUtilities {
       _tmp = mass_points_string.substr(start, found-start);
       mass_points.push_back(make_pair(_tmp.substr(0,_tmp.find("_")), _tmp.substr(_tmp.find("_")+1)));
       cout<<"Adding mass point: mgluino = "<<mass_points.back().first<<" mlsp = "<<mass_points.back().second<<endl;
-    } 
+    } else {
+      mass_points.push_back(make_pair("127","1"));
+      for (int ichi(150); ichi < 1301; ichi +=25) {
+        mass_points.push_back(make_pair(to_string(ichi),"1"));
+      }
+    }
   }
   
   void parseYears(string years_string, set<int> & years)
@@ -231,10 +236,13 @@ namespace HigUtilities {
     // mcTag['ttx'] = {*.root,*.root}
     map<string, set<string> > mcTags;
   
+    // mcTags["t#bar{t}+X"]     = set<string>({"*TTJets_*Lept*"});
     mcTags["t#bar{t}+X"]     = set<string>({"*TTJets_*Lept*", "*_TTZ*.root", "*_TTW*.root",
                                        "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root"});
     mcTags["V+jets"]   = set<string>({"*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root"});
-    mcTags["QCD"]     = set<string>({"*QCD_HT*0_Tune*.root", "*QCD_HT*Inf_Tune*.root"});
+    mcTags["QCD"]     = set<string>({"*_QCD_HT200to300_*","*_QCD_HT300to500_*","*_QCD_HT500to700_*",
+                                   "*_QCD_HT700to1000_*", "*_QCD_HT1000to1500_*","*_QCD_HT1500to2000_*",
+                                   "*_QCD_HT2000toInf_*"});
     mcTags["Other"]   = set<string>({"*_WH_HToBB*.root", "*_ZH_HToBB*.root", "*_ST_*.root",
                                        "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"});
   
