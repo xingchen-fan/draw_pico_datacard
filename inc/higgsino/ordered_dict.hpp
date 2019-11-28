@@ -122,6 +122,10 @@ class OrderedDict {
   /// `nullptr` if no such key is stored in the `OrderedDict`.
   Value* find(const Key& key) noexcept;
 
+  /// Returns the index associated with the given key, or -1
+  /// if no such key is stored in the `OrderedDict`.
+  int idx(const Key& key) noexcept;
+
   /// Returns a pointer to the value associated with the given key, or a
   /// `nullptr` if no such key is stored in the `OrderedDict`.
   const Value* find(const Key& key) const noexcept;
@@ -437,6 +441,15 @@ const Value* OrderedDict<Key, Value>::find(const Key& key) const noexcept {
     return nullptr;
   }
   return &items_[iterator->second].value();
+}
+
+template <typename Key, typename Value>
+int OrderedDict<Key, Value>::idx(const Key& key) noexcept {
+  auto iterator = index_.find(key);
+  if (iterator == index_.end()) {
+    return -1;
+  }
+  return iterator->second;
 }
 
 template <typename Key, typename Value>

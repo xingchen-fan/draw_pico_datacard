@@ -45,7 +45,7 @@ int main(){
 
   Palette colors("txt/colors.txt", "default");
 
-  string foldermc(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higtight/");
+  string foldermc(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higbase/");
   string foldersig(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/TChiHH/merged_higmc_higtight/");
 
   map<string, set<string>> mctags; 
@@ -87,10 +87,11 @@ int main(){
 
   NamedFunc wgt = "w_lumi*w_isr";
   vector<string> cuts;
-  cuts.push_back("met>150 && ht>300 ");
-  cuts.push_back("!lowDphiFix");
-  cuts.push_back("nvlep==0");
-  cuts.push_back("ntk==0");
+  // cuts.push_back("met>150 && ht>300 ");
+  // cuts.push_back("!lowDphiFix");
+  // cuts.push_back("nvlep==0");
+  // cuts.push_back("ntk==0");
+  cuts.push_back("met>150 && ht>300 && !lowDphiFix && nvlep==0 && ntk==0 && nbm>=2 && njet>=3");
   cuts.push_back("ht>600");
   cuts.push_back("nfjet>=2");
   cuts.push_back("fjet_pt[0]>300 && fjet_pt[1]>300");

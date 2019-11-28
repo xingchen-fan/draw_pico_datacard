@@ -21,7 +21,7 @@ namespace Functions{
 
   const NamedFunc boostedRegionIdx("boostedRegionIdx",[](const Baby &b) -> NamedFunc::ScalarType{
     float bb_wp = 0.3;
-    if (b.met()<300) bb_wp = 0.6;
+    if (b.met()<=300) bb_wp = 0.6;
     // 0 = D, 1 = B1, 2 = B2, 3 = C, 4 = A1, 5 = A2
     bool j1mass = b.fjet_msoftdrop()->at(0)>85 && b.fjet_msoftdrop()->at(0)<=135;
     bool j2mass = b.fjet_msoftdrop()->at(1)>85 && b.fjet_msoftdrop()->at(1)<=135;

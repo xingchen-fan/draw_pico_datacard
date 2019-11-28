@@ -117,12 +117,11 @@ int main(int argc, char *argv[])
       dimensionBins["drmax"].push_back({"drmax0", "hig_cand_drmax[0]<=1.1"});
       dimensionBins["drmax"].push_back({"drmax1", "hig_cand_drmax[0]>1.1"});
     } else {
-      // dimensionBins["met"].push_back({"met0", "met>150 && met<=200"});
-      // dimensionBins["met"].push_back({"met1", "met>200 && met<=300"});
-      // dimensionBins["met"].push_back({"met2", "met>300 && met<=500"});
-      // dimensionBins["met"].push_back({"met3", "met>500 && met<=700"});
-      // dimensionBins["met"].push_back({"met4", "met>700"});
-      dimensionBins["met"].push_back({"met4", "met>150"});
+      dimensionBins["met"].push_back({"met0", "met>150 && met<=200"});
+      dimensionBins["met"].push_back({"met1", "met>200 && met<=300"});
+      dimensionBins["met"].push_back({"met2", "met>300 && met<=500"});
+      dimensionBins["met"].push_back({"met3", "met>500 && met<=700"});
+      dimensionBins["met"].push_back({"met4", "met>700"});
     }
   } else {
     HigWriteDataCards::readDimensionFile(dimensionFilePath, dimensionBins);
@@ -161,9 +160,9 @@ int main(int argc, char *argv[])
   map<string, pair<GammaParams, TableRow> > mYields;
   //HigUtilities::fillDataYields(pm, cutTable["data"], mYields);
   // Luminosity used for scaling
-  HigUtilities::fillMcYields(pm, luminosity, cutTable["mc"], mYields);
+  HigUtilities::fillMcYields(pm, luminosity, cutTable["mc"], mYields, true);
   // Luminosity used for scaling
-  HigUtilities::fillSignalYieldsProcesses(pm, luminosity, sampleProcesses["signal"], cutTable["signal"], mYields);
+  HigUtilities::fillSignalYieldsProcesses(pm, luminosity, sampleProcesses["signal"], cutTable["signal"], mYields, true);
   HigUtilities::fillAverageGenMetYields(sampleProcesses["signal"], sampleBins, "signal", "signalGenMet", "signalAverageGenMet", mYields, true);
 
   cout<<cutTable["signal"].tableRows[5].cut_.Name()<<endl;

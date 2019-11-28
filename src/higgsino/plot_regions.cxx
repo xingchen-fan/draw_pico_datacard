@@ -35,7 +35,7 @@ namespace{
   bool res_view = true; 
   bool quick = false;
   string tag = "";
-  string mass_points_string = "700_1";//"225_1,400_1,700_1";
+  string mass_points_string = "900_1";//"225_1,400_1,900_1";
 }
 
 int main(int argc, char *argv[]){
@@ -113,11 +113,11 @@ int main(int argc, char *argv[]){
   auto proc_bkg_anaA_anaB_sr = Process::MakeShared<Baby_pico>("MC bkg $\\cap$ "+anaB+" SR only", 
     Process::Type::background, kGreen+1, attach_folder(foldermc, all_bkg),
     base_filters && "stitch" && (res_view ? (res_base+"&&"+boo_SR) : (boo_base+"&&"+res_SR)));
-  auto proc_sig_anaA = Process::MakeShared<Baby_pico>("TChiHH(700,1)", 
-    Process::Type::signal, 1, {foldersig+"*TChiHH_mChi-700*.root"}, 
+  auto proc_sig_anaA = Process::MakeShared<Baby_pico>("TChiHH(900,1)", 
+    Process::Type::signal, 1, {foldersig+"*TChiHH_mChi-900*.root"}, 
     base_filters && (res_view ? res_base : boo_base));
-  auto proc_sig_anaA_anaB_sr = Process::MakeShared<Baby_pico>("TChiHH(700,1) $\\cap$ "+anaB+" SR only", 
-    Process::Type::signal, 1, {foldersig+"*TChiHH_mChi-700*.root"}, 
+  auto proc_sig_anaA_anaB_sr = Process::MakeShared<Baby_pico>("TChiHH(900,1) $\\cap$ "+anaB+" SR only", 
+    Process::Type::signal, 1, {foldersig+"*TChiHH_mChi-900*.root"}, 
     base_filters && "stitch" && (res_view ? (res_base+"&&"+boo_SR) : (boo_base+"&&"+res_SR)));
 
   vector<shared_ptr<Process> > procs = {proc_bkg_anaA, proc_bkg_anaA_anaB_crsr, proc_bkg_anaA_anaB_sr, 
