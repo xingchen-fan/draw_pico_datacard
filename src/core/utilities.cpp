@@ -114,6 +114,12 @@ string CodeToPlainText(string code){
   ReplaceAll(code, "nbt>=2","ge2b");
   ReplaceAll(code, "hig_cand_am[0]>100&&hig_cand_am[0]<=140","HIG");
   ReplaceAll(code, "!(hig_cand_am[0]>100&&hig_cand_am[0]<=140)","SBD");
+  ReplaceAll(code, "boostedRegionIdx==0","0H, SBD");
+  ReplaceAll(code, "boostedRegionIdx==1","1H, SBD");
+  ReplaceAll(code, "boostedRegionIdx==2","2H, SBD");
+  ReplaceAll(code, "boostedRegionIdx==3","0H, HIG");
+  ReplaceAll(code, "boostedRegionIdx==4","1H, HIG");
+  ReplaceAll(code, "boostedRegionIdx==5","2H, HIG");
   
   ReplaceAll(code, ".", "p");
   ReplaceAll(code, "(", "");
@@ -174,17 +180,17 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "met>100&&met<=150", "100<p_{T}^{miss}#leq 150");
   ReplaceAll(code, "met>150&&met<=200", "150<p_{T}^{miss}#leq 200");
   ReplaceAll(code, "met>200&&met<=300", "200<p_{T}^{miss}#leq 300");
-  ReplaceAll(code, "met>300&&met<=450", "300<p_{T}^{miss}#leq 450");
+  ReplaceAll(code, "met>300&&met<=400", "300<p_{T}^{miss}#leq 400");
   ReplaceAll(code, "met>300&&met<=500", "300<p_{T}^{miss}#leq 500");
   ReplaceAll(code, "met>450&&met<=700", "450<p_{T}^{miss}#leq 700");
   ReplaceAll(code, "met>500&&met<=700", "500<p_{T}^{miss}#leq 700");
   ReplaceAll(code, "met>200&&met<=500", "200<p_{T}^{miss}#leq 500");
 
   ReplaceAll(code, "fjet_pt[0]>300&&fjet_pt[1]>300", "p_{T,J1},p_{T,J2}> 300");
-  ReplaceAll(code, "((met<=300&&fjet_mva_hbb_btv[0]>0.6&&fjet_mva_hbb_btv[1]>0.6)||(met>300&&fjet_mva_hbb_btv[0]>0.3&&fjet_mva_hbb_btv[1]>0.3))", "DDB_{J1},DDB_{J2}> 0.3 (0.6)");
+  ReplaceAll(code, "((met<=300&&fjet_deep_md_hbb_btv[0]>0.6&&fjet_deep_md_hbb_btv[1]>0.6)||(met>300&&fjet_deep_md_hbb_btv[0]>0.3&&fjet_deep_md_hbb_btv[1]>0.3))", "DDB_{J1},DDB_{J2}> 0.3 (0.6)");
   ReplaceAll(code, "fjet_msoftdrop[0]>50&&fjet_msoftdrop[0]<=250&&fjet_msoftdrop[1]>50&&fjet_msoftdrop[1]<=250", "50<m_{J1},m_{J2}#leq 250");
   ReplaceAll(code, "fjet_msoftdrop[0]>85&&fjet_msoftdrop[0]<=135&&fjet_msoftdrop[1]>85&&fjet_msoftdrop[1]<=135", "85<m_{J1},m_{J2}#leq 135");
-  ReplaceAll(code, "fjet_mva_hbb_btv[0]>0.3&&fjet_mva_hbb_btv[1]>0.3", "DDB_{J1},DDB_{J2}> 0.3");
+  ReplaceAll(code, "fjet_deep_md_hbb_btv[0]>0.7&&fjet_deep_md_hbb_btv[1]>0.7", "DDB_{J1},DDB_{J2}> 0.7");
   ReplaceAll(code, "!lowDphiFix", "hi-#Delta#phi");
   ReplaceAll(code, "!low_dphi", "hi-#Delta#phi");
   ReplaceAll(code, "low_dphi", "low #Delta#phi");

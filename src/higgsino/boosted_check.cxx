@@ -28,7 +28,7 @@ using namespace std;
 using namespace PlotOptTypes;
 
 namespace{
-  float lumi = 137;
+  float lumi = 35.9;
   string tag = "";
 }
 
@@ -62,7 +62,7 @@ int main(){
 
   //    Define processes, including intersections
   //--------------------------------------------------
-  NamedFunc base_filters = HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
+  NamedFunc base_filters = HigUtilities::pass_2016 && "met/met_calo<5"; //since pass_fsjets is not quite usable...
 
   vector<shared_ptr<Process> > procs;
   procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGray+2,
@@ -91,14 +91,13 @@ int main(){
   // cuts.push_back("!lowDphiFix");
   // cuts.push_back("nvlep==0");
   // cuts.push_back("ntk==0");
-  cuts.push_back("met>150 && ht>300 && !lowDphiFix && nvlep==0 && ntk==0 && nbm>=2 && njet>=3");
+  cuts.push_back("met>300 && ht>300 && !lowDphiFix && nvlep==0 && ntk==0");
   cuts.push_back("ht>600");
   cuts.push_back("nfjet>=2");
   cuts.push_back("fjet_pt[0]>300 && fjet_pt[1]>300");
   cuts.push_back("fjet_msoftdrop[0]>50 && fjet_msoftdrop[0]<=250 && fjet_msoftdrop[1]>50 && fjet_msoftdrop[1]<=250");
-  cuts.push_back("((met<=300 && fjet_mva_hbb_btv[0]>0.6 && fjet_mva_hbb_btv[1]>0.6) || (met>300 && fjet_mva_hbb_btv[0]>0.3 && fjet_mva_hbb_btv[1]>0.3))");
+  cuts.push_back("fjet_deep_md_hbb_btv[0]>0.7 && fjet_deep_md_hbb_btv[1]>0.7");
   cuts.push_back("fjet_msoftdrop[0]>85 && fjet_msoftdrop[0]<=135 && fjet_msoftdrop[1]>85 && fjet_msoftdrop[1]<=135");
-  cuts.push_back("met>300");
 
   vector<TableRow> tablerows;
   string tmp ="";

@@ -89,7 +89,7 @@ int main(int argc, char *argv[]){
                          "*_QCD_HT2000toInf_*", "*_WH_HToBB*.root", "*_ZH_HToBB*.root",
                          "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root", "*DYJetsToLL*.root"};
 
-  set<string> ttxtags = {"*TTJets_*Lept*"};//, "*_TTZ*.root", "*_TTW*.root", "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root"};
+  set<string> ttxtags = {"*TTJets_*Lept*", "*_TTZ*.root", "*_TTW*.root", "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root"};
   
   set<string> qcdtags = {"*_QCD_HT200to300_*","*_QCD_HT300to500_*","*_QCD_HT500to700_*",
                          "*_QCD_HT700to1000_*", "*_QCD_HT1000to1500_*","*_QCD_HT1500to2000_*",
@@ -110,6 +110,8 @@ int main(int argc, char *argv[]){
   // if (sample_name=="ttbar" || sample_name=="search") 
     procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X", Process::Type::background,
       colors("tt_1l"),attach_folder(foldermc,ttxtags), base_filters));
+    // procs.push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background,
+    //   colors("qcd"),attach_folder(foldermc,qcdtags), base_filters));
 
  /////////////////////////////////////////////////////////////////////////////////////////////////////////
  /////////////////////////////////////////// Defining cuts ///////////////////////////////////////////////
@@ -127,7 +129,9 @@ int main(int argc, char *argv[]){
   torch::OrderedDict<string, NamedFunc> baselines; // all desired cut combinations
   // zll skim:  ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100))
   // nlep==2 && Max$(lep_pt)>40 
-  if (!boosted) {
+  if (boosted) {
+    baselines.insert("vanilla", baseline);
+  } else {
     // if (sample_name=="zll") {
     //   baselines.push_back("nlep==2 && met<50");
     //   baselines.push_back("nlep==2 && met<50 && hig_cand_drmax[0]<2.2");
@@ -149,8 +153,6 @@ int main(int argc, char *argv[]){
         baselines.insert("high_drbb", baseline+"&& hig_cand_drmax[0]>1.1");
       // baselines.push_back("nvlep==0 && ntk==0 && !lowDphiFix");
     }
-  } else {
-
   }
 
   vector<TString> metcuts;
@@ -163,8 +165,14 @@ int main(int argc, char *argv[]){
   // if (sample_name!="qcd") metcuts.push_back(metdef+">100&&"+metdef+"<=150");
   metcuts.push_back(metdef+">150&&"+metdef+"<=200");
   metcuts.push_back(metdef+">200&&"+metdef+"<=300");
-  metcuts.push_back(metdef+">300&&"+metdef+"<=450");
-  metcuts.push_back(metdef+">450");
+  if (boosted) {
+    metcuts.push_back(metdef+">300&&"+metdef+"<=500");
+    metcuts.push_back(metdef+">500&&"+metdef+"<=700");
+    metcuts.push_back(metdef+">700");
+  } else {
+    metcuts.push_back(metdef+">300&&"+metdef+"<=400");
+    metcuts.push_back(metdef+">400");
+  }
 
   string c_ab="nbm==2";
   string c_cd="nbm==3&&nbl==3";
@@ -180,31 +188,46 @@ int main(int argc, char *argv[]){
 
   //list of all cuts of interest
   torch::OrderedDict<string, string> abcdcuts; 
-  abcdcuts.insert("sbd2b", c_ab+"&&"+c_sbd);
-  abcdcuts.insert("hig2b", c_ab+"&&"+c_hig);
-  abcdcuts.insert("sbd3b", c_cd+"&&"+c_sbd);
-  abcdcuts.insert("hig3b", c_cd+"&&"+c_hig);
-  abcdcuts.insert("sbd4b", c_ef+"&&"+c_sbd);
-  abcdcuts.insert("hig4b", c_ef+"&&"+c_hig);
-  abcdcuts.insert("sbd3b_lodr", c_cd+"&&"+c_sbd+"&& hig_cand_drmax[0]<=1.1");
-  abcdcuts.insert("hig3b_lodr", c_cd+"&&"+c_hig+"&& hig_cand_drmax[0]<=1.1");
-  abcdcuts.insert("sbd4b_lodr", c_ef+"&&"+c_sbd+"&& hig_cand_drmax[0]<=1.1");
-  abcdcuts.insert("hig4b_lodr", c_ef+"&&"+c_hig+"&& hig_cand_drmax[0]<=1.1");
-  abcdcuts.insert("sbd3b_hidr", c_cd+"&&"+c_sbd+"&& hig_cand_drmax[0]>1.1");
-  abcdcuts.insert("hig3b_hidr", c_cd+"&&"+c_hig+"&& hig_cand_drmax[0]>1.1");
-  abcdcuts.insert("sbd4b_hidr", c_ef+"&&"+c_sbd+"&& hig_cand_drmax[0]>1.1");
-  abcdcuts.insert("hig4b_hidr", c_ef+"&&"+c_hig+"&& hig_cand_drmax[0]>1.1");
+  if (boosted) {
+    abcdcuts.insert("D", "boostedRegionIdx==0");
+    abcdcuts.insert("C", "boostedRegionIdx==3");
+    abcdcuts.insert("B1", "boostedRegionIdx==1");
+    abcdcuts.insert("A1", "boostedRegionIdx==4");
+    abcdcuts.insert("B2", "boostedRegionIdx==2");
+    abcdcuts.insert("A2", "boostedRegionIdx==5");
+  } else {
+    abcdcuts.insert("sbd2b", c_ab+"&&"+c_sbd);
+    abcdcuts.insert("hig2b", c_ab+"&&"+c_hig);
+    abcdcuts.insert("sbd3b", c_cd+"&&"+c_sbd);
+    abcdcuts.insert("hig3b", c_cd+"&&"+c_hig);
+    abcdcuts.insert("sbd4b", c_ef+"&&"+c_sbd);
+    abcdcuts.insert("hig4b", c_ef+"&&"+c_hig);
+    abcdcuts.insert("sbd3b_lodr", c_cd+"&&"+c_sbd+"&& hig_cand_drmax[0]<=1.1");
+    abcdcuts.insert("hig3b_lodr", c_cd+"&&"+c_hig+"&& hig_cand_drmax[0]<=1.1");
+    abcdcuts.insert("sbd4b_lodr", c_ef+"&&"+c_sbd+"&& hig_cand_drmax[0]<=1.1");
+    abcdcuts.insert("hig4b_lodr", c_ef+"&&"+c_hig+"&& hig_cand_drmax[0]<=1.1");
+    abcdcuts.insert("sbd3b_hidr", c_cd+"&&"+c_sbd+"&& hig_cand_drmax[0]>1.1");
+    abcdcuts.insert("hig3b_hidr", c_cd+"&&"+c_hig+"&& hig_cand_drmax[0]>1.1");
+    abcdcuts.insert("sbd4b_hidr", c_ef+"&&"+c_sbd+"&& hig_cand_drmax[0]>1.1");
+    abcdcuts.insert("hig4b_hidr", c_ef+"&&"+c_hig+"&& hig_cand_drmax[0]>1.1");
+  }
 
   // Makes a plot for each vector in plots
   vector<aplot> plots;
-  for (auto &ibase: baselines) {
-    plots.push_back({"3b_"+ibase.key(),vector<string>({"sbd2b","hig2b","sbd3b","hig3b"}), ibase.value(), metcuts});
-    plots.push_back({"4b_"+ibase.key(),vector<string>({"sbd2b","hig2b","sbd4b","hig4b"}), ibase.value(), metcuts});
-    // plots.push_back({"3b_int_lodr",vector<string>({"sbd2b","hig2b","sbd3b_lodr","hig3b_lodr"}), ibase, metcuts});
-    // plots.push_back({"3b_int_hidr",vector<string>({"sbd2b","hig2b","sbd3b_hidr","hig3b_hidr"}), ibase, metcuts});
-    // plots.push_back({"4b_int_lodr",vector<string>({"sbd2b","hig2b","sbd4b_lodr","hig4b_lodr"}), ibase, metcuts});
-    // plots.push_back({"4b_int_hidr",vector<string>({"sbd2b","hig2b","sbd4b_hidr","hig4b_hidr"}), ibase, metcuts});
-
+  if (boosted) {
+    for (auto &ibase: baselines) {
+      plots.push_back({"1H_"+ibase.key(),vector<string>({"D","C","B1","A1"}), ibase.value(), metcuts});
+      plots.push_back({"2H_"+ibase.key(),vector<string>({"D","C","B2","A2"}), ibase.value(), metcuts});
+    }
+  } else {
+    for (auto &ibase: baselines) {
+      plots.push_back({"3b_"+ibase.key(),vector<string>({"sbd2b","hig2b","sbd3b","hig3b"}), ibase.value(), metcuts});
+      plots.push_back({"4b_"+ibase.key(),vector<string>({"sbd2b","hig2b","sbd4b","hig4b"}), ibase.value(), metcuts});
+      // plots.push_back({"3b_int_lodr",vector<string>({"sbd2b","hig2b","sbd3b_lodr","hig3b_lodr"}), ibase, metcuts});
+      // plots.push_back({"3b_int_hidr",vector<string>({"sbd2b","hig2b","sbd3b_hidr","hig3b_hidr"}), ibase, metcuts});
+      // plots.push_back({"4b_int_lodr",vector<string>({"sbd2b","hig2b","sbd4b_lodr","hig4b_lodr"}), ibase, metcuts});
+      // plots.push_back({"4b_int_hidr",vector<string>({"sbd2b","hig2b","sbd4b_hidr","hig4b_hidr"}), ibase, metcuts});
+    }
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -305,7 +328,7 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, aplot &plotdef,
   } // Loop over graphs
 
   //// Finding ytitle
-  TString ytitle="Ratio";
+  TString ytitle="#kappa";
   if(indices[0].size()==2){
     size_t ind0=indices[0][0][1], ind1=indices[0][1][1];
     if((int(ind0)==abcdcuts.idx("hig2b") && int(ind1)==abcdcuts.idx("sbd2b"))) ytitle = "Hig/Sbd";
@@ -313,14 +336,6 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, aplot &plotdef,
   if(indices[0].size()==4){
     // size_t ind0=indices[0][0][1], ind1=indices[0][1][1];
     // size_t ind2=indices[0][2][1], ind3=indices[0][3][1];
-    if(plotdef.name.Contains("4b")) {
-      if (sample_name=="qcd" || sample_name=="zll") ytitle = "1 tight b #kappa";
-      else ytitle = "4b #kappa";
-    }
-    if(plotdef.name.Contains("3b")) {
-      if (sample_name=="qcd" || sample_name=="zll") ytitle = "1b #kappa";
-      else ytitle = "3b #kappa";
-    }
   }
   //// Setting plot style
   PlotOpt opts("txt/plot_styles.txt", "Ratio");
@@ -339,8 +354,8 @@ void plotRatio(vector<vector<vector<GammaParams> > > &allyields, aplot &plotdef,
   histo.SetMaximum(maxy);
   histo.GetYaxis()->CenterTitle(true);
   histo.GetXaxis()->SetLabelOffset(0.008);
-  histo.GetYaxis()->SetTitleSize(0.09);
-  histo.GetYaxis()->SetTitleOffset(0.7);
+  histo.GetYaxis()->SetTitleSize(0.06);
+  histo.GetYaxis()->SetTitleOffset(0.8);
   histo.SetYTitle(ytitle);
   histo.Draw();
 

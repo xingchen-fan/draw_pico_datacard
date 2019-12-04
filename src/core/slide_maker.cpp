@@ -39,7 +39,9 @@ void SlideMaker::AddSlide(vector<string> pnames, unsigned ncols, string title,
   outfile_<<"\\hline \n";
   outfile_<<"\\multicolumn{"<<ncols+1<<"}{|c|}{"+title+"}\\\\ \n";
   outfile_<<"\\hline \n";
-  for (unsigned i(0); i<ncols+1; i++) outfile_<<col_labels[i]<<(i==ncols ? " \\\\ \n":" & ");
+  // no label on first column
+  outfile_<<" & ";
+  for (unsigned i(0); i<ncols; i++) outfile_<<col_labels[i]<<(i==(ncols-1) ? " \\\\ \n":" & ");
   outfile_<<"\\hline \n";
   for (size_t i(0); i<nplots; i++){
     if (pnames[i]=="") continue;

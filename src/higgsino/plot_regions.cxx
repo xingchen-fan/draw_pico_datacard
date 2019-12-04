@@ -32,7 +32,7 @@ void GetOptions(int argc, char *argv[]);
 namespace{
   float lumi = 137;
   bool doSignal = false;
-  bool res_view = true; 
+  bool resolved = true; 
   bool quick = false;
   string tag = "";
   string mass_points_string = "900_1";//"225_1,400_1,900_1";
@@ -101,24 +101,24 @@ int main(int argc, char *argv[]){
 
   //    Define processes, including intersections
   //--------------------------------------------------
-  string anaA(res_view?"Res":"Boo"), anaB(res_view?"Boo":"Res");
+  string anaA(resolved?"Res":"Boo"), anaB(resolved?"Boo":"Res");
   NamedFunc base_filters = HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
 
   auto proc_bkg_anaA = Process::MakeShared<Baby_pico>("MC bkg", 
     Process::Type::background, kGreen+1,attach_folder(foldermc, all_bkg),
-    base_filters && "stitch" && (res_view ? res_base : boo_base));
+    base_filters && "stitch" && (resolved ? res_base : boo_base));
   auto proc_bkg_anaA_anaB_crsr = Process::MakeShared<Baby_pico>("MC bkg $\\cap$ "+anaB+" (CR+SR)", 
     Process::Type::background, kGreen+1, attach_folder(foldermc, all_bkg),
     base_filters && "stitch &&"+res_base+"&&"+boo_base);
   auto proc_bkg_anaA_anaB_sr = Process::MakeShared<Baby_pico>("MC bkg $\\cap$ "+anaB+" SR only", 
     Process::Type::background, kGreen+1, attach_folder(foldermc, all_bkg),
-    base_filters && "stitch" && (res_view ? (res_base+"&&"+boo_SR) : (boo_base+"&&"+res_SR)));
+    base_filters && "stitch" && (resolved ? (res_base+"&&"+boo_SR) : (boo_base+"&&"+res_SR)));
   auto proc_sig_anaA = Process::MakeShared<Baby_pico>("TChiHH(900,1)", 
     Process::Type::signal, 1, {foldersig+"*TChiHH_mChi-900*.root"}, 
-    base_filters && (res_view ? res_base : boo_base));
+    base_filters && (resolved ? res_base : boo_base));
   auto proc_sig_anaA_anaB_sr = Process::MakeShared<Baby_pico>("TChiHH(900,1) $\\cap$ "+anaB+" SR only", 
     Process::Type::signal, 1, {foldersig+"*TChiHH_mChi-900*.root"}, 
-    base_filters && "stitch" && (res_view ? (res_base+"&&"+boo_SR) : (boo_base+"&&"+res_SR)));
+    base_filters && "stitch" && (resolved ? (res_base+"&&"+boo_SR) : (boo_base+"&&"+res_SR)));
 
   vector<shared_ptr<Process> > procs = {proc_bkg_anaA, proc_bkg_anaA_anaB_crsr, proc_bkg_anaA_anaB_sr, 
                                         proc_sig_anaA, proc_sig_anaA_anaB_sr};
@@ -132,11 +132,11 @@ int main(int argc, char *argv[]){
 
   // assume common MET binning
   vector<TString> vc_met;
-  if (res_view) {
+  if (resolved) {
     vc_met.push_back("met>150 && met<=200");
     vc_met.push_back("met>200 && met<=300");
-    vc_met.push_back("met>300 && met<=450");
-    vc_met.push_back("met>450");
+    vc_met.push_back("met>300 && met<=400");
+    vc_met.push_back("met>400");
   } else {
     vc_met.push_back("met>150 && met<=200");
     vc_met.push_back("met>200 && met<=300");
@@ -150,7 +150,7 @@ int main(int argc, char *argv[]){
   PlotMaker pm;
   vector<TableRow> tablerows;
   unsigned nbins(0), nheads(0);
-  if (res_view) {
+  if (resolved) {
     nheads = vc_met.size()*vc_drmax.size();
     for (auto &imet: vc_met) {
       for (auto &idrmax: vc_drmax) {
@@ -173,7 +173,7 @@ int main(int argc, char *argv[]){
       }
     }
   }
-  TString tabname = "table_"; tabname += (res_view ? "resolved" : "boosted");
+  TString tabname = "table_"; tabname += (resolved ? "resolved" : "boosted");
   pm.Push<Table>(tabname.Data(), tablerows, procs, 0);
 
   pm.min_print_ = true;
@@ -192,7 +192,7 @@ int main(int argc, char *argv[]){
   //      Make the plot
   //-------------------------------------
   PlotOpt opts("txt/plot_styles.txt", "Bins");
-  if (!res_view) opts.BottomMargin(0.13);
+  if (!resolved) opts.BottomMargin(0.13);
   setPlotStyle(opts);
 
   vector<int> colors = {EColor::kBlack, EColor::kGray+2, EColor::kAzure+1, EColor::kRed, EColor::kMagenta};
@@ -207,7 +207,7 @@ int main(int argc, char *argv[]){
   legB.SetFillStyle(0); legB.SetBorderSize(0); legB.SetTextSize(opts.LegendEntryHeight()); legB.SetTextFont(42);
 
   vector<TH1D> histo;
-  TString htitle = res_view? "Resolved regions":"Boosted regions";
+  TString htitle = resolved? "Resolved regions":"Boosted regions";
   for (unsigned ihist(0); ihist<yields.size(); ihist++) {
     histo.push_back(TH1D("", htitle+"; ; Events", nbins, 0.5, nbins+0.5));
   }
@@ -248,8 +248,8 @@ int main(int argc, char *argv[]){
 
   //       Adding annotations
   //-------------------------------------
-  unsigned nmet = res_view ? nbins/12 : nbins/6;
-  unsigned nbin_per_met = res_view ? 12 : 6;
+  unsigned nmet = resolved ? nbins/12 : nbins/6;
+  unsigned nbin_per_met = resolved ? 12 : 6;
   unsigned nbin_per_drmax = 6;
   float space = (1-opts.LeftMargin() - opts.RightMargin())/nmet;
   TLatex latex; latex.SetNDC();
@@ -267,7 +267,7 @@ int main(int argc, char *argv[]){
       line.SetLineColor(kBlack);
       line.DrawLine(i*nbin_per_met+0.5, 0, i*nbin_per_met+0.5, histo[0].GetMaximum()/15);
     }
-    if (res_view){
+    if (resolved){
       for (unsigned j(0); j<vc_drmax.size();j++){
         float pos_ = met_pos_ + (j-0.5)*space/2;
         latex.SetTextColor(j ? kOrange:kOrange-3);
@@ -283,7 +283,7 @@ int main(int argc, char *argv[]){
   latex.SetTextSize(0.045);
   // label.DrawLatex(nbins/2, 0.0005, "p_{T}^{miss} [GeV]");
 
-  TString recotag = (res_view ? "resolved" : "boosted");
+  TString recotag = (resolved ? "resolved" : "boosted");
   TString pdfname = tag+"_"+recotag+".pdf";
   if (tag=="") pdfname = recotag+".pdf";
   can.SaveAs(pdfname);
@@ -329,7 +329,7 @@ void GetOptions(int argc, char *argv[]){
     case 0:
       optname = long_options[option_index].name;
       if(optname == "boo"){
-        res_view = false;
+        resolved = false;
       }else if(optname == "quick"){
         quick = true;
       } else {

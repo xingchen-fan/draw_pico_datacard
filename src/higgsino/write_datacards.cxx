@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
     yBins["sig"] = "hig_cand_am[0]>100 && hig_cand_am[0]<=140";
     yBins["bkg"] = "!("+yBins["sig"]+")";
   } else if (tag=="boosted") {
-    yBins["sig"] = "fjet_msoftdrop[0]>85 && fjet_msoftdrop[0]<=135 && fjet_msoftdrop[1]>85 && fjet_msoftdrop[1]<=135";
+    yBins["sig"] = "fjet_msoftdrop[0]>95 && fjet_msoftdrop[0]<=145 && fjet_msoftdrop[1]>95 && fjet_msoftdrop[1]<=145";
     yBins["bkg"] = "!("+yBins["sig"]+")";
   }
   
@@ -112,8 +112,8 @@ int main(int argc, char *argv[])
     if (tag=="resolved") {
       dimensionBins["met"].push_back({"met0", "met>150 && met<=200"});
       dimensionBins["met"].push_back({"met1", "met>200 && met<=300"});
-      dimensionBins["met"].push_back({"met2", "met>300 && met<=450"});
-      dimensionBins["met"].push_back({"met3", "met>450"});
+      dimensionBins["met"].push_back({"met2", "met>300 && met<=400"});
+      dimensionBins["met"].push_back({"met3", "met>400"});
       dimensionBins["drmax"].push_back({"drmax0", "hig_cand_drmax[0]<=1.1"});
       dimensionBins["drmax"].push_back({"drmax1", "hig_cand_drmax[0]>1.1"});
     } else {
@@ -162,8 +162,8 @@ int main(int argc, char *argv[])
   // Luminosity used for scaling
   HigUtilities::fillMcYields(pm, luminosity, cutTable["mc"], mYields, true);
   // Luminosity used for scaling
-  HigUtilities::fillSignalYieldsProcesses(pm, luminosity, sampleProcesses["signal"], cutTable["signal"], mYields, true);
-  HigUtilities::fillAverageGenMetYields(sampleProcesses["signal"], sampleBins, "signal", "signalGenMet", "signalAverageGenMet", mYields, true);
+  HigUtilities::fillSignalYieldsProcesses(pm, luminosity, sampleProcesses["signal"], cutTable["signal"], mYields);
+  HigUtilities::fillAverageGenMetYields(sampleProcesses["signal"], sampleBins, "signal", "signalGenMet", "signalAverageGenMet", mYields);
 
   cout<<cutTable["signal"].tableRows[5].cut_.Name()<<endl;
 

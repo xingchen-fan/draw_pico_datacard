@@ -23,8 +23,8 @@ namespace Functions{
     float bb_wp = 0.3;
     if (b.met()<=300) bb_wp = 0.6;
     // 0 = D, 1 = B1, 2 = B2, 3 = C, 4 = A1, 5 = A2
-    bool j1mass = b.fjet_msoftdrop()->at(0)>85 && b.fjet_msoftdrop()->at(0)<=135;
-    bool j2mass = b.fjet_msoftdrop()->at(1)>85 && b.fjet_msoftdrop()->at(1)<=135;
+    bool j1mass = b.fjet_msoftdrop()->at(0)>95 && b.fjet_msoftdrop()->at(0)<=145;
+    bool j2mass = b.fjet_msoftdrop()->at(1)>95 && b.fjet_msoftdrop()->at(1)<=145;
     bool j1bb = b.fjet_mva_hbb_btv()->at(0)>bb_wp;
     bool j2bb = b.fjet_mva_hbb_btv()->at(1)>bb_wp;
 
@@ -39,14 +39,14 @@ namespace Functions{
     }
   });
 
-  const NamedFunc ntrub("ntrub", [](const Baby &b){
-      int ntrub_(0);
-      for(size_t i = 0; i < b.jet_pt()->size(); i++) {
-        if(IsGoodJet(b,i) && b.jet_hflavor()->at(i)==5)
-          ntrub_++;
-      }
-      return ntrub_;
-    });
+  const NamedFunc ntrub("ntrub",[](const Baby &b) -> NamedFunc::ScalarType{
+    int tmp_ntrub(0);
+    for (unsigned i(0); i<b.jet_pt()->size(); i++){
+      if (!b.jet_h1d()->at(i) && !b.jet_h2d()->at(i)) continue;
+      if (b.jet_hflavor()->at(i)==5) tmp_ntrub++;
+    }
+    return tmp_ntrub;
+  });
 
   bool IsGoodJet(const Baby &b, size_t ijet){
     return ijet<b.jet_pt()->size()

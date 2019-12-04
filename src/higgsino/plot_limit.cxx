@@ -130,10 +130,10 @@ int main(int argc, char *argv[]){
   TString chi10= "#lower[-0.12]{#tilde{#chi}}#kern[+0.2]{#lower[0.2]{#scale[0.99]{^{0}}}}#kern[-1.3]{#scale[0.99]{_{1}}}";
   TString xsoft= "X#lower[-0.2]{#scale[0.85]{_{soft}}}";
   TString mass_ = "m#kern[0.1]{#lower[-0.12]{_{";
-  float minh=200, maxh=1250, maxXsec = 5e3;
+  float minh=200, maxh=1250;//, maxXsec = 5e3;
   if(do_paper) {
     minh = 127;
-    maxXsec = 1e5;
+    // maxXsec = 1e5;
   }
   TH1D histo("histo", "", 18, minh, maxh);
   histo.SetMinimum(0);
@@ -264,8 +264,8 @@ int main(int argc, char *argv[]){
   }
 
   histo.GetXaxis()->SetLabelOffset(0.01);
-  histo.SetMinimum(miny/2.);
-  histo.SetMaximum(maxXsec);
+  histo.SetMinimum(0.1);
+  histo.SetMaximum(1e5);
   histo.SetYTitle("#sigma [fb]");
   if (hh4b_bf>.99) histo.SetYTitle("#sigma [fb]#times BR(HH#rightarrow 4b)");
 

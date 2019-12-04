@@ -21,18 +21,18 @@ using namespace std;
 namespace{
   std::string ToLatex(std::string x){
     ReplaceAll(x, "#", "\\");
-    // auto pos_1 = x.find("\\");
-    // auto pos_2 = x.find("_");
-    // auto pos_3 = x.find("^");
-    // auto pos_4 = x.find("{");
-    // auto pos_5 = x.find("}");
-    // if(pos_1 != string::npos
-    //    || pos_2 != string::npos
-    //    || pos_3 != string::npos
-    //    || pos_4 != string::npos
-    //    || pos_5 != string::npos){
-    //   x = "$"+x+"$";
-    // }
+    auto pos_1 = x.find("\\");
+    auto pos_2 = x.find("_");
+    auto pos_3 = x.find("^");
+    auto pos_4 = x.find("{");
+    auto pos_5 = x.find("}");
+    if(pos_1 != string::npos
+       || pos_2 != string::npos
+       || pos_3 != string::npos
+       || pos_4 != string::npos
+       || pos_5 != string::npos){
+      x = "$"+x+"$";
+    }
     return x;
   }
 }
