@@ -26,10 +26,13 @@ using namespace PlotOptTypes;
 void GetOptions(int argc, char *argv[]);
 
 namespace{
-  bool do_allbkg = true;
+  bool do_allbkg = false;
   string sample_name = "search";
   float lumi = 137;
-  bool unblind = true;
+  bool unblind = false;
+  bool do_dmcut = false;
+  bool do_tkveto = true;
+  bool do_dphicut = true;
 }
 
 int main(int argc, char *argv[]){
@@ -53,19 +56,18 @@ int main(int argc, char *argv[]){
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
-  string foldermc = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higtight/";
-  // if (sample_name=="ttbar") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep1/";
-  // if (sample_name=="zll") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higlep2/";
-  // if (sample_name=="qcd") foldermc = bfolder+"/cms2r0/babymaker/babies/2017_01_27/mc/merged_higmc_higqcd/";
+  string foldermc = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higloose/";
+  if (sample_name=="ttbar") foldermc = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higlep1/";
+  if (sample_name=="zll") foldermc = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higlep2/";
   string folderdata = bfolder+"";
-  // if (sample_name=="ttbar") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higlep1/";
-  // if (sample_name=="zll") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higlep2/";
-  // if (sample_name=="qcd") folderdata = bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higqcd/";
+  // if (sample_name=="ttbar") folderdata = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/data/merged_higdata_higlep1/";
+  // if (sample_name=="zll") folderdata = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/data/merged_higdata_higlep2/";
+  // if (sample_name=="qcd") folderdata = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/data/merged_higdata_higqcd/";
 
   set<string> alltags; 
-  if (sample_name=="ttbar" || sample_name=="search") alltags = {"*TTJets_*Lept*",
-                                      "*_TTZ*.root", "*_TTW*.root", "*_TTGJets*.root", 
-                                      "*ttHTobb*.root","*_TTTT*.root"};
+  if (sample_name=="ttbar" || sample_name=="search") alltags = {"*TTJets_*Lept*"};//,
+                                      // "*_TTZ*.root", "*_TTW*.root", "*_TTGJets*.root", 
+                                      // "*ttHTobb*.root","*_TTTT*.root"};
   // if (sample_name=="zll") alltags = {"*DYJetsToLL*.root"};
   // if (sample_name=="qcd") alltags = {//"*QCD_HT100to200_Tune*", "*QCD_HT200to300_Tune*",
   //                               //"*QCD_HT300to500_Tune*", 
@@ -90,20 +92,16 @@ int main(int argc, char *argv[]){
   set<string> allfiles = attach_folder(foldermc,alltags);
 
   // Baseline definitions
-  string baseline = "!lowDphiFix && nvlep==0 && ntk==0";
-  string higtrim = "hig_cand_drmax[0]<=2.2 && hig_cand_dm[0] <= 40 && hig_cand_am[0]<=200";
-  baseline += "&& njet>=4 && njet<=5 && nbt>=2 && "+higtrim;
+  string baseline = "njet>=4 && njet<=5 && hig_cand_am[0]<=200";
+  if (do_dphicut) baseline += sample_name=="qcd" ? "&& lowDphiFix" : "&& !lowDphiFix";
+  if (do_tkveto) baseline += "&& ntk==0";
+  if (do_dmcut) baseline += "&& hig_cand_dm[0]<=40";
   
-
-  // zll skim: ((elel_m>80&&elel_m<100)||(mumu_m>80&&mumu_m<100)) && 
-  // nlep==2 && nlep>=1 && Max$(leps_pt)>30 && njets>=4&&njets<=5
-  // if (sample_name=="zll") baseline = baseline+"&& nlep==2 && met<50";
-  // // qcd skim - met>150 && nvlep==0 && (njets==4||njets==5)
-  // if (sample_name=="qcd") baseline = baseline+"&& nvlep==0 && lowDphiFix";
-  // // ttbar skim - nlep==1 && (njets==4||njets==5) && nbm>=2
-  // if (sample_name=="ttbar") baseline = baseline+"&& nlep==1 && mt<100";
-  // search skim - met>100 && nvlep==0 && (njets==4||njets==5) && nbm>=2
-  // if (sample_name=="search") baseline = baseline+"&& nvlep==0";
+  if (sample_name=="zll") baseline += "&& nlep==2 && met<50";
+  if (sample_name=="qcd") baseline += "&& nvlep==0";
+  if (sample_name=="ttbar") baseline += "&& nlep==1 && mt<=100 && nbt>=2 && met>150";
+  // if (sample_name=="search") baseline += "&& nvlep==0 && ntk==0 && !lowDphiFix && nbt>=2";
+  if (sample_name=="search") baseline += "&& nvlep==0 && nbt>=2";
     
 
   ////// Nb cuts
@@ -145,19 +143,18 @@ int main(int argc, char *argv[]){
   string lumi_s=RoundNumber(lumi,1).Data();
 
   vector<vector<string>> combos, combos_labels;
-  // int color_data = kBlue-7;
-  // if (sample_name=="zll") { // do 0b vs 1b
-  //   color_data = kOrange+1;
-  //   combos.push_back({"nbm==0","nbm==1"});
-  //   combos.push_back({"nbm==1","nbm==2"});
-  // } else if (sample_name=="qcd") { // do 0b vs 1b and 2b vs 3+b
-  //   color_data = kOrange;
-  //   combos.push_back({"nbm==0","nbm==1"});
-  //   combos.push_back({"nbm==1","nbm==2"});
-  //   combos.push_back({"nbm==2","nbm==3"});
-  //   combos.push_back({"nbm==2", "nbm>=3 && nbl>=4"});
-  // } else 
-  if (sample_name=="search" || sample_name=="ttbar") {
+  int color_data = kBlue-7;
+  if (sample_name=="zll") { // do 0b vs 1b
+    color_data = kOrange+1;
+    combos.push_back({"nbm==0","nbm==1"});
+    combos.push_back({"nbm==1","nbm==2"});
+  } else if (sample_name=="qcd") { // do 0b vs 1b and 2b vs 3+b
+    color_data = kOrange;
+    combos.push_back({"nbm==0","nbm==1"});
+    combos.push_back({"nbm==1","nbm==2"});
+    combos.push_back({"nbm==2","nbm==3"});
+    combos.push_back({"nbm==2", "nbm>=3 && nbl>=4"});
+  } else if (sample_name=="search" || sample_name=="ttbar") {
     combos.push_back({"nbm==2", "nbm==3 && nbl==3"});
     combos.push_back({"nbm==2", "nbm>=3 && nbl>=4"});
   }
@@ -174,51 +171,64 @@ int main(int argc, char *argv[]){
     combos_labels.push_back(label);
   }
 
-  // vector<vector<shared_ptr<Process> >> procs_data;
-  // for (unsigned ind(0); ind<combos.size(); ind++){
-  //   vector<string> icomb = combos[ind], ilab = combos_labels[ind];
-  //   procs_data.push_back(vector<shared_ptr<Process> >());
-  //   string tmpcuts = filters +"&&"+icomb[0]; //if not cast here, it crashes
-  //   procs_data.back().push_back(Process::MakeShared<Baby_pico>(ilab[0]+" Data "+lumi_s+" fb^{-1}", 
-  //                    Process::Type::background, kBlack, {folderdata+"*root"}, 
-  //                    Higfuncs::trig_hig && tmpcuts));
-  //   procs_data.back().back()->SetFillColor(color_data);
-  //   procs_data.back().back()->SetLineColor(color_data);
-  //   procs_data.back().back()->SetLineWidth(2);
+  vector<vector<shared_ptr<Process> >> procs_data;
+  if (unblind) {
+    for (unsigned ind(0); ind<combos.size(); ind++){
+      vector<string> icomb = combos[ind], ilab = combos_labels[ind];
+      procs_data.push_back(vector<shared_ptr<Process> >());
+      procs_data.back().push_back(Process::MakeShared<Baby_pico>(ilab[0]+" Data "+lumi_s+" fb^{-1}", 
+                       Process::Type::background, kBlack, {folderdata+"*root"}, 
+                       /*Higfuncs::trig_hig &&*/ filters && icomb[0]));
+      procs_data.back().back()->SetFillColor(color_data);
+      procs_data.back().back()->SetLineColor(color_data);
+      procs_data.back().back()->SetLineWidth(2);
 
-  //   tmpcuts = filters +"&&"+icomb[1];
-  //   procs_data.back().push_back(Process::MakeShared<Baby_pico>(ilab[1]+" Data "+lumi_s+" fb^{-1}", 
-  //                    Process::Type::data, kBlack, 
-  //     {folderdata+"*root"}, Higfuncs::trig_hig && tmpcuts));
-  // }
+      procs_data.back().push_back(Process::MakeShared<Baby_pico>(ilab[1]+" Data "+lumi_s+" fb^{-1}", 
+                       Process::Type::data, kBlack, 
+        {folderdata+"*root"}, /*Higfuncs::trig_hig &&*/ filters && icomb[1]));
+    }
+  }
 
 
   string metcut = "met>150";
-  // if (sample_name=="zll") metcut = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>0";
-  // else if (sample_name=="ttbar") metcut = "1";
+  if (sample_name=="zll") metcut = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>0";
+  else if (sample_name=="ttbar") metcut = "1";
 
   vector<string> xcuts;
-  xcuts.push_back(metcut);
-  xcuts.push_back("hig_cand_drmax[0]<=1.1");
-  xcuts.push_back("hig_cand_drmax[0]>1.1");
+  // xcuts.push_back("1");
+  xcuts.push_back("met>300");
+  // xcuts.push_back("hig_cand_drmax[0]<=0.8");
+  // xcuts.push_back("hig_cand_drmax[0]>1.1 && hig_cand_drmax[0]<=2.2");
 
   PlotMaker pm;
   NamedFunc wgt = "w_lumi*w_isr";//Higfuncs::weight_higd*Higfuncs::eff_higtrig;
 
   for (unsigned ic(0); ic<xcuts.size(); ic++){
-    // if (sample_name!="search" || unblind) {
-    //   for (unsigned i(0); i<combos.size(); i++)
-    //     pm.Push<Hist1D>(Axis(10,0,200,"hig_cand_am[0]", "#LTm#GT [GeV]", {100., 140.}),
-    //       baseline+"&&"+xcuts[ic]+"&&"+scuts[is], procs_data[i], plt_types)
-    // .Tag(sample_name+"_datavdata"+to_string(i)).RatioTitle(combos_labels[i][1],combos_labels[i][0]);
-    // }
+    if (unblind && sample_name!="search") {
+      for (unsigned i(0); i<combos.size(); i++)
+        pm.Push<Hist1D>(Axis(10,0,200,"hig_cand_am[0]", "#LTm#GT [GeV]", {100., 140.}),
+          baseline+"&&"+xcuts[ic], procs_data[i], plt_types)
+    .Tag(sample_name+"_datavdata"+to_string(i)).RatioTitle(combos_labels[i][1],combos_labels[i][0]);
+    }
 
     pm.Push<Hist1D>(Axis(10,0,200,"hig_cand_am[0]", "#LTm#GT [GeV]", {100., 140.}),
       baseline+"&&"+xcuts[ic], procs, plt_types).Weight(wgt).Tag(sample_name+"_shape_bcats")
       .RatioTitle("Bkg. nb","Bkg. 2b");
-
     pm.Push<Hist1D>(Axis(10,0,200,"hig_cand_am[0]", "#LTm#GT [GeV]", {100., 140.}),
       baseline+"&&"+xcuts[ic], procs_trub, plt_types).Weight(wgt).Tag(sample_name+"_shape_trub");
+
+    pm.Push<Hist1D>(Axis(10,0,100,"hig_cand_dm[0]", "#Deltam [GeV]", {40.}),
+      baseline+"&&"+xcuts[ic], procs, plt_types).Weight(wgt).Tag(sample_name+"_shape_bcats")
+      .RatioTitle("Bkg. nb","Bkg. 2b");
+    pm.Push<Hist1D>(Axis(10,0,100,"hig_cand_dm[0]", "#Deltam [GeV]", {40.}),
+      baseline+"&&"+xcuts[ic], procs_trub, plt_types).Weight(wgt).Tag(sample_name+"_shape_trub");
+
+    pm.Push<Hist1D>(Axis(20,0,4,"hig_cand_drmax[0]", "#DeltaR_{max}", {1.1, 2.2}),
+      baseline+"&&"+xcuts[ic], procs, plt_types).Weight(wgt).Tag(sample_name+"_shape_bcats")
+      .RatioTitle("Bkg. nb","Bkg. 2b");
+    pm.Push<Hist1D>(Axis(20,0,4,"hig_cand_drmax[0]", "#DeltaR_{max}", {1.1, 2.2}),
+      baseline+"&&"+xcuts[ic], procs_trub, plt_types).Weight(wgt).Tag(sample_name+"_shape_trub");
+
   }
 
   pm.min_print_ = true;

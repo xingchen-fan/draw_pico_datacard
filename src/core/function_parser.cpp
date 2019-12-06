@@ -185,6 +185,8 @@ void FunctionParser::ResolveVariables() const{
         token = Functions::lowDphiFix;
       } else if(token.string_rep_ == "boostedRegionIdx"){
         token = Functions::boostedRegionIdx;
+      } else if(token.string_rep_ == "amBoostedRegionIdx"){
+        token = Functions::amBoostedRegionIdx;
       }
       else {
         token.function_ = Baby::GetFunction(token.string_rep_);

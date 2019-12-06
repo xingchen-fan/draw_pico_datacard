@@ -89,9 +89,9 @@ int main(int argc, char *argv[]){
 
   //there are also cuts in the skims for number of leptons, trigger, mll and met in case of 0l
   if (sample_name=="zll")    base_func = base_func && "nlep==2 && met<50"; 
-  if (sample_name=="qcd")    base_func = base_func && "nvlep==0 && ntk==0 && lowDphiFix && met>150";
+  if (sample_name=="qcd")    base_func = base_func && "nvlep==0 && ntk==0 && lowDphiFix";
   if (sample_name=="ttbar")  base_func = base_func && "nlep==1 && mt<=100 && nbt>=2";
-  if (sample_name=="search") base_func = base_func && "nvlep==0 && ntk==0 && !lowDphiFix && met>150";
+  if (sample_name=="search") base_func = base_func && "nvlep==0 && ntk==0 && !lowDphiFix && nbt>=2";
 
 
   map<string, vector<shared_ptr<Process> >> proc_sets;

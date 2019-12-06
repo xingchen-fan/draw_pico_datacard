@@ -77,9 +77,8 @@ int main(int argc, char *argv[]){
     bfolder = "/net/cms29"; // In laptops, you can't create a /net folder
 
   string foldermc = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higtight/";
-  // if (sample_name=="ttbar") foldermc = bfolder+"/cms29r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep1met0/";
-  // if (sample_name=="zll") foldermc = bfolder+"/cms29r0/babymaker/babies/2016_08_10/mc/merged_higmc_higlep2/";
-  // if (sample_name=="qcd") foldermc = bfolder+"/cms29r0/babymaker/babies/2016_08_10/mc/merged_higmc_higqcd/";
+  if (sample_name=="ttbar") foldermc = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higlep1/";
+  if (sample_name=="zll") foldermc = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higlep2/";
 
   set<string> alltags = {"*TTJets_*Lept*", "*_TTZ*.root", "*_TTW*.root",
                          "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root", 
@@ -104,9 +103,11 @@ int main(int argc, char *argv[]){
   // if (sample_name=="zll") 
     procs.push_back(Process::MakeShared<Baby_pico>("Z#rightarrow#nu#nu", Process::Type::background, 
       kOrange+1, {foldermc+"*_ZJet*.root"}, base_filters));
+    procs.push_back(Process::MakeShared<Baby_pico>("W#rightarrowl#nu", Process::Type::background, 
+      colors("wjets"), {foldermc+"*_WJet*.root"}, base_filters));
   // if (sample_name=="qcd") 
-    // procs.push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background, 
-    //   colors("other"),attach_folder(foldermc,qcdtags), base_filters)); 
+    procs.push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background, 
+      colors("other"),attach_folder(foldermc,qcdtags), base_filters)); 
   // if (sample_name=="ttbar" || sample_name=="search") 
     procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X", Process::Type::background,
       colors("tt_1l"),attach_folder(foldermc,ttxtags), base_filters));
@@ -116,8 +117,9 @@ int main(int argc, char *argv[]){
  /////////////////////////////////////////////////////////////////////////////////////////////////////////
  /////////////////////////////////////////// Defining cuts ///////////////////////////////////////////////
   // Baseline definitions
-  NamedFunc wgt = "w_lumi*w_isr";
-  string baseline = "!lowDphiFix && nvlep==0 && ntk==0";
+  // NamedFunc wgt = "w_lumi*w_isr";
+  NamedFunc wgt = Functions::eff_higtrig*"w_lumi*w_isr";
+  string baseline = "nvlep==0 && !lowDphiFix && ntk==0";
   string higtrim = "hig_cand_drmax[0]<=2.2 && hig_cand_dm[0] <= 40 && hig_cand_am[0]<=200";
   if (boosted) {
     baseline += " && ht>600 && nfjet>1 && fjet_pt[0]>300 && fjet_pt[1]>300";
@@ -132,26 +134,15 @@ int main(int argc, char *argv[]){
   if (boosted) {
     baselines.insert("vanilla", baseline);
   } else {
-    // if (sample_name=="zll") {
-    //   baselines.push_back("nlep==2 && met<50");
-    //   baselines.push_back("nlep==2 && met<50 && hig_cand_drmax[0]<2.2");
-    // }
-    // // qcd skim - met>150 && nvlep==0 && (njets==4||njets==5)
-    // if (sample_name=="qcd") {
-    //   baselines.push_back("nvlep==0 && ntk==0 && lowDphiFix");
-    //   baselines.push_back("nvlep==0 && ntk==0 && lowDphiFix && hig_cand_drmax[0]<2.2");
-    // }
-    // // ttbar skim - met>100 && nlep==1 && (njets==4||njets==5) && nbm>=2
-    // if (sample_name=="ttbar") {
-    //   baselines.push_back("nlep==1 && mt<100");
-    //   baselines.push_back("nlep==1 && mt<100 && hig_cand_drmax[0]<2.2");
-    // } 
-    // search skim - met>100 && nvlep==0 && (njets==4||njets==5) && nbm>=2
-    if (sample_name=="search") {
-        baselines.insert("vanilla", baseline);
+    if (sample_name=="zll") {
+      baselines.insert("Dilep_CS","nlep==2 && met<50");
+    } else if (sample_name=="qcd") {
+      baselines.insert("QCD_CS","nvlep==0 && ntk==0 && lowDphiFix");
+    } else if (sample_name=="ttbar") {
+      baselines.insert("TTX_CS","nlep==1 && mt<100");
+    } else if (sample_name=="search") {
         baselines.insert("low_drbb", baseline+"&& hig_cand_drmax[0]<=1.1");
         baselines.insert("high_drbb", baseline+"&& hig_cand_drmax[0]>1.1");
-      // baselines.push_back("nvlep==0 && ntk==0 && !lowDphiFix");
     }
   }
 
@@ -189,12 +180,22 @@ int main(int argc, char *argv[]){
   //list of all cuts of interest
   torch::OrderedDict<string, string> abcdcuts; 
   if (boosted) {
+    //Using 2016 method
     abcdcuts.insert("D", "boostedRegionIdx==0");
     abcdcuts.insert("C", "boostedRegionIdx==3");
     abcdcuts.insert("B1", "boostedRegionIdx==1");
     abcdcuts.insert("A1", "boostedRegionIdx==4");
     abcdcuts.insert("B2", "boostedRegionIdx==2");
     abcdcuts.insert("A2", "boostedRegionIdx==5");
+
+    // Using average mass
+    abcdcuts.insert("am_D", "amBoostedRegionIdx==0");
+    abcdcuts.insert("am_C", "amBoostedRegionIdx==3");
+    abcdcuts.insert("am_B1", "amBoostedRegionIdx==1");
+    abcdcuts.insert("am_A1", "amBoostedRegionIdx==4");
+    abcdcuts.insert("am_B2", "amBoostedRegionIdx==2");
+    abcdcuts.insert("am_A2", "amBoostedRegionIdx==5");
+
   } else {
     abcdcuts.insert("sbd2b", c_ab+"&&"+c_sbd);
     abcdcuts.insert("hig2b", c_ab+"&&"+c_hig);
@@ -202,22 +203,16 @@ int main(int argc, char *argv[]){
     abcdcuts.insert("hig3b", c_cd+"&&"+c_hig);
     abcdcuts.insert("sbd4b", c_ef+"&&"+c_sbd);
     abcdcuts.insert("hig4b", c_ef+"&&"+c_hig);
-    abcdcuts.insert("sbd3b_lodr", c_cd+"&&"+c_sbd+"&& hig_cand_drmax[0]<=1.1");
-    abcdcuts.insert("hig3b_lodr", c_cd+"&&"+c_hig+"&& hig_cand_drmax[0]<=1.1");
-    abcdcuts.insert("sbd4b_lodr", c_ef+"&&"+c_sbd+"&& hig_cand_drmax[0]<=1.1");
-    abcdcuts.insert("hig4b_lodr", c_ef+"&&"+c_hig+"&& hig_cand_drmax[0]<=1.1");
-    abcdcuts.insert("sbd3b_hidr", c_cd+"&&"+c_sbd+"&& hig_cand_drmax[0]>1.1");
-    abcdcuts.insert("hig3b_hidr", c_cd+"&&"+c_hig+"&& hig_cand_drmax[0]>1.1");
-    abcdcuts.insert("sbd4b_hidr", c_ef+"&&"+c_sbd+"&& hig_cand_drmax[0]>1.1");
-    abcdcuts.insert("hig4b_hidr", c_ef+"&&"+c_hig+"&& hig_cand_drmax[0]>1.1");
   }
 
   // Makes a plot for each vector in plots
   vector<aplot> plots;
   if (boosted) {
     for (auto &ibase: baselines) {
-      plots.push_back({"1H_"+ibase.key(),vector<string>({"D","C","B1","A1"}), ibase.value(), metcuts});
-      plots.push_back({"2H_"+ibase.key(),vector<string>({"D","C","B2","A2"}), ibase.value(), metcuts});
+      plots.push_back({"1H_2016_"+ibase.key(),vector<string>({"D","C","B1","A1"}), ibase.value(), metcuts});
+      plots.push_back({"2H_2016_"+ibase.key(),vector<string>({"D","C","B2","A2"}), ibase.value(), metcuts});
+      plots.push_back({"1H_AM_"+ibase.key(),vector<string>({"am_D","am_C","am_B1","am_A1"}), ibase.value(), metcuts});
+      plots.push_back({"2H_AM_"+ibase.key(),vector<string>({"am_D","am_C","am_B2","am_A2"}), ibase.value(), metcuts});
     }
   } else {
     for (auto &ibase: baselines) {

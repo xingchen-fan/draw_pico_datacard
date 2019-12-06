@@ -169,9 +169,9 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "nbm==3&&nbl==3","3b");
   ReplaceAll(code, "nbm>=3&&nbl>=4","4b");
   ReplaceAll(code, "nbm>=3","#geq3b");
-  ReplaceAll(code, "hig_cand_drmax[0]<=1.1", "lo-#DeltaR_{bb}");
-  ReplaceAll(code, "hig_cand_drmax[0]>1.1", "hi-#DeltaR_{bb}");
-  ReplaceAll(code, "hig_cand_drmax[0]>2.2", "#DeltaR_{max}> 2.2");
+  ReplaceAll(code, "hig_cand_am[0]", "#LTm#GT");
+  ReplaceAll(code, "hig_cand_drmax[0]", "#DeltaR_{max}");
+  ReplaceAll(code, "hig_cand_dm[0]", "#Delta m");
   ReplaceAll(code, "!(hig_cand_am[0]>100&&hig_cand_am[0]<=140)","SBD");
   ReplaceAll(code, "hig_cand_am[0]>100&&hig_cand_am[0]<=140","HIG");
 
@@ -215,7 +215,6 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "&&", ", ");
   ReplaceAll(code, "==", " = ");
   ReplaceAll(code, "met_calo", "E_{T,calo}^{miss}");
-  ReplaceAll(code, "hig_am[0]","#LTm#GT");
   ReplaceAll(code, "met", "p_{T}^{miss}");
   ReplaceAll(code, "mht", "MHT");
   ReplaceAll(code, "ht", "H_{T}");
