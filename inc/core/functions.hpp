@@ -16,8 +16,6 @@ namespace Functions{
 
   bool IsGoodJet(const Baby &b, std::size_t ijet);
 
-  extern const NamedFunc eff_higtrig;
-
   // these are used for doing systematic variations of weights
   enum class Variation{central, up, down};
   NamedFunc MismeasurementCorrection(const std::string &file_path,

@@ -118,11 +118,11 @@ int main(int argc, char *argv[]){
  /////////////////////////////////////////// Defining cuts ///////////////////////////////////////////////
   // Baseline definitions
   // NamedFunc wgt = "w_lumi*w_isr";
-  NamedFunc wgt = Functions::eff_higtrig*"w_lumi*w_isr";
+  NamedFunc wgt = "w_lumi*w_isr";
   string baseline = "nvlep==0 && !lowDphiFix && ntk==0";
   string higtrim = "hig_cand_drmax[0]<=2.2 && hig_cand_dm[0] <= 40 && hig_cand_am[0]<=200";
   if (boosted) {
-    baseline += " && ht>600 && nfjet>1 && fjet_pt[0]>300 && fjet_pt[1]>300";
+    baseline += " && ht>600 && nfjet>1 && fjet_pt[0]>300 && fjet_pt[1]>300 && nbm>=2";
     baseline += " && fjet_msoftdrop[0]>50 && fjet_msoftdrop[0]<=250 && fjet_msoftdrop[1]>50 && fjet_msoftdrop[1]<=250";
   } else {
     baseline += "&& njet>=4 && njet<=5 && nbt>=2 && "+higtrim;

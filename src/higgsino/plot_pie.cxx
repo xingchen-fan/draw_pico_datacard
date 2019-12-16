@@ -95,9 +95,10 @@ int main(int argc, char *argv[]){
 
 
   map<string, vector<shared_ptr<Process> >> proc_sets;
-
-  proc_sets["base"].push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X", Process::Type::background, colors("tt_1l"),
-    attach_folder(foldermc,mctags["ttx"]),     base_func));
+  proc_sets["base"].push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X (#tau_{had}>0)", Process::Type::background, kBlue-7,
+    attach_folder(foldermc,mctags["ttx"]),     base_func && "ntrutauh>0"));
+  proc_sets["base"].push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X (#tau_{had}=0)", Process::Type::background, colors("tt_1l"),
+    attach_folder(foldermc,mctags["ttx"]),     base_func && "ntrutauh==0"));
   proc_sets["base"].push_back(Process::MakeShared<Baby_pico>("V+jets",     Process::Type::background, kOrange+1,
     attach_folder(foldermc,mctags["vjets"]),   base_func));
   proc_sets["base"].push_back(Process::MakeShared<Baby_pico>("Single t",   Process::Type::background, colors("single_t"),
