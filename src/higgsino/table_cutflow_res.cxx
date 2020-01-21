@@ -37,10 +37,13 @@ int main(){
 
   string bfolder("");
   string hostname = execute("echo $HOSTNAME");
-  if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
-    bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
+  if(Contains(hostname, "cms") || Contains(hostname, "compute-") || Contains(hostname, "physics.ucsb.edu"))
+    bfolder = "/net/cms29"; // In laptops, you can't create a /net folder
 
-  string foldermc(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higloose/");
+  string mc_production = "higgsino_angeles"; // higgsino_eldorado
+  string year = "2016"; // 2017, 2018
+
+  string foldermc(bfolder+"/cms29r0/pico/NanoAODv5/"+mc_production+"/"+year+"/mc/merged_higmc_higloose/");
   string foldersig(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/TChiHH/merged_higmc_unskimmed/");
 
   map<string, set<string>> mctags; 
