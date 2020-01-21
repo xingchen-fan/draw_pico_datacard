@@ -196,12 +196,12 @@ int main(){
 
   string weight = "1";
 
-  string resolved_baseline = "ntk==0&&!low_dphi&&nvlep==0&&met>150";
+  string resolved_baseline = "ntk==0&&!low_dphi_met&&nvlep==0&&met>150";
   string resolved_bcuts = "((nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4)||(nbt==2&&nbm==2))";
   string resolved_baseline_fourjet = "njet>=4&&njet<=5&&Alt$(hig_cand_drmax[0]<2.2,0)&&Alt$(hig_cand_am[0]<200,0)&&Alt$(hig_cand_dm[0]<40,0)"; 
   string resolved = resolved_baseline+"&&"+resolved_bcuts+"&&"+resolved_baseline_fourjet;
 
-  string boosted_baseline = "met>150 && ht>300 && !low_dphi && nvlep==0 && ntk==0";
+  string boosted_baseline = "met>150 && ht>300 && !low_dphi_met && nvlep==0 && ntk==0";
   string boosted_baseline_ak8 = "Alt$(fjet_pt[0]>300,0) && Alt$(fjet_pt[1]>300,0) && Alt$(fjet_msoftdrop[0]>85,0) && Alt$(fjet_msoftdrop[0]<135,0) && Alt$(fjet_msoftdrop[1]>85,0) && Alt$(fjet_msoftdrop[1]<135,0)";
   //string boosted_bcuts = "(fjet_mva_hbb_btv[0]>0.3||fjet_mva_hbb_btv[1]>0.3)";
   string boosted_doubleh = "((met<300&&Alt$(fjet_mva_hbb_btv[0]>0.6,0)&&Alt$(fjet_mva_hbb_btv[1]>0.6,0))||(met>300&&Alt$(fjet_mva_hbb_btv[0]>0.3,0)&&Alt$(fjet_mva_hbb_btv[1]>0.3,0)))";

@@ -192,8 +192,8 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "fjet_msoftdrop[0]>85&&fjet_msoftdrop[0]<=135&&fjet_msoftdrop[1]>85&&fjet_msoftdrop[1]<=135", "85<m_{J1},m_{J2}#leq 135");
   ReplaceAll(code, "fjet_deep_md_hbb_btv[0]>0.7&&fjet_deep_md_hbb_btv[1]>0.7", "DDB_{J1},DDB_{J2}> 0.7");
   ReplaceAll(code, "!lowDphiFix", "hi-#Delta#phi");
-  ReplaceAll(code, "!low_dphi", "hi-#Delta#phi");
-  ReplaceAll(code, "low_dphi", "low #Delta#phi");
+  ReplaceAll(code, "!low_dphi_met", "hi-#Delta#phi");
+  ReplaceAll(code, "low_dphi_met", "low #Delta#phi");
   ReplaceAll(code, "hig_drmax", "#DeltaR^{max}_{bb}");
   ReplaceAll(code, "ntk", "N_{tks}");
   ReplaceAll(code, "nlep", "N_{lep}");

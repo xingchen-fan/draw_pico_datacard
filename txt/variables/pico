@@ -4,10 +4,15 @@ int lumiblock
 Long64_t event
 int type
 bool stitch
+bool stitch_ht
 
 ####################   Global   ###################
 int npv
+int npv_good
 float ht
+float ht5
+float mht
+float mht_phi
 float met
 float met_phi
 float met_calo
@@ -15,6 +20,7 @@ float met_tru
 float met_tru_phi
 float mt
 float mt_tru
+float ht_isr_me
 
 ###################   Higgsinos   ##################
 std::vector<float> hig_cand_dm
@@ -25,7 +31,31 @@ std::vector<float> hig_df_cand_dm
 std::vector<float> hig_df_cand_am
 std::vector<float> hig_df_cand_drmax
 
-bool low_dphi
+bool low_dphi_met_e5
+bool low_dphi_mht_e5
+bool low_dphi_met
+bool low_dphi_mht
+
+###################   Zgamma   ##################
+float dijet_pt
+float dijet_eta
+float dijet_phi
+float dijet_m
+float dijet_dr
+float dijet_dphi
+float dijet_deta
+
+int nllphoton
+std::vector<float> llphoton_pt
+std::vector<float> llphoton_eta
+std::vector<float> llphoton_phi
+std::vector<float> llphoton_m
+std::vector<float> llphoton_dr
+std::vector<float> llphoton_dphi
+std::vector<float> llphoton_deta
+std::vector<float> llphoton_costhj
+std::vector<int>   llphoton_iph
+std::vector<int>   llphoton_ill
 
 ###################   Jets   ##################
 int njet
@@ -41,14 +71,18 @@ std::vector<float> jet_pt
 std::vector<float> jet_eta
 std::vector<float> jet_phi
 std::vector<float> jet_m
+std::vector<float> jet_breg_corr
+std::vector<float> jet_breg_res
 std::vector<float> jet_deepcsv
 std::vector<float> jet_deepflav
 std::vector<float> jet_qgl
 std::vector<bool>  jet_islep
 std::vector<bool>  jet_isphoton
+std::vector<bool>  jet_isgood
 std::vector<bool>  jet_id
 std::vector<int>   jet_hflavor
 std::vector<int>   jet_pflavor
+std::vector<float> jet_mht_dphi
 std::vector<float> jet_met_dphi
 std::vector<bool>  jet_h1d
 std::vector<bool>  jet_h2d
@@ -65,6 +99,21 @@ std::vector<float> fjet_msoftdrop
 std::vector<float> fjet_deep_md_hbb_btv
 std::vector<float> fjet_mva_hbb_btv
 std::vector<float> fjet_deep_md_hbb_jme
+std::vector<int>   fjet_subjet_idx1
+std::vector<int>   fjet_subjet_idx2
+
+int nsubfjet
+std::vector<float> subfjet_pt
+std::vector<float> subfjet_eta
+std::vector<float> subfjet_phi
+std::vector<float> subfjet_m
+std::vector<float> subfjet_deepcsv
+std::vector<float> subfjet_raw_factor
+std::vector<float> subfjet_tau1
+std::vector<float> subfjet_tau2
+std::vector<float> subfjet_tau3
+std::vector<float> subfjet_tau4
+std::vector<int>   subfjet_jet_idx
 
 ###################   ISR related   ##################
 
@@ -82,6 +131,10 @@ float jetsys_nob_m
 ##################   Leptons   ################
 int nlep
 int nvlep
+std::vector<float> lep_pt
+std::vector<float> lep_eta
+std::vector<float> lep_phi
+std::vector<int> lep_pdgid
 
 int nmu
 int nvmu
@@ -94,10 +147,10 @@ std::vector<float> mu_dz
 std::vector<float> mu_dxy
 std::vector<float> mu_ip3d
 std::vector<float> mu_sip3d
-std::vector<bool> mu_id
-std::vector<bool> mu_sig
-std::vector<int> mu_charge
-std::vector<int> mu_pflavor
+std::vector<bool>  mu_id
+std::vector<bool>  mu_sig
+std::vector<int>   mu_charge
+std::vector<int>   mu_pflavor
 
 int nel
 int nvel
@@ -111,22 +164,24 @@ std::vector<float> el_dxy
 std::vector<float> el_ip3d
 std::vector<float> el_sip3d
 std::vector<float> el_idmva
-std::vector<bool> el_id
-std::vector<bool> el_sig
-std::vector<bool> el_ispf
-std::vector<int> el_charge
-std::vector<int> el_pflavor
+std::vector<bool>  el_id
+std::vector<bool>  el_sig
+std::vector<bool>  el_ispf
+std::vector<int>   el_charge
+std::vector<int>   el_pflavor
 
 ##################   Di-Leptons   ################
-std::vector<float> elel_m
-std::vector<float> elel_pt
-std::vector<float> elel_eta
-std::vector<float> elel_phi
-
-std::vector<float> mumu_m
-std::vector<float> mumu_pt
-std::vector<float> mumu_eta
-std::vector<float> mumu_phi
+int nll
+std::vector<float> ll_pt
+std::vector<float> ll_eta
+std::vector<float> ll_phi
+std::vector<float> ll_m
+std::vector<float> ll_dr
+std::vector<float> ll_dphi
+std::vector<float> ll_deta
+std::vector<int>   ll_lepid
+std::vector<int>   ll_i1
+std::vector<int>   ll_i2
 
 ##################   Photons   ###################
 int nphoton
@@ -136,10 +191,10 @@ std::vector<float> photon_phi
 std::vector<float> photon_reliso
 std::vector<float> photon_r9
 std::vector<float> photon_drmin
-std::vector<int>  photon_pflavor
-std::vector<bool> photon_id
-std::vector<bool> photon_elveto
-std::vector<bool> photon_sig
+std::vector<int>   photon_pflavor
+std::vector<bool>  photon_id
+std::vector<bool>  photon_elveto
+std::vector<bool>  photon_sig
 
 ###################   Tracks    ##################
 int ntk
@@ -149,7 +204,7 @@ std::vector<float> tk_eta
 std::vector<float> tk_phi
 std::vector<float> tk_dxy
 std::vector<float> tk_dz
-std::vector<int> tk_pdgid
+std::vector<int>   tk_pdgid
 std::vector<float> tk_miniso_chg
 std::vector<float> tk_reliso_chg
 std::vector<float> tk_mt
@@ -163,12 +218,14 @@ bool pass_goodv
 bool pass_cschalo_tight
 bool pass_eebadsc
 bool pass_ecaldeadcell
-bool pass_fsjets
 bool pass_badpfmu
 bool pass_mubadtrk
 bool pass_badchhad
-bool pass_ra2_badmu
+bool pass_muon_jet
+bool pass_low_neutral_jet
+bool pass_htratio_dphi_tight
 bool pass_badcalib
+bool pass_boosted
 bool pass
 
 ################  Truth   ##################
@@ -180,6 +237,7 @@ std::vector<int>   mc_id
 std::vector<int>   mc_mom
 std::vector<int>   mc_momidx
 std::vector<int>   mc_status
+std::vector<int>   mc_statusflag
 
 int ntrulep
 int ntrumu
@@ -198,6 +256,7 @@ float weight
 float w_lumi
 float w_lep
 float w_fs_lep
+float w_photon
 float w_btag
 float w_btag_df
 float w_bhig
@@ -230,14 +289,19 @@ bool HLT_PFJet500
 # ZGamma triggers
 bool HLT_Mu17_Photon30_IsoCaloId
 bool HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ
+bool HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL
 bool HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL
+bool HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL
 bool HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ
+bool HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ
 
 ################  Systematic variations  - to be implemented as needed  ##################
 
 # +/- variations are index 0 and 1
 std::vector<float> sys_lep
 std::vector<float> sys_fs_lep
+
+std::vector<float> sys_photon
 
 std::vector<float> sys_bchig
 std::vector<float> sys_udsghig

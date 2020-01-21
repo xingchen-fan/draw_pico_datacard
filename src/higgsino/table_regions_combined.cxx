@@ -254,8 +254,8 @@ int main(int argc, char *argv[]){
         Process::Type::signal, 1, {foldersig+"*TChiHH_mChi-"+sigm[isig]+"*.root"}, base_filters));
   }
  
-  string filters = "pass_ra2_badmu && met/met_calo<5";
-  NamedFunc baseline = HigUtilities::pass_nhig_cand&&(filters+"&& njet>=4 && njet<=5 && nvlep==0 && ntk==0 && !low_dphi");
+  string filters = "pass_muon_jet && met/met_calo<5";
+  NamedFunc baseline = HigUtilities::pass_nhig_cand&&(filters+"&& njet>=4 && njet<=5 && nvlep==0 && ntk==0 && !low_dphi_met");
   string c_2b = "nbt==2&&nbm==2";
   string c_3b = "nbt>=2&&nbm==3&&nbl==3";
   string c_4b = "nbt>=2&&nbm>=3&&nbl>=4";

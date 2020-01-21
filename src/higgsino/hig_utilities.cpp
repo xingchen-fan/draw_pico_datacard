@@ -66,7 +66,7 @@ namespace HigUtilities {
 
   // based on pass_run2 with removal of non-existing branches
   const NamedFunc pass_2016("pass_2016", [](const Baby &b) -> NamedFunc::ScalarType{
-    bool pass_ =  b.pass_ra2_badmu() && (b.met()/b.met_calo()<5);
+    bool pass_ =  b.pass_muon_jet() && (b.met()/b.met_calo()<5);
     if (b.type()<1000 && b.type()>0) { // Data
       pass_ = pass_ && b.pass_jets() && b.pass_goodv() && b.pass_hbhe() && 
               b.pass_hbheiso() && b.pass_ecaldeadcell() && b.pass_badpfmu() && b.pass_eebadsc();
@@ -74,7 +74,7 @@ namespace HigUtilities {
       if (b.type()>=100e3) { // FastSim
         //pass_ = pass_ && b.pass_fsjets() && b.pass_goodv() && b.pass_hbhe() && 
         //        b.pass_hbheiso() && b.pass_ecaldeadcell() && b.pass_badpfmu();
-        pass_ = pass_ && b.pass_goodv() && b.pass_hbhe() && 
+        pass_ = pass_ && b.pass_jets() && b.pass_goodv() && b.pass_hbhe() && 
                 b.pass_hbheiso() && b.pass_ecaldeadcell() && b.pass_badpfmu();
       } else { //FullSim
         pass_ = pass_ && b.pass_jets() && b.pass_goodv() && b.pass_hbhe() && 

@@ -89,7 +89,7 @@ int main(){
   NamedFunc wgt = "w_lumi*w_isr";//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
 
 
-  string baseline = "nvlep==0 && njet>=4 && njet<=5"; //pass_ra2_badmu && met/met_calo<5
+  string baseline = "nvlep==0 && njet>=4 && njet<=5"; //pass_muon_jet && met/met_calo<5
   string sigonly = "type>100e3";
 
   string ncols = to_string(procs.size()+2);  
