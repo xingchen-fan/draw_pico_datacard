@@ -9,6 +9,7 @@
 #include "TError.h" // Controls error level reporting
 #include "TColor.h" // Controls error level reporting
 #include "TLegend.h" // Controls error level reporting
+#include "TVector2.h"
 
 #include "core/utilities.hpp"
 #include "core/baby.hpp"
@@ -23,6 +24,15 @@
 #include "core/hist1d.hpp"
 #include "core/functions.hpp"
 #include "higgsino/hig_utilities.hpp"
+
+const NamedFunc min_jet_dphi("min_jet_dphi", [](const Baby &b) -> NamedFunc::ScalarType{
+  float min_dphi = 4;
+  for (size_t ijet = 0; ijet < (*b.jet_phi()).size(); ++ijet) {
+    float dphi = fabs(TVector2::Phi_mpi_pi((*b.jet_phi())[ijet]-b.met_phi()));
+    if (dphi < min_dphi) min_dphi = dphi;
+  }
+  return min_dphi;
+});
 
 using namespace std;
 using namespace PlotOptTypes;
@@ -48,7 +58,7 @@ int main(int argc, char *argv[]){
   ////////////////////////////////////////// Defining processes //////////////////////////////////////////
   string bfolder("");
   string hostname = execute("echo $HOSTNAME");
-  if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
+  if(Contains(hostname, "cms") || Contains(hostname, "compute-") || Contains(hostname, "physics.ucsb.edu"))
     bfolder = "/net/cms29"; // In laptops, you can't create a /net folder
 
   string foldermc(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higtight/");
@@ -87,18 +97,18 @@ int main(int argc, char *argv[]){
   vector<shared_ptr<Process> > procs;
   procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGray+2,
                   attach_folder(foldermc, mctags["other"]), base_filters && baseline));
-  procs.push_back(Process::MakeShared<Baby_pico>("Z$+$jets", Process::Type::background, kOrange+1,
+  procs.push_back(Process::MakeShared<Baby_pico>("Z+jets", Process::Type::background, kOrange+1,
                   attach_folder(foldermc,mctags["zjets"]), base_filters && baseline));
-  procs.push_back(Process::MakeShared<Baby_pico>("W$+$jets", Process::Type::background, kGreen+1,
+  procs.push_back(Process::MakeShared<Baby_pico>("W+jets", Process::Type::background, kGreen+1,
                   attach_folder(foldermc,mctags["wjets"]), base_filters && baseline));
-  procs.push_back(Process::MakeShared<Baby_pico>("$t\\bar{t}$", Process::Type::background,colors("tt_1l"),
+  procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}", Process::Type::background,colors("tt_1l"),
                   attach_folder(foldermc, mctags["tt"]), base_filters && baseline));
-  procs.push_back(Process::MakeShared<Baby_pico>("$t/t\\bar{t}+X$", Process::Type::background,colors("tt_1l"),
+  procs.push_back(Process::MakeShared<Baby_pico>("t/t#bar{t}+X", Process::Type::background,colors("tt_1l"),
                   attach_folder(foldermc, mctags["topx"]), base_filters && baseline));
   procs.push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background, colors("other"),
                   attach_folder(foldermc, mctags["qcd"]), base_filters && baseline)); 
 
-  vector<int> sigm = {800,900};
+  vector<int> sigm = {450, 700, 950};
   for (unsigned isig(0); isig<sigm.size(); isig++){
     procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+to_string(sigm[isig])+",1)", Process::Type::signal, 
       1, {foldersig+"*TChiHH_mChi-"+to_string(sigm[isig])+"_*.root"}, base_filters && baseline));
@@ -116,9 +126,14 @@ int main(int argc, char *argv[]){
   vector<string> res_abcd = {c_2b+"&&"+sbd, c_3b+"&&"+sbd, c_4b+"&&"+sbd, 
                              c_2b+"&&"+hig, c_3b+"&&"+hig, c_4b+"&&"+hig};
 
+  bool bin_drmax = false;
+  bool bin_met = true;
+  bool bin_dphi = true;
+
   vector<TString> vc_drmax;
   vc_drmax.push_back("hig_cand_drmax[0]>1.1");
   vc_drmax.push_back("hig_cand_drmax[0]<=1.1");
+  if (!bin_drmax) vc_drmax = {"hig_cand_drmax[0]>0"};
 
   // assume common MET binning
   vector<TString> vc_met;
@@ -135,6 +150,14 @@ int main(int argc, char *argv[]){
     vc_met.push_back("met>700");
     // vc_met.push_back("met>150");
   }   
+  if (!bin_met) vc_met = {"met>150"};
+
+  vector<pair<string, NamedFunc>> vc_dphi;
+  vc_dphi.push_back({"0 \\leq \\Delta \\phi \\leq 0.5" ,min_jet_dphi>=0. && min_jet_dphi<=0.5});
+  //vc_dphi.push_back({"0.5 < \\Delta \\phi \\leq 1", min_jet_dphi>0.5 && min_jet_dphi<=1.});
+  //vc_dphi.push_back({"1 < \\Delta \\phi", min_jet_dphi>1.});
+  vc_dphi.push_back({"0.5 < \\Delta \\phi", min_jet_dphi>0.5});
+  if (!bin_dphi) vc_dphi = {{"0 \\leq \\Delta \\phi", min_jet_dphi>=0.}};
 
   //        Define and fill tables
   //------------------------------------
@@ -144,11 +167,16 @@ int main(int argc, char *argv[]){
   if (resolved) {
     for (auto &imet: vc_met) {
       for (auto &idrmax: vc_drmax) {
-        tablerows.push_back(TableRow("$"+CodeToLatex((imet+"&&"+idrmax).Data())+"$"));
-        for (auto &iabcd: res_abcd) {
-          NamedFunc res_reg_ = imet+"&&"+idrmax+"&&"+iabcd;
-          tablerows.push_back(TableRow("$"+CodeToLatex(iabcd)+"$", res_reg_, 0,0, wgt));
-          nbins++;
+        for (auto &idphi: vc_dphi) {
+          // Label
+          tablerows.push_back(TableRow("$"+CodeToLatex((imet+"&&"+idrmax).Data())+","+idphi.first+"$"));
+          for (auto &iabcd: res_abcd) {
+            // Cut for row
+            NamedFunc res_reg_ = imet+"&&"+idrmax+"&&"+iabcd&&idphi.second;
+            // Add row to table
+            tablerows.push_back(TableRow("$"+CodeToLatex(iabcd)+"$", res_reg_, 0,0, wgt));
+            nbins++;
+          }
         }
       }
     }
