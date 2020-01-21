@@ -116,7 +116,7 @@ vector<int> get_semi_bbjet_indices(vector<float> const & fjet_msoftdrop, vector<
   }
   //cout<<"event end"<<endl;
   if (best_btag_index.first == -1 || best_btag_index.second == -1) return bbjet_index;
-  if (best_btag_index.second < btag_wpts_2016[2]) return bbjet_index;
+  if (best_btag.second < btag_wpts_2016[2]) return bbjet_index;
   bbjet_index.at(0) = best_btag_index.first;
   bbjet_index.at(1) = best_btag_index.second;
   return bbjet_index;
@@ -209,8 +209,8 @@ int main(int argc, char *argv[]){
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
     bfolder = "/net/cms29"; // In laptops, you can't create a /net folder
 
-  string foldermc(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higloose/");
   //string folderdata(bfolder+"/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higloose/");
+  string foldermc(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higloose/");
   string foldersig(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/TChiHH/merged_higmc_higloose/");
 
   map<string, set<string>> mctags; 
@@ -226,11 +226,11 @@ int main(int argc, char *argv[]){
 
   vector<shared_ptr<Process> > procs;
   procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGreen+1,
-							    attach_folder(foldermc, mctags["other"]),c_ps&&base_filters));
+                  attach_folder(foldermc, mctags["other"]),c_ps&&base_filters));
   procs.push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background, colors("other"),
-							    attach_folder(foldermc, mctags["qcd"]),c_ps&&base_filters)); 
+                  attach_folder(foldermc, mctags["qcd"]),c_ps&&base_filters)); 
   procs.push_back(Process::MakeShared<Baby_pico>("V+jets", Process::Type::background, kOrange+1,
-							    attach_folder(foldermc,mctags["vjets"]),c_ps&&base_filters));
+                  attach_folder(foldermc,mctags["vjets"]),c_ps&&base_filters));
   procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X", Process::Type::background,colors("tt_1l"),
                   attach_folder(foldermc, mctags["ttx"]),c_ps&&base_filters));
 
@@ -251,7 +251,7 @@ int main(int argc, char *argv[]){
       //procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigm[isig]+",1)", 
       //  Process::Type::signal, 1, {foldersig+"*TChiHH_mChi-"+sigm[isig]+"*.root"}, "pass_goodv&&pass_ecaldeadcell&&pass_hbhe&&pass_hbheiso&&pass_fsmet"&&base_filters));
       procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigm[isig]+",1)", 
-        Process::Type::signal, 1, {foldersig+"*TChiHH_mChi-"+sigm[isig]+"*.root"}, "pass_goodv&&pass_ecaldeadcell&&pass_hbhe&&pass_hbheiso"&&base_filters));
+        Process::Type::signal, 1, {foldersig+"*TChiHH_mChi-"+sigm[isig]+"*.root"}, base_filters));
   }
  
   string filters = "pass_ra2_badmu && met/met_calo<5";
@@ -276,7 +276,7 @@ int main(int argc, char *argv[]){
   string boosted_singleh = "((fjet_mva_hbb_btv[0]>0.3&&fjet_mva_hbb_btv[1]<=0.3)||(fjet_mva_hbb_btv[0]<=0.3&&fjet_mva_hbb_btv[1]>0.3))";
   string boosted_bcuts = "("+boosted_doubleh + "||" + boosted_singleh+")";
 
-  NamedFunc semi_baseline = !boost_low_dphi && "njet>=3&&njet<=5 && nvlep==0 && ntk==0"&&semi_fjet_m!=0.&&semi_bbjet_m>60&&semi_bbjet_m<160&&semi_bbjet_dr<1.1;
+  NamedFunc semi_baseline = !boost_low_dphi && "njet>=3&&njet<=5 && nvlep==0 && ntk==0"&&semi_fjet_m!=0.&&semi_bbjet_m>60&&semi_bbjet_m<160&&semi_bbjet_dr<2.2;
   
   //        Cutflow table
   //-------------------------------- 
