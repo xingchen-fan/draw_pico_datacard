@@ -169,11 +169,11 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "nbm==3&&nbl==3","3b");
   ReplaceAll(code, "nbm>=3&&nbl>=4","4b");
   ReplaceAll(code, "nbm>=3","#geq3b");
+  ReplaceAll(code, "hig_cand_am[0]>100&&hig_cand_am[0]<=140","HIG");
+  ReplaceAll(code, "!(hig_cand_am[0]>100&&hig_cand_am[0]<=140)","SBD");
   ReplaceAll(code, "hig_cand_am[0]", "#LTm#GT");
   ReplaceAll(code, "hig_cand_drmax[0]", "#DeltaR_{max}");
   ReplaceAll(code, "hig_cand_dm[0]", "#Delta m");
-  ReplaceAll(code, "!(hig_cand_am[0]>100&&hig_cand_am[0]<=140)","SBD");
-  ReplaceAll(code, "hig_cand_am[0]>100&&hig_cand_am[0]<=140","HIG");
 
   ReplaceAll(code, "met>50&&met<=100", "50<p_{T}^{miss}#leq 100");
   ReplaceAll(code, "met>75&&met<=150", "75<p_{T}^{miss}#leq 150");
@@ -748,6 +748,17 @@ double calcKappa(vector<vector<float> > &entries, vector<vector<float> > &weight
 set<string> attach_folder(string folder, set<string> &fileset) {
   set<string> fset = set<string>();
   for (auto &ifile: fileset) fset.insert(folder+ifile);
+  return fset; 
+}
+
+set<string> attach_folder(string base_folder, set<int> years, string sample_folder, set<string> fileset) {
+  set<string> fset = set<string>();
+  for (auto & year: years) {
+    for (auto &ifile: fileset) {
+      fset.insert(base_folder+"/"+to_string(year)+"/"+sample_folder+"/"+ifile);
+      //cout<<base_folder+"/"+to_string(year)+"/"+sample_folder+"/"+ifile<<endl;
+    }
+  }
   return fset; 
 }
 

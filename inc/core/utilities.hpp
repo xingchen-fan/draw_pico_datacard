@@ -123,6 +123,7 @@ double calcKappa(std::vector<std::vector<float> > &entries, std::vector<std::vec
 		 bool verbose=false, double syst=-1., bool do_plot=false, int nrep=100000, int nSigma = 1);
 
 std::set<std::string> attach_folder(std::string folder, std::set<std::string> &fileset);
+std::set<std::string> attach_folder(std::string base_folder, std::set<int> years, std::string sample_folder, std::set<std::string> fileset);
 void parseMasses(const std::string &str, int &mglu, int &mlsp);
 
 
