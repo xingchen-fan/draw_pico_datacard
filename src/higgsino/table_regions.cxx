@@ -61,8 +61,10 @@ int main(int argc, char *argv[]){
   if(Contains(hostname, "cms") || Contains(hostname, "compute-") || Contains(hostname, "physics.ucsb.edu"))
     bfolder = "/net/cms29"; // In laptops, you can't create a /net folder
 
-  string foldermc(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higtight/");
-  string foldersig(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/TChiHH/merged_higmc_unskimmed/");
+  string foldermc_base("/cms29r0/pico/NanoAODv5/higgsino_eldorado/");
+  string foldermc_skim("mc/merged_higmc_higloose/");
+  string foldersig("/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/TChiHH/merged_higmc_unskimmed/");
+  set<int> years = {2016, 2017, 2018};
 
   map<string, set<string>> mctags; 
   mctags["tt"]     = set<string>({"*TTJets_*Lept*"});
@@ -92,27 +94,29 @@ int main(int argc, char *argv[]){
   //--------------------------------------------------
   Palette colors("txt/colors.txt", "default");
 
-  NamedFunc base_filters = HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
+  NamedFunc base_filters = "1";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
 
   vector<shared_ptr<Process> > procs;
   procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGray+2,
-                  attach_folder(foldermc, mctags["other"]), base_filters && baseline));
+                  attach_folder(foldermc_base,years,foldermc_skim, mctags["other"]), base_filters && baseline));
   procs.push_back(Process::MakeShared<Baby_pico>("Z+jets", Process::Type::background, kOrange+1,
-                  attach_folder(foldermc,mctags["zjets"]), base_filters && baseline));
+                  attach_folder(foldermc_base,years,foldermc_skim,mctags["zjets"]), base_filters && baseline));
   procs.push_back(Process::MakeShared<Baby_pico>("W+jets", Process::Type::background, kGreen+1,
-                  attach_folder(foldermc,mctags["wjets"]), base_filters && baseline));
+                  attach_folder(foldermc_base,years,foldermc_skim,mctags["wjets"]), base_filters && baseline));
   procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}", Process::Type::background,colors("tt_1l"),
-                  attach_folder(foldermc, mctags["tt"]), base_filters && baseline));
+                  attach_folder(foldermc_base,years,foldermc_skim, mctags["tt"]), base_filters && baseline));
   procs.push_back(Process::MakeShared<Baby_pico>("t/t#bar{t}+X", Process::Type::background,colors("tt_1l"),
-                  attach_folder(foldermc, mctags["topx"]), base_filters && baseline));
+                  attach_folder(foldermc_base,years,foldermc_skim, mctags["topx"]), base_filters && baseline));
   procs.push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background, colors("other"),
-                  attach_folder(foldermc, mctags["qcd"]), base_filters && baseline)); 
+                  attach_folder(foldermc_base,years,foldermc_skim, mctags["qcd"]), base_filters && baseline)); 
 
-  vector<int> sigm = {450, 700, 950};
-  for (unsigned isig(0); isig<sigm.size(); isig++){
-    procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+to_string(sigm[isig])+",1)", Process::Type::signal, 
-      1, {foldersig+"*TChiHH_mChi-"+to_string(sigm[isig])+"_*.root"}, base_filters && baseline));
-    cout<<"Adding: "<<foldersig+"*TChiHH_mChi-"+to_string(sigm[isig])+"_*.root"<<endl;
+  if (doSignal) {
+    vector<int> sigm = {450, 700, 950};
+    for (unsigned isig(0); isig<sigm.size(); isig++){
+      procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+to_string(sigm[isig])+",1)", Process::Type::signal, 
+        1, {foldersig+"*TChiHH_mChi-"+to_string(sigm[isig])+"_*.root"}, base_filters && baseline));
+      cout<<"Adding: "<<foldersig+"*TChiHH_mChi-"+to_string(sigm[isig])+"_*.root"<<endl;
+    }
   }
 
 
