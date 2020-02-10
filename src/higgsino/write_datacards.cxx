@@ -40,6 +40,7 @@ namespace
   bool unblind = false;
   string tag = "resolved";
   bool do_met_average = true;
+  string higgsino_model = "CN";
 }
 
 int main(int argc, char *argv[])
@@ -49,20 +50,24 @@ int main(int argc, char *argv[])
   time(&begtime);
   HigWriteDataCards::GetOptions(argc, argv);
 
-  string baseFolder = HigUtilities::getBaseFolder();
+  string baseFolder = ""; string hostName = execute("echo $HOSTNAME");
+  if(Contains(hostName, "cms") || Contains(hostName, "compute-")) baseFolder = "/net/cms29";
+  //baseFolder = "";
+
   cout<<"INFO:: Systematics are ON. Make sure to run on appropriate babies, i.e. unskimmed or skim_sys_abcd!!"<<endl;
   gSystem->mkdir(outFolder.c_str(), kTRUE);
   // massPoints = { {"1000","1"} }
-  vector<pair<string, string> > massPoints;
-  HigUtilities::parseMassPoints(mass_points_string, massPoints);
-
   set<int> years;
   HigUtilities::parseYears(years_string, years);
 
   map<string, string> samplePaths;
-  samplePaths["mc_2016"] = baseFolder + "/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higtight/";
-  samplePaths["signal_2016"] = baseFolder + "/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/TChiHH/merged_higmc_unskimmed/";
+  samplePaths["mc_2016"] = baseFolder + "/cms29r0/pico/NanoAODv5/higgsino_eldorado/2016/mc/merged_higmc_higloose/";
+  samplePaths["signal_2016"] = baseFolder + "/cms29r0/pico/NanoAODv5/higgsino_eldorado/2016/SMS-TChiHH_2D/merged_higmc_higloose/";
   // samplePaths["data_2016"] = baseFolder + "/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higloose/";
+
+  vector<pair<string, string> > massPoints;
+  if (mass_points_string == "") HigUtilities::findMassPoints(samplePaths["signal_2016"], massPoints);
+  else HigUtilities::parseMassPoints(mass_points_string, massPoints);
 
   NamedFunc filters = HigUtilities::pass_2016;
 
@@ -75,7 +80,8 @@ int main(int argc, char *argv[])
   HigUtilities::setSignalProcesses(massPoints, years, samplePaths, filters, sampleProcesses);
   
   NamedFunc weight = "w_lumi*w_isr";
-  string baseline = "!lowDphiFix && nvlep==0 && ntk==0";
+  if (higgsino_model=="N1N2") weight *= HigUtilities::w_CNToN1N2;
+  string baseline = "!low_dphi_met && nvlep==0 && ntk==0";
   string higtrim = "hig_cand_drmax[0]<=2.2 && hig_cand_dm[0] <= 40 && hig_cand_am[0]<=200";
   if (tag=="resolved") baseline += "&& njet>=4 && njet<=5 && nbt>=2 && "+higtrim;
   else if (tag=="boosted") {
@@ -165,7 +171,7 @@ int main(int argc, char *argv[])
   HigUtilities::fillSignalYieldsProcesses(pm, luminosity, sampleProcesses["signal"], cutTable["signal"], mYields);
   HigUtilities::fillAverageGenMetYields(sampleProcesses["signal"], sampleBins, "signal", "signalGenMet", "signalAverageGenMet", mYields);
 
-  cout<<cutTable["signal"].tableRows[5].cut_.Name()<<endl;
+  cout<<"cut name: "<<cutTable["signal"].tableRows[5].cut_.Name()<<endl;
 
   for (auto & process : sampleProcesses["signal"]){
     cout<<"Process name: "<<process->name_<<endl;
@@ -402,12 +408,13 @@ namespace HigWriteDataCards{
         {"tag", required_argument, 0, 't'},
         {"unblind", no_argument, 0, 'u'},
         {"recomet", no_argument, 0, 0},
+        {"higgsino_model", required_argument, 0, 'm'},
         {0, 0, 0, 0}
       };
   
       char opt = -1;
       int option_index;
-      opt = getopt_long(argc, argv, "o:p:y:l:d:t:nu", long_options, &option_index);
+      opt = getopt_long(argc, argv, "o:p:y:l:d:t:m:nu", long_options, &option_index);
       if( opt == -1) break;
   
       string optname;
@@ -417,6 +424,7 @@ namespace HigWriteDataCards{
         case 'y': years_string = optarg; break;
         case 'l': luminosity = atof(optarg); break;
         case 't': tag = optarg; break;
+        case 'm': higgsino_model = optarg; break;
         case 'd': 
           dimensionFilePath = optarg; 
           if (!FileExists(dimensionFilePath)) 

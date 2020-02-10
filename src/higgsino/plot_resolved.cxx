@@ -278,14 +278,15 @@ int main(int argc, char *argv[]){
 
   string bfolder("");
   string hostname = execute("echo $HOSTNAME");
-  if(Contains(hostname, "cms") || Contains(hostname, "compute-") || Contains(hostname, "physics.ucsb"))
+  if((Contains(hostname, "cms") || Contains(hostname, "compute-")) && !Contains(hostname, "cms37"))
     bfolder = "/net/cms29"; // In laptops, you can't create a /net folder
 
+  bfolder = "/net/cms29"; // In laptops, you can't create a /net folder
   string mc_base_folder = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_eldorado/";
   //string mc_base_folder = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/";
   string mc_skim_folder = "mc/merged_higmc_higloose/";
-  string sig_base_folder = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/";
-  string sig_skim_folder = "TChiHH/merged_higmc_unskimmed/";
+  string sig_base_folder = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_eldorado/";
+  string sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higloose/";
 
   NamedFunc base_filters = HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
   NamedFunc wgt = "w_lumi*w_isr"*w_years*Higfuncs::eff_higtrig;

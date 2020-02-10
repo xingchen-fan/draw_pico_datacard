@@ -7,6 +7,7 @@ parser = argparse.ArgumentParser(description="Submits batch jobs to calculate Hi
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument("-c","--card_dir", default= os.path.join(os.getcwd(),"cards"),
                     help="Directory where the datacards are")
+parser.add_argument("-m","--model", default="CN")
 args = parser.parse_args()
 
 tag = args.card_dir.strip('/').replace('/','_')
@@ -23,7 +24,7 @@ cmdfile.write('#!/bin/env python\n')
 for icard_path in card_paths:
   in_dir = os.path.dirname(icard_path)
   file_name = os.path.basename(icard_path)
-  cmd = '{}/run/higgsino/scan_point.exe -i {} -f {}'.format(os.getcwd(), in_dir, file_name)
+  cmd = '{}/run/higgsino/scan_point.exe -s -i {} -f {} -m {}'.format(os.getcwd(), in_dir, file_name, args.model)
   cmdfile.write('print(\"'+cmd+'\")\n')
 
 cmdfile.close()

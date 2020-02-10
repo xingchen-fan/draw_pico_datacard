@@ -11,6 +11,7 @@ namespace xsec{
   void signalCrossSection(int glu_mass, double &xsec, double &xsec_unc);
   void stopCrossSection(int stop_mass, double &xsec, double &xsec_unc);
   void higgsinoCrossSection(int hig_mass, double &xsec, double &xsec_unc);
+  void higgsino2DCrossSection(int hig_mass, double &xsec, double &xsec_unc);
   float fractionNegWeights(const TString &file);
 }
 

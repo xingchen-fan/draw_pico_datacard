@@ -37,6 +37,7 @@ namespace HigUtilities {
   extern const NamedFunc weight_2016;
   extern const NamedFunc pass_nhig_cand;
   extern const NamedFunc pass_nhig_df_cand;
+  extern const NamedFunc w_CNToN1N2;
 
   TString nom2sys_bin(TString ibin, size_t shift_index);
   TString nom2genmet(TString ibin);
@@ -46,6 +47,8 @@ namespace HigUtilities {
   void parseMassPoints(std::string mass_points_string, std::vector<std::pair<std::string, std::string> > & mass_points);
   // Example: "2016,2017" => {2016,2017}
   void parseYears(std::string years_string, std::set<int> & years);
+  void findMassPoints(std::string signal_folder, std::vector<std::pair<std::string, std::string> > & mass_points);
+  void filenameToMassPoint(std::string filename, std::string & mChi, std::string & mLSP);
 
   std::string setProcessName(std::string const & model, int const & mGluino, int const & mLSP);
   std::string setProcessNameLong(std::string const & model, int const & mGluino, int const & mLSP);

@@ -101,11 +101,72 @@ namespace HigUtilities {
     else return 1;
   });
 
+  const NamedFunc w_CNToN1N2("w_CNToN1N2", [](const Baby &b) -> NamedFunc::ScalarType{
+    if(b.type() != 106000) return 1;
+    if(b.mprod() ==127) return 1.44725/7.6022;
+    if(b.mprod() ==150) return 0.71514/3.83231;
+    if(b.mprod() ==175) return 0.419059/2.26794;
+    if(b.mprod() ==200) return 0.244213/1.33562;
+    if(b.mprod() ==225) return 0.156286/0.860597;
+    if(b.mprod() ==250) return 0.104252/0.577314;
+    if(b.mprod() ==275) return 0.0719125/0.400107;
+    if(b.mprod() ==300) return 0.0509994/0.284855;
+    if(b.mprod() ==325) return 0.0369715/0.20736;
+    if(b.mprod() ==350) return 0.0273286/0.153841;
+    if(b.mprod() ==375) return 0.0205429/0.116006;
+    if(b.mprod() ==400) return 0.0156691/0.0887325;
+    if(b.mprod() ==425) return 0.0120965/0.0686963;
+    if(b.mprod() ==450) return 0.00944017/0.0537702;
+    if(b.mprod() ==475) return 0.00743587/0.0424699;
+    if(b.mprod() ==500) return 0.00590757/0.0338387;
+    if(b.mprod() ==526) return 0.00469101/0.0269524;
+    if(b.mprod() ==550) return 0.0038167/0.0219868;
+    if(b.mprod() ==576) return 0.003073/0.0177611;
+    if(b.mprod() ==600) return 0.00253015/0.0146677;
+    if(b.mprod() ==626) return 0.00206136/0.0119691;
+    if(b.mprod() ==650) return 0.00171418/0.00996406;
+    if(b.mprod() ==676) return 0.00140934/0.00822165;
+    if(b.mprod() ==700) return 0.00118113/0.00689981;
+    if(b.mprod() ==726) return 0.000979349/0.00574289;
+    if(b.mprod() ==750) return 0.000826366/0.0048731;
+    if(b.mprod() ==776) return 0.000690208/0.00407012;
+    if(b.mprod() ==800) return 0.000586211/0.00346143;
+    if(b.mprod() ==826) return 0.00049277/0.00291514;
+    if(b.mprod() ==850) return 0.000420556/0.0024923;
+    if(b.mprod() ==876) return 0.000358734/0.00212322;
+    if(b.mprod() ==900) return 0.000305935/0.00180616;
+    if(b.mprod() ==926) return 0.000260948/0.00154462;
+    if(b.mprod() ==950) return 0.00022285/0.00132692;
+    if(b.mprod() ==976) return 0.000189681/0.00112253;
+    if(b.mprod() ==1000) return 0.00016428/0.000968853;
+    if(b.mprod() ==1024) return 0.000142206/0.000845522;
+    if(b.mprod() ==1052) return 0.000120971/0.000717628;
+    if(b.mprod() ==1076) return 0.000105301/0.000623403;
+    if(b.mprod() ==1100) return 9.12469e-05/0.000538005;
+    if(b.mprod() ==1124) return 7.9765e-05/0.00047022;
+    if(b.mprod() ==1152) return 6.78234e-05/0.000398787;
+    if(b.mprod() ==1176) return 5.9016e-05/0.000346209;
+    if(b.mprod() ==1200) return 5.16263e-05/0.000299347;
+    if(b.mprod() ==1224) return 4.5147e-05/0.000267704;
+    if(b.mprod() ==1252) return 3.88343e-05/0.000222061;
+    if(b.mprod() ==1276) return 3.41304e-05/0.00018915;
+    if(b.mprod() ==1300) return 2.99353e-05/0.000160765;
+    if(b.mprod() ==1324) return 2.63637e-05/0.000137188;
+    if(b.mprod() ==1352) return 2.26779e-05/0.000113724;
+    if(b.mprod() ==1376) return 1.99318e-05/9.68213e-05;
+    if(b.mprod() ==1400) return 1.75031e-05/7.80263e-05;
+    if(b.mprod() ==1424) return 1.53974e-05/7.0157e-05;
+    if(b.mprod() ==1452) return 1.3245e-05/5.81247e-05;
+    if(b.mprod() ==1476) return 1.16416e-05/4.94646e-05;
+    else return 0;
+  });
+
 
   TString nom2genmet(TString ibin){
     ibin.ReplaceAll("met", "met_tru");
     //fix unintended replacement...
     ibin.ReplaceAll("met_tru/met_tru_calo", "met/met_calo");
+    ibin.ReplaceAll("low_dphi_met_tru", "low_dphi_met");
     return ibin;
   }
   
@@ -167,6 +228,27 @@ namespace HigUtilities {
       _tmp = years_string.substr(start, found-start);
       years.insert(atoi(_tmp.c_str()));
     }
+  }
+
+  void findMassPoints(std::string signal_folder, std::vector<std::pair<std::string, std::string> > & mass_points) {
+    set<string> signal_files = Glob(signal_folder+"/*.root");
+    string mLSP, mChi;
+    for (string signal_file : signal_files) {
+      filenameToMassPoint(signal_file, mChi, mLSP);
+      mass_points.push_back({mChi, mLSP});
+    }
+  }
+
+  void filenameToMassPoint(std::string filename, string & mChi, string & mLSP) {
+    size_t start_mChi = filename.find("mChi")+5;
+    size_t end_mChi = filename.find("_", start_mChi);
+    string mChi_string = filename.substr(start_mChi, (end_mChi-start_mChi));
+    size_t start_mLSP = filename.find("mLSP")+5;
+    size_t end_mLSP = filename.find("_", start_mLSP);
+    if (end_mLSP == std::string::npos) end_mLSP = filename.find(".", start_mLSP);
+    string mLSP_string = filename.substr(start_mLSP, (end_mLSP-start_mLSP));
+    mChi = mChi_string;
+    mLSP = mLSP_string;
   }
 
   std::string setProcessName(std::string const & model, int const & mGluino, int const & mLSP)
