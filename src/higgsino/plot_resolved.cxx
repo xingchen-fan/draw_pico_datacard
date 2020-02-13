@@ -235,12 +235,6 @@ namespace{
   //bool do_twiki = true;
   double luminosity = 1.;
   //double luminosity = 137;
-
-  vector<string> sigm = {"225","400","700","1000"}; 
-  vector<int> sig_colors = {kGreen+1, kRed, kBlue, kOrange}; // need sigm.size() >= sig_colors.size()
-  // extended list
-  // vector<string> sigm = {"127","300","400","500","600","700","850","1000"}; 
-  // vector<int> sig_colors = {kAzure, kGreen+2, kRed, kViolet-6, kYellow, kMagenta+1, kCyan+1, kOrange-3};
 }
 
 int main(int argc, char *argv[]){

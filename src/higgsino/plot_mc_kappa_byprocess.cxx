@@ -39,7 +39,7 @@ using namespace Functions;
 namespace{
   bool debug = false;
   // options "zll", "qcd", "ttbar", "search"
-  string sample_name = "search";
+  string sample_name = "ttbar";
   TString tag = "";
   bool boosted = false;
   float lumi=137;
@@ -76,9 +76,15 @@ int main(int argc, char *argv[]){
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
     bfolder = "/net/cms29"; // In laptops, you can't create a /net folder
 
-  string foldermc = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higtight/";
-  if (sample_name=="ttbar") foldermc = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higlep1/";
-  if (sample_name=="zll") foldermc = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higlep2/";
+  set<int> years;
+  years = {2016, 2017, 2018};
+
+  string mc_base_folder = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_eldorado/";
+  // string mc_skim_folder = "mc/merged_higmc_higtight/";
+  string mc_skim_folder = "mc/merged_higmc_higtight/";
+  if (sample_name=="ttbar") mc_skim_folder = "mc/merged_higmc_higlep1/";
+  // if (sample_name=="ttbar") foldermc = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higlep1/";
+  // if (sample_name=="zll") foldermc = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higlep2/";
 
   set<string> alltags = {"*TTJets_*Lept*", "*_TTZ*.root", "*_TTW*.root",
                          "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root", 
@@ -98,34 +104,30 @@ int main(int argc, char *argv[]){
   vector<shared_ptr<Process> > procs;
   // All bkg. kappa
   procs.push_back(Process::MakeShared<Baby_pico>("All bkg.", Process::Type::background, 
-    kBlack, attach_folder(foldermc,alltags), base_filters));
+    kBlack, attach_folder(mc_base_folder, years, mc_skim_folder,alltags), base_filters));
   // Sample specific kappa
-  // if (sample_name=="zll") 
+  if (sample_name=="zll" || sample_name=="search") 
     procs.push_back(Process::MakeShared<Baby_pico>("Z#rightarrow#nu#nu", Process::Type::background, 
-      kOrange+1, {foldermc+"*_ZJet*.root"}, base_filters));
-    procs.push_back(Process::MakeShared<Baby_pico>("W#rightarrowl#nu", Process::Type::background, 
-      colors("wjets"), {foldermc+"*_WJet*.root"}, base_filters));
-  // if (sample_name=="qcd") 
+      kOrange+1, attach_folder(mc_base_folder, years, mc_skim_folder,{"*_ZJet*.root"}), base_filters));
+  if (sample_name=="qcd") 
     procs.push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background, 
-      colors("other"),attach_folder(foldermc,qcdtags), base_filters)); 
-  // if (sample_name=="ttbar" || sample_name=="search") 
+      colors("other"),attach_folder(mc_base_folder, years, mc_skim_folder,qcdtags), base_filters)); 
+  if (sample_name=="ttbar" || sample_name=="search") 
     procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X", Process::Type::background,
-      colors("tt_1l"),attach_folder(foldermc,ttxtags), base_filters));
-    // procs.push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background,
-    //   colors("qcd"),attach_folder(foldermc,qcdtags), base_filters));
+      colors("tt_1l"),attach_folder(mc_base_folder, years, mc_skim_folder,ttxtags), base_filters));
 
  /////////////////////////////////////////////////////////////////////////////////////////////////////////
  /////////////////////////////////////////// Defining cuts ///////////////////////////////////////////////
   // Baseline definitions
   // NamedFunc wgt = "w_lumi*w_isr";
   NamedFunc wgt = "w_lumi*w_isr";
-  string baseline = "nvlep==0 && !lowDphiFix && ntk==0";
-  string higtrim = "hig_cand_drmax[0]<=2.2 && hig_cand_dm[0] <= 40 && hig_cand_am[0]<=200";
+  string baseline = "";
   if (boosted) {
-    baseline += " && ht>600 && nfjet>1 && fjet_pt[0]>300 && fjet_pt[1]>300 && nbm>=2";
-    baseline += " && fjet_msoftdrop[0]>50 && fjet_msoftdrop[0]<=250 && fjet_msoftdrop[1]>50 && fjet_msoftdrop[1]<=250";
+    baseline += "ht>600 && nfjet>1 && fjet_pt[0]>300 && fjet_pt[1]>300 && nbm>=2";
+    baseline += "&& fjet_msoftdrop[0]>50 && fjet_msoftdrop[0]<=250 && fjet_msoftdrop[1]>50 && fjet_msoftdrop[1]<=250";
   } else {
-    baseline += "&& njet>=4 && njet<=5 && nbt>=2 && "+higtrim;
+    string higtrim = "hig_cand_drmax[0]<=2.2 && hig_cand_dm[0] <= 40 && hig_cand_am[0]<=200";
+    baseline += "njet>=4 && njet<=5 && nbt>=2 && "+higtrim;
   }
 
   torch::OrderedDict<string, NamedFunc> baselines; // all desired cut combinations
@@ -135,14 +137,20 @@ int main(int argc, char *argv[]){
     baselines.insert("vanilla", baseline);
   } else {
     if (sample_name=="zll") {
-      baselines.insert("Dilep_CS","nlep==2 && met<50");
+      baselines.insert("zll_CS",baseline+"&& nlep==2 && met<50");
     } else if (sample_name=="qcd") {
-      baselines.insert("QCD_CS","nvlep==0 && ntk==0 && lowDphiFix");
+      baselines.insert("qcd_CS",baseline+"&& nvlep==0 && ntk==0 && lowDphiFix");
     } else if (sample_name=="ttbar") {
-      baselines.insert("TTX_CS","nlep==1 && mt<100");
+      baseline += "&& nlep==1 && mt<100";
+      baselines.insert("ttX_CS_loose",baseline);
+      baselines.insert("ttX_CS",baseline+"&& ntk==0 && !lowDphiFix");
+      baselines.insert("ttX_CS_low_drbb", baseline+"&& hig_cand_drmax[0]<=1.1");
+      baselines.insert("ttX_CS_high_drbb", baseline+"&& hig_cand_drmax[0]>1.1");
     } else if (sample_name=="search") {
-        baselines.insert("low_drbb", baseline+"&& hig_cand_drmax[0]<=1.1");
-        baselines.insert("high_drbb", baseline+"&& hig_cand_drmax[0]>1.1");
+        baseline += "&& nvlep==0 && ntk==0 && !lowDphiFix";
+        baselines.insert("SR_vanilla", baseline);
+        baselines.insert("SR_low_drbb", baseline+"&& hig_cand_drmax[0]<=1.1");
+        baselines.insert("SR_high_drbb", baseline+"&& hig_cand_drmax[0]>1.1");
     }
   }
 
@@ -218,10 +226,6 @@ int main(int argc, char *argv[]){
     for (auto &ibase: baselines) {
       plots.push_back({"3b_"+ibase.key(),vector<string>({"sbd2b","hig2b","sbd3b","hig3b"}), ibase.value(), metcuts});
       plots.push_back({"4b_"+ibase.key(),vector<string>({"sbd2b","hig2b","sbd4b","hig4b"}), ibase.value(), metcuts});
-      // plots.push_back({"3b_int_lodr",vector<string>({"sbd2b","hig2b","sbd3b_lodr","hig3b_lodr"}), ibase, metcuts});
-      // plots.push_back({"3b_int_hidr",vector<string>({"sbd2b","hig2b","sbd3b_hidr","hig3b_hidr"}), ibase, metcuts});
-      // plots.push_back({"4b_int_lodr",vector<string>({"sbd2b","hig2b","sbd4b_lodr","hig4b_lodr"}), ibase, metcuts});
-      // plots.push_back({"4b_int_hidr",vector<string>({"sbd2b","hig2b","sbd4b_hidr","hig4b_hidr"}), ibase, metcuts});
     }
   }
 

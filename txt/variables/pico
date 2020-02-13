@@ -23,6 +23,7 @@ float mt_tru
 float ht_isr_me
 
 ###################   Higgsinos   ##################
+float hig_am_dnn
 std::vector<float> hig_cand_dm
 std::vector<float> hig_cand_am
 std::vector<float> hig_cand_drmax

@@ -112,8 +112,8 @@ string CodeToPlainText(string code){
   ReplaceAll(code, "nbm>=3&&nbl>=4","4b");
   ReplaceAll(code, "nbm>=3","ge3b");
   ReplaceAll(code, "nbt>=2","ge2b");
-  ReplaceAll(code, "hig_cand_am[0]>100&&hig_cand_am[0]<=140","HIG");
   ReplaceAll(code, "!(hig_cand_am[0]>100&&hig_cand_am[0]<=140)","SBD");
+  ReplaceAll(code, "hig_cand_am[0]>100&&hig_cand_am[0]<=140","HIG");
   ReplaceAll(code, "boostedRegionIdx==0","0H, SBD");
   ReplaceAll(code, "boostedRegionIdx==1","1H, SBD");
   ReplaceAll(code, "boostedRegionIdx==2","2H, SBD");
@@ -169,9 +169,11 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "nbm==3&&nbl==3","3b");
   ReplaceAll(code, "nbm>=3&&nbl>=4","4b");
   ReplaceAll(code, "nbm>=3","#geq3b");
-  ReplaceAll(code, "hig_cand_am[0]>100&&hig_cand_am[0]<=140","HIG");
   ReplaceAll(code, "!(hig_cand_am[0]>100&&hig_cand_am[0]<=140)","SBD");
+  ReplaceAll(code, "hig_cand_am[0]>100&&hig_cand_am[0]<=140","HIG");
   ReplaceAll(code, "hig_cand_am[0]", "#LTm#GT");
+  ReplaceAll(code, "hig_cand_drmax[0]<=1.1", "lo-#DeltaR_{max}");
+  ReplaceAll(code, "hig_cand_drmax[0]>1.1", "hi-#DeltaR_{max}");
   ReplaceAll(code, "hig_cand_drmax[0]", "#DeltaR_{max}");
   ReplaceAll(code, "hig_cand_dm[0]", "#Delta m");
 
