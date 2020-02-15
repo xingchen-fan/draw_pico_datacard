@@ -60,7 +60,7 @@ SConsignFile('kernel/'+getKernel()+'/sconsign.dblite')
 if (subprocess.check_output("uname", shell=True, universal_newlines=True).rstrip() != 'Darwin'):
   analysisEnv = Environment(ENV = returnEnviornment('set_env.sh'))
 else:
-  analysisEnv = Environment()
+  analysisEnv = Environment(ENV = returnEnviornment('/Users/ana/root/build_root/bin/thisroot.sh'))
 
 addBasicEnv(analysisEnv)
 addKernelEnv(analysisEnv)

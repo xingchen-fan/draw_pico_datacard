@@ -56,13 +56,15 @@ int main(int argc, char *argv[]){
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
-  string foldermc = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higloose/";
-  if (sample_name=="ttbar") foldermc = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higlep1/";
-  if (sample_name=="zll") foldermc = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/merged_higmc_higlep2/";
-  string folderdata = bfolder+"";
-  // if (sample_name=="ttbar") folderdata = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/data/merged_higdata_higlep1/";
-  // if (sample_name=="zll") folderdata = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/data/merged_higdata_higlep2/";
-  // if (sample_name=="qcd") folderdata = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/data/merged_higdata_higqcd/";
+  set<int> years;
+  years = {2016, 2017, 2018};
+
+  string base_dir(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_eldorado/");
+  string mc_skim_dir("mc/merged_higmc_higtight/"), data_skim_dir("mc/merged_higdata_higloose/");
+  if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1/"; data_skim_dir = "merged_higdata_higlep1/";} 
+  else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2/"; data_skim_dir = "merged_higdata_higlep2/";} 
+  else if (sample=="qcd") {mc_skim_dir = "mc/merged_higmc_higqcd/";  data_skim_dir = "merged_higdata_higqcd/";} 
+  string sig_skim_dir("SMS-TChiHH_2D/merged_higmc_higtight/");
 
   set<string> alltags; 
   if (sample_name=="ttbar" || sample_name=="search") alltags = {"*TTJets_*Lept*"};//,
@@ -89,7 +91,7 @@ int main(int argc, char *argv[]){
             "*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root", "*_ST_*.root",
             "*_WH_HToBB*.root", "*_ZH_HToBB*.root", "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"};
   }
-  set<string> allfiles = attach_folder(foldermc,alltags);
+  set<string> allfiles = attach_folder(base_dir, years, mc_skim_dir,alltags);
 
   // Baseline definitions
   string baseline = "njet>=4 && njet<=5 && hig_cand_am[0]<=200";
@@ -196,9 +198,9 @@ int main(int argc, char *argv[]){
 
   vector<string> xcuts;
   // xcuts.push_back("1");
-  xcuts.push_back("met>300");
-  // xcuts.push_back("hig_cand_drmax[0]<=0.8");
-  // xcuts.push_back("hig_cand_drmax[0]>1.1 && hig_cand_drmax[0]<=2.2");
+  xcuts.push_back("hig_cand_drmax[0]<=2.2");
+  xcuts.push_back("hig_cand_drmax[0]<=1.1");
+  xcuts.push_back("hig_cand_drmax[0]>1.1 && hig_cand_drmax[0]<=2.2");
 
   PlotMaker pm;
   NamedFunc wgt = "w_lumi*w_isr";//Higfuncs::weight_higd*Higfuncs::eff_higtrig;
@@ -216,6 +218,12 @@ int main(int argc, char *argv[]){
       .RatioTitle("Bkg. nb","Bkg. 2b");
     pm.Push<Hist1D>(Axis(10,0,200,"hig_cand_am[0]", "#LTm#GT [GeV]", {100., 140.}),
       baseline+"&&"+xcuts[ic], procs_trub, plt_types).Weight(wgt).Tag(sample_name+"_shape_trub");
+
+    // pm.Push<Hist1D>(Axis(10,0,200,"hig_am_dnn", "DNN #LTm#GT [GeV]", {100., 140.}),
+    //   baseline+"&&"+xcuts[ic], procs, plt_types).Weight(wgt).Tag(sample_name+"_shape_bcats")
+    //   .RatioTitle("Bkg. nb","Bkg. 2b");
+    // pm.Push<Hist1D>(Axis(10,0,200,"hig_am_dnn", "DNN #LTm#GT [GeV]", {100., 140.}),
+    //   baseline+"&&"+xcuts[ic], procs_trub, plt_types).Weight(wgt).Tag(sample_name+"_shape_trub");
 
     pm.Push<Hist1D>(Axis(10,0,100,"hig_cand_dm[0]", "#Deltam [GeV]", {40.}),
       baseline+"&&"+xcuts[ic], procs, plt_types).Weight(wgt).Tag(sample_name+"_shape_bcats")
