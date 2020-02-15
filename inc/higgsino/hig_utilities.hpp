@@ -35,6 +35,7 @@ namespace HigUtilities {
 
   extern const NamedFunc pass_2016;
   extern const NamedFunc weight_2016;
+  extern const NamedFunc w_years;
   extern const NamedFunc pass_nhig_cand;
   extern const NamedFunc pass_nhig_df_cand;
   extern const NamedFunc w_CNToN1N2;

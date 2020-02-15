@@ -91,6 +91,22 @@ namespace HigUtilities {
     else return b.weight()/b.w_btag()*b.w_bhig();
   });
 
+  const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
+    if (b.SampleType()<0) return 1.;
+
+    double wgt = 1;
+    if (b.type()==106000) {
+      return 137.;
+    }
+    if (b.SampleType()==2016){
+      return wgt*35.9;
+    } else if (b.SampleType()==2017){
+      return wgt*41.5;
+    } else {
+      return wgt*59.6;
+    }
+  });
+  
   const NamedFunc pass_nhig_cand("pass_nhig_cand", [](const Baby &b) -> NamedFunc::ScalarType{
     if (b.hig_cand_drmax()->size() == 0) return 0;
     else return 1;

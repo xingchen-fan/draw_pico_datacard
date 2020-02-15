@@ -38,11 +38,11 @@
 #include "core/config_parser.hpp"
 #include "core/functions.hpp"
 #include "higgsino/hig_functions.hpp"
+#include "higgsino/hig_utilities.hpp"
 
 using namespace std;
 
 namespace{
-  bool paper = true;
   bool only_kappa = false;
   bool split_bkg = true;
   bool do_signal = true;
@@ -53,9 +53,9 @@ namespace{
   TString sample = "search";
   string alt_scen = "mc_as_data";
   bool only_mc = (alt_scen != "data");
-  float lumi=137;
+  float lumi=1.;
   bool quick_test = false;
-  bool print_mc = false;
+  bool print_mc = true;
   bool do_zbi = false;
   // for office use only
   vector<TString> syst_names;
@@ -99,8 +99,8 @@ int main(int argc, char *argv[]){
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
-  set<int> years;
-  years = {2016, 2017, 2018};
+  set<int> years = {2016};
+  // years = {2016, 2017, 2018};
 
   string base_dir(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_eldorado/");
   string mc_skim_dir("mc/merged_higmc_higtight/"), data_skim_dir("mc/merged_higdata_higloose/");
@@ -119,9 +119,10 @@ int main(int argc, char *argv[]){
                                  });
   mctags["other"]   = set<string>({
                                    // "*QCD_HT100to200_Tune*", "*QCD_HT200to300_Tune*", // these have too low weights
-                                   // "*QCD_HT300to500_Tune*", "*QCD_HT500to700_Tune*",
-                                   "*QCD_HT700to1000_Tune*", "*QCD_HT1000to1500_Tune*", 
-                                   "*QCD_HT1500to2000_Tune*", "*QCD_HT2000toInf_Tune*",
+                                   // "*QCD_HT300to500_Tune*", 
+                                   // "*QCD_HT500to700_Tune*",
+                                   // "*QCD_HT700to1000_Tune*", "*QCD_HT1000to1500_Tune*", 
+                                   // "*QCD_HT1500to2000_Tune*", "*QCD_HT2000toInf_Tune*",
                                    "*_ST_*.root",
                                    "*_WH_HToBB*.root", "*_ZH_HToBB*.root",
                                    "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"
@@ -188,20 +189,25 @@ int main(int argc, char *argv[]){
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Defining scenarios  //////////////////////////////////////////
-  NamedFunc nom_wgt = "w_lumi*w_isr";//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
+  NamedFunc nom_wgt = "w_lumi*w_isr"*HigUtilities::w_years*Higfuncs::eff_higtrig;//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
   vector<string> scenarios;
   map<string, NamedFunc> weights;
   weights.emplace("no_mismeasurement", nom_wgt);
   if(alt_scen == "data"){
     scenarios = vector<string>{"data"};
   } else if(alt_scen == "bctag"){ 
-    // example custom-defined systematic
+    only_kappa = true;
+    // example custom-defined systematic, can define multiple instead of just one, if desired
     // in general, can define any distortion of the MC with a named func and compare to default using this...
     scenarios = vector<string>();
     scenarios.push_back("syst_bctag");
     weights.emplace("syst_bctag", nom_wgt*"sys_bctag[0]");
+  } else if(alt_scen == "mc_as_data"){
+    scenarios = vector<string>{"mc_as_data"}; 
+    weights.emplace("mc_as_data", nom_wgt);
   } else {
-    // run on all scenarios in the sys_cfg file
+    only_kappa = true;
+    // run on all scenarios from the sys_cfg file
     scenarios = vector<string>{alt_scen}; 
     for(const auto &scen: scenarios)
       weights.emplace(scen, nom_wgt*Functions::MismeasurementWeight(sys_wgts_file, scen));
@@ -312,7 +318,7 @@ int main(int argc, char *argv[]){
       allyields.push_back(yield_table->Yield(proc_ttx.get(), lumi));
       allyields.push_back(yield_table->Yield(proc_vjets.get(), lumi));
     }
-    if (true) {
+    if (debug) {
       cout<<"only_mc = "<<(only_mc? "True":"False")<<endl;
       cout<<"Total number of cuts per process:"<<allyields[0].size()<<endl;
       cout<<"----------------------- Yields table -----------------------"<<endl;
@@ -375,40 +381,38 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
   yieldsPlane.clear();
   TString ump = " & ";
 
-  size_t Nsig = proc_sigs.size(); // Number of signal points (for now it cannot be changed)
-  size_t Ncol = 3;
-  if(print_mc) Ncol += 2;
-  if(do_signal) Ncol += Nsig;
-  if(do_signal &&do_zbi) Ncol += Nsig;
-  if(split_bkg) Ncol += 3;
-  if(only_mc) {
-    Ncol -= 3;
-    if(do_signal && do_zbi) Ncol += Nsig;
-  } else {
-    if(do_zbi) Ncol++;
-  }
+
 
   //// Setting output file name
   TString lumi_s = RoundNumber(lumi, 0);
-  TString outname = "tables/table_pred_"+sample+"_tight_lumi"+lumi_s+(do_highnb?"_highnb":"")+(do_midnb?"_midnb":""); 
+  if (lumi_s=="1") lumi_s = "137";
+  TString outname = "tables/table_pred_"+sample+"_lumi"+lumi_s+(do_highnb?"_highnb":"")+(do_midnb?"_midnb":""); 
   outname += "_"+abcd.scenario+".tex";
   ofstream out(outname);
 
   //// Printing main table preamble
-  if(abcd.scenario.Contains("signal") && Ncol>7) out << "\\resizebox{\\textwidth}{!}{\n";
+  out << "\\resizebox{\\textwidth}{!}{\n";
   out << "\\begin{tabular}[tbp!]{ l ";
-  if(split_bkg) out << "|ccc";
-  if(print_mc) out << "|cc";
-  if(!only_mc) out << "|cc "<<(do_zbi?"c":"");
-  if(do_signal)
-    for(size_t ind=0; ind<Nsig; ind++)
+  size_t Nsig = proc_sigs.size(); // Number of signal points (for now it cannot be changed)
+  size_t Ncol = 1;
+  if(split_bkg) {out << "|ccc"; Ncol +=3;}
+  if(print_mc) {out << "|cc"; Ncol +=2;}
+  if(!only_mc || abcd.scenario.Contains("mc_as_data")) {
+    out << "|cc "<<(do_zbi?"c":"");
+    Ncol += 2 + (do_zbi?1:0);
+  }
+  if(do_signal) {
+    for(size_t ind=0; ind<Nsig; ind++){
       out<<"|c"<<(do_zbi?"c":"");
-  
+      Ncol += 1 + (do_zbi?1:0);
+    } 
+  }
+
   out<<"}\\hline\\hline\n";
   out<<"${\\cal L}="<<lumi_s<<"$ fb$^{-1}$ ";
-  if(split_bkg) out << " & Other & Single $t$ & $t\\bar{t}$ ";
+  if(split_bkg) out << " & Other & V$+$jets & $t\\bar{t}$ ";
   if(print_mc) out << "& $\\kappa$ & MC bkg.";
-  if(!only_mc) out << " & Pred.& Obs. "<<(do_zbi?"& Signi.":"");
+  if(!only_mc || abcd.scenario.Contains("mc_as_data")) out << " & Pred.& Obs. "<<(do_zbi?"& Signi.":"");
   if(do_signal) {
     for(size_t ind=0; ind<Nsig; ind++) {
       TString signame = proc_sigs[ind]->name_.c_str();
@@ -492,7 +496,7 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
 
   //// Printing footer and closing file
   out<< "\\end{tabular}"<<endl;
-  if(abcd.scenario.Contains("signal") && Ncol>7) out << "}\n"; // For resizebox
+  out << "}\n"; // For resizebox
   out.close();
 
   //// Copying header and table to the compilable file
@@ -503,12 +507,12 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
   header.close();
   if(!abcd.scenario.Contains("signal")) full << "\\usepackage[landscape]{geometry}\n\n";
   full << "\\begin{document}\n\n";
-  full << "\\begin{table}\n\\centering\n";
+  full << "\\begin{preview}\n";
   // full << "\\caption{" << abcd.caption <<".}\\vspace{0.1in}\n\\label{tab:"<<abcd.scenario<<"}\n";
   ifstream outtab(outname);
   full << outtab.rdbuf();
   outtab.close();
-  full << "\\end{table}\n\n";
+  full << "\\end{preview}\n";
   full << "\\end{document}\n";
   full.close();
 
@@ -578,7 +582,6 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
     } // Loop over bin cuts
   } // Loop over plane cuts
 
-  cout<<"Making the actual plot"<<endl;
   //// Plotting kappas
   TCanvas can("can","");
   can.SetFillStyle(4000);
@@ -615,8 +618,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
   for(size_t iplane=0; iplane < k_ordered.size(); iplane++) {
     for(size_t ibin=0; ibin < k_ordered[iplane].size(); ibin++){
       bin++;
-      if (paper) histo.GetXaxis()->SetBinLabel(bin, "");
-      else histo.GetXaxis()->SetBinLabel(bin, CodeToRootTex(k_ordered[iplane][ibin][0].cut.Data()).c_str());
+      histo.GetXaxis()->SetBinLabel(bin, "");
       // xval is the x position of the first marker in the group
       double xval = bin, nbs = k_ordered[iplane][ibin].size(), minxb = 0.15, binw = 0;
       // If there is more than one point in the group, it starts minxb to the left of the center of the bin
@@ -669,7 +671,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
             klab.SetTextColor(1);
             klab.SetTextSize(0.045);
             if (k_ordered.size()*k_ordered[iplane].size()>8) klab.SetTextSize(0.03);
-            if(alt_scen!="mc_as_data" && !paper) klab.DrawLatex(xval, 0.952*maxy, text);
+            if(alt_scen!="mc_as_data") klab.DrawLatex(xval, 0.952*maxy, text);
             //// Printing stat uncertainty of kappa_mm/kappa
             float kapUp = k_ordered[iplane][ibin][ib].kappa[1], kapDown = k_ordered[iplane][ibin][ib].kappa[2];
             float kap_mmUp = k_ordered_mm[iplane][ibin][ib].kappa[1];
@@ -679,32 +681,29 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
             } else {
               text = "#sigma_{stat} = ^{+"+RoundNumber(kapUp*100,0, 1)+"%}_{-"+RoundNumber(kapDown*100,0, 1)+"%}";
             }
+            // adding label to indicate the ABCD corresponding to each kappa value
             klab.SetTextSize(0.05);
             if (k_ordered.size()*k_ordered[iplane].size()>8) klab.SetTextSize(0.035);
-            if (paper) {
-              if (sample=="search" || sample=="ttbar") text = ibin%2==0 ? "3b/2b" : "4b/2b"; 
-              else if (sample=="zll") text = do_midnb ? "2b/1b" : "1b/0b"; 
-              else if (sample=="qcd") {
-                if (do_highnb) text =  ibin%2==0 ? "3b/2b" : "4b/2b"; 
-                else text = do_midnb ? "2b/1b" : "1b/0b"; 
-              }
-              klab.DrawLatex(xval, 0.92*maxy, text);
-            } else {
-              klab.DrawLatex(xval, 0.888*maxy, text);
+            if (sample=="search" || sample=="ttbar") text = ibin%2==0 ? "3b/2b" : "4b/2b"; 
+            else if (sample=="zll") text = do_midnb ? "2b/1b" : "1b/0b"; 
+            else if (sample=="qcd") {
+              if (do_highnb) text =  ibin%2==0 ? "3b/2b" : "4b/2b"; 
+              else text = do_midnb ? "2b/1b" : "1b/0b"; 
             }
+            klab.DrawLatex(xval, 0.92*maxy, text);
             xval += binw;
           }
         } 
       } 
     } // Loop over bin cuts
 
-    // Drawing line separating MET planes
+    // Drawing lines separating MET planes
     line.SetLineStyle(iplane%2==0 ? 2:1); line.SetLineWidth(1); line.SetLineColor(kBlack);
     if (iplane<k_ordered.size()-1) line.DrawLine(bin+0.5, miny, bin+0.5, maxy);
-    // Drawing plane labels
+
+    // All the labels on the X-axis...
     string metdef = "met";
     if (sample=="zll") metdef = "ll_pt";
-
     double lmargin(opts.LeftMargin()), rmargin(opts.RightMargin()), bmargin(opts.BottomMargin());
     label.SetTextSize(0.05);
     if (abcd.planecuts[iplane].Contains("drmax")) {
@@ -723,7 +722,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
         label.SetTextAlign(23);
         label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/abcd.planecuts.size()*(iplane+1), 0.13, metlabel.c_str());
       }
-    } else {
+    } else { // if not binning in dRmax
       string plabel = CodeToRootTex(abcd.planecuts[iplane].Data());
       ReplaceAll(plabel, "<"+metdef+"#leq","#minus"); 
       if(plabel == "> 0") plabel = "Inclusive";
@@ -784,7 +783,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
       leg.AddEntry(&graph_mm[indb], data_s, "ep");
 
   } // Loop over TGraphs
-  if (sample!="search" || !paper) leg.Draw();
+  leg.Draw();
 
   //// Drawing CMS labels and line at 1
   TString cmsPrel = "#font[62]{CMS} #scale[0.8]{#font[52]{}}";
