@@ -43,7 +43,6 @@
 using namespace std;
 
 namespace{
-  bool only_kappa = false;
   bool split_bkg = true;
   bool do_signal = true;
   bool debug = false;
@@ -52,10 +51,8 @@ namespace{
   int digits_table = 1;
   TString sample = "search";
   string alt_scen = "mc_as_data";
-  bool only_mc = (alt_scen != "data");
   float lumi=1.;
   bool quick_test = false;
-  bool print_mc = true;
   bool do_zbi = false;
   // for office use only
   vector<TString> syst_names;
@@ -160,7 +157,7 @@ int main(int argc, char *argv[]){
 
   // define data or pseudo-data process
   set<string> names_data(attach_folder(base_dir, years, data_skim_dir, {"*.root"}));
-  if(only_mc) { 
+  if(alt_scen != "data") { 
     if (quick_test) {
       names_data = {base_dir+"/2016/"+mc_skim_dir+"/*TTJets_SingleLeptFromT_Tune*"};
     } else {
@@ -171,7 +168,7 @@ int main(int argc, char *argv[]){
     }
   }
   NamedFunc base_data = baseline && "1"; //INSERT_TRIGGERS_HERE, these will depend on the sample!
-  if (only_mc) base_data = baseline;
+  if (alt_scen != "data") base_data = baseline;
   auto proc_data = Process::MakeShared<Baby_pico>("Data", Process::Type::data, kBlack, names_data,base_data);
 
   // define combination of processes to use
@@ -197,7 +194,6 @@ int main(int argc, char *argv[]){
   if(alt_scen == "data"){
     scenarios = vector<string>{"data"};
   } else if(alt_scen == "bctag"){ 
-    only_kappa = true;
     // example custom-defined systematic, can define multiple instead of just one, if desired
     // in general, can define any distortion of the MC with a named func and compare to default using this...
     scenarios = vector<string>();
@@ -207,7 +203,6 @@ int main(int argc, char *argv[]){
     scenarios = vector<string>{"mc_as_data"}; 
     weights.emplace("mc_as_data", nom_wgt);
   } else {
-    only_kappa = true;
     // run on all scenarios from the sys_cfg file
     scenarios = vector<string>{alt_scen}; 
     for(const auto &scen: scenarios)
@@ -278,7 +273,7 @@ int main(int argc, char *argv[]){
           TString totcut = iplane+"&&"+ireg;
           totcut.ReplaceAll("nb_cr", nbcuts[0]).ReplaceAll("nb_sr",inb);
           table_cuts.push_back(TableRow(totcut.Data(), totcut.Data(),0,0,weights.at("nominal")));
-          if(only_mc) 
+          if(alt_scen != "data") 
             table_cuts_mm.push_back(TableRow(totcut.Data(), totcut.Data(),0,0,weights.at(iscen)));
         } // Loop over ABCD cuts
       } // Loop over bin cuts
@@ -300,7 +295,7 @@ int main(int argc, char *argv[]){
     // if split_bkg [2/4] Other, [3/5] tt1l, [4/6] tt2l
     vector<vector<GammaParams> > allyields;
     Table * yield_table;
-    if(only_mc){
+    if(alt_scen != "data"){
       yield_table = static_cast<Table*>(pm.Figures()[iscen*2].get());
       Table * yield_table_mm = static_cast<Table*>(pm.Figures()[iscen*2+1].get());
       allyields.push_back(yield_table_mm->Yield(proc_data.get(), lumi));
@@ -320,7 +315,6 @@ int main(int argc, char *argv[]){
     }
     // Print out all the yields
     if (debug) {
-      cout<<"only_mc = "<<(only_mc? "True":"False")<<endl;
       cout<<"Total number of cuts per process:"<<allyields[0].size()<<endl;
       cout<<"----------------------- Yields table -----------------------"<<endl;
       cout<<setw(10)<<"Cut"<<setw(10)<<"Data"<<setw(10)<<"SM bkg.";
@@ -353,7 +347,7 @@ int main(int argc, char *argv[]){
     plotKappa(abcds[iscen], kappas, kappas_mm, kmcdat);
   } // Loop over ABCD methods
 
-  if(!only_kappa){
+  if(alt_scen=="data" || alt_scen=="mc_as_data" || alt_scen=="mc"){
     //// Printing names of ouput files
     cout<<endl<<"===== Tables that can be compiled"<<endl;
     for(size_t ind=0; ind<tablenames.size(); ind++)
@@ -397,11 +391,9 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
   size_t Nsig = proc_sigs.size(); // Number of signal points (for now it cannot be changed)
   size_t Ncol = 1;
   if(split_bkg) {out << "|ccc"; Ncol +=3;}
-  if(print_mc) {out << "|cc"; Ncol +=2;}
-  if(!only_mc || abcd.scenario.Contains("mc_as_data")) {
-    out << "|cc "<<(do_zbi?"c":"");
-    Ncol += 2 + (do_zbi?1:0);
-  }
+  out << "|cc"; Ncol +=2; //for kappa and tot bkg
+  out << "|cc "<<(do_zbi?"c":""); // for predicted and observed
+  Ncol += 2 + (do_zbi?1:0);
   if(do_signal) {
     for(size_t ind=0; ind<Nsig; ind++){
       out<<"|c"<<(do_zbi?"c":"");
@@ -412,8 +404,8 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
   out<<"}\\hline\\hline\n";
   out<<"${\\cal L}="<<lumi_s<<"$ fb$^{-1}$ ";
   if(split_bkg) out << " & Other & V$+$jets & $t\\bar{t}$ ";
-  if(print_mc) out << "& $\\kappa$ & MC bkg.";
-  if(!only_mc || abcd.scenario.Contains("mc_as_data")) out << " & Pred.& Obs. "<<(do_zbi?"& Signi.":"");
+  out << "& $\\kappa$ & MC bkg.";
+  out << " & Pred.& Obs. "<<(do_zbi?"& Signi.":"");
   if(do_signal) {
     for(size_t ind=0; ind<Nsig; ind++) {
       TString signame = proc_sigs[ind]->name_.c_str();
@@ -452,15 +444,13 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
               << ump <<RoundNumber(allyields[offset+3][index].Yield(), digits_table)
               << ump <<RoundNumber(allyields[offset+4][index].Yield(), digits_table);
         }
-        if(print_mc) {
-          //// Printing kappa
-          out<<ump;
-          if(iabcd==3) out  << "$"    << RoundNumber(kappas[iplane][ibin][0], digits_table)
-                            << "^{+"  << RoundNumber(kappas[iplane][ibin][1], digits_table)
-                            << "}_{-" << RoundNumber(kappas[iplane][ibin][2], digits_table) <<"}$ ";
-          //// Printing MC Bkg yields
-          out << ump << RoundNumber(allyields[1][index].Yield(), digits_table);
-        } // print_mc
+        //// Printing kappa
+        out<<ump;
+        if(iabcd==3) out  << "$"    << RoundNumber(kappas[iplane][ibin][0], digits_table)
+                          << "^{+"  << RoundNumber(kappas[iplane][ibin][1], digits_table)
+                          << "}_{-" << RoundNumber(kappas[iplane][ibin][2], digits_table) <<"}$ ";
+        //// Printing MC Bkg yields
+        out << ump << RoundNumber(allyields[1][index].Yield(), digits_table);
         //// Printing background predictions
         out << ump;
         if(iabcd==3) out << "$"    << RoundNumber(preds[iplane][ibin][0], digits_table)
@@ -694,7 +684,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
   //// Drawing legend and TGraphs
   if (debug) cout<<"Building up TGraphs"<<endl;
   double legX(0.595), legY(1-0.035), legH(0.05), legW(0.15);
-  if(only_mc) legX = 0.65;
+  if(alt_scen != "data") legX = 0.65;
   TLegend leg(legX, legY-legH, legX+legW, legY);
   leg.SetTextSize(opts.LegendEntryHeight()*1.15); leg.SetFillColor(0);leg.SetFillStyle(0); leg.SetBorderSize(0);
   leg.SetTextFont(42);
@@ -733,7 +723,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
   cmslabel.SetTextSize(0.06);
   cmslabel.SetNDC(kTRUE);
   cmslabel.SetTextAlign(11);
-  if(only_mc) cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,cmsSim);
+  if(alt_scen != "data") cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,cmsSim);
   else cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,cmsPrel);
   cmslabel.SetTextAlign(31);
   //cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015,"#font[42]{13 TeV}");
@@ -749,7 +739,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
   TString title = "";
   TString fontstyle = RoundNumber(opts.Font()+10,0);
   if(alt_scen!="mc_as_data") title = "#font[42]{"+RoundNumber(lumi, 0)+" fb^{-1} (13 TeV)}";
-  if(abcd_title.Contains("Search") && only_mc) title = "#font["+fontstyle+"]{"+abcd_title+"}";
+  if(sample=="search" && alt_scen != "data") title = "#font["+fontstyle+"]{"+abcd_title+"}";
   cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015, title);
 
   ///// Sample name
@@ -757,7 +747,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
   title = "#font["+fontstyle+"]{"+abcd_title+"}";
   TString newSignal = "#color["; newSignal += cSignal; newSignal += "]{Signal}";
   title.ReplaceAll("Signal", newSignal);
-  if(!(abcd_title.Contains("Search") && only_mc)) cmslabel.DrawLatex(opts.LeftMargin()+0.14, 1-opts.TopMargin()+0.015, title);
+  if(!(sample=="search" && alt_scen != "data")) cmslabel.DrawLatex(opts.LeftMargin()+0.14, 1-opts.TopMargin()+0.015, title);
 
   line.SetLineStyle(3); line.SetLineWidth(1);
   line.DrawLine(minx, 1, maxx, 1);
@@ -883,7 +873,6 @@ void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
       {"sample", required_argument, 0, 's'},    // Which sample to use: standard, 2015 data
-      {"only_kappa", no_argument, 0, 'k'},    // Only plots kappa (no table)
       {"debug", no_argument, 0, 'd'},         // Debug: prints yields and cuts used
       {"quick", no_argument, 0, 'q'},           // Used inclusive ttbar for quick testing
       {"scen", required_argument, 0, 0},        // Mismeasurment scenario, 0 for data
@@ -901,9 +890,6 @@ void GetOptions(int argc, char *argv[]){
     switch(opt){
     case 's':
       sample = optarg;
-      break;
-    case 'k':
-      only_kappa = true;
       break;
     case 'd':
       debug = true;
