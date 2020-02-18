@@ -11,6 +11,9 @@ namespace Higfuncs{
   // count number of jets associated with true B-hadrons 
   // among the 4 jets used to build average mjj
   extern const NamedFunc ntrub;
+
+  //use both the MET-binned and HT-binned ttbar
+  extern const NamedFunc stitch_htmet;
   
   // pT of leading Higgs bosons in MC
   extern const NamedFunc hig_pt1;

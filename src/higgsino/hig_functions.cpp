@@ -9,6 +9,23 @@ using namespace std;
 
 namespace Higfuncs{
 
+const NamedFunc ntrub("ntrub",[](const Baby &b) -> NamedFunc::ScalarType{
+  int tmp_ntrub(0);
+  for (unsigned i(0); i<b.jet_pt()->size(); i++){
+    if (!b.jet_h1d()->at(i) && !b.jet_h2d()->at(i)) continue;
+    if (b.jet_hflavor()->at(i)==5) tmp_ntrub++;
+  }
+  return tmp_ntrub;
+});
+
+
+const NamedFunc stitch_htmet("stitch_htmet",[](const Baby &b) -> NamedFunc::ScalarType{
+  bool stitch_(b.stitch());
+  if (b.ht_isr_me()>600 && b.type()>=1000 && b.type()<1300) 
+    stitch_ = false; 
+  return stitch_;
+});
+
 const NamedFunc hig_pt1("hig_pt1",[](const Baby &b) -> NamedFunc::ScalarType{
     float higpt(0);
     for (unsigned i(0); i<b.mc_pt()->size(); i++){
@@ -30,15 +47,6 @@ const NamedFunc hig_pt2("hig_pt2",[](const Baby &b) -> NamedFunc::ScalarType{
       }
     }
     return higpt2;
-});
-
-const NamedFunc ntrub("ntrub",[](const Baby &b) -> NamedFunc::ScalarType{
-  int tmp_ntrub(0);
-  for (unsigned i(0); i<b.jet_pt()->size(); i++){
-    if (!b.jet_h1d()->at(i) && !b.jet_h2d()->at(i)) continue;
-    if (b.jet_hflavor()->at(i)==5) tmp_ntrub++;
-  }
-  return tmp_ntrub;
 });
 
 const NamedFunc hig_bcat("hig_bcat",[](const Baby &b) -> NamedFunc::ScalarType{
