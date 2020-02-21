@@ -235,6 +235,12 @@ namespace{
   //bool do_twiki = true;
   double luminosity = 1.;
   //double luminosity = 137;
+
+  vector<string> sigm = {"225","400","700","1000"}; 
+  vector<int> sig_colors = {kGreen+1, kRed, kBlue, kOrange}; // need sigm.size() >= sig_colors.size()
+  // extended list
+  // vector<string> sigm = {"127","300","400","500","600","700","850","1000"}; 
+  // vector<int> sig_colors = {kAzure, kGreen+2, kRed, kViolet-6, kYellow, kMagenta+1, kCyan+1, kOrange-3};
 }
 
 int main(int argc, char *argv[]){
@@ -275,7 +281,6 @@ int main(int argc, char *argv[]){
   if((Contains(hostname, "cms") || Contains(hostname, "compute-")) && !Contains(hostname, "cms37"))
     bfolder = "/net/cms29"; // In laptops, you can't create a /net folder
 
-  bfolder = "/net/cms29"; // In laptops, you can't create a /net folder
   string mc_base_folder = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_eldorado/";
   //string mc_base_folder = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/";
   string mc_skim_folder = "mc/merged_higmc_higloose/";
@@ -283,7 +288,11 @@ int main(int argc, char *argv[]){
   string sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higloose/";
 
   NamedFunc base_filters = HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
-  NamedFunc wgt = "w_lumi*w_isr"*w_years*Higfuncs::eff_higtrig;
+  //NamedFunc wgt = "w_lumi*w_isr"*w_years*Higfuncs::eff_higtrig;
+  //NamedFunc wgt = "w_lumi*w_isr*137."*Higfuncs::eff_higtrig;
+  NamedFunc wgt = "w_lumi*w_isr"*Higfuncs::eff_higtrig;
+  if (years.size()==1 && *years.begin()==2016) wgt *= "137.";
+  else wgt *= w_years;
 
   map<string, set<string>> mctags; 
   mctags["tt"]     = set<string>({"*TTJets_*Lept*",
@@ -337,16 +346,12 @@ int main(int argc, char *argv[]){
   vector<string> sigm = {"450", "700", "950"}; 
   //vector<string> sigm = {"950"}; 
   vector<int> sig_colors = {kGreen+1, kRed, kBlue, kOrange}; // need sigm.size() >= sig_colors.size()
-  if (plot_ABCD) {
+  if (plot_ABCD || plot_dphi) {
     for (unsigned isig(0); isig<sigm.size(); isig++){
       procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigm[isig]+",1)", Process::Type::signal, 
-        sig_colors[isig], attach_folder(sig_base_folder, years, sig_skim_folder, {"*TChiHH_mChi-"+sigm[isig]+"_*.root"}), base_filters));
+        sig_colors[isig], attach_folder(sig_base_folder, years, sig_skim_folder, {"*TChiHH_mChi-"+sigm[isig]+"_mLSP-0*.root"}), base_filters));
     }
   }
-  ////for (unsigned isig(0); isig<sigm.size(); isig++){
-  ////  procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigm[isig]+",1)", Process::Type::background, 
-  ////    sig_colors[isig], {foldersig+"*TChiHH_mChi-"+sigm[isig]+"_*.root"}, base_filters));
-  ////}
 
 
   string baseline = "ntk==0&&!low_dphi_met&&nvlep==0&&met>150";

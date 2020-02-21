@@ -749,7 +749,10 @@ double calcKappa(vector<vector<float> > &entries, vector<vector<float> > &weight
 
 set<string> attach_folder(string folder, set<string> &fileset) {
   set<string> fset = set<string>();
-  for (auto &ifile: fileset) fset.insert(folder+ifile);
+  for (auto &ifile: fileset) {
+    fset.insert(folder+ifile);
+    cout<<folder+ifile<<endl;
+  }
   return fset; 
 }
 
@@ -758,7 +761,7 @@ set<string> attach_folder(string base_folder, set<int> years, string sample_fold
   for (auto & year: years) {
     for (auto &ifile: fileset) {
       fset.insert(base_folder+"/"+to_string(year)+"/"+sample_folder+"/"+ifile);
-      //cout<<base_folder+"/"+to_string(year)+"/"+sample_folder+"/"+ifile<<endl;
+      cout<<base_folder+"/"+to_string(year)+"/"+sample_folder+"/"+ifile<<endl;
     }
   }
   return fset; 

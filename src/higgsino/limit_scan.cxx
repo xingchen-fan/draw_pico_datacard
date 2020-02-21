@@ -305,6 +305,7 @@ void MakeLimitPlot(vector<double> vmx,
   rtitle.SetTextAlign(32);
 
   c.SetTopMargin(2.*c.GetTopMargin());
+  c.SetLeftMargin(0.12);
   c.SetLogz();
   glim.Draw("colz");
 
@@ -329,6 +330,9 @@ void MakeLimitPlot(vector<double> vmx,
     filebase += to_string(num_smooth_);
   }
 
+  gPad->Update();
+  glim.GetZaxis()->SetTitleOffset(1.3);
+  glim.GetXaxis()->SetRangeUser(0,1200);
   c.Print((filebase+"_"+tag+".pdf").c_str());
   
   TFile file((filebase+"_"+tag+".root").c_str(), "recreate");
@@ -475,6 +479,9 @@ TGraph DrawContours(TGraph2D &g2, int color, int style, double width,
   }
 
   graph.SetTitle(g2.GetTitle());
+  graph.SetLineColor(color);
+  graph.SetLineWidth(width);
+  graph.SetLineStyle(style);
   return graph;
 }
 

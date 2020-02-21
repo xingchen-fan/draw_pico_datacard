@@ -40,7 +40,18 @@
 #include "higgsino/hig_functions.hpp"
 #include "higgsino/hig_utilities.hpp"
 
-using namespace std;
+//using namespace std;
+using std::cout;
+using std::endl;
+using std::vector;
+using std::pair;
+using std::map;
+using std::string;
+using std::set;
+using std::shared_ptr;
+using std::setw;
+using std::ofstream;
+using std::ifstream;
 
 namespace{
   bool split_bkg = true;
@@ -84,8 +95,8 @@ int main(int argc, char *argv[]){
   gErrorIgnoreLevel=6000; // Turns off ROOT errors due to missing branches
   GetOptions(argc, argv);
 
-  chrono::high_resolution_clock::time_point begTime;
-  begTime = chrono::high_resolution_clock::now();
+  //chrono::high_resolution_clock::time_point begTime;
+  //begTime = chrono::high_resolution_clock::now();
 
   Palette colors("txt/colors.txt", "default");
   
@@ -355,9 +366,9 @@ int main(int argc, char *argv[]){
     cout<<endl;
   }
 
-  double seconds = (chrono::duration<double>(chrono::high_resolution_clock::now() - begTime)).count();
-  TString hhmmss = HoursMinSec(seconds);
-  cout<<endl<<"Finding "<<abcds.size()<<" tables took "<<round(seconds)<<" seconds ("<<hhmmss<<")"<<endl<<endl;
+  //double seconds = (chrono::duration<double>(chrono::high_resolution_clock::now() - begTime)).count();
+  //TString hhmmss = HoursMinSec(seconds);
+  //cout<<endl<<"Finding "<<abcds.size()<<" tables took "<<round(seconds)<<" seconds ("<<hhmmss<<")"<<endl<<endl;
 } // main
 
 ////////////////////////////////////////// End of main //////////////////////////////////////////////////////

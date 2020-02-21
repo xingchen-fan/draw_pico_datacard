@@ -14,6 +14,7 @@
 #include "TString.h"
 #include "TMath.h"
 #include "TError.h" // Controls error level reporting
+#include "TVector2.h"
 
 #include "core/utilities.hpp"
 #include "core/baby.hpp"
@@ -42,6 +43,15 @@ namespace
   bool do_met_average = true;
   string higgsino_model = "CN";
 }
+
+const NamedFunc min_jet_dphi("min_jet_dphi", [](const Baby &b) -> NamedFunc::ScalarType{
+  float min_dphi = 4;
+  for (size_t ijet = 0; ijet < (*b.jet_phi()).size(); ++ijet) {
+    float dphi = fabs(TVector2::Phi_mpi_pi((*b.jet_phi())[ijet]-b.met_phi()));
+    if (dphi < min_dphi) min_dphi = dphi;
+  }
+  return min_dphi;
+});
 
 int main(int argc, char *argv[])
 {
@@ -81,6 +91,7 @@ int main(int argc, char *argv[])
   
   NamedFunc weight = "w_lumi*w_isr";
   if (higgsino_model=="N1N2") weight *= HigUtilities::w_CNToN1N2;
+  //weight *=  (min_jet_dphi>0.5);
   string baseline = "!low_dphi_met && nvlep==0 && ntk==0";
   string higtrim = "hig_cand_drmax[0]<=2.2 && hig_cand_dm[0] <= 40 && hig_cand_am[0]<=200";
   if (tag=="resolved") baseline += "&& njet>=4 && njet<=5 && nbt>=2 && "+higtrim;
@@ -120,8 +131,8 @@ int main(int argc, char *argv[])
       dimensionBins["met"].push_back({"met1", "met>200 && met<=300"});
       dimensionBins["met"].push_back({"met2", "met>300 && met<=400"});
       dimensionBins["met"].push_back({"met3", "met>400"});
-      dimensionBins["drmax"].push_back({"drmax0", "hig_cand_drmax[0]<=1.1"});
-      dimensionBins["drmax"].push_back({"drmax1", "hig_cand_drmax[0]>1.1"});
+      //dimensionBins["drmax"].push_back({"drmax0", "hig_cand_drmax[0]<=1.1"});
+      //dimensionBins["drmax"].push_back({"drmax1", "hig_cand_drmax[0]>1.1"});
     } else {
       dimensionBins["met"].push_back({"met0", "met>150 && met<=200"});
       dimensionBins["met"].push_back({"met1", "met>200 && met<=300"});
