@@ -40,18 +40,16 @@
 #include "higgsino/hig_functions.hpp"
 #include "higgsino/hig_utilities.hpp"
 
-//using namespace std;
-using std::cout;
-using std::endl;
-using std::vector;
-using std::pair;
-using std::map;
+using std::ifstream;
+using std::ofstream;
 using std::string;
+using std::vector;
+using std::cout;
+using std::setw;
+using std::endl;
+using std::map;
 using std::set;
 using std::shared_ptr;
-using std::setw;
-using std::ofstream;
-using std::ifstream;
 
 namespace{
   bool split_bkg = true;
@@ -95,8 +93,8 @@ int main(int argc, char *argv[]){
   gErrorIgnoreLevel=6000; // Turns off ROOT errors due to missing branches
   GetOptions(argc, argv);
 
-  //chrono::high_resolution_clock::time_point begTime;
-  //begTime = chrono::high_resolution_clock::now();
+  std::chrono::high_resolution_clock::time_point begTime;
+  begTime = std::chrono::high_resolution_clock::now();
 
   Palette colors("txt/colors.txt", "default");
   
@@ -112,8 +110,8 @@ int main(int argc, char *argv[]){
 
   string base_dir(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_eldorado/");
   string mc_skim_dir("mc/merged_higmc_higtight/"), data_skim_dir("mc/merged_higdata_higloose/");
-  if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1/"; data_skim_dir = "merged_higdata_higlep1/";} 
-  else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2/"; data_skim_dir = "merged_higdata_higlep2/";} 
+  if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "merged_higdata_higlep1T/";} 
+  else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "merged_higdata_higlep2T/";} 
   else if (sample=="qcd") {mc_skim_dir = "mc/merged_higmc_higqcd/";  data_skim_dir = "merged_higdata_higqcd/";} 
   string sig_skim_dir("SMS-TChiHH_2D/merged_higmc_higtight/");
 
@@ -129,7 +127,7 @@ int main(int argc, char *argv[]){
                                    // "*QCD_HT100to200_Tune*", "*QCD_HT200to300_Tune*", // these have too low weights
                                    // "*QCD_HT300to500_Tune*", 
                                    // "*QCD_HT500to700_Tune*",
-                                   "*QCD_HT700to1000_Tune*", 
+                                   // "*QCD_HT700to1000_Tune*", 
                                    "*QCD_HT1000to1500_Tune*", 
                                    "*QCD_HT1500to2000_Tune*", "*QCD_HT2000toInf_Tune*",
                                    "*_ST_*.root",
@@ -186,7 +184,7 @@ int main(int argc, char *argv[]){
   vector<shared_ptr<Process> > all_procs = vector<shared_ptr<Process> >{proc_ttx, proc_vjets, proc_other};
   if(quick_test) {
     auto proc_bkg = Process::MakeShared<Baby_pico>("All_bkg", Process::Type::background, colors("tt_1l"),
-                    {base_dir+"/2016/"+mc_skim_dir+"/*TTJets_SingleLeptFromT_Tune*"}, baseline);
+                    {base_dir+"/2016/"+mc_skim_dir+"/*TTJets_SingleLeptFromT*"}, baseline);
     all_procs = vector<shared_ptr<Process> >{proc_bkg};
     split_bkg = false;
   }
@@ -225,14 +223,18 @@ int main(int argc, char *argv[]){
   vector<TString> metcuts;
   string metdef = "met";
   if (sample=="zll") metdef = "ll_pt[0]";
-  if (sample=="ttbar" || sample=="zll"){
+  if (sample=="search" || sample=="qcd"){
+    metcuts.push_back(metdef+">150&&"+metdef+"<=200");
+    metcuts.push_back(metdef+">200&&"+metdef+"<=300");
+    metcuts.push_back(metdef+">300&&"+metdef+"<=400");
+    metcuts.push_back(metdef+">400");
+  } else if (sample=="ttbar" || sample=="zll") {
     metcuts.push_back(metdef+">0&&"+metdef+"<=75");
     metcuts.push_back(metdef+">75&&"+metdef+"<=150");
+    metcuts.push_back(metdef+">150&&"+metdef+"<=200");
+    metcuts.push_back(metdef+">200&&"+metdef+"<=300");
+    metcuts.push_back(metdef+">300");
   }
-  metcuts.push_back(metdef+">150&&"+metdef+"<=200");
-  metcuts.push_back(metdef+">200&&"+metdef+"<=300");
-  metcuts.push_back(metdef+">300&&"+metdef+"<=400");
-  metcuts.push_back(metdef+">400");
   if (sample=="qcd") { // add an inclusive bin
     metcuts.push_back(metdef+">150");
   } else if (sample=="ttbar" || sample=="zll"){
@@ -303,7 +305,7 @@ int main(int argc, char *argv[]){
   vector<TString> tablenames;
   for(size_t iscen=0; iscen<abcds.size(); iscen++) {
     // allyields: [0] data, [1] bkg, [2] T1tttt(NC), [3] T1tttt(C)
-    // if split_bkg [2/4] Other, [3/5] tt1l, [4/6] tt2l
+    // if split_bkg [2/4] Other, [3/5] ttx, [4/6] vjets
     vector<vector<GammaParams> > allyields;
     Table * yield_table;
     if(alt_scen != "data"){
@@ -366,9 +368,9 @@ int main(int argc, char *argv[]){
     cout<<endl;
   }
 
-  //double seconds = (chrono::duration<double>(chrono::high_resolution_clock::now() - begTime)).count();
-  //TString hhmmss = HoursMinSec(seconds);
-  //cout<<endl<<"Finding "<<abcds.size()<<" tables took "<<round(seconds)<<" seconds ("<<hhmmss<<")"<<endl<<endl;
+  double seconds = (std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - begTime)).count();
+  TString hhmmss = HoursMinSec(seconds);
+  cout<<endl<<"Finding "<<abcds.size()<<" tables took "<<round(seconds)<<" seconds ("<<hhmmss<<")"<<endl<<endl;
 } // main
 
 ////////////////////////////////////////// End of main //////////////////////////////////////////////////////
@@ -539,7 +541,6 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
   // value_index: 0 = central value, 1 = up value, 2 = down value
   vector<vector<vector<float> > > k_ordered, kmd_ordered, k_ordered_mm;
    
-  int cSignal = kBlue;
   int nbins = 0; // Total number of njet bins (used in the base histo)
   for(size_t iplane=0; iplane < kappas.size(); iplane++) {
     k_ordered.push_back(vector<vector<float> >());
@@ -627,24 +628,27 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
       float kap = k_ordered[iplane][ibin][0], kap_mm = k_ordered_mm[iplane][ibin][0];
       TString text = ""; 
       if(alt_scen=="data") text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-1)*100,0,1)+"%";
-      else if (alt_scen=="mc_as_data" || alt_scen=="mc") text = "#Delta_{#kappa} = "+RoundNumber((kap-1)*100,0,1)+"%";
-      else /*if fake mismeasure*/ text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-kap)*100,0,kap)+"%";
-      klabel.SetTextSize(0.045);
-      if (k_ordered.size()*k_ordered[iplane].size()>8) klabel.SetTextSize(0.03);
+      else if (alt_scen=="mc_as_data" || alt_scen=="mc") text = "#Delta_{#kappa}="+RoundNumber((kap-1)*100,0,1)+"%";
+      else /*if fake mismeasure*/ text = "#Delta_{#kappa}="+RoundNumber((kap_mm-kap)*100,0,kap)+"%";
+      klabel.SetTextSize(abcd.planecuts.size()>=10 ? 0.025 : 0.045);
       klabel.DrawLatex(bin, 0.85*maxy, text);
       //// Printing stat uncertainty of kappa_mm/kappa
       float kapUp = k_ordered[iplane][ibin][1], kapDown = k_ordered[iplane][ibin][2];
       float kap_mmUp = k_ordered_mm[iplane][ibin][1];
       float kap_mmDown = k_ordered_mm[iplane][ibin][2];
-      if(alt_scen=="data" || alt_scen=="mc_as_data") {              
-        text = "#sigma_{stat} = ^{+"+RoundNumber(kap_mmUp*100,0, 1)+"%}_{-"+RoundNumber(kap_mmDown*100,0, 1)+"%}";
+      if(alt_scen=="data" || alt_scen=="mc_as_data") {
+        TString unc_ = RoundNumber(kap_mmUp*100,0, 1)>RoundNumber(kap_mmDown*100,0, 1) ? RoundNumber(kap_mmUp*100,0, 1) : RoundNumber(kap_mmDown*100,0, 1);
+        // text = "#sigma_{stat}=^{+"+RoundNumber(kap_mmUp*100,0, 1)+"%}_{-"+RoundNumber(kap_mmDown*100,0, 1)+"%}";
+        text = "#sigma_{st}="+unc_+"%";
       } else {
-        text = "#sigma_{stat} = ^{+"+RoundNumber(kapUp*100,0, 1)+"%}_{-"+RoundNumber(kapDown*100,0, 1)+"%}";
+        TString unc_ = RoundNumber(kapUp*100,0, 1)>RoundNumber(kapDown*100,0, 1) ? RoundNumber(kapUp*100,0, 1) : RoundNumber(kapDown*100,0, 1);
+        // text = "#sigma_{stat}=^{+"+RoundNumber(kapUp*100,0, 1)+"%}_{-"+RoundNumber(kapDown*100,0, 1)+"%}";
+        text = "#sigma_{st}="+unc_+"%";
       }
       klabel.DrawLatex(bin, 0.78*maxy, text);
       // adding label to indicate the ABCD corresponding to each kappa value
-      klabel.SetTextSize(0.05);
-      if (k_ordered.size()*k_ordered[iplane].size()>8) klabel.SetTextSize(0.035);
+      klabel.SetTextSize(abcd.planecuts.size()>=10 ? 0.025 : 0.035);
+      
       if (sample=="search" || sample=="ttbar") text = ibin%2==0 ? "3b/2b" : "4b/2b"; 
       else if (sample=="zll") text = do_midnb ? "2b/1b" : "1b/0b"; 
       else if (sample=="qcd") {
@@ -660,6 +664,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
 
     // All the labels on the X-axis...
     TLatex label; label.SetTextSize(0.05); label.SetTextFont(42); label.SetTextAlign(23);
+    label.SetTextSize(abcd.planecuts.size()>=10 ? 0.025 : 0.045);
     string metdef = "met";
     if (sample=="zll") metdef = "ll_pt";
     double lmargin(opts.LeftMargin()), rmargin(opts.RightMargin()), bmargin(opts.BottomMargin());
@@ -753,17 +758,15 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
   if(sample=="search" && alt_scen != "data") title = "#font["+fontstyle+"]{"+abcd_title+"}";
   cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015, title);
 
-  ///// Sample name
+  ///// sample name
   cmslabel.SetTextAlign(11);
   title = "#font["+fontstyle+"]{"+abcd_title+"}";
-  TString newSignal = "#color["; newSignal += cSignal; newSignal += "]{Signal}";
-  title.ReplaceAll("Signal", newSignal);
-  if(!(sample=="search" && alt_scen != "data")) cmslabel.DrawLatex(opts.LeftMargin()+0.14, 1-opts.TopMargin()+0.015, title);
+  if(!(sample=="search" && alt_scen != "data")) cmslabel.DrawLatex(opts.LeftMargin()+0.2, 1-opts.TopMargin()+0.015, title);
 
   line.SetLineStyle(3); line.SetLineWidth(1);
   line.DrawLine(minx, 1, maxx, 1);
 
-  TString fname="plots/kappa_"+sample+"_tight_" +abcd.scenario + (do_highnb?"_highnb":"")+(do_midnb?"_highnb":"");
+  TString fname="plots/kappa_"+sample+"_" +abcd.scenario + (do_highnb?"_highnb":"")+(do_midnb?"_midnb":"");
   fname += "_lumi"+RoundNumber(lumi, 0)+".pdf";
   can.SaveAs(fname);
   cout<<endl<<" open "<<fname<<endl; 
@@ -883,10 +886,10 @@ vector<vector<float> > findPreds(abcd_def &abcd, vector<vector<GammaParams> > &a
 void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
-      {"sample", required_argument, 0, 's'},    // Which sample to use: standard, 2015 data
+      {"sample", required_argument, 0, 's'},
       {"debug", no_argument, 0, 'd'},         // Debug: prints yields and cuts used
-      {"quick", no_argument, 0, 'q'},           // Used inclusive ttbar for quick testing
-      {"scen", required_argument, 0, 0},        // Mismeasurment scenario, 0 for data
+      {"quick", no_argument, 0, 'q'},         // Used inclusive ttbar for quick testing
+      {"scen", required_argument, 0, 0},       
       {"midnb", no_argument, 0, 0},           // Check zll and qcd CRs for 2b
       {"highnb", no_argument, 0, 0},          // Check QCD CR at 3b and 4b
       {0, 0, 0, 0}
