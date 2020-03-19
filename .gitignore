@@ -33,6 +33,7 @@
 *~
 *#
 *.root
+*.txt
 *.log
 *.pdf
 *.fdb_latexmk

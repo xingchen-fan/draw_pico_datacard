@@ -156,7 +156,7 @@ void GetOptions(int argc, char *argv[]){
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "i:f:s", long_options, &option_index);
+    opt = getopt_long(argc, argv, "i:f:m:s", long_options, &option_index);
     if( opt == -1) break;
 
     string optname;

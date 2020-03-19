@@ -19,6 +19,7 @@
 #include "core/plot_opt.hpp"
 #include "core/functions.hpp"
 #include "higgsino/hig_utilities.hpp"
+#include "higgsino/hig_functions.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;
@@ -28,11 +29,8 @@ void GetOptions(int argc, char *argv[]);
 namespace{
   bool do_allbkg = false;
   string cr_sample = "search";
-  float lumi = 137;
+  float lumi = 1;
   bool unblind = false;
-  bool do_dmcut = false;
-  bool do_tkveto = true;
-  bool do_dphicut = true;
 }
 
 int main(int argc, char *argv[]){
@@ -60,22 +58,21 @@ int main(int argc, char *argv[]){
   years = {2016, 2017, 2018};
 
   string base_dir(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_eldorado/");
-  string mc_skim_dir("mc/merged_higmc_higtight/"), data_skim_dir("mc/merged_higdata_higloose/");
-  if (cr_sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1/"; data_skim_dir = "merged_higdata_higlep1/";} 
-  else if (cr_sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2/"; data_skim_dir = "merged_higdata_higlep2/";} 
+  string mc_skim_dir("mc/merged_higmc_preselect/"), data_skim_dir("mc/merged_higdata_higloose/");
+  if (cr_sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "merged_higdata_higlep1/";} 
+  else if (cr_sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "merged_higdata_higlep2/";} 
   else if (cr_sample=="qcd") {mc_skim_dir = "mc/merged_higmc_higqcd/";  data_skim_dir = "merged_higdata_higqcd/";} 
-  string sig_skim_dir("SMS-TChiHH_2D/merged_higmc_higtight/");
 
   set<string> alltags; 
   if (cr_sample=="ttbar" || cr_sample=="search") alltags = {"*TTJets_*Lept*"};//,
                                       // "*_TTZ*.root", "*_TTW*.root", "*_TTGJets*.root", 
                                       // "*ttHTobb*.root","*_TTTT*.root"};
-  // if (cr_sample=="zll") alltags = {"*DYJetsToLL*.root"};
-  // if (cr_sample=="qcd") alltags = {//"*QCD_HT100to200_Tune*", "*QCD_HT200to300_Tune*",
-  //                               //"*QCD_HT300to500_Tune*", 
-  //                                "*QCD_HT500to700_Tune*",
-  //                                "*QCD_HT700to1000_Tune*", "*QCD_HT1000to1500_Tune*", 
-  //                                "*QCD_HT1500to2000_Tune*", "*QCD_HT2000toInf_Tune*"};
+  if (cr_sample=="zll") alltags = {"*DYJetsToLL*.root"};
+  if (cr_sample=="qcd") alltags = {//"*QCD_HT100to200_Tune*", "*QCD_HT200to300_Tune*",
+                                //"*QCD_HT300to500_Tune*", 
+                                 "*QCD_HT500to700_Tune*",
+                                 "*QCD_HT700to1000_Tune*", "*QCD_HT1000to1500_Tune*", 
+                                 "*QCD_HT1500to2000_Tune*", "*QCD_HT2000toInf_Tune*"};
   if (do_allbkg) { // don't include QCD MC unless in QCD control cr_sample
     if(cr_sample=="qcd") alltags = {"*TTJets_*Lept*", 
                                  "*_TTZ*.root", "*_TTW*.root", "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root",
@@ -89,22 +86,19 @@ int main(int argc, char *argv[]){
     else  alltags = {"*TTJets_*Lept*",
             "*_TTZ*.root", "*_TTW*.root", "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root",
             "*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root", "*_ST_*.root",
-            "*_WH_HToBB*.root", "*_ZH_HToBB*.root", "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"};
+            "*_WH_HToBB*.root", "*_ZH_HToBB*.root", "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"
+          };
   }
   set<string> allfiles = attach_folder(base_dir, years, mc_skim_dir,alltags);
 
   // Baseline definitions
-  string baseline = "njet>=4 && njet<=5 && hig_cand_am[0]<=200";
-  if (do_dphicut) baseline += cr_sample=="qcd" ? "&& lowDphiFix" : "&& !lowDphiFix";
-  if (do_tkveto) baseline += "&& ntk==0";
-  if (do_dmcut) baseline += "&& hig_cand_dm[0]<=40";
+  string baseline = "stitch && pass && njet>=4 && njet<=5 && met>150 && met<=200"; // "&& ntk==0" - should not affect kinematics, so don't kill stats
+  if (cr_sample=="search") baseline += "&& met>150 && nbt>=2 && nvlep==0 && ntk==0 && !low_dphi_met";
+  if (cr_sample=="ttbar")  baseline += "&& met>150&& nbt>=2 && nlep==1  && mt<=100";
+  if (cr_sample=="zll")    baseline += "&& nlep==2  && met<50";
+  if (cr_sample=="qcd")    baseline += "&& met>150 && nvlep==0 && low_dphi_met";
   
-  if (cr_sample=="zll") baseline += "&& nlep==2 && met<50";
-  if (cr_sample=="qcd") baseline += "&& nvlep==0";
-  if (cr_sample=="ttbar") baseline += "&& nlep==1 && mt<=100 && nbt>=2 && met>150";
-  // if (cr_sample=="search") baseline += "&& nvlep==0 && ntk==0 && !lowDphiFix && nbt>=2";
-  if (cr_sample=="search") baseline += "&& nvlep==0 && nbt>=2";
-    
+  baseline += "&& hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200";
 
   ////// Nb cuts
   vector<string> nbcuts;
@@ -124,9 +118,6 @@ int main(int argc, char *argv[]){
   if (do_allbkg) sname = "Bkg.";
 
   vector<int> colors = {kGreen+3, kGreen+1, kOrange, kAzure+1, kBlue+1};
-
-  // Cuts applied to all processes but not shown in plot title
-  NamedFunc filters = "stitch && pass"; 
 
   vector<shared_ptr<Process> > procs = vector<shared_ptr<Process> >();
   for (unsigned inb(firstnb); inb<nbcuts.size(); inb++){
@@ -181,7 +172,7 @@ int main(int argc, char *argv[]){
       procs_data.back().push_back(Process::MakeShared<Baby_pico>(ilab[0]+" Data "+lumi_s+" fb^{-1}", 
                        Process::Type::background, kBlack, 
                        attach_folder(base_dir, years, data_skim_dir,{"*root"}),
-                       /*Higfuncs::trig_hig &&*/ filters && icomb[0]));
+                       /*Higfuncs::trig_hig &&*/ icomb[0]));
       procs_data.back().back()->SetFillColor(color_data);
       procs_data.back().back()->SetLineColor(color_data);
       procs_data.back().back()->SetLineWidth(2);
@@ -189,23 +180,22 @@ int main(int argc, char *argv[]){
       procs_data.back().push_back(Process::MakeShared<Baby_pico>(ilab[1]+" Data "+lumi_s+" fb^{-1}", 
                        Process::Type::data, kBlack, 
                        attach_folder(base_dir, years, data_skim_dir,{"*root"}),
-                        /*Higfuncs::trig_hig &&*/ filters && icomb[1]));
+                        /*Higfuncs::trig_hig &&*/ icomb[1]));
     }
   }
 
 
-  string metcut = "met>150";
+  string metcut = "met>300";
   if (cr_sample=="zll") metcut = "(mumu_pt*(mumu_pt>0)+elel_pt*(elel_pt>0))>0";
   else if (cr_sample=="ttbar") metcut = "1";
 
   vector<string> xcuts;
   // xcuts.push_back("1");
-  xcuts.push_back("hig_cand_drmax[0]<=2.2");
   xcuts.push_back("hig_cand_drmax[0]<=1.1");
-  xcuts.push_back("hig_cand_drmax[0]>1.1 && hig_cand_drmax[0]<=2.2");
+  xcuts.push_back("hig_cand_drmax[0]>1.1");
 
   PlotMaker pm;
-  NamedFunc wgt = "w_lumi*w_isr";//Higfuncs::weight_higd*Higfuncs::eff_higtrig;
+  NamedFunc wgt = "w_lumi*w_isr" * HigUtilities::w_years*Higfuncs::eff_higtrig;//Higfuncs::weight_higd;
 
   for (unsigned ic(0); ic<xcuts.size(); ic++){
     if (unblind && cr_sample!="search") {
@@ -220,12 +210,6 @@ int main(int argc, char *argv[]){
       .RatioTitle("Bkg. nb","Bkg. 2b");
     pm.Push<Hist1D>(Axis(10,0,200,"hig_cand_am[0]", "#LTm#GT [GeV]", {100., 140.}),
       baseline+"&&"+xcuts[ic], procs_trub, plt_types).Weight(wgt).Tag(cr_sample+"_shape_trub");
-
-    // pm.Push<Hist1D>(Axis(10,0,200,"hig_am_dnn", "DNN #LTm#GT [GeV]", {100., 140.}),
-    //   baseline+"&&"+xcuts[ic], procs, plt_types).Weight(wgt).Tag(cr_sample+"_shape_bcats")
-    //   .RatioTitle("Bkg. nb","Bkg. 2b");
-    // pm.Push<Hist1D>(Axis(10,0,200,"hig_am_dnn", "DNN #LTm#GT [GeV]", {100., 140.}),
-    //   baseline+"&&"+xcuts[ic], procs_trub, plt_types).Weight(wgt).Tag(cr_sample+"_shape_trub");
 
     pm.Push<Hist1D>(Axis(10,0,100,"hig_cand_dm[0]", "#Deltam [GeV]", {40.}),
       baseline+"&&"+xcuts[ic], procs, plt_types).Weight(wgt).Tag(cr_sample+"_shape_bcats")
@@ -242,7 +226,7 @@ int main(int argc, char *argv[]){
   }
 
   pm.min_print_ = true;
-  pm.MakePlots(35.9);
+  pm.MakePlots(1);
 
   time(&endtime);
   cout<<endl<<"Making plots took "<<difftime(endtime, begtime)<<" seconds"<<endl<<endl;
