@@ -25,7 +25,7 @@ To plot overlap between the boosted and resolved analysis:
 Write all the datacards:
 
 ~~~~bash
-./run/higgsino/write_datacards.exe -t boosted -o boosted/
+./run/higgsino/write_datacards.exe -m N1N2 -o test
 ~~~~
 
 For comparison of signal yields to other tables, remember to use `--recomet` such that the yield is not averaged with the one obtained using GenMET. To make a datacard for the boosted case, use `-t boosted`. Use option `--unblind` to include data. To run on a particular point add, e.g. `-p "700_1"`. Then to get a limit interactively:
@@ -37,7 +37,7 @@ For comparison of signal yields to other tables, remember to use `--recomet` suc
 Get limits for the full scan in the batch:
 
 ~~~~bash
-./scripts/write_combine_cmds.py --card_dir test
+./scripts/write_combine_cmds.py --card_dir test -m N1N2
 ~~~~
 
 To combine outputs and make the limit plot

@@ -11,6 +11,8 @@ namespace Higfuncs{
   // count number of jets associated with true B-hadrons 
   // among the 4 jets used to build average mjj
   extern const NamedFunc ntrub;
+  // nbfake = category minus ntrub
+  extern const NamedFunc nbfake;
 
   //use both the MET-binned and HT-binned ttbar
   extern const NamedFunc stitch_htmet;

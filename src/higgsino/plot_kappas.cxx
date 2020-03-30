@@ -53,13 +53,13 @@ using std::shared_ptr;
 
 namespace{
   bool split_bkg = true;
-  bool do_signal = true;
+  bool do_signal = false;
   bool debug = false;
   bool do_highnb = false;
   bool do_midnb = false;
   int digits_table = 1;
   TString sample = "search";
-  string alt_scen = "mc_as_data";
+  string alt_scen = "mc_as_data"; //e.g. "mc", "data", "mc_as_data" or any systematic defined in sys_weights.cfg or in the defining scenarios section below
   float lumi=1.;
   bool quick_test = false;
   bool do_zbi = false;
@@ -106,29 +106,30 @@ int main(int argc, char *argv[]){
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
   set<int> years; 
-  years = {2016, 2017, 2018};
+  years = {2016,2017,2018};
 
   string base_dir(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_eldorado/");
-  string mc_skim_dir("mc/merged_higmc_higtight/"), data_skim_dir("mc/merged_higdata_higloose/");
+  string mc_skim_dir("mc/merged_higmc_preselect/"), data_skim_dir("mc/merged_higdata_higloose/");
   if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "merged_higdata_higlep1T/";} 
   else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "merged_higdata_higlep2T/";} 
   else if (sample=="qcd") {mc_skim_dir = "mc/merged_higmc_higqcd/";  data_skim_dir = "merged_higdata_higqcd/";} 
-  string sig_skim_dir("SMS-TChiHH_2D/merged_higmc_higtight/");
+  string sig_skim_dir("SMS-TChiHH_2D/mergednn_higmc_preselect/");
 
   map<string, set<string>> mctags; 
-  mctags["ttx"]     = set<string>({"*TTJets_*Lept*", 
+  mctags["ttx"]     = set<string>({
+                                    "*TTJets_*Lept*", 
                                     "*_TTZ*.root", "*_TTW*.root",
                                     "*_TTGJets*.root", "*_ttHTobb*.root","*_TTTT*.root"
                                   });
   mctags["vjets"]   = set<string>({ 
-                                   "*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root"
+                                   "*DYJetsToLL*.root","*_ZJet*.root", "*_WJetsToLNu*.root"
                                  });
-  mctags["other"]   = set<string>({
-                                   // "*QCD_HT100to200_Tune*", "*QCD_HT200to300_Tune*", // these have too low weights
-                                   // "*QCD_HT300to500_Tune*", 
-                                   // "*QCD_HT500to700_Tune*",
-                                   // "*QCD_HT700to1000_Tune*", 
-                                   "*QCD_HT1000to1500_Tune*", 
+  mctags["other"]   = set<string>({ // no events pass from QCD HT 100-200
+                                   // "*QCD_HT100to200_Tune*", 
+                                   // "*QCD_HT200to300_Tune*", 
+                                   "*QCD_HT300to500_Tune*",  // these have very low stats
+                                   "*QCD_HT500to700_Tune*",
+                                   "*QCD_HT700to1000_Tune*", "*QCD_HT1000to1500_Tune*", 
                                    "*QCD_HT1500to2000_Tune*", "*QCD_HT2000toInf_Tune*",
                                    "*_ST_*.root",
                                    "*_WH_HToBB*.root", "*_ZH_HToBB*.root",
@@ -140,17 +141,19 @@ int main(int argc, char *argv[]){
   ////////////////////////////////////////// Defining baseline cuts ///////////////////////////////////////
   TString c_hig_trim = "hig_cand_drmax[0]<=2.2  && hig_cand_dm[0]<=40 && hig_cand_am[0]<200";
   string baseline_s = "njet>=4 && njet<=5";
-  if (sample=="search") baseline_s += " && nvlep==0 && ntk==0 && !lowDphiFix &&"+c_hig_trim;
+  if (sample=="search") baseline_s += " && nvlep==0 && ntk==0 && !low_dphi_met &&"+c_hig_trim;
   else if (sample=="ttbar") baseline_s += " && nlep==1 && mt<100 &&"+c_hig_trim;
   else if (sample=="zll") baseline_s += " && nlep==2 && met<50 &&"+c_hig_trim;
-  else if (sample=="qcd") baseline_s += " && nvlep==0 && ntk==0 && lowDphiFix &&"+c_hig_trim;
+  else if (sample=="qcd") baseline_s += " && nvlep==0 && ntk==0 && low_dphi_met &&"+c_hig_trim;
+
+  // NamedFunc baseline = baseline_s && Higfuncs::nbfake==0. && "stitch && pass";
+  // NamedFunc baseline = baseline_s && Higfuncs::ntrub==2 && "stitch && pass";
   NamedFunc baseline = baseline_s && "stitch && pass";
-  // NamedFunc baseline = baseline_s && Higfuncs::stitch_htmet && "pass";
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Defining processes //////////////////////////////////////////  
   // define signal processes
-  vector<string> sigMasses({"400", "900"});
+  vector<string> sigMasses({"225","400", "900"});
   vector<shared_ptr<Process> > proc_sigs;
   for (unsigned isig(0); isig<sigMasses.size(); isig++)
     proc_sigs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigMasses[isig]+",1)", Process::Type::signal, 1, 
@@ -223,6 +226,11 @@ int main(int argc, char *argv[]){
   vector<TString> metcuts;
   string metdef = "met";
   if (sample=="zll") metdef = "ll_pt[0]";
+  if (sample=="qcd") { // add an inclusive bin
+    metcuts.push_back(metdef+">150");
+  } else if (sample=="ttbar" || sample=="zll"){
+    metcuts.push_back(metdef+">0");
+  }
   if (sample=="search" || sample=="qcd"){
     metcuts.push_back(metdef+">150&&"+metdef+"<=200");
     metcuts.push_back(metdef+">200&&"+metdef+"<=300");
@@ -235,11 +243,7 @@ int main(int argc, char *argv[]){
     metcuts.push_back(metdef+">200&&"+metdef+"<=300");
     metcuts.push_back(metdef+">300");
   }
-  if (sample=="qcd") { // add an inclusive bin
-    metcuts.push_back(metdef+">150");
-  } else if (sample=="ttbar" || sample=="zll"){
-    metcuts.push_back(metdef+">0");
-  }
+
 
   vector<TString> nbcuts;
   if (sample=="ttbar" || sample=="search" || do_highnb){
@@ -248,17 +252,17 @@ int main(int argc, char *argv[]){
     nbcuts.push_back("nbt>=2&&nbm>=3&&nbl>=4");
   } else if (do_midnb){
     nbcuts.push_back("nbm==1");
-    nbcuts.push_back("nbt==2&&nbm==2");
+    nbcuts.push_back("nbm==2");
   } else {
     nbcuts.push_back("nbm==0");
     nbcuts.push_back("nbm==1");
   }
 
   vector<TString> planecuts;
-  for (auto imet: metcuts){
-    planecuts.push_back(imet + "&& hig_cand_drmax[0]<=1.1");
-    planecuts.push_back(imet + "&& hig_cand_drmax[0]>1.1");
-    // planecuts.push_back(imet);
+  for (unsigned imet(0); imet<metcuts.size(); imet++){
+    // planecuts.push_back(metcuts[imet]);
+      planecuts.push_back(metcuts[imet] + "&& hig_cand_drmax[0]<=1.1");
+      planecuts.push_back(metcuts[imet] + "&& hig_cand_drmax[0]>1.1");
   }
 
   ////// ABCD cuts
@@ -285,6 +289,7 @@ int main(int argc, char *argv[]){
         for(auto &ireg: abcd_regions){
           TString totcut = iplane+"&&"+ireg;
           totcut.ReplaceAll("nb_cr", nbcuts[0]).ReplaceAll("nb_sr",inb);
+
           table_cuts.push_back(TableRow(totcut.Data(), totcut.Data(),0,0,weights.at("nominal")));
           if(alt_scen != "data") 
             table_cuts_mm.push_back(TableRow(totcut.Data(), totcut.Data(),0,0,weights.at(iscen)));
@@ -323,8 +328,8 @@ int main(int argc, char *argv[]){
     }
     if(split_bkg){
       allyields.push_back(yield_table->Yield(proc_other.get(), lumi));
-      allyields.push_back(yield_table->Yield(proc_ttx.get(), lumi));
       allyields.push_back(yield_table->Yield(proc_vjets.get(), lumi));
+      allyields.push_back(yield_table->Yield(proc_ttx.get(), lumi));
     }
     // Print out all the yields
     if (debug) {
@@ -630,7 +635,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
       if(alt_scen=="data") text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-1)*100,0,1)+"%";
       else if (alt_scen=="mc_as_data" || alt_scen=="mc") text = "#Delta_{#kappa}="+RoundNumber((kap-1)*100,0,1)+"%";
       else /*if fake mismeasure*/ text = "#Delta_{#kappa}="+RoundNumber((kap_mm-kap)*100,0,kap)+"%";
-      klabel.SetTextSize(abcd.planecuts.size()>=10 ? 0.025 : 0.045);
+      klabel.SetTextSize(abcd.planecuts.size()>=10 ? 0.025 : 0.035);
       klabel.DrawLatex(bin, 0.85*maxy, text);
       //// Printing stat uncertainty of kappa_mm/kappa
       float kapUp = k_ordered[iplane][ibin][1], kapDown = k_ordered[iplane][ibin][2];
@@ -691,8 +696,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
     }
     // write pT miss at the bottom of the plot...
     if (iplane==0) {
-      if (sample=="zll") label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/2., bmargin-0.08, 
-            "p_{T}(l#kern[0.11]{#lower[-0.25]{^{+}}}#kern[0.3]{l#kern[0.05]{#lower[0.36]{^{#scale[1.3]{-}}}}}) [GeV]");
+      if (sample=="zll") label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/2., bmargin-0.08, "p_{T}^{Z} [GeV]");
       else label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/2., bmargin-0.08, "p_{T}^{miss} [GeV]");
     }
   } // Loop over plane cuts

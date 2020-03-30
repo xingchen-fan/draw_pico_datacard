@@ -18,6 +18,20 @@ const NamedFunc ntrub("ntrub",[](const Baby &b) -> NamedFunc::ScalarType{
   return tmp_ntrub;
 });
 
+const NamedFunc nbfake("nbfake",[](const Baby &b) -> NamedFunc::ScalarType{
+  int nb_tru(0);
+  for (unsigned i(0); i<b.jet_pt()->size(); i++){
+    if (!b.jet_h1d()->at(i) && !b.jet_h2d()->at(i)) continue;
+    if (b.jet_hflavor()->at(i)==5) nb_tru++;
+  }
+  int nb_reco(0);
+  if (b.nbt()>=2) {
+    if (b.nbm()==2) nb_reco = 2;
+    if (b.nbm()==3&&b.nbl()==3) nb_reco = 3;
+    if (b.nbm()>=3&&b.nbl()>=4) nb_reco = 4;
+  }
+  return nb_reco-nb_tru;
+});
 
 const NamedFunc stitch_htmet("stitch_htmet",[](const Baby &b) -> NamedFunc::ScalarType{
   bool stitch_(b.stitch());

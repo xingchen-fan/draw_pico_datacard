@@ -26,15 +26,6 @@
 #include "higgsino/hig_functions.hpp"
 #include "higgsino/hig_utilities.hpp"
 
-const NamedFunc min_jet_dphi("min_jet_dphi", [](const Baby &b) -> NamedFunc::ScalarType{
-  float min_dphi = 4;
-  for (size_t ijet = 0; ijet < (*b.jet_phi()).size(); ++ijet) {
-    float dphi = fabs(TVector2::Phi_mpi_pi((*b.jet_phi())[ijet]-b.met_phi()));
-    if (dphi < min_dphi) min_dphi = dphi;
-  }
-  return min_dphi;
-});
-
 const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
   if (b.SampleType()<0) return 1.;
 
@@ -79,23 +70,24 @@ int main(int argc, char *argv[]){
     bfolder = "/net/cms29"; // In laptops, you can't create a /net folder
 
   string foldermc_base("/cms29r0/pico/NanoAODv5/higgsino_eldorado/");
-  string foldermc_skim("mc/merged_higmc_higloose/");
+  string foldermc_skim("mc/merged_higmc_preselect/");
+  // string foldermc_base("/cms29r0/pico/NanoAODv5/higgsino_angeles/");
+  // string foldermc_skim("mc/merged_higmc_higloose/");
   //string foldersig("/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/TChiHH/merged_higmc_unskimmed/");
   string foldersig("/cms29r0/pico/NanoAODv5/higgsino_eldorado/2016/SMS-TChiHH_2D/merged_higmc_higloose/");
-  //set<int> years = {2016, 2017, 2018};
-  set<int> years = {2016};
+  set<int> years = {2016, 2017, 2018};
+  // set<int> years = {2016};
 
   map<string, set<string>> mctags; 
-  mctags["tt"]     = set<string>({"*TTJets_*Lept*"});
-  mctags["topx"]     = set<string>({"*_TTZ*.root", "*_TTW*.root",
-                                     "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root", "*_ST_*.root"});
-  mctags["wjets"]   = set<string>({"*_WJetsToLNu*.root"});
-  mctags["zjets"]   = set<string>({"*_ZJet*.root"});
-  mctags["qcd"]     = set<string>({"*_QCD_HT200to300_*","*_QCD_HT300to500_*","*_QCD_HT500to700_*",
+  mctags["ttx"]     = set<string>({"*TTJets_*Lept*","*_TTZ*.root", "*_TTW*.root",
+                                     "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root"});
+  mctags["vjets"]   = set<string>({"*_WJetsToLNu*.root", "*DYJetsToLL*.root", "*_ZJet*.root"});
+  mctags["qcd"]     = set<string>({//"*_QCD_HT200to300_*","*_QCD_HT300to500_*",
+                                   "*_QCD_HT500to700_*",
                                    "*_QCD_HT700to1000_*", "*_QCD_HT1000to1500_*","*_QCD_HT1500to2000_*",
                                    "*_QCD_HT2000toInf_*"});
   mctags["other"]   = set<string>({"*_WH_HToBB*.root", "*_ZH_HToBB*.root",
-                                     "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root", "*DYJetsToLL*.root"});
+                                     "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root", "*_ST_*.root"});
 
   //    Baseline definitions
   //-----------------------------------------
@@ -115,19 +107,15 @@ int main(int argc, char *argv[]){
   //--------------------------------------------------
   Palette colors("txt/colors.txt", "default");
 
-  NamedFunc base_filters = HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
+  NamedFunc base_filters = "pass";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
 
   vector<shared_ptr<Process> > procs;
   procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGray+2,
                   attach_folder(foldermc_base,years,foldermc_skim, mctags["other"]), base_filters && baseline));
-  procs.push_back(Process::MakeShared<Baby_pico>("Z+jets", Process::Type::background, kOrange+1,
-                  attach_folder(foldermc_base,years,foldermc_skim,mctags["zjets"]), base_filters && baseline));
-  procs.push_back(Process::MakeShared<Baby_pico>("W+jets", Process::Type::background, kGreen+1,
-                  attach_folder(foldermc_base,years,foldermc_skim,mctags["wjets"]), base_filters && baseline));
-  procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}", Process::Type::background,colors("tt_1l"),
-                  attach_folder(foldermc_base,years,foldermc_skim, mctags["tt"]), base_filters && baseline));
-  procs.push_back(Process::MakeShared<Baby_pico>("t/t#bar{t}+X", Process::Type::background,colors("tt_1l"),
-                  attach_folder(foldermc_base,years,foldermc_skim, mctags["topx"]), base_filters && baseline));
+  procs.push_back(Process::MakeShared<Baby_pico>("V+jets", Process::Type::background, kGreen+1,
+                  attach_folder(foldermc_base,years,foldermc_skim,mctags["vjets"]), base_filters && baseline));
+  procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X", Process::Type::background,colors("tt_1l"),
+                  attach_folder(foldermc_base,years,foldermc_skim, mctags["ttx"]), base_filters && baseline));
   procs.push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background, colors("other"),
                   attach_folder(foldermc_base,years,foldermc_skim, mctags["qcd"]), base_filters && baseline)); 
 
@@ -151,9 +139,8 @@ int main(int argc, char *argv[]){
   vector<string> res_abcd = {c_2b+"&&"+sbd, c_3b+"&&"+sbd, c_4b+"&&"+sbd, 
                              c_2b+"&&"+hig, c_3b+"&&"+hig, c_4b+"&&"+hig};
 
-  bool bin_drmax = false;
+  bool bin_drmax = true;
   bool bin_met = true;
-  bool bin_dphi = true;
 
   vector<TString> vc_drmax;
   vc_drmax.push_back("hig_cand_drmax[0]>1.1");
@@ -177,13 +164,6 @@ int main(int argc, char *argv[]){
   }   
   if (!bin_met) vc_met = {"met>150"};
 
-  vector<pair<string, NamedFunc>> vc_dphi;
-  vc_dphi.push_back({"0 \\leq \\Delta \\phi \\leq 0.5" ,min_jet_dphi>=0. && min_jet_dphi<=0.5});
-  //vc_dphi.push_back({"0.5 < \\Delta \\phi \\leq 1", min_jet_dphi>0.5 && min_jet_dphi<=1.});
-  //vc_dphi.push_back({"1 < \\Delta \\phi", min_jet_dphi>1.});
-  vc_dphi.push_back({"0.5 < \\Delta \\phi", min_jet_dphi>0.5});
-  if (!bin_dphi) vc_dphi = {{"0 \\leq \\Delta \\phi", min_jet_dphi>=0.}};
-
   //        Define and fill tables
   //------------------------------------
   PlotMaker pm;
@@ -192,16 +172,14 @@ int main(int argc, char *argv[]){
   if (resolved) {
     for (auto &imet: vc_met) {
       for (auto &idrmax: vc_drmax) {
-        for (auto &idphi: vc_dphi) {
-          // Label
-          tablerows.push_back(TableRow("$"+CodeToLatex((imet+"&&"+idrmax).Data())+","+idphi.first+"$"));
-          for (auto &iabcd: res_abcd) {
-            // Cut for row
-            NamedFunc res_reg_ = imet+"&&"+idrmax+"&&"+iabcd&&idphi.second;
-            // Add row to table
-            tablerows.push_back(TableRow("$"+CodeToLatex(iabcd)+"$", res_reg_, 0,0, wgt));
-            nbins++;
-          }
+        // Label
+        tablerows.push_back(TableRow("$"+CodeToLatex((imet+"&&"+idrmax).Data())+"$"));
+        for (auto &iabcd: res_abcd) {
+          // Cut for row
+          NamedFunc res_reg_ = imet+"&&"+idrmax+"&&"+iabcd;
+          // Add row to table
+          tablerows.push_back(TableRow("$"+CodeToLatex(iabcd)+"$", res_reg_, 0,0, wgt));
+          nbins++;
         }
       }
     }

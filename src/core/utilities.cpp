@@ -101,6 +101,8 @@ string execute(const string &cmd){
 string CodeToPlainText(string code){
   ReplaceAll(code, " ", "");
   ReplaceAll(code, "stitch &&", "");
+  ReplaceAll(code, "stitch_htmet &&", "");
+  ReplaceAll(code, "stitch_ht &&", "");
   ReplaceAll(code, "nbm==0","0b");
   ReplaceAll(code, "nbm==1","1b");
   ReplaceAll(code, "nbt==2&&nbm==2","2b");
@@ -188,6 +190,13 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "met>500&&met<=700", "500<p_{T}^{miss}#leq 700");
   ReplaceAll(code, "met>200&&met<=500", "200<p_{T}^{miss}#leq 500");
 
+  ReplaceAll(code, "ll_pt[0]>0&&ll_pt[0]<=75","0<p_{T}^{Z}#leq 75");
+  ReplaceAll(code, "ll_pt[0]>75&&ll_pt[0]<=150","75<p_{T}^{Z}#leq 150");
+  ReplaceAll(code, "ll_pt[0]>150&&ll_pt[0]<=200","150<p_{T}^{Z}#leq 200");
+  ReplaceAll(code, "ll_pt[0]>200&&ll_pt[0]<=300","200<p_{T}^{Z}#leq 300");
+  ReplaceAll(code, "ll_pt[0]>300&&ll_pt[0]<=400","300<p_{T}^{Z}#leq 400");
+  ReplaceAll(code, "ll_pt[0]","p_{T}^{Z}");
+  
   ReplaceAll(code, "fjet_pt[0]>300&&fjet_pt[1]>300", "p_{T,J1},p_{T,J2}> 300");
   ReplaceAll(code, "((met<=300&&fjet_deep_md_hbb_btv[0]>0.6&&fjet_deep_md_hbb_btv[1]>0.6)||(met>300&&fjet_deep_md_hbb_btv[0]>0.3&&fjet_deep_md_hbb_btv[1]>0.3))", "DDB_{J1},DDB_{J2}> 0.3 (0.6)");
   ReplaceAll(code, "fjet_msoftdrop[0]>50&&fjet_msoftdrop[0]<=250&&fjet_msoftdrop[1]>50&&fjet_msoftdrop[1]<=250", "50<m_{J1},m_{J2}#leq 250");
