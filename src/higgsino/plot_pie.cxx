@@ -77,8 +77,8 @@ int main(int argc, char *argv[]){
   mctags["singlet"] = set<string>({"*_ST_*.root"});
   mctags["qcd"]     = set<string>({
                                    // "*QCD_HT100to200_Tune*", 
-                                   // "*QCD_HT200to300_Tune*", 
-                                   // "*QCD_HT300to500_Tune*",  // these have very low stats
+                                   "*QCD_HT200to300_Tune*", 
+                                   "*QCD_HT300to500_Tune*",  // these have very low stats
                                    "*QCD_HT500to700_Tune*",
                                  "*QCD_HT700to1000_Tune*", "*QCD_HT1000to1500_Tune*", 
                                  "*QCD_HT1500to2000_Tune*", "*QCD_HT2000toInf_Tune*"});
@@ -93,13 +93,13 @@ int main(int argc, char *argv[]){
   NamedFunc wgt = "w_lumi*w_isr"*HigUtilities::w_years*Higfuncs::eff_higtrig;//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
 
   TString c_hig_trim = "hig_cand_drmax[0]<=2.2  && hig_cand_dm[0]<=40 && hig_cand_am[0]<200";
-  string baseline = "njet>=4 && njet<=5";
+  string baseline = "njet>=4 && njet<=5 && nbt>=2";
   if (sample_name=="search") baseline += " && nvlep==0 && ntk==0 && !low_dphi_met &&"+c_hig_trim;
   else if (sample_name=="ttbar") baseline += " && nlep==1 && mt<100 &&"+c_hig_trim;
   else if (sample_name=="zll") baseline += " && nlep==2 && met<50 &&"+c_hig_trim;
   else if (sample_name=="qcd") baseline += " && nvlep==0 && ntk==0 && low_dphi_met &&"+c_hig_trim;
 
-  NamedFunc base_func = baseline && "stitch && pass";
+  NamedFunc base_func = baseline && Functions::hem_veto && "stitch && pass";// && met/mht<2 && met/met_calo<2";
 
   map<string, vector<shared_ptr<Process> >> proc_sets;
   proc_sets["base"].push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X (#tau_{had}>0)", Process::Type::background, kBlue-7,

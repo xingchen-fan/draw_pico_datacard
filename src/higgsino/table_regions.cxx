@@ -26,22 +26,6 @@
 #include "higgsino/hig_functions.hpp"
 #include "higgsino/hig_utilities.hpp"
 
-const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
-  if (b.SampleType()<0) return 1.;
-
-  double wgt = 1;
-  if (b.type()==106000) {
-    return 35.9;
-  }
-  if (b.SampleType()==2016){
-    return wgt*35.9;
-  } else if (b.SampleType()==2017){
-    return wgt*41.5;
-  } else {
-    return wgt*59.6;
-  }
-});
-
 using namespace std;
 using namespace PlotOptTypes;
 
@@ -74,7 +58,7 @@ int main(int argc, char *argv[]){
   // string foldermc_base("/cms29r0/pico/NanoAODv5/higgsino_angeles/");
   // string foldermc_skim("mc/merged_higmc_higloose/");
   //string foldersig("/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/TChiHH/merged_higmc_unskimmed/");
-  string foldersig("/cms29r0/pico/NanoAODv5/higgsino_eldorado/2016/SMS-TChiHH_2D/merged_higmc_higloose/");
+  string foldersig("/cms29r0/pico/NanoAODv5/higgsino_eldorado/2016/SMS-TChiHH_2D/merged_higmc_preselect/");
   set<int> years = {2016, 2017, 2018};
   // set<int> years = {2016};
 
@@ -82,7 +66,7 @@ int main(int argc, char *argv[]){
   mctags["ttx"]     = set<string>({"*TTJets_*Lept*","*_TTZ*.root", "*_TTW*.root",
                                      "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root"});
   mctags["vjets"]   = set<string>({"*_WJetsToLNu*.root", "*DYJetsToLL*.root", "*_ZJet*.root"});
-  mctags["qcd"]     = set<string>({//"*_QCD_HT200to300_*","*_QCD_HT300to500_*",
+  mctags["qcd"]     = set<string>({"*_QCD_HT200to300_*","*_QCD_HT300to500_*",
                                    "*_QCD_HT500to700_*",
                                    "*_QCD_HT700to1000_*", "*_QCD_HT1000to1500_*","*_QCD_HT1500to2000_*",
                                    "*_QCD_HT2000toInf_*"});
@@ -93,8 +77,8 @@ int main(int argc, char *argv[]){
   //-----------------------------------------
   NamedFunc wgt = "w_lumi*w_isr"*Higfuncs::eff_higtrig;
   if (years.size()==1 && *years.begin()==2016) wgt *= "137.";
-  else wgt *= w_years;
-  string baseline = "stitch && !low_dphi_met && nvlep==0 && ntk==0";
+  else wgt *= HigUtilities::w_years;
+  string baseline = "stitch && nvlep==0 && ntk==0 && !low_dphi_met";
   string higtrim = "hig_cand_drmax[0]<=2.2 && hig_cand_dm[0] <= 40 && hig_cand_am[0]<=200";
   if (resolved) {
     baseline += "&& njet>=4 && njet<=5 && nbt>=2 && "+higtrim;
@@ -107,7 +91,7 @@ int main(int argc, char *argv[]){
   //--------------------------------------------------
   Palette colors("txt/colors.txt", "default");
 
-  NamedFunc base_filters = "pass";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
+  NamedFunc base_filters = Functions::hem_veto && "pass && met/mht<2 && met/met_calo<2";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
 
   vector<shared_ptr<Process> > procs;
   procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGray+2,
@@ -120,11 +104,11 @@ int main(int argc, char *argv[]){
                   attach_folder(foldermc_base,years,foldermc_skim, mctags["qcd"]), base_filters && baseline)); 
 
   if (doSignal) {
-    vector<int> sigm = {450, 700, 950};
+    vector<string> sigm = {"175", "400", "650"};
     for (unsigned isig(0); isig<sigm.size(); isig++){
-      procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+to_string(sigm[isig])+",1)", Process::Type::signal, 
-        1, {foldersig+"*TChiHH_mChi-"+to_string(sigm[isig])+"_mLSP-0*.root"}, base_filters && baseline));
-      cout<<foldersig+"*TChiHH_mChi-"+to_string(sigm[isig])+"_mLSP-0*.root"<<endl;
+      procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigm[isig]+",1)", Process::Type::signal, 
+        1, {foldersig+"*TChiHH_mChi-"+sigm[isig]+"_mLSP-0*.root"}, base_filters && baseline));
+      cout<<foldersig+"*TChiHH_mChi-"+sigm[isig]+"_mLSP-0*.root"<<endl;
     }
   }
 
@@ -136,15 +120,14 @@ int main(int argc, char *argv[]){
   string c_4b = "nbm>=3&&nbl>=4";
   string hig = "hig_cand_am[0]>100 && hig_cand_am[0]<=140";
   string sbd = "!(hig_cand_am[0]>100 && hig_cand_am[0]<=140)";
-  vector<string> res_abcd = {c_2b+"&&"+sbd, c_3b+"&&"+sbd, c_4b+"&&"+sbd, 
-                             c_2b+"&&"+hig, c_3b+"&&"+hig, c_4b+"&&"+hig};
+  vector<string> res_abcd = {c_2b+"&&"+sbd, c_2b+"&&"+hig, c_3b+"&&"+sbd, c_3b+"&&"+hig, c_4b+"&&"+sbd, c_4b+"&&"+hig};
 
   bool bin_drmax = true;
   bool bin_met = true;
 
   vector<TString> vc_drmax;
-  vc_drmax.push_back("hig_cand_drmax[0]>1.1");
   vc_drmax.push_back("hig_cand_drmax[0]<=1.1");
+  vc_drmax.push_back("hig_cand_drmax[0]>1.1");
   if (!bin_drmax) vc_drmax = {"hig_cand_drmax[0]>0"};
 
   // assume common MET binning

@@ -40,6 +40,11 @@
 #include "higgsino/hig_functions.hpp"
 #include "higgsino/hig_utilities.hpp"
 
+
+#include "TVector2.h"
+#include "TMath.h"
+#include "Math/Vector4D.h"
+
 using std::ifstream;
 using std::ofstream;
 using std::string;
@@ -50,19 +55,24 @@ using std::endl;
 using std::map;
 using std::set;
 using std::shared_ptr;
+using std::pair;
+using std::tuple;
+using std::get;
 
 namespace{
   bool split_bkg = true;
   bool do_signal = false;
+  bool do_zbi = false;
+  bool do_incl_met = true;
   bool debug = false;
   bool do_highnb = false;
   bool do_midnb = false;
+  bool unblind = false;
   int digits_table = 1;
   TString sample = "search";
   string alt_scen = "mc_as_data"; //e.g. "mc", "data", "mc_as_data" or any systematic defined in sys_weights.cfg or in the defining scenarios section below
   float lumi=1.;
   bool quick_test = false;
-  bool do_zbi = false;
   // for office use only
   vector<TString> syst_names;
   vector<vector<float>> syst_values;
@@ -84,7 +94,6 @@ vector<vector<float> > findPreds(abcd_def &abcd, vector<vector<GammaParams> > &a
                                  vector<vector<vector<float> > > &kappas, 
                                  vector<vector<vector<float> > > &kappas_mm, 
                                  vector<vector<vector<float> > > &kmcdat, 
-                                 vector<vector<vector<float> > > &datapreds,
                                  vector<vector<vector<float> > > &preds);
 
 void GetOptions(int argc, char *argv[]);
@@ -113,7 +122,7 @@ int main(int argc, char *argv[]){
   if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "merged_higdata_higlep1T/";} 
   else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "merged_higdata_higlep2T/";} 
   else if (sample=="qcd") {mc_skim_dir = "mc/merged_higmc_higqcd/";  data_skim_dir = "merged_higdata_higqcd/";} 
-  string sig_skim_dir("SMS-TChiHH_2D/mergednn_higmc_preselect/");
+  string sig_skim_dir("SMS-TChiHH_2D/merged_higmc_preselect/");
 
   map<string, set<string>> mctags; 
   mctags["ttx"]     = set<string>({
@@ -122,15 +131,17 @@ int main(int argc, char *argv[]){
                                     "*_TTGJets*.root", "*_ttHTobb*.root","*_TTTT*.root"
                                   });
   mctags["vjets"]   = set<string>({ 
-                                   "*DYJetsToLL*.root","*_ZJet*.root", "*_WJetsToLNu*.root"
+                                    "*DYJetsToLL*.root","*_ZJet*.root", "*_WJetsToLNu*.root"
                                  });
   mctags["other"]   = set<string>({ // no events pass from QCD HT 100-200
                                    // "*QCD_HT100to200_Tune*", 
-                                   // "*QCD_HT200to300_Tune*", 
+                                   "*QCD_HT200to300_Tune*", 
                                    "*QCD_HT300to500_Tune*",  // these have very low stats
                                    "*QCD_HT500to700_Tune*",
-                                   "*QCD_HT700to1000_Tune*", "*QCD_HT1000to1500_Tune*", 
-                                   "*QCD_HT1500to2000_Tune*", "*QCD_HT2000toInf_Tune*",
+                                   "*QCD_HT700to1000_Tune*", 
+                                   "*QCD_HT1000to1500_Tune*", 
+                                   "*QCD_HT1500to2000_Tune*", 
+                                   "*QCD_HT2000toInf_Tune*",
                                    "*_ST_*.root",
                                    "*_WH_HToBB*.root", "*_ZH_HToBB*.root",
                                    "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"
@@ -146,14 +157,13 @@ int main(int argc, char *argv[]){
   else if (sample=="zll") baseline_s += " && nlep==2 && met<50 &&"+c_hig_trim;
   else if (sample=="qcd") baseline_s += " && nvlep==0 && ntk==0 && low_dphi_met &&"+c_hig_trim;
 
-  // NamedFunc baseline = baseline_s && Higfuncs::nbfake==0. && "stitch && pass";
-  // NamedFunc baseline = baseline_s && Higfuncs::ntrub==2 && "stitch && pass";
-  NamedFunc baseline = baseline_s && "stitch && pass";
+  NamedFunc baseline = baseline_s && "stitch && pass && met/mht<2 && met/met_calo<2";
+  baseline = baseline && Functions::hem_veto;
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Defining processes //////////////////////////////////////////  
   // define signal processes
-  vector<string> sigMasses({"225","400", "900"});
+  vector<string> sigMasses({"175", "400", "850"});
   vector<shared_ptr<Process> > proc_sigs;
   for (unsigned isig(0); isig<sigMasses.size(); isig++)
     proc_sigs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigMasses[isig]+",1)", Process::Type::signal, 1, 
@@ -199,6 +209,7 @@ int main(int argc, char *argv[]){
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Defining scenarios  //////////////////////////////////////////
+  // NamedFunc nom_wgt = "w_lumi*w_isr"*HigUtilities::w_CNToN1N2*HigUtilities::w_years*Higfuncs::eff_higtrig;//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
   NamedFunc nom_wgt = "w_lumi*w_isr"*HigUtilities::w_years*Higfuncs::eff_higtrig;//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
   vector<string> scenarios;
   map<string, NamedFunc> weights;
@@ -226,11 +237,6 @@ int main(int argc, char *argv[]){
   vector<TString> metcuts;
   string metdef = "met";
   if (sample=="zll") metdef = "ll_pt[0]";
-  if (sample=="qcd") { // add an inclusive bin
-    metcuts.push_back(metdef+">150");
-  } else if (sample=="ttbar" || sample=="zll"){
-    metcuts.push_back(metdef+">0");
-  }
   if (sample=="search" || sample=="qcd"){
     metcuts.push_back(metdef+">150&&"+metdef+"<=200");
     metcuts.push_back(metdef+">200&&"+metdef+"<=300");
@@ -243,7 +249,13 @@ int main(int argc, char *argv[]){
     metcuts.push_back(metdef+">200&&"+metdef+"<=300");
     metcuts.push_back(metdef+">300");
   }
-
+  if (do_incl_met) {
+    if (sample=="qcd") { // add an inclusive bin
+      metcuts.push_back(metdef+">150");
+    } else if (sample=="ttbar" || sample=="zll"){
+      metcuts.push_back(metdef+">0");
+    }
+  }
 
   vector<TString> nbcuts;
   if (sample=="ttbar" || sample=="search" || do_highnb){
@@ -352,12 +364,12 @@ int main(int argc, char *argv[]){
     }
 
     //// Calculating kappa and Total bkg prediction
-    vector<vector<vector<float> > > kappas, kappas_mm, kmcdat, datapreds, preds;
+    vector<vector<vector<float> > > kappas, kappas_mm, kmcdat, preds;
     if (debug) cout<<"Finding predictions"<<endl;
-    vector<vector<float> > yieldsPlane = findPreds(abcds[iscen], allyields, kappas, kappas_mm, kmcdat, datapreds, preds);
+    vector<vector<float> > yieldsPlane = findPreds(abcds[iscen], allyields, kappas, kappas_mm, kmcdat, preds);
 
     if (debug) cout<<"Making tables."<<endl;
-    TString fullname = printTable(abcds[iscen], allyields, kappas, datapreds, yieldsPlane, proc_sigs);
+    TString fullname = printTable(abcds[iscen], allyields, kappas, preds, yieldsPlane, proc_sigs);
     tablenames.push_back(fullname);
     
     //// Plotting kappa
@@ -410,8 +422,11 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
   size_t Ncol = 1;
   if(split_bkg) {out << "|ccc"; Ncol +=3;}
   out << "|cc"; Ncol +=2; //for kappa and tot bkg
-  out << "|cc "<<(do_zbi?"c":""); // for predicted and observed
-  Ncol += 2 + (do_zbi?1:0);
+  out << "|c"; Ncol += 1;
+  if (unblind) {
+    out << "c "<<(do_zbi?"c":""); // for predicted and observed
+    Ncol += 1 + (do_zbi?1:0);
+  }
   if(do_signal) {
     for(size_t ind=0; ind<Nsig; ind++){
       out<<"|c"<<(do_zbi?"c":"");
@@ -423,7 +438,8 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
   out<<"${\\cal L}="<<lumi_s<<"$ fb$^{-1}$ ";
   if(split_bkg) out << " & Other & V$+$jets & $t\\bar{t}$ ";
   out << "& $\\kappa$ & MC bkg.";
-  out << " & Pred.& Obs. "<<(do_zbi?"& Signi.":"");
+  out << " & Pred. ";
+  if (unblind) out << "& Obs. "<<(do_zbi?"& Signi.":"");
   if(do_signal) {
     for(size_t ind=0; ind<Nsig; ind++) {
       TString signame = proc_sigs[ind]->name_.c_str();
@@ -474,15 +490,17 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
         if(iabcd==3) out << "$"    << RoundNumber(preds[iplane][ibin][0], digits_table)
                          << "^{+"  << RoundNumber(preds[iplane][ibin][1], digits_table)
                          << "}_{-" << RoundNumber(preds[iplane][ibin][2], digits_table) <<"}$ ";
-        //// Printing observed events in data and Obs/MC ratio
-        out << ump;
-        if(iabcd==3) out << RoundNumber(allyields[0][index].Yield(), 0);
-        else out << RoundNumber(allyields[0][index].Yield(), 0);
-        //// Printing Zbi significance
-        if(do_zbi) { // "$"+RoundNumber(Significance( ),1)+"\\sigma$"
+        if (unblind) {
+          //// Printing observed events in data and Obs/MC ratio
           out << ump;
-          if(iabcd==3) out << "$"+RoundNumber(Significance(allyields[0][index].Yield(), preds[iplane][ibin][0], 
-                                                preds[iplane][ibin][1], preds[iplane][ibin][2]),1)+"\\sigma$";
+          if(iabcd==3) out << RoundNumber(allyields[0][index].Yield(), 0);
+          else out << RoundNumber(allyields[0][index].Yield(), 0);
+          //// Printing Zbi significance
+          if(do_zbi) { // "$"+RoundNumber(Significance( ),1)+"\\sigma$"
+            out << ump;
+            if(iabcd==3) out << "$"+RoundNumber(Significance(allyields[0][index].Yield(), preds[iplane][ibin][0], 
+                                                  preds[iplane][ibin][1], preds[iplane][ibin][2]),1)+"\\sigma$";
+          }
         }
         //// Printing signal yields
         if(do_signal){
@@ -490,9 +508,14 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
             out<<ump<<RoundNumber(allyields[2+ind][index].Yield(), digits_table);
             if(do_zbi){
               out << ump;
-              if(iabcd==3) 
-                out<<"$"+RoundNumber(Significance(preds[iplane][ibin][0]+allyields[2+ind][index].Yield(),
-                         preds[iplane][ibin][0], preds[iplane][ibin][1], preds[iplane][ibin][2]),1)+"\\sigma$";
+              if(iabcd==3) {
+                float signif = Significance(preds[iplane][ibin][0]+allyields[2+ind][index].Yield(),preds[iplane][ibin][0], preds[iplane][ibin][1], preds[iplane][ibin][2]);
+                if (allyields[2+ind][index].Yield()>0.45 && signif>0.45) {
+                  out<<"$"+RoundNumber(signif,1)+"\\sigma$";
+                } else {
+                  out<<"$ - $";
+                }
+              }
             } // if do_zbi
           } // Loop over signals
         } // if do_signal
@@ -537,7 +560,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
   //// Setting plot style
   PlotOpt opts("txt/plot_styles.txt", "Kappa");
   if(kappas.size() >= 1) { // Used to be 4
-    opts.CanvasWidth(1600);
+    opts.CanvasWidth(2000);
     markerSize = 1.5;
   }
   setPlotStyle(opts);
@@ -781,8 +804,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
 // allyields: [0] data, [1] bkg, [2] T1tttt(NC), [3] T1tttt(C)
 vector<vector<float> > findPreds(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
                vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &kappas_mm, 
-               vector<vector<vector<float> > > &kmcdat, vector<vector<vector<float> > > &datapreds,
-               vector<vector<vector<float> > > &preds){
+               vector<vector<vector<float> > > &kmcdat, vector<vector<vector<float> > > &preds){
   // Powers for kappa:   ({R1, R2, D3, R4})
   vector<float> pow_kappa({ 1, -1, -1,  1});
   // Powers for TotBkg pred:({R1, R2, D3,  R1, R2, D3, D4})
@@ -812,7 +834,6 @@ vector<vector<float> > findPreds(abcd_def &abcd, vector<vector<GammaParams> > &a
     kmcdat.push_back(vector<vector<float> >());
     kappas_mm.push_back(vector<vector<float> >());
     preds.push_back(vector<vector<float> >());
-    datapreds.push_back(vector<vector<float> >());
     for(size_t ibin=0; ibin < abcd.bincuts.size(); ibin++){
       vector<vector<float> > entries;
       vector<vector<float> > weights;
@@ -828,7 +849,6 @@ vector<vector<float> > findPreds(abcd_def &abcd, vector<vector<GammaParams> > &a
       // Throwing toys to find predictions with no kappa -> used for data stat. unc. in systematics table
       val = calcKappa(entries, weights, pow_datapred, valdown, valup);
       if(valdown<0) valdown = 0;
-      datapreds[iplane].push_back(vector<float>({val, valup, valdown}));
 
       vector<vector<float> > kentries;
       vector<vector<float> > kweights;
@@ -893,6 +913,7 @@ void GetOptions(int argc, char *argv[]){
       {"sample", required_argument, 0, 's'},
       {"debug", no_argument, 0, 'd'},         // Debug: prints yields and cuts used
       {"quick", no_argument, 0, 'q'},         // Used inclusive ttbar for quick testing
+      {"unblind", no_argument, 0, 'u'},         // Used inclusive ttbar for quick testing
       {"scen", required_argument, 0, 0},       
       {"midnb", no_argument, 0, 0},           // Check zll and qcd CRs for 2b
       {"highnb", no_argument, 0, 0},          // Check QCD CR at 3b and 4b
@@ -901,7 +922,7 @@ void GetOptions(int argc, char *argv[]){
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "s:kdq", long_options, &option_index);
+    opt = getopt_long(argc, argv, "s:kdqu", long_options, &option_index);
     if(opt == -1) break;
 
     string optname;
@@ -914,6 +935,9 @@ void GetOptions(int argc, char *argv[]){
       break;
     case 'q':
       quick_test = true;
+      break;
+    case 'u':
+      unblind = true;
       break;
     case 0:
       optname = long_options[option_index].name;

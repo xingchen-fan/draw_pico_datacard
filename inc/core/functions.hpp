@@ -9,6 +9,7 @@
  
 namespace Functions{
   
+  extern const NamedFunc hem_veto;
   extern const NamedFunc lowDphiFix;
   extern const NamedFunc boostedRegionIdx;
   extern const NamedFunc amBoostedRegionIdx;

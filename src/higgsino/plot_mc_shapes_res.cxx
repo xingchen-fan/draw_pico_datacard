@@ -190,9 +190,9 @@ int main(int argc, char *argv[]){
   else if (cr_sample=="ttbar") metcut = "1";
 
   vector<string> xcuts;
-  // xcuts.push_back("1");
-  xcuts.push_back("hig_cand_drmax[0]<=1.1");
-  xcuts.push_back("hig_cand_drmax[0]>1.1");
+  xcuts.push_back("1");
+  // xcuts.push_back("hig_cand_drmax[0]<=1.1");
+  // xcuts.push_back("hig_cand_drmax[0]>1.1");
 
   PlotMaker pm;
   NamedFunc wgt = "w_lumi*w_isr" * HigUtilities::w_years*Higfuncs::eff_higtrig;//Higfuncs::weight_higd;

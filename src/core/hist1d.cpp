@@ -1045,7 +1045,7 @@ TGraphAsymmErrors Hist1D::GetBackgroundError() const{
   }else{
     g = TGraphAsymmErrors(&(backgrounds_.front()->scaled_hist_));
   // set the color of the error band to the line color, accomodating data-to-data plots
-    g.SetFillColorAlpha(backgrounds_.front()->scaled_hist_.GetLineColor(),0.3);
+    g.SetFillColorAlpha(backgrounds_.front()->scaled_hist_.GetLineColor(),0.2);
   }
   //g.SetFillStyle(3002);
   g.SetLineWidth(0);

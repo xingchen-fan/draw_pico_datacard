@@ -9,6 +9,41 @@ using namespace std;
 
 namespace Functions{
 
+  const NamedFunc hem_veto("hem_veto",[](const Baby &b) -> NamedFunc::ScalarType{
+    if(abs(b.SampleType()) == 2018) {
+      if (b.SampleType()<0) {
+        if (b.run() >= 319077) { 
+          if(b.nel() > 0) {
+            for(size_t i = 0; i < b.lep_pt()->size(); i++) {
+              if (abs(b.lep_pdgid()->at(i))==13) continue;
+              if(b.lep_eta()->at(i) < -1.5 && (b.lep_phi()->at(i) > -1.6 && b.lep_phi()->at(i) < -0.8)) 
+                return static_cast<float>(0);
+            }
+          }
+          for(size_t i = 0; i < b.jet_pt()->size(); i++) {
+            if(Functions::IsGoodJet(b,i) && b.jet_eta()->at(i) < -1.5 && (b.jet_phi()->at(i) > -1.6 && b.jet_phi()->at(i) < -0.8)) 
+              return static_cast<float>(0);
+          }
+        }
+      } else {
+        if ((b.event()%1961) < 1296) { 
+          if(b.nel() > 0) {
+            for(size_t i = 0; i < b.lep_pt()->size(); i++) {
+              if (abs(b.lep_pdgid()->at(i))==13) continue;
+              if(b.lep_eta()->at(i) < -1.5 && (b.lep_phi()->at(i) > -1.6 && b.lep_phi()->at(i) < -0.8)) 
+                return static_cast<float>(0);
+            }
+          }
+          for(size_t i = 0; i < b.jet_pt()->size(); i++) {
+            if(Functions::IsGoodJet(b,i) && b.jet_eta()->at(i) < -1.5 && (b.jet_phi()->at(i) > -1.6 && b.jet_phi()->at(i) < -0.8)) 
+              return static_cast<float>(0);
+          }
+        }
+      }
+    }
+    return static_cast<float>(1);
+  });
+  
   const NamedFunc lowDphiFix("lowDphiFix",[](const Baby &b) -> NamedFunc::ScalarType{
     bool lowDphi(false);
     for (unsigned i(0); i<b.jet_pt()->size(); i++){

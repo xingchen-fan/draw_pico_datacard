@@ -163,6 +163,8 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "pass&&stitch", "ps");
   ReplaceAll(code, "&&1", "");
   ReplaceAll(code, "weight", "w");
+  ReplaceAll(code, "nbm==0","0b");
+  ReplaceAll(code, "nbm==1","1b");
   ReplaceAll(code, "nbt>=2&&nbm==3&&nbl==3","3b");
   ReplaceAll(code, "nbt>=2&&nbm>=3&&nbl>=4","4b");
   ReplaceAll(code, "nbt>=2&&nbm>=3","#geq3b");
@@ -179,7 +181,7 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "hig_cand_drmax[0]", "#DeltaR_{max}");
   ReplaceAll(code, "hig_cand_dm[0]", "#Delta m");
 
-  ReplaceAll(code, "met>50&&met<=100", "50<p_{T}^{miss}#leq 100");
+  ReplaceAll(code, "met>0&&met<=75", "0<p_{T}^{miss}#leq 75");
   ReplaceAll(code, "met>75&&met<=150", "75<p_{T}^{miss}#leq 150");
   ReplaceAll(code, "met>100&&met<=150", "100<p_{T}^{miss}#leq 150");
   ReplaceAll(code, "met>150&&met<=200", "150<p_{T}^{miss}#leq 200");
@@ -206,8 +208,10 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "!low_dphi_met", "hi-#Delta#phi");
   ReplaceAll(code, "low_dphi_met", "low #Delta#phi");
   ReplaceAll(code, "hig_drmax", "#DeltaR^{max}_{bb}");
+  ReplaceAll(code, "ntk==0", "0 trk");
   ReplaceAll(code, "ntk", "N_{tks}");
   ReplaceAll(code, "nlep", "N_{lep}");
+  ReplaceAll(code, "nvlep==0", "0L");
   ReplaceAll(code, "nvlep", "N_{lep}");
   ReplaceAll(code, "nmu", "N_{#mu}");
   ReplaceAll(code, "nel", "N_{e}");
@@ -216,6 +220,7 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "ntrulep", "N^{true}_{lep}");
   ReplaceAll(code, "npv", "N_{PV}");
 
+  ReplaceAll(code, "njet>=4&&njet<=5","4-5j");
   ReplaceAll(code, "njet","N_{jet}");
   ReplaceAll(code, "nfjet","N_{J}");
   ReplaceAll(code, "abs(lep_id)==13&&","");
@@ -227,7 +232,7 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "==", " = ");
   ReplaceAll(code, "met_calo", "E_{T,calo}^{miss}");
   ReplaceAll(code, "met", "p_{T}^{miss}");
-  ReplaceAll(code, "mht", "MHT");
+  ReplaceAll(code, "mht", "H_{T}^{miss}");
   ReplaceAll(code, "ht", "H_{T}");
   ReplaceAll(code, "mt", "m_{T}");
   ReplaceAll(code, "nbm","N_{b,M}");
@@ -770,7 +775,7 @@ set<string> attach_folder(string base_folder, set<int> years, string sample_fold
   for (auto & year: years) {
     for (auto &ifile: fileset) {
       fset.insert(base_folder+"/"+to_string(year)+"/"+sample_folder+"/"+ifile);
-      cout<<base_folder+"/"+to_string(year)+"/"+sample_folder+"/"+ifile<<endl;
+      // cout<<base_folder+"/"+to_string(year)+"/"+sample_folder+"/"+ifile<<endl;
     }
   }
   return fset; 
