@@ -46,6 +46,7 @@ namespace Clustering{
     void SetPoints(const TH2D &h);
 
     TH2D GetHistogram(double luminosity) const;
+    TH2D GetHistogram() const;
     TGraph GetGraph(double luminosity, bool keep_in_frame = true) const;
 
   private:
