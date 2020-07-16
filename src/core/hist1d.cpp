@@ -488,6 +488,14 @@ void Hist1D::Print(double luminosity,
       : "plots/"+Name();
     for(const auto &ext: this_opt_.FileExtensions()){
       string full_name = base_name+"__"+this_opt_.TypeString()+'.'+ext;
+      if (Contains(tag_,"FixName:")){
+        string tagName=tag_;
+        ReplaceAll(tagName, "FixName:", "");
+        base_name = subdir != ""
+          ? "plots/"+subdir+"/"+tagName
+          : "plots/"+tagName;
+        full_name = base_name+'.'+ext;
+      }
       full->Print(full_name.c_str());
       cout << "open " << full_name << endl;
     }
@@ -528,6 +536,10 @@ string Hist1D::Name() const{
   
   if(tag_ == ""){
     return CodeToPlainText(xaxis_.var_.Name()+cut+weight);
+  }else if (Contains(tag_,"ShortName:")){
+    string tagName=tag_;
+    ReplaceAll(tagName, "ShortName:", "");
+    return CodeToPlainText(tagName+"__"+xaxis_.var_.Name()+weight);
   }else{
     return CodeToPlainText(tag_+"__"+xaxis_.var_.Name()+cut+weight);
   }
