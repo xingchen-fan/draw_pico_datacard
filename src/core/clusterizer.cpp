@@ -118,6 +118,11 @@ TH2D Clusterizer::GetHistogram(double luminosity) const{
   return h;
 }
 
+TH2D Clusterizer::GetHistogram() const{
+  TH2D h = hist_;
+  return h;
+}
+
 TGraph Clusterizer::GetGraph(double luminosity, bool keep_in_frame) const{
   Cluster(luminosity);
   float xmin = hist_.GetXaxis()->GetBinLowEdge(1);

@@ -52,6 +52,8 @@ public:
 
   std::string Name() const;
 
+  virtual bool is_2d_histogram() {return true;};
+
   Hist2D & Weight(const NamedFunc &weight);
   Hist2D & Tag(const std::string &tag);
 
@@ -59,6 +61,8 @@ public:
   NamedFunc cut_, weight_;
   std::string tag_;
   std::vector<PlotOpt> plot_options_;
+
+  TH2D GetDataHist() const;
 
 private:
   std::vector<std::unique_ptr<SingleHist2D> > backgrounds_;

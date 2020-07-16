@@ -44,6 +44,7 @@ namespace{
 PlotMaker::PlotMaker():
   multithreaded_(true),
   min_print_(false),
+  print_2d_figures_(true),
   figures_(){
 }
 
@@ -56,7 +57,9 @@ void PlotMaker::MakePlots(double luminosity,
   GetYields();
 
   for(auto &figure: figures_){
-    figure->Print(luminosity, subdir);
+    if ((!(figure->is_2d_histogram()))||print_2d_figures_) {
+      figure->Print(luminosity, subdir);
+    }
   }
 }
 

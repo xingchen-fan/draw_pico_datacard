@@ -331,6 +331,36 @@ TH2D Hist2D::GetBkgHist(bool bkg_is_hist) const{
   return h;
 }
 
+TH2D Hist2D::GetDataHist() const{
+  string units = (xaxis_.units_ == yaxis_.units_) ? (xaxis_.units_+"^{2}") : (xaxis_.units_+"*"+yaxis_.units_);
+  string z_title = ("Data Events/(" + ToString(xaxis_.AvgBinWidth()*yaxis_.AvgBinWidth())+" "+units+")");
+  string title = ";"+xaxis_.Title()+";"+yaxis_.Title()+";"+z_title;
+  TH2D h;
+  //change this to signal
+  if(datas_.size() > 0){
+    h = datas_.front()->clusterizer_.GetHistogram();
+    for(size_t i = 1; i < datas_.size(); ++i){
+      TH2D to_add = datas_.at(i)->clusterizer_.GetHistogram();
+      h.Add(&to_add);
+    }
+  }else{
+    h = TH2D("", title.c_str(),
+             xaxis_.Nbins(), &xaxis_.Bins().at(0),
+             yaxis_.Nbins(), &yaxis_.Bins().at(0));
+  }
+  h.SetTitle(title.c_str());
+  h.GetZaxis()->SetTitle(z_title.c_str());
+  h.SetStats(0);
+  h.SetMinimum(this_opt_.LogMinimum());
+  h.SetLabelOffset(0.011);
+  h.SetTitleOffset(this_opt_.XTitleOffset(), "x");
+  h.SetTitleOffset(this_opt_.YTitleOffset(), "y");
+  h.SetTitleOffset(this_opt_.ZTitleOffset(), "z");
+  h.SetLabelSize(this_opt_.LabelSize(), "xyz");
+  h.SetTitleSize(this_opt_.TitleSize(), "xyz");
+  return h;
+}
+
 vector<TGraph> Hist2D::GetGraphs(const vector<unique_ptr<SingleHist2D> > &components,
 				 bool lumi_weighted) const{
   vector<TGraph> graphs(components.size());

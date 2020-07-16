@@ -36,6 +36,7 @@ public:
   Figure& operator=(const Figure &) = default;
   Figure(Figure &&) = default;
   Figure& operator=(Figure &&) = default;
+  virtual bool is_2d_histogram() {return false;};
   virtual ~Figure() = default;
 
   virtual void Print(double luminosity,
