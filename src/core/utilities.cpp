@@ -775,7 +775,7 @@ set<string> attach_folder(string base_folder, set<int> years, string sample_fold
   for (auto & year: years) {
     for (auto &ifile: fileset) {
       fset.insert(base_folder+"/"+to_string(year)+"/"+sample_folder+"/"+ifile);
-      // cout<<base_folder+"/"+to_string(year)+"/"+sample_folder+"/"+ifile<<endl;
+       cout<<base_folder+"/"+to_string(year)+"/"+sample_folder+"/"+ifile<<endl;
     }
   }
   return fset; 

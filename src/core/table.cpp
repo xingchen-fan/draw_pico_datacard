@@ -20,6 +20,11 @@ using namespace std;
 
 namespace{
   std::string ToLatex(std::string x){
+    if (x.find("!!") != string::npos) {
+      ReplaceAll(x,"!!","");
+      ReplaceAll(x,"_","\\_");
+      return x;
+    }
     ReplaceAll(x, "#", "\\");
     auto pos_1 = x.find("\\");
     auto pos_2 = x.find("_");
@@ -473,6 +478,15 @@ void Table::PrintPie(std::size_t irow, double luminosity) const{
   if(irow==0){
     leg.Draw();
     plot_name = "plots/pie_"+name_+"_legend_lumi"+RoundNumber(luminosity,0)+".pdf";
+    if (Contains(name_,"ShortName:")) {
+      string tagName=name_;
+      ReplaceAll(tagName, "ShortName:", "");
+      plot_name = "plots/pie_"+tagName+"_legend_lumi"+RoundNumber(luminosity,0)+".pdf";
+    } else if (Contains(name_,"FixName:")) {
+      string tagName=name_;
+      ReplaceAll(tagName, "FixName:", "");
+      plot_name = "plots/"+tagName+"_legend.pdf";
+    }
     can.SaveAs(plot_name.c_str());
     cout<<" open "<<plot_name<<endl;
   }
@@ -493,6 +507,15 @@ void Table::PrintPie(std::size_t irow, double luminosity) const{
   TLatex total(0.68,0.5,RoundNumber(Yield_tot,1));
   if(print_titlepie_) total.Draw();
   plot_name = "plots/pie_"+name_+"_"+CodeToPlainText(rows_.at(irow).cut_.Name())+"_perc_lumi"+RoundNumber(luminosity,0).Data()+".pdf";
+  if (Contains(name_,"ShortName:")) {
+    string tagName=name_;
+    ReplaceAll(tagName, "ShortName:", "");
+    plot_name = "plots/pie_"+tagName+"_perc_lumi"+RoundNumber(luminosity,0).Data()+".pdf";
+  } else if (Contains(name_,"FixName:")) {
+    string tagName=name_;
+    ReplaceAll(tagName, "FixName:", "");
+    plot_name = "plots/"+tagName+".pdf";
+  }
   can.SaveAs(plot_name.c_str());
   cout<<" open "<<plot_name<<endl;
 

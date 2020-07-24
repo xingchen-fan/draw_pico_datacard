@@ -37,14 +37,17 @@ int main(){
 
   string bfolder("");
   string hostname = execute("echo $HOSTNAME");
-  if(Contains(hostname, "cms") || Contains(hostname, "compute-") || Contains(hostname, "physics.ucsb.edu"))
+  if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
     bfolder = "/net/cms29"; // In laptops, you can't create a /net folder
 
-  string mc_production = "higgsino_angeles"; // higgsino_eldorado
+  //string mc_production = "higgsino_angeles"; // higgsino_eldorado
+  //string mc_production = "higgsino_eldorado";
+  string mc_production = "higgsino_humboldt";
   string year = "2016"; // 2017, 2018
 
-  string foldermc(bfolder+"/cms29r0/pico/NanoAODv5/"+mc_production+"/"+year+"/mc/merged_higmc_higloose/");
-  string foldersig(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/TChiHH/merged_higmc_unskimmed/");
+  string foldermc(bfolder+"/cms29r0/pico/NanoAODv5/"+mc_production+"/"+year+"/mc1/merged_higmc_higloose/");
+  //string foldersig(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/TChiHH/merged_higmc_unskimmed/");
+  string foldersig(bfolder+"/cms29r0/pico/NanoAODv5/"+mc_production+"/2016/SMS-TChiHH_2D/unskimmed/");
 
   map<string, set<string>> mctags; 
   mctags["tt"]     = set<string>({"*TTJets_*Lep*"});
@@ -70,9 +73,11 @@ int main(){
               attach_folder(foldermc, mctags["ttx"]),c_ps));
   procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}", Process::Type::background,1,
               attach_folder(foldermc, mctags["tt"]),c_ps));
-  for (unsigned isig(0); isig<sigm.size(); isig++)
+  for (unsigned isig(0); isig<sigm.size(); isig++) {
     procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigm[isig]+",1)", 
-      Process::Type::signal, 1, {foldersig+"*TChiHH_mChi-"+sigm[isig]+"*.root"}, "1"));
+      Process::Type::signal, 1, {foldersig+"*TChiHH_mChi-"+sigm[isig]+"_mLSP-0*.root"}, "1"));
+    cout<<foldersig+"*TChiHH_mChi-"+sigm[isig]+"_mLSP-0*.root"<<endl;
+  }
 
 
   string c_2bt  = "nbt>=2";
@@ -88,13 +93,20 @@ int main(){
 
   NamedFunc wgt = "w_lumi*w_isr";//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
 
-
   string baseline = "nvlep==0 && njet>=4 && njet<=5"; //pass_muon_jet && met/met_calo<5
   string sigonly = "type>100e3";
 
   string ncols = to_string(procs.size()+2);  
   PlotMaker pm;
   pm.Push<Table>("cutflow", vector<TableRow>{
+  TableRow("1", 
+    "1",0,0, wgt),
+  TableRow("$0\\ell$, $\\text{4-5 jets}$", 
+    baseline,0,0, wgt),
+  TableRow("nbt>=2", 
+    baseline+"&&"+c_2bt,0,0, wgt),
+  TableRow("MET>150", 
+    baseline+"&&"+c_2bt+"&&met>150",0,0, wgt),
   TableRow("$0\\ell$, $\\text{4-5 jets}$, $N_{\\text{b,T}}\\geq 2$, $p_{\\rm T}^{\\rm miss}>150$ GeV", 
     baseline+"&& met>150 &&" + c_2bt,0,0, wgt),
   TableRow("Track veto", 

@@ -223,6 +223,8 @@ bool pass_badpfmu
 bool pass_mubadtrk
 bool pass_badchhad
 bool pass_muon_jet
+# pass_ra2_badmu is for higgsino_angeles compatibility
+bool pass_ra2_badmu 
 bool pass_low_neutral_jet
 bool pass_htratio_dphi_tight
 bool pass_badcalib

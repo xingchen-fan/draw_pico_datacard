@@ -117,7 +117,9 @@ int main(int argc, char *argv[]){
   set<int> years; 
   years = {2016,2017,2018};
 
-  string base_dir(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_eldorado/");
+  //string base_dir(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_eldorado/");
+  //string base_dir("/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/");
+  string base_dir("/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado");
   string mc_skim_dir("mc/merged_higmc_preselect/"), data_skim_dir("mc/merged_higdata_higloose/");
   if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "merged_higdata_higlep1T/";} 
   else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "merged_higdata_higlep2T/";} 
