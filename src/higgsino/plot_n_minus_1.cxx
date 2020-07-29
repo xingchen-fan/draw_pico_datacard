@@ -22,6 +22,7 @@
 #include "core/palette.hpp"
 #include "core/table.hpp"
 #include "core/hist1d.hpp"
+#include "core/hist2d.hpp"
 #include "core/event_scan.hpp"
 #include "core/utilities.hpp"
 #include "core/functions.hpp"
@@ -32,13 +33,22 @@ using namespace std;
 using namespace PlotOptTypes;
 using namespace Higfuncs;
 
+namespace{
+  bool single_thread = false;
+  bool unblind = false;
+  // sample can be search, ttbar, zll, qcd
+  string sample = "search";
+  string year_string = "2016";
+}
+
+
 const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
   if (b.SampleType()<0) return 1.;
 
   double weight = 1;
-  if (b.type()==106000) {
-    return 35.9;
-  }
+  //if (b.type()==106000) {
+  //  return 35.9;
+  //}
   if (b.SampleType()==2016){
     return weight*35.9;
   } else if (b.SampleType()==2017){
@@ -48,11 +58,8 @@ const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
   }
 });
 
-namespace{
-  bool single_thread = false;
-}
-
 int main(int argc, char *argv[]){
+  // ./run/higgsino/plot_n_minus_1.exe --sample search --year 2016
   gErrorIgnoreLevel = 6000;
   time_t begtime, endtime;
   time(&begtime);
@@ -67,40 +74,73 @@ int main(int argc, char *argv[]){
     .Stack(StackType::data_norm).LegendColumns(3);
   PlotOpt log_norm_info = lin_norm_info().YAxis(YAxisType::log);
   PlotOpt log_norm = lin_norm_info().YAxis(YAxisType::log).Title(TitleType::info).LogMinimum(.2);
+  PlotOpt log_norm_data = lin_norm_info().YAxis(YAxisType::log).Title(TitleType::info).LogMinimum(.2).Bottom(BottomType::ratio);
   PlotOpt lin_norm = lin_norm_info().YAxis(YAxisType::linear).Title(TitleType::info);
+  PlotOpt lin_norm_data = lin_norm_info().YAxis(YAxisType::linear).Title(TitleType::info).Bottom(BottomType::ratio);
   PlotOpt lin_shapes = lin_norm().Stack(StackType::shapes).Bottom(BottomType::ratio);
   PlotOpt lin_shapes_info = lin_shapes().Title(TitleType::info).Bottom(BottomType::off);
+  PlotOpt style("txt/plot_styles.txt", "Scatter");
+  vector<PlotOpt> plt_2D = {style().Stack(StackType::data_norm).Title(TitleType::data)};
 
   vector<PlotOpt> plt_norm_info = {lin_norm_info, log_norm_info};
   vector<PlotOpt> plt_lin = {lin_norm};
   vector<PlotOpt> plt_log = {log_norm};
   vector<PlotOpt> plt_shapes = {lin_shapes};
   vector<PlotOpt> plt_shapes_info = {lin_shapes_info};
+  if (unblind) plt_lin = {lin_norm_data};
+  if (unblind) plt_log = {log_norm_data};
 
   // Set options
   //string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/";
   string mc_base_folder = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado";
+  // preselect:
+  //   ((nbt>=2 && njet>=4 && njet<=5)||(Sum$(fjet_pt>300 && fjet_msoftdrop>50)>1))
+  //   nvlep==0 && ntk==0 && !low_dphi_met && met>150 && 
+  // higloose: 
+  //   (nbt>=2 || nbdft>=2 || Sum$(fjet_pt>300 && fjet_msoftdrop>50)>0)&&
+  //   met>150 && nvlep==0
   string search_mc_skim_folder = "mc/merged_higmc_higloose/";
+  // higlep1T:
+  //   (Sum$(fjet_pt>300 && fjet_msoftdrop>50)>1 || ((nbt>=2 || nbdft>=2) && njet>=4 && njet<=5)) &&
+  //   nlep==1 && 
+  //   (Max$(el_pt*el_sig)>40 || Max$(mu_pt*mu_sig)>40) // pass_1l_trig40 (sig is signal lepton)
   string ttbar_mc_skim_folder = "mc/merged_higmc_higlep1T/";
+  // higlep2T:
+  //   (Sum$(fjet_pt>300 && fjet_msoftdrop>50)>1 || (njet>=4 && njet<=5))
+  //   nlep==2 && 
+  //   @ll_m.size()>=1 && Sum$(ll_m>80 && ll_m<100)>=1
+  //   (Max$(el_pt*el_sig)>30 || Max$(mu_pt*mu_sig)>30) // pass_2l_trig30
   string zll_mc_skim_folder = "mc/merged_higmc_higlep2T/";
+  // higqcd with met150:
+  //   (Sum$(fjet_pt>300 && fjet_msoftdrop>50)>1 || (njet>=4 && njet<=5))
+  //   nvlep==0 && ntk==0 && low_dphi_met &&
+  //   met>150  // Since applied to met150 skim
   string qcd_mc_skim_folder = "mc/merged_higmc_higqcd/";
 
-  string data_base_folder = "/net/cms25/cms25r0/pico/NanoAODv5/higgsino_humboldt";
+  string data_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt";
   string search_data_skim_folder = "data/merged_higmc_higloose/";
   string ttbar_data_skim_folder = "data/merged_higmc_higlep1T/";
   string zll_data_skim_folder = "data/merged_higmc_higlep2T/";
   string qcd_data_skim_folder = "data/merged_higmc_higqcd/";
 
   string sig_base_folder = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado/";
-  string sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higloose/";
+  string sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_preselect/";
 
   set<int> years;
+  HigUtilities::parseYears(year_string, years);
   //years = {2016, 2017, 2018};
-  years = {2016};
+  float total_luminosity = 0;
+  for (auto const & year : years) {
+    if (year == 2016) total_luminosity += 35.9;
+    if (year == 2017) total_luminosity += 41.5;
+    if (year == 2018) total_luminosity += 60;
+  }
+  string total_luminosity_string = RoundNumber(total_luminosity, 1, 1).Data();
 
-  NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig;
-  if (years.size()==1 && *years.begin()==2016) weight *= "137.";
-  else weight *= w_years;
+  //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*w_years;
+  //if (years.size()==1 && *years.begin()==2016) weight *= "137.";
+  //else weight *= w_years;
+  NamedFunc weight = "weight"*Higfuncs::eff_higtrig*w_years;
 
   // Set MC 
   map<string, set<string>> mctags; 
@@ -130,17 +170,16 @@ int main(int argc, char *argv[]){
                                "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root", "*DYJetsToLL*.root"
   });
 
-  // sample can be search, ttbar, zll, qcd
-  string sample = "qcd";
-  string year_string = "2016";
-
-
   string mc_skim_folder;
   if (sample == "ttbar") mc_skim_folder = ttbar_mc_skim_folder;
   else if (sample == "zll") mc_skim_folder = zll_mc_skim_folder;
   else if (sample == "qcd") mc_skim_folder = qcd_mc_skim_folder;
   else mc_skim_folder = search_mc_skim_folder;
-
+  string data_skim_folder;
+  if (sample == "ttbar") data_skim_folder = ttbar_data_skim_folder;
+  else if (sample == "zll") data_skim_folder = zll_data_skim_folder;
+  else if (sample == "qcd") data_skim_folder = qcd_data_skim_folder;
+  else data_skim_folder = search_data_skim_folder;
 
   //NamedFunc base_resolved = 
   //                       "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
@@ -215,61 +254,22 @@ int main(int argc, char *argv[]){
                   attach_folder(mc_base_folder, years, mc_skim_folder, mctags["qcd"]),"stitch")); 
   procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGray+2,
                   attach_folder(mc_base_folder, years, mc_skim_folder, mctags["other"]),"stitch"));
-  //procs.push_back(Process::MakeShared<Baby_pico>("Data", Process::Type::data, kBlack,
-  //                attach_folder(data_base_folder, years, qcd_data_skim_folder, {"*.root"}),"stitch"));
 
+  ////vector<string> sigm = {"175", "400", "650"};
+  //vector<string> sigm = {"400"};
+  //for (unsigned isig(0); isig<sigm.size(); isig++){
+  //  procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigm[isig]+",1)", Process::Type::background, 
+  //    kRed, attach_folder(sig_base_folder, years, sig_skim_folder, {"*TChiHH_mChi-"+sigm[isig]+"_mLSP-0*.root"}), 
+  //    "stitch"));
+  //}
 
-  // Set processes according to btag
-  // Getting colors
-  // TColor * color; float red, green, blue;
-  // color = gROOT->GetColor(kAzure+1); color->GetRGB(red,green,blue); cout<<red*255<<" "<<green*255<<" "<<blue*255<<endl;
-  vector<shared_ptr<Process> > procs_btag;
-  procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. (0b)", Process::Type::background,colors("0b"),
-                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]),"stitch&&(nbm==0)"));
-  procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. (1b)", Process::Type::background,colors("1b"),
-                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]),"stitch&&(nbm==1)"));
-  procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. (2b)", Process::Type::background,colors("2b"),
-                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]),"stitch&&(nbm==2)"));
+  if (unblind) {
+    procs.push_back(Process::MakeShared<Baby_pico>("Data", Process::Type::data, kBlack,
+                    attach_folder(data_base_folder, years, data_skim_folder, {"*.root"}),"stitch"));
+  }
 
-  // Set processes according to true number of b
-  vector<shared_ptr<Process> > procs_trueB;
-  procs_trueB.push_back(Process::MakeShared<Baby_pico>
-    ("0 B-hadron",       Process::Type::background, colors("true_0b"), attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]), "stitch" && Functions::ntrub<1));
-  procs_trueB.push_back(Process::MakeShared<Baby_pico>
-    ("1 B-hadron",       Process::Type::background, colors("true_1b"), attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]), "stitch" && Functions::ntrub==1));
-  procs_trueB.push_back(Process::MakeShared<Baby_pico>
-    ("2 B-hadrons",      Process::Type::background, colors("true_2b"), attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]), "stitch" && Functions::ntrub==2));
-  procs_trueB.push_back(Process::MakeShared<Baby_pico>
-    ("3 B-hadrons",      Process::Type::background, colors("true_3b"), attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]),  "stitch"&& Functions::ntrub==3));
-  procs_trueB.push_back(Process::MakeShared<Baby_pico>
-    ("4 B-hadrons", Process::Type::background, colors("true_4b"), attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]), "stitch" && Functions::ntrub==4));
-
-  // Set processes according to true number of b simple version
-  vector<shared_ptr<Process> > procs_trueB012;
-  procs_trueB012.push_back(Process::MakeShared<Baby_pico>
-    ("0 B-hadron",       Process::Type::background, colors("true_0b"), attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]), "stitch" && Functions::ntrub<1));
-  procs_trueB012.push_back(Process::MakeShared<Baby_pico>
-    ("1 B-hadron",       Process::Type::background, colors("true_1b"), attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]), "stitch" && Functions::ntrub==1));
-  procs_trueB012.push_back(Process::MakeShared<Baby_pico>
-    ("2 B-hadrons",      Process::Type::background, colors("true_2b"), attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]), "stitch" && Functions::ntrub==2));
-
-  vector<shared_ptr<Process> > qcd_data_procs_btag;
-  qcd_data_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. (0b)", Process::Type::background,colors("0b"),
-                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]),"stitch&&(nbm==0)"));
-  qcd_data_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. (1b)", Process::Type::background,colors("1b"),
-                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]),"stitch&&(nbm==1)"));
-  qcd_data_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. (2b)", Process::Type::background,colors("2b"),
-                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]),"stitch&&(nbm==2)"));
-
-  vector<shared_ptr<Process> > procs_nisr;
-  procs_nisr.push_back(Process::MakeShared<Baby_pico>("N_{ISR} = 0", Process::Type::background,colors("nisr_0"),
-                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]),"stitch&&nisr==0"));
-  procs_nisr.push_back(Process::MakeShared<Baby_pico>("N_{ISR} = 1", Process::Type::background,colors("nisr_1"),
-                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]),"stitch&&nisr==1"));
-  procs_nisr.push_back(Process::MakeShared<Baby_pico>("N_{ISR} = 2", Process::Type::background,colors("nisr_2"),
-                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]),"stitch&&nisr==2"));
-
-  NamedFunc base_filters = HigUtilities::pass_2016 && "met/mht<2 && met/met_calo<2"; //since pass_fsjets is not quite usable...
+  //NamedFunc base_filters = HigUtilities::pass_2016 && "met/mht<2 && met/met_calo<2"; //since pass_fsjets is not quite usable...
+  NamedFunc base_filters = Functions::hem_veto && "pass && met/mht<2 && met/met_calo<2";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
 
   PlotMaker pm;
 
@@ -277,8 +277,9 @@ int main(int argc, char *argv[]){
   axis_dict.insert("ntk",Axis(10, -0.5, 9.5, "ntk", "Number of iso tk", {0.5}));
   axis_dict.insert("low_dphi_met",Axis(2, -0.5, 1.5, "low_dphi_met", "Low #Delta #phi", {0.5}));
   axis_dict.insert("nvlep",Axis(6, -0.5, 5.5, "nvlep", "N_{veto leps}", {0.5}));
-  axis_dict.insert("nlep",Axis(5, 0.5, 5.5, "nvlep", "N_{leps}", {1.5}));
+  axis_dict.insert("nlep",Axis(5, 0.5, 5.5, "nlep", "N_{leps}", {}));
   axis_dict.insert("met",Axis(14, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}));
+  axis_dict.insert("ht",Axis(40, 0, 2000., "ht", "HT [GeV]", {}));
   axis_dict.insert("met_zll",Axis(20, 0, 150., "met", "p_{T}^{miss} [GeV]", {30}));
   axis_dict.insert("njet",Axis(12, -0.5, 11.5, "njet", "N_{jets}", {3.5, 5.5}));
   axis_dict.insert("hig_cand_drmax",Axis(20,0,4,"hig_cand_drmax[0]", "#DeltaR_{max}", {1.1, 2.2}));
@@ -288,7 +289,8 @@ int main(int argc, char *argv[]){
   axis_dict.insert("lep_pt",Axis(10, 0, 300., "lep_pt[0]", "p_{l} [GeV]", {30}));
   axis_dict.insert("mt",Axis(10, 0, 200., "mt", "m_{T} [GeV]", {100}));
   axis_dict.insert("dbtags",Axis(5, -0.5, 4.5, "nbm", "N_{b medium}", {}));
-  //axis_dict.insert("ll_pt",Axis(16, 0, 400., "ll_pt[0]", "p_{ll} [GeV]", {75., 150., 200., 300}));
+  axis_dict.insert("ll_pt",Axis(16, 0, 400., "ll_pt[0]", "p_{ll} [GeV]", {75., 150., 200., 300}));
+  vector<string> log_plots = {"met", "btags"};
 
 
   // Draw n-1
@@ -298,19 +300,31 @@ int main(int argc, char *argv[]){
   else if (sample == "zll") map_resolved_cuts = zll_resolved_cuts;
   else if (sample == "qcd") map_resolved_cuts = qcd_resolved_cuts;
   else map_resolved_cuts = search_resolved_cuts;
-  // Loop over variables
+
+  // Variables to draw
+  set<string> target_variables;
   for (auto const & target_var : map_resolved_cuts) {
+    target_variables.insert(target_var.key());
+  }
+  target_variables.insert("ht");
+  if (sample=="zll") target_variables.insert("ll_pt");
+  if (sample=="ttbar") target_variables.insert("met");
+
+
+  // Loop over variables
+  for (auto const & target_var : target_variables) {
     // Make n-1 cut for target_var
     NamedFunc n_minus_1_cut = "1";
     for (auto const & cut_item : map_resolved_cuts) {
-      if (cut_item.key() == target_var.key()) continue;
+      // Remove plotting variable
+      if (cut_item.key() == target_var) continue;
       // Below are special conditions
-      if (target_var.key() == "njet") {
+      if (target_var == "njet") {
         if (cut_item.key() == "hig_cand_drmax") continue;
         if (cut_item.key() == "hig_cand_am") continue;
         if (cut_item.key() == "hig_cand_dm") continue;
       }
-      if (target_var.key() == "nlep") {
+      if (target_var == "nlep") {
         if (cut_item.key() == "mt") continue;
       }
       n_minus_1_cut = n_minus_1_cut && cut_item.value();
@@ -318,21 +332,21 @@ int main(int argc, char *argv[]){
     
     // Draw target_var
     // For special case
-    if (target_var.key() == "met" && sample == "zll") {
-      pm.Push<Hist1D>(axis_dict[target_var.key()+"_zll"],
+    if (target_var == "met" && sample == "zll") {
+      pm.Push<Hist1D>(axis_dict[target_var+"_zll"],
         base_filters&&n_minus_1_cut,
-        procs, plt_lin).Weight(weight).Tag("FixName:fig_n-1_"+target_var.key()+"_"+year_string);
+        procs, plt_lin).Weight(weight).Tag("FixName:fig_n-1_"+sample+"_"+target_var+"_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
     }
     // For log plots
-    else if (target_var.key() == "met" || target_var.key() == "btags") {
-      pm.Push<Hist1D>(axis_dict[target_var.key()],
+    else if (std::find(log_plots.begin(), log_plots.end(), target_var) != log_plots.end()) {
+      pm.Push<Hist1D>(axis_dict[target_var],
         base_filters&&n_minus_1_cut,
-        procs, plt_log).Weight(weight).Tag("FixName:fig_n-1_"+target_var.key()+"_"+year_string);
+        procs, plt_log).Weight(weight).Tag("FixName:fig_n-1_"+sample+"_"+target_var+"_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
     // Normal case
     } else {
-      pm.Push<Hist1D>(axis_dict[target_var.key()],
+      pm.Push<Hist1D>(axis_dict[target_var],
         base_filters&&n_minus_1_cut,
-        procs, plt_lin).Weight(weight).Tag("FixName:fig_n-1_"+target_var.key()+"_"+year_string);
+        procs, plt_lin).Weight(weight).Tag("FixName:fig_n-1_"+sample+"_"+target_var+"_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
     }
   }
 
@@ -340,13 +354,22 @@ int main(int argc, char *argv[]){
   for (auto & item : map_resolved_cuts) {
     resolved_cuts = resolved_cuts && item.value();
   }
-  // Special case for zll. Draw but do not cut on ll_pt
-  if (sample=="zll") {
-    pm.Push<Hist1D>(Axis(16, 0, 400., "ll_pt[0]", "p_{ll} [GeV]", {75., 150., 200., 300}),
-      base_filters&&resolved_cuts,
-      procs, plt_lin).Weight(weight).Tag("FixName:n-1_hig_cand_am_2016");
-  }
+  // Draw 2D ht vs met
+  pm.Push<Hist2D>(axis_dict["ht"], axis_dict["met"],
+    base_filters&&resolved_cuts, procs, plt_2D).Weight(weight);
 
+  //// Special case for zll. Draw but do not cut on ll_pt
+  //if (sample=="zll") {
+  //  pm.Push<Hist1D>(Axis(16, 0, 400., "ll_pt[0]", "p_{ll} [GeV]", {75., 150., 200., 300}),
+  //    base_filters&&resolved_cuts,
+  //    procs, plt_lin).Weight(weight).Tag("FixName:fig_n-1_"+sample+"_ll_pt_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+  //}
+  //// Special case for ttbar. Draw but do not cut on met
+  //if (sample=="ttbar") {
+  //  pm.Push<Hist1D>(axis_dict["met"],
+  //    base_filters&&resolved_cuts,
+  //    procs, plt_log).Weight(weight).Tag("FixName:fig_n-1_"+sample+"_met_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+  //}
 
   //// Example
   //NamedFunc resolved_cuts = "1";
@@ -374,6 +397,9 @@ void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
       {"single_thread", no_argument, 0, 's'},
+      {"unblind", no_argument, 0, 0},
+      {"sample", required_argument, 0, 0},
+      {"year", required_argument, 0, 0},
       {0, 0, 0, 0}
     };
 
@@ -390,7 +416,12 @@ void GetOptions(int argc, char *argv[]){
       break;
     case 0:
       optname = long_options[option_index].name;
-      if(false){
+      if(optname == "sample"){
+        sample = optarg;
+      } else if (optname == "year") {
+        year_string = optarg;
+      } else if (optname == "unblind") {
+        unblind = true;
       }else{
         printf("Bad option! Found option name %s\n", optname.c_str());
       }
@@ -402,20 +433,3 @@ void GetOptions(int argc, char *argv[]){
   }
 }
 
-vector<unsigned> higidx(const Baby &b){
-  vector<unsigned> idx;
-  for (unsigned i(0); i<b.mc_pt()->size(); i++){
-    if (b.mc_id()->at(i)==25) idx.push_back(i);
-    if (idx.size()>1) break;
-  }
-  return idx;
-}
-
-// vector<unsigned> bidx(const Baby &b){
-//   vector<unsigned> idx;
-//   for (unsigned i(0); i<b.mc_pt()->size(); i++){
-//     if (b.mc_id()->at(i)==25) higidx.push_back(i);
-//     if (higidx.size()>1) break;
-//   }
-//   return idx;
-// }
