@@ -84,6 +84,30 @@ namespace HigUtilities {
     if (pass_) return 1.;
     else return 0.;
   });
+
+  // based on r136 of https://twiki.cern.ch/twiki/bin/viewauth/CMS/MissingETOptionalFiltersRun2
+  const NamedFunc pass_run2("pass_run2", [](const Baby &b) -> NamedFunc::ScalarType{
+    bool pass_ = b.pass_muon_jet() && (b.met()/b.met_calo()<5);
+    if (b.SampleType()<0) { // Data
+      pass_ = pass_ && b.pass_jets() && b.pass_goodv() && b.pass_cschalo_tight() && b.pass_hbhe() && 
+              b.pass_hbheiso() && b.pass_ecaldeadcell() && b.pass_badpfmu() && b.pass_eebadsc();
+      if (b.SampleType()!=-2016) pass_ = pass_ && b.pass_badcalib();
+    } else {
+      if (b.type()>=100e3) { // FastSim
+        //pass_ = pass_ && b.pass_fsjets() && b.pass_goodv() && b.pass_hbhe() && 
+        //        b.pass_hbheiso() && b.pass_ecaldeadcell() && b.pass_badpfmu();
+        pass_ = pass_ && b.pass_jets() && b.pass_goodv() && b.pass_hbhe() && 
+                b.pass_hbheiso() && b.pass_ecaldeadcell() && b.pass_badpfmu();
+        if (b.SampleType()!=2016) pass_ = pass_ && b.pass_badcalib();
+      } else { //FullSim
+        pass_ = pass_ && b.pass_jets() && b.pass_goodv() && b.pass_cschalo_tight() && b.pass_hbhe() && 
+                b.pass_hbheiso() && b.pass_ecaldeadcell() && b.pass_badpfmu();
+        if (b.SampleType()!=2016) pass_ = pass_ && b.pass_badcalib();
+      }
+    }
+    if (pass_) return 1.;
+    else return 0.;
+  });
   
   const NamedFunc weight_2016("weight_2016", [](const Baby &b) -> NamedFunc::ScalarType{
     // Data

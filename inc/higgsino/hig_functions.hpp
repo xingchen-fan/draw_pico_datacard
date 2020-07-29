@@ -48,6 +48,7 @@ namespace Higfuncs{
   //NamedFunc::ScalarType trig_hig_decision(const Baby &b);
   //extern const NamedFunc trig_hig;
   extern const NamedFunc eff_higtrig;
+  extern const NamedFunc eff_higtrig_run2;
   extern const NamedFunc err_higtrig;
   extern const NamedFunc weight_higd;
   extern const NamedFunc pico_weight_higd;

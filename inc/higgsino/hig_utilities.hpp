@@ -34,6 +34,7 @@ namespace HigUtilities {
   std::string removeSpaces(std::string inString);
 
   extern const NamedFunc pass_2016;
+  extern const NamedFunc pass_run2;
   extern const NamedFunc weight_2016;
   extern const NamedFunc w_years;
   extern const NamedFunc pass_nhig_cand;
