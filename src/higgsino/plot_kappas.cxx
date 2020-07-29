@@ -77,6 +77,7 @@ namespace{
   vector<TString> syst_names;
   vector<vector<float>> syst_values;
   string sys_wgts_file = "txt/sys_weights.cfg";
+  string year_string = "2016,2017,2018";
 }
 
 struct abcd_def{
@@ -115,11 +116,19 @@ int main(int argc, char *argv[]){
     bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
 
   set<int> years; 
-  years = {2016,2017,2018};
+  HigUtilities::parseYears(year_string, years);
+  //years = {2016,2017,2018};
+  float total_luminosity = 0;
+  for (auto const & year : years) {
+    if (year == 2016) total_luminosity += 35.9;
+    if (year == 2017) total_luminosity += 41.5;
+    if (year == 2018) total_luminosity += 60;
+  }
+  string total_luminosity_string = RoundNumber(total_luminosity, 1, 1).Data();
 
   //string base_dir(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_eldorado/");
-  //string base_dir("/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/");
-  string base_dir("/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado");
+  string base_dir("/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/");
+  //string base_dir("/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado");
   string mc_skim_dir("mc/merged_higmc_preselect/"), data_skim_dir("mc/merged_higdata_higloose/");
   if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "merged_higdata_higlep1T/";} 
   else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "merged_higdata_higlep2T/";} 
@@ -919,6 +928,7 @@ void GetOptions(int argc, char *argv[]){
       {"scen", required_argument, 0, 0},       
       {"midnb", no_argument, 0, 0},           // Check zll and qcd CRs for 2b
       {"highnb", no_argument, 0, 0},          // Check QCD CR at 3b and 4b
+      {"year", required_argument, 0, 0},
       {0, 0, 0, 0}
     };
 
@@ -949,6 +959,8 @@ void GetOptions(int argc, char *argv[]){
         do_highnb = true;
       }else if(optname == "midnb"){
         do_midnb = true;
+      }else if(optname == "year"){
+        year_string = optarg;
       }else{
         printf("Bad option! Found option name %s\n", optname.c_str());
         exit(1);
