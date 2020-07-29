@@ -58,7 +58,10 @@ public:
   std::set<const Process*> GetProcesses() const final;
 
   FigureComponent * GetComponent(const Process *process) final;
+
+  Table & LuminosityTag(const std::string &tag) {luminosity_tag_ = tag;return *this;}
   
+  std::string luminosity_tag_;//!<Filename tag to identify plot
   std::string name_;
   std::vector<TableRow> rows_;
   bool do_zbi_;

@@ -289,7 +289,8 @@ void Table::PrintHeader(ofstream &file, double luminosity) const{
 
   file << " }\n";
   file << "    \\hline\\hline\n";
-  file <<" \\multicolumn{1}{c|}{${\\cal L} = "<<setprecision(1)<<luminosity<<"$ fb$^{-1}$} ";
+  if (luminosity_tag_ != "") file <<" \\multicolumn{1}{c|}{${\\cal L} = "<<setprecision(1)<<luminosity_tag_<<"$ fb$^{-1}$} ";
+  else file <<" \\multicolumn{1}{c|}{${\\cal L} = "<<setprecision(1)<<luminosity<<"$ fb$^{-1}$} ";
   if(do_unc_)
     file <<setprecision(2);
   else
