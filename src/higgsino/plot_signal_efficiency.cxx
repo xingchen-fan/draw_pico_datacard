@@ -186,7 +186,8 @@ int main(){
 
   //tree->Add("/net/cms29/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/TChiHH/merged_higmc_higloose/*mChi-700_mLSP-1_*.root");
   //tree->Add("/net/cms29/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/TChiHH/unskimmed/*mChi-700_mLSP-1_*.root");
-  tree->Add("/net/cms29/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/TChiHH/unskimmed/*mChi-*_mLSP-1_*.root");
+  //tree->Add("/net/cms29/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/TChiHH/unskimmed/*mChi-*_mLSP-1_*.root");
+  tree->Add("/net/cms29/cms29r0/pico/NanoAODv5/higgsino_humboldt/2016/SMS-TChiHH_2D/unskimmed/*mChi-*_mLSP-0_*.root");
 
   int dist_nbins = 60;
   float dist_min = 0;

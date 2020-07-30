@@ -58,7 +58,7 @@ int main(int argc, char *argv[]){
   string bfolder("");
   string hostname = execute("echo $HOSTNAME");
   if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
-    bfolder = "/net/cms2"; // In laptops, you can't create a /net folder
+    bfolder = "/net/cms29"; // In laptops, you can't create a /net folder
 
   set<int> years; 
   years = {2016, 2017, 2018};

@@ -36,7 +36,7 @@ namespace
   string mass_points_string = ""; // run over all the points, otherwise specify, e.g. "175_1,200_1"
   string years_string = "2016";
   float luminosity = 137.;
-  // float luminosity = 35.9;
+  //float luminosity = 35.9;
   string dimensionFilePath = "";
   bool unblind = false;
   string tag = "resolved";
@@ -71,15 +71,18 @@ int main(int argc, char *argv[])
   HigUtilities::parseYears(years_string, years);
 
   map<string, string> samplePaths;
-  samplePaths["mc_2016"] = baseFolder + "/cms29r0/pico/NanoAODv5/higgsino_eldorado/2016/mc/merged_higmc_preselect/";
-  samplePaths["signal_2016"] = baseFolder + "/cms29r0/pico/NanoAODv5/higgsino_eldorado/2016/SMS-TChiHH_2D/merged_higmc_preselect/";
-  // samplePaths["data_2016"] = baseFolder + "/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higloose/";
+  //samplePaths["mc_2016"] = baseFolder + "/cms29r0/pico/NanoAODv5/higgsino_eldorado/2016/mc/merged_higmc_preselect/";
+  //samplePaths["signal_2016"] = baseFolder + "/cms29r0/pico/NanoAODv5/higgsino_eldorado/2016/SMS-TChiHH_2D/merged_higmc_preselect/";
+  //// samplePaths["data_2016"] = baseFolder + "/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higloose/";
+  samplePaths["mc_2016"] = "/net/cms25/cms25r5/jbkim/pico/NanoAODv5/higgsino_humboldt/2016/mc/merged_higmc_preselect/";
+  samplePaths["signal_2016"] = "/net/cms25/cms25r5/jbkim/pico/NanoAODv5/higgsino_humboldt/2016/SMS-TChiHH_2D/merged_higmc_preselect/";
 
   vector<pair<string, string> > massPoints;
   if (mass_points_string == "") HigUtilities::findMassPoints(samplePaths["signal_2016"], massPoints);
   else HigUtilities::parseMassPoints(mass_points_string, massPoints);
 
-  NamedFunc filters = HigUtilities::pass_2016;
+  //NamedFunc filters = HigUtilities::pass_2016;
+  NamedFunc filters = "pass";
 
   // sampleProcesses[mc, data, signal]
   map<string, vector<shared_ptr<Process> > > sampleProcesses;
@@ -89,10 +92,10 @@ int main(int argc, char *argv[])
   HigUtilities::setDataProcesses(years, samplePaths, filters, sampleProcesses);
   HigUtilities::setSignalProcesses(massPoints, years, samplePaths, filters, sampleProcesses);
   
-  NamedFunc weight = "w_lumi*w_isr";
+  NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig;
   if (higgsino_model=="N1N2") weight *= HigUtilities::w_CNToN1N2;
-  //weight *=  (min_jet_dphi>0.5);
   string baseline = "!low_dphi_met && nvlep==0 && ntk==0";
+  //string higtrim = "hig_cand_drmax[0]<=2.2 && hig_cand_dm[0] <= 40 && hig_cand_am[0]<=200";
   string higtrim = "hig_cand_drmax[0]<=2.2 && hig_cand_dm[0] <= 40 && hig_cand_am[0]<=200";
   if (tag=="resolved") baseline += "&& njet>=4 && njet<=5 && nbt>=2 && "+higtrim;
   else if (tag=="boosted") {
@@ -127,7 +130,6 @@ int main(int argc, char *argv[])
   map<string, vector<pair<string, string> > > dimensionBins;
   if (dimensionFilePath==""){
     if (tag=="resolved") {
-
       dimensionBins["met"].push_back({"met0", "met>150 && met<=200"});
       dimensionBins["met"].push_back({"met1", "met>200 && met<=300"});
       dimensionBins["met"].push_back({"met2", "met>300 && met<=400"});

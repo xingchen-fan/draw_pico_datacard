@@ -13,7 +13,7 @@ def runCommand(command):
   #return subprocess.check_output(command[1], shell=True, stderr=subprocess.STDOUT)
   process = subprocess.Popen(command[1], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
   out, err = process.communicate()
-  return out+'\n'+err
+  return out.decode("utf-8")+'\n'+err.decode("utf-8")
 
 if __name__ == '__main__':
   t0 = time()

@@ -488,6 +488,14 @@ void Hist1D::Print(double luminosity,
       : "plots/"+Name();
     for(const auto &ext: this_opt_.FileExtensions()){
       string full_name = base_name+"__"+this_opt_.TypeString()+'.'+ext;
+      if (Contains(tag_,"FixName:")){
+        string tagName=tag_;
+        ReplaceAll(tagName, "FixName:", "");
+        base_name = subdir != ""
+          ? "plots/"+subdir+"/"+tagName
+          : "plots/"+tagName;
+        full_name = base_name+'.'+ext;
+      }
       full->Print(full_name.c_str());
       cout << "open " << full_name << endl;
     }
@@ -528,6 +536,10 @@ string Hist1D::Name() const{
   
   if(tag_ == ""){
     return CodeToPlainText(xaxis_.var_.Name()+cut+weight);
+  }else if (Contains(tag_,"ShortName:")){
+    string tagName=tag_;
+    ReplaceAll(tagName, "ShortName:", "");
+    return CodeToPlainText(tagName+"__"+xaxis_.var_.Name()+weight);
   }else{
     return CodeToPlainText(tag_+"__"+xaxis_.var_.Name()+cut+weight);
   }
@@ -554,6 +566,11 @@ Hist1D & Hist1D::Weight(const NamedFunc &weight){
 
 Hist1D & Hist1D::Tag(const string &tag){
   tag_ = tag;
+  return *this;
+}
+
+Hist1D & Hist1D::LuminosityTag(const string &tag){
+  luminosity_tag_ = tag;
   return *this;
 }
 
@@ -1020,7 +1037,8 @@ vector<shared_ptr<TLatex> > Hist1D::GetTitleTexts() const{
 
     ostringstream oss;
     if(this_opt_.Stack() != StackType::shapes) {
-      if (luminosity_<1.1) oss << "137 fb^{-1} (13 TeV)" << setprecision(1) << flush;
+      if (luminosity_tag_ != "") oss << luminosity_tag_ << " fb^{-1} (13 TeV)" << flush;
+      else if (luminosity_<1.1) oss << "137 fb^{-1} (13 TeV)" << setprecision(1) << flush;
       else oss << setprecision(1) << luminosity_ << " fb^{-1} (13 TeV)" << flush;
     } else oss << "13 TeV" << flush;
     out.push_back(make_shared<TLatex>(right, bottom+0.2*(top-bottom),
@@ -1362,7 +1380,8 @@ vector<shared_ptr<TLegend> > Hist1D::GetLegends(){
   if(this_opt_.DisplayLumiEntry()){
     auto &leg = legends.at(GetLegendIndex(entries_added, n_entries, legends.size()));
     ostringstream label;
-    if(luminosity_ != 1.0) label << fixed  << "L=" << setprecision(1) << luminosity_ << " fb^{-1}";
+    if (luminosity_tag_ != "") label << fixed  << "L=" << luminosity_tag_ << " fb^{-1}";
+    else if(luminosity_ != 1.0) label << fixed  << "L=" << setprecision(1) << luminosity_ << " fb^{-1}";
     else label << fixed << setprecision(1) << "L=137 fb^{-1}";
     //else label << fixed << setprecision(1) << "L=" << 36.8 << " fb^{-1}";
     if(this_opt_.Stack() == StackType::data_norm && datas_.size() > 0){

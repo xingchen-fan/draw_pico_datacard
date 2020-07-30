@@ -426,40 +426,62 @@ vector<int> getJetTypes(vector<float> const & jet_deepcsv, vector<bool> const & 
   //for (unsigned iQuark = 0; iQuark < ttbarQuarks.size(); ++iQuark) {
   //  cout<<"id: "<<get<0>(ttbarQuarks[iQuark])<<" pt: "<<get<1>(ttbarQuarks[iQuark]).Pt()<<endl;
   //}
-  // Find closest quark to jet
-  // closestQuarkToJet = [(id, deltaR)]
-  vector<tuple<int,int> > closestQuarkToJet;
-  for (unsigned hJet = 0; hJet < bbjet_indices.size(); ++hJet) {
-    int ijet = bbjet_indices[hJet];
-    ROOT::Math::PtEtaPhiMVector jet ((jet_pt)[ijet], (jet_eta)[ijet], (jet_phi)[ijet], (jet_m)[ijet]);
+
+  //// Find closest quark to jet
+  //// closestQuarkToJet = [(id, deltaR)]
+  //vector<tuple<int,int> > closestQuarkToJet;
+  //for (unsigned hJet = 0; hJet < bbjet_indices.size(); ++hJet) {
+  //  int ijet = bbjet_indices[hJet];
+  //  ROOT::Math::PtEtaPhiMVector jet ((jet_pt)[ijet], (jet_eta)[ijet], (jet_phi)[ijet], (jet_m)[ijet]);
+  //  float minR = 1000;
+  //  int minQuarkId = -1;
+  //  for (unsigned iQuark = 0; iQuark < ttbarQuarks.size(); ++iQuark) {
+  //    int quarkId = get<0>(ttbarQuarks[iQuark]);
+  //    ROOT::Math::PtEtaPhiMVector & quark = get<1>(ttbarQuarks[iQuark]);
+  //    float deltaR = DeltaR(jet, quark);
+  //    if (minR>deltaR) {
+  //      minR = deltaR;
+  //      minQuarkId = quarkId;
+  //    }
+  //  }
+  //  closestQuarkToJet.push_back({minQuarkId, minR});
+  //}
+  //vector<int> quarks;
+  //for (unsigned iJet = 0; iJet < closestQuarkToJet.size(); ++iJet) {
+  //  int quarkId = get<0>(closestQuarkToJet[iJet]);
+  //  quarks.push_back(quarkId);
+  //};
+
+  // Match quarks to jets
+  //matchQuarkToJet[quark index] = (jet index, deltaR)
+  map<int, tuple<int, float> > matchQuarkToJet;
+  for (unsigned iQuark = 0; iQuark < ttbarQuarks.size(); ++iQuark) {
+    //int quarkId = get<0>(ttbarQuarks[iQuark]);
+    ROOT::Math::PtEtaPhiMVector const & quark = get<1>(ttbarQuarks[iQuark]);
+    int minJetIndex = -1;
     float minR = 1000;
-    int minQuarkId = -1;
-    for (unsigned iQuark = 0; iQuark < ttbarQuarks.size(); ++iQuark) {
-      int quarkId = get<0>(ttbarQuarks[iQuark]);
-      ROOT::Math::PtEtaPhiMVector & quark = get<1>(ttbarQuarks[iQuark]);
+    for (unsigned hJet = 0; hJet < bbjet_indices.size(); ++hJet) {
+      int ijet = bbjet_indices[hJet];
+      ROOT::Math::PtEtaPhiMVector jet ((jet_pt)[ijet], (jet_eta)[ijet], (jet_phi)[ijet], (jet_m)[ijet]);
       float deltaR = DeltaR(jet, quark);
       if (minR>deltaR) {
         minR = deltaR;
-        minQuarkId = quarkId;
+        minJetIndex = hJet;
       }
     }
-    closestQuarkToJet.push_back({minQuarkId, minR});
+    matchQuarkToJet[iQuark] = {minJetIndex, minR};
   }
-  // Tag event (xxxx) MSB is h1b1, LSB is h2b2. x is 0: unknown, 1:d, 2:u, 3:s, 4:c, 5:b, 6:b from t
-  //int eventTag = 0;
-  //for (unsigned iJet = 0; iJet < closestQuarkToJet.size(); ++iJet) {
-  //  int quarkId = get<0>(closestQuarkToJet[iJet]);
-  //  float minR = get<1>(closestQuarkToJet[iJet]);
-  //  if (minR>0.4) quarkId = 0;
-  //  eventTag += quarkId * pow(10,(closestQuarkToJet.size()-iJet-1));
-  //}
-  //return eventTag;
+  vector<int> quarks(4,-1);
+  for (auto it = matchQuarkToJet.begin(); it != matchQuarkToJet.end(); ++it) {
+    int quarkIndex = (*it).first;
+    int quarkId = get<0>(ttbarQuarks[quarkIndex]);
+    int jetIndex = get<0>((*it).second);
+    float minR = get<1>((*it).second);
+    if (minR>0.4) continue;
+    quarks[jetIndex] = quarkId;
+  }
+  //cout<<quarks[0]<<" "<<quarks[1]<<" "<<quarks[2]<<" "<<quarks[3]<<endl;
 
-  vector<int> quarks;
-  for (unsigned iJet = 0; iJet < closestQuarkToJet.size(); ++iJet) {
-    int quarkId = get<0>(closestQuarkToJet[iJet]);
-    quarks.push_back(quarkId);
-  };
   return quarks;
 }
 
@@ -597,7 +619,8 @@ int main(int argc, char *argv[]){
     bfolder = "/net/cms29"; // In laptops, you can't create a /net folder
 
   //string mc_base_folder = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_eldorado/";
-  string mc_base_folder = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_humboldt/";
+  //string mc_base_folder = bfolder+"/cms29r0/pico/NanoAODv5/higgsino_humboldt/";
+  string mc_base_folder = "/net/cms25/cms25r5/jbkim/pico/NanoAODv5/higgsino_humboldt/";
   // TODO
   string mc_skim_folder = "mc/merged_higmc_higloose/";
   //string mc_skim_folder = "mc/unskimmed/";
@@ -612,49 +635,47 @@ int main(int argc, char *argv[]){
   if (years.size()==1 && *years.begin()==2016) wgt *= "137.";
   else wgt *= w_years;
 
-  // TODO
   map<string, set<string>> mctags; 
   mctags["tt"]     = set<string>({"*TTJets_SingleLept*",
                                   "*TTJets_DiLept*",
-                                  //"*_TTZ*.root", "*_TTW*.root",
-                                  //"*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root", "*_ST_*.root"
+                                  "*_TTZ*.root", "*_TTW*.root",
+                                  "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root", "*_ST_*.root"
                                  });
-  mctags["ttonly"]     = set<string>({"*TTJets_*Lept*"});
-  mctags["topx"]     = set<string>({"*_TTZ*.root", "*_TTW*.root",
-                                     "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root", "*_ST_*.root"});
+  //mctags["ttonly"]     = set<string>({"*TTJets_*Lept*"});
+  //mctags["topx"]     = set<string>({"*_TTZ*.root", "*_TTW*.root",
+  //                                   "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root", "*_ST_*.root"});
   mctags["wjets"]   = set<string>({"*_WJetsToLNu*.root"});
   mctags["zjets"]   = set<string>({"*_ZJet*.root"});
-  //mctags["qcd"]     = set<string>({"*_QCD_HT200to300_*","*_QCD_HT300to500_*","*_QCD_HT500to700_*",
-  //                                 "*_QCD_HT700to1000_*", "*_QCD_HT1000to1500_*","*_QCD_HT1500to2000_*",
-  //                                 "*_QCD_HT2000toInf_*"});
-  mctags["qcd"]     = set<string>({
+  mctags["qcd"]     = set<string>({"*_QCD_HT200to300_*","*_QCD_HT300to500_*","*_QCD_HT500to700_*",
+                                   "*_QCD_HT700to1000_*", "*_QCD_HT1000to1500_*","*_QCD_HT1500to2000_*",
                                    "*_QCD_HT2000toInf_*"});
+  //mctags["qcd"]     = set<string>({
+  //                                 "*_QCD_HT2000toInf_*"});
   mctags["other"]   = set<string>({"*_WH_HToBB*.root", "*_ZH_HToBB*.root",
                                      "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root", "*DYJetsToLL*.root"});
-  // TODO
   mctags["all"] = set<string>({"*TTJets_SingleLept*",
                                "*TTJets_DiLept*",
-                               //"*_TTZ*.root", "*_TTW*.root",
-                               //"*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root", "*_ST_*.root",
-                               //"*_WJetsToLNu*.root", "*_ZJet*.root",
-                               ////"*_QCD_HT200to300_*","*_QCD_HT300to500_*","*_QCD_HT500to700_*",
-                               ////"*_QCD_HT1000to1500_*","*_QCD_HT1500to2000_*",
-                               //"*_QCD_HT2000toInf_*",
-                               //"*_WH_HToBB*.root", "*_ZH_HToBB*.root",
-                               //"*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root", "*DYJetsToLL*.root"
+                               "*_TTZ*.root", "*_TTW*.root",
+                               "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root", "*_ST_*.root",
+                               "*_WJetsToLNu*.root", "*_ZJet*.root",
+                               //"*_QCD_HT200to300_*","*_QCD_HT300to500_*","*_QCD_HT500to700_*",
+                               //"*_QCD_HT1000to1500_*","*_QCD_HT1500to2000_*",
+                               "*_QCD_HT2000toInf_*",
+                               "*_WH_HToBB*.root", "*_ZH_HToBB*.root",
+                               "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root", "*DYJetsToLL*.root"
   });
-  // TODO
+
   vector<shared_ptr<Process> > procs;
-  //procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGray+2,
-  //                attach_folder(mc_base_folder, years, mc_skim_folder, mctags["other"]),base_filters&&"stitch"));
-  //procs.push_back(Process::MakeShared<Baby_pico>("Z+jets", Process::Type::background, kOrange+1,
-  //                attach_folder(mc_base_folder, years, mc_skim_folder,mctags["zjets"]),base_filters&&"stitch"));
-  //procs.push_back(Process::MakeShared<Baby_pico>("W+jets", Process::Type::background, kGreen+1,
-  //                attach_folder(mc_base_folder, years, mc_skim_folder,mctags["wjets"]),base_filters&&"stitch"));
+  procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGray+2,
+                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["other"]),base_filters&&"stitch"));
+  procs.push_back(Process::MakeShared<Baby_pico>("Z+jets", Process::Type::background, kOrange+1,
+                  attach_folder(mc_base_folder, years, mc_skim_folder,mctags["zjets"]),base_filters&&"stitch"));
+  procs.push_back(Process::MakeShared<Baby_pico>("W+jets", Process::Type::background, kGreen+1,
+                  attach_folder(mc_base_folder, years, mc_skim_folder,mctags["wjets"]),base_filters&&"stitch"));
   procs.push_back(Process::MakeShared<Baby_pico>("tt", Process::Type::background,colors("tt_1l"),
                   attach_folder(mc_base_folder, years, mc_skim_folder, mctags["tt"]),base_filters&&"stitch"));
-  //procs.push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background, colors("other"),
-  //                attach_folder(mc_base_folder, years, mc_skim_folder, mctags["qcd"]),base_filters&&"stitch")); 
+  procs.push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background, colors("other"),
+                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["qcd"]),base_filters&&"stitch")); 
 
   //procs.push_back(Process::MakeShared<Baby_pico>("tt+X", Process::Type::background,colors("tt_1l"),
   //                attach_folder(mc_base_folder, years, mc_skim_folder, mctags["topx"]),base_filters&&"stitch"));
@@ -667,34 +688,34 @@ int main(int argc, char *argv[]){
   bool plot_ABCD = true;
   bool plot_dphi = false;
 
-  vector<string> sigm = {"450", "700", "950"}; 
+  vector<string> sigm = {"200", "600", "950"}; 
   //vector<string> sigm = {"950"}; 
   vector<int> sig_colors = {kGreen+1, kRed, kBlue, kOrange}; // need sigm.size() >= sig_colors.size()
-  if (plot_dphi || plot_ABCD) {
+  if (plot_dphi||plot_ABCD) {
     for (unsigned isig(0); isig<sigm.size(); isig++){
       procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigm[isig]+",1)", Process::Type::signal, 
         sig_colors[isig], attach_folder(sig_base_folder, years, sig_skim_folder, {"*TChiHH_mChi-"+sigm[isig]+"_mLSP-0*.root"}), base_filters));
     }
   }
-  // TODO
-  //string baseline = "ntk==0&&!low_dphi_met&&nvlep==0&&met>150";
+
+  string baseline = "ntk==0&&!low_dphi_met&&nvlep==0&&met>150";
   //string baseline = "ntk==0&&!low_dphi_met&&nvlep==0&&met>50";
-  string baseline = "!low_dphi_met&&nvlep==0&&met>150";
+  //string baseline = "!low_dphi_met&&nvlep==0&&met>150";
   //string baseline = "ntk==0&&!low_dphi_met&&nlep==2&&met>150";
-  // TODO
-  //string baseline_fourjet = "njet>=4&&njet<=5&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&nbm>=2"; 
+
+  string baseline_fourjet = "njet>=4&&njet<=5&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&nbm>=2"; 
   //NamedFunc baseline_fourjet = "njet>=4&&njet<=5&&hig_cand_am[0]<200&&hig_cand_dm[0]<40"&&higgs_h1b2_pt>80&&higgs_h2b2_pt>80; 
-  NamedFunc baseline_fourjet = "njet>=4&&njet<=6&&hig_cand_am[0]<200&&hig_cand_dm[0]<60"; 
+  //NamedFunc baseline_fourjet = "njet>=4&&njet<=6&&hig_cand_am[0]<200&&hig_cand_dm[0]<60"; 
   //string baseline_fourjet = "njet>=4&&njet<=5&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&nbm>=2&&hig_cand_am[0]<60"; 
   //string baseline_fourjet = "njet>=4&&njet<=5&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&nbm>=2&&hig_cand_am[0]<150&&hig_cand_am[0]>100"; 
   //string baseline_fourjet = "njet==4&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&nbm>=2"; 
   //string baseline_fourjet = "njet==5&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&nbm>=2"; 
   //string drcut = "hig_cand_drmax[0]>=0 && hig_cand_drmax[0]<2.2";
-  // TODO 
+
   //string drcut = "hig_cand_drmax[0]>=1.1 && hig_cand_drmax[0]<2.2";
-  string drcut = "hig_cand_drmax[0]>=0 && hig_cand_drmax[0]<1.1";
+  string drcut = "hig_cand_drmax[0]>=0 && hig_cand_drmax[0]<2.2";
   //string drcut = "hig_cand_drmax[0]>=0.8 && hig_cand_drmax[0]<1.2";
-  // TODO none
+
   // TTML
   string bcut_2b = "(nbt==2&&nbm==2)";
   string bcut_3b = "(nbt>=2&&nbm==3&&nbl==3)";
@@ -752,7 +773,14 @@ int main(int argc, char *argv[]){
   //baseline_fourjet += "&&"+bcut_4b;
   //baseline_fourjet += "&&"+bcut_2b;
 
-  NamedFunc extra_cut = higgs_h1b2_pt>80&&higgs_h2b2_pt>80;
+  NamedFunc extra_cut = "1";
+  //NamedFunc extra_cut = higgs_h2b2_pt>80;
+  //NamedFunc extra_cut = higgs_h1b2_pt>80&&higgs_h2b2_pt>80;
+  //NamedFunc extra_cut = higgs_h2b2_pt>80;
+  //NamedFunc extra_cut = higgs_h2b2_pt>80;
+  //NamedFunc extra_cut = "hig_cand_am[0]>100&&hig_cand_am[0]<140";
+  //NamedFunc extra_cut = "hig_cand_am[0]>100";
+  //NamedFunc extra_cut = "hig_cand_am[0]<80";
 
   PlotMaker pm;
 
@@ -879,16 +907,40 @@ int main(int argc, char *argv[]){
       1, procs_btag, plt_shapes).Weight(wgt).Tag("nbtagVsIsrTruPt");
     //pm.Push<Hist1D>(Axis(15, 50, 250, "hig_cand_am[0]", "Average Higgs mass [GeV]", {100,140}),
     //  higgs_h1b2_pflavor>=5&&higgs_h2b2_pflavor>=5, procs_btag, plt_shapes).Weight(wgt).Tag("nbtagVsAm");
+    pm.Push<Hist1D>(Axis(8, -0.5, 7.5, jetType_h1b2, "jetType h1b2", {}),
+      1, procs_btag, plt_shapes).Weight(wgt).Tag("nbtagVsh1b2");
+    pm.Push<Hist1D>(Axis(8, -0.5, 7.5, jetType_h2b2, "jetType h2b2", {}),
+      1, procs_btag, plt_shapes).Weight(wgt).Tag("nbtagVsh2b2");
+    pm.Push<Hist1D>(Axis(10, -0.5, 9.5, "nisr", "nisr", {}),
+      1, procs_btag, plt_shapes).Weight(wgt).Tag("nisr");
 
     // Important variables
-    pm.Push<Hist1D>(Axis(6, 0, 6, jetType_h1b1, "jetType h1b1", {}),
+    pm.Push<Hist1D>(Axis(8, -0.5, 7.5, jetType_h1b1, "jetType h1b1", {}),
       base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut, procs, plt_lin).Weight(wgt);
-    //pm.Push<Hist1D>(Axis(6, 0, 6, jetType_h1b2, "jetType h1b2", {}),
-    //  base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut, procs, plt_lin).Weight(wgt);
-    //pm.Push<Hist1D>(Axis(6, 0, 6, jetType_h2b1, "jetType h2b1", {}),
-    //  base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut, procs, plt_lin).Weight(wgt);
-    //pm.Push<Hist1D>(Axis(6, 0, 6, jetType_h2b2, "jetType h2b2", {}),
-    //  base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut, procs, plt_lin).Weight(wgt);
+    pm.Push<Hist1D>(Axis(8, -0.5, 7.5, jetType_h1b2, "jetType h1b2", {}),
+      base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut, procs, plt_lin).Weight(wgt);
+    pm.Push<Hist1D>(Axis(8, -0.5, 7.5, jetType_h2b1, "jetType h2b1", {}),
+      base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut, procs, plt_lin).Weight(wgt);
+    pm.Push<Hist1D>(Axis(8, -0.5, 7.5, jetType_h2b2, "jetType h2b2", {}),
+      base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut, procs, plt_lin).Weight(wgt);
+    //// low mass
+    //pm.Push<Hist1D>(Axis(8, -0.5, 7.5, jetType_h1b1, "jetType h1b1", {}),
+    //  base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut&&"hig_cand_am[0]<80", procs, plt_lin).Weight(wgt);
+    //pm.Push<Hist1D>(Axis(8, -0.5, 7.5, jetType_h1b2, "jetType h1b2", {}),
+    //  base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut&&"hig_cand_am[0]<80", procs, plt_lin).Weight(wgt);
+    //pm.Push<Hist1D>(Axis(8, -0.5, 7.5, jetType_h2b1, "jetType h2b1", {}),
+    //  base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut&&"hig_cand_am[0]<80", procs, plt_lin).Weight(wgt);
+    //pm.Push<Hist1D>(Axis(8, -0.5, 7.5, jetType_h2b2, "jetType h2b2", {}),
+    //  base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut&&"hig_cand_am[0]<80", procs, plt_lin).Weight(wgt);
+    //// high mass
+    //pm.Push<Hist1D>(Axis(8, -0.5, 7.5, jetType_h1b1, "jetType h1b1", {}),
+    //  base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut&&"hig_cand_am[0]>100", procs, plt_lin).Weight(wgt);
+    //pm.Push<Hist1D>(Axis(8, -0.5, 7.5, jetType_h1b2, "jetType h1b2", {}),
+    //  base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut&&"hig_cand_am[0]>100", procs, plt_lin).Weight(wgt);
+    //pm.Push<Hist1D>(Axis(8, -0.5, 7.5, jetType_h2b1, "jetType h2b1", {}),
+    //  base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut&&"hig_cand_am[0]>100", procs, plt_lin).Weight(wgt);
+    //pm.Push<Hist1D>(Axis(8, -0.5, 7.5, jetType_h2b2, "jetType h2b2", {}),
+    //  base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut&&"hig_cand_am[0]>100", procs, plt_lin).Weight(wgt);
 
     pm.Push<Hist1D>(Axis(18, 150, 600, "met", "MET [GeV]", {200, 300, 450}),
       base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut, procs, plt_lin).Weight(wgt);
@@ -900,9 +952,21 @@ int main(int argc, char *argv[]){
       base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut, procs, plt_lin).Weight(wgt);
     pm.Push<Hist1D>(Axis(10, 0, 10, "ntk", "Number of iso tk", {}),
       base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut, procs, plt_lin).Weight(wgt);
+    pm.Push<Hist1D>(Axis(15, 0, 300, higgs_h1b1_pt, "pT of Higgs 1, jet 1 [GeV]", {80}),
+      base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut, procs, plt_lin).Weight(wgt);
     pm.Push<Hist1D>(Axis(15, 0, 300, higgs_h1b2_pt, "pT of Higgs 1, jet 2 [GeV]", {80}),
       base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut, procs, plt_lin).Weight(wgt);
+    pm.Push<Hist1D>(Axis(15, 0, 300, higgs_h2b1_pt, "pT of Higgs 2, jet 1 [GeV]", {80}),
+      base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut, procs, plt_lin).Weight(wgt);
     pm.Push<Hist1D>(Axis(15, 0, 300, higgs_h2b2_pt, "pT of Higgs 2, jet 2 [GeV]", {80}),
+      base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut, procs, plt_lin).Weight(wgt);
+    pm.Push<Hist1D>(Axis(20, 0, 1, higgs_h1b1_bcsv, "Btag of Higgs 1, jet 1", {0.2217, 0.6321, 0.8953}),
+      base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut, procs, plt_lin).Weight(wgt);
+    pm.Push<Hist1D>(Axis(20, 0, 1, higgs_h1b2_bcsv, "Btag of Higgs 1, jet 2", {0.2217, 0.6321, 0.8953}),
+      base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut, procs, plt_lin).Weight(wgt);
+    pm.Push<Hist1D>(Axis(20, 0, 1, higgs_h2b1_bcsv, "Btag of Higgs 2, jet 1", {0.2217, 0.6321, 0.8953}),
+      base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut, procs, plt_lin).Weight(wgt);
+    pm.Push<Hist1D>(Axis(20, 0, 1, higgs_h2b2_bcsv, "Btag of Higgs 2, jet 2", {0.2217, 0.6321, 0.8953}),
       base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut, procs, plt_lin).Weight(wgt);
     pm.Push<Hist1D>(Axis(15, 0, 300, "isr_tru_pt", "ISR true pT [GeV]", {}),
       base_filters&&"stitch"&&baseline&&baseline_fourjet&&drcut&&bcut_4b&&extra_cut, procs, plt_lin).Weight(wgt);

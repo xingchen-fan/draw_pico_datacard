@@ -71,6 +71,7 @@ public:
 
   Hist1D & Weight(const NamedFunc &weight);
   Hist1D & Tag(const std::string &tag);
+  Hist1D & LuminosityTag(const std::string &tag);
   Hist1D & LeftLabel(const std::vector<std::string> &label);
   Hist1D & RightLabel(const std::vector<std::string> &label);
   Hist1D & YAxisZoom(const double &yaxis_zoom);
@@ -81,6 +82,7 @@ public:
   NamedFunc cut_;//!<Event selection
   NamedFunc weight_;//!<Event weight
   std::string tag_;//!<Filename tag to identify plot
+  std::string luminosity_tag_;//!<Filename tag to identify plot
   std::vector<std::string> left_label_;//!<Label to plot under the legend, to the left
   std::vector<std::string> right_label_;//!<Label to plot under the legend, to the right
   double yaxis_zoom_;//!<Y-axis zoom

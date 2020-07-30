@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 
 ###### Script that compares the yields in old and new ntuples
 from ROOT import TChain, TH1D
@@ -21,15 +22,17 @@ class bcolors:
 
 def findBaseSampleNames(folder):
   infiles = set() # to remove duplicates
-  for file in glob.glob(folder+'/*TTJ*.root'):
+  #for file in glob.glob(folder+'/*TTJ*.root'):
+  for file in glob.glob(folder+'/*.root'):
     dataset_tag = file.split('/')[-1]
     dataset_tag = dataset_tag.split('__RunIISummer16NanoAODv5__')[0]
     dataset_tag = dataset_tag.split('__RunIIFall17NanoAODv5__')[0]
     dataset_tag = dataset_tag.split('__RunIIAutumn18NanoAODv5__')[0]
     dataset_tag = dataset_tag.split('_ext')[0]
     dataset_tag = dataset_tag.split('_Tune')[0]
+    dataset_tag.replace('pico_','')
     infiles.add(dataset_tag)
-    sortedfiles = list()
+  sortedfiles = list()
   for file in infiles:
     sortedfiles.append(file)
   sortedfiles = sorted(sortedfiles)
@@ -37,22 +40,24 @@ def findBaseSampleNames(folder):
   return sortedfiles
 
 # Setting folders
-oldfolder    = '/cms29r0/pico/NanoAODv5/higgsino_eldorado/2016/mc/unskimmed/'
-newfolder    = '/cms29r0/pico/NanoAODv5/higgsino_eldorado/2017/mc/unskimmed/'
+oldfolder    = '/net/cms29/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/mc/unskimmed/'
+newfolder    = '/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado/2016/mc/unskimmed/'
 
 oweight = "weight"
 nweight = "weight"
 
 ## Finding tags for each dataset
 sortedfiles = findBaseSampleNames(newfolder)
+print ('Will compare below samples')
+print(*sortedfiles,sep="\n")
 
-print '\nOLD FOLDER: '+oldfolder
-print 'NEW FOLDER: '+newfolder
-print 'OLD WEIGHT "'+oweight+'"  - NEW WEIGHT "'+nweight
+print ('\nOLD FOLDER: '+oldfolder)
+print ('NEW FOLDER: '+newfolder)
+print ('OLD WEIGHT "'+oweight+'"  - NEW WEIGHT "'+nweight)
 
-print '\n{:>40}'.format(' Ntuple name          ')+'{:>16}'.format('Difference')+'{:>17}'.format('Old yield'),
-print '{:>17}'.format('New yield')+'{:>17}'.format('Old entries')+'{:>17}'.format('New entries')
-print '=' * 128
+print ('\n{:>40}'.format(' Ntuple name          ')+'{:>16}'.format('Difference')+'{:>17}'.format('Old yield'),end='')
+print ('{:>17}'.format('New yield')+'{:>17}'.format('Old entries')+'{:>17}'.format('New entries'))
+print ('=' * 128)
 not_in_old = list()
 not_in_new = list()
 rows = list()
@@ -89,8 +94,8 @@ for ifile in sortedfiles:
     pretag = bcolors.FAIL
     posttag = bcolors.ENDC
   ## Printing all rows
-  print pretag+'{:>40}'.format(ifile)+'{:>14.2f}'.format(diff)+' %'+'{:>17.2f}'.format(oldtot),
-  print '{:>17.2f}'.format(newtot)+'{:>17}'.format(no)+'{:>17}'.format(nn)+posttag
+  print (pretag+'{:>40}'.format(ifile)+'{:>14.2f}'.format(diff)+' %'+'{:>17.2f}'.format(oldtot),end='')
+  print ('{:>17.2f}'.format(newtot)+'{:>17}'.format(no)+'{:>17}'.format(nn)+posttag)
   if line == 5 : 
     print
     line = 0
@@ -98,10 +103,10 @@ for ifile in sortedfiles:
 
 ## Sorting rows by difference
 if len(rows) > 0: 
-  print bcolors.FAIL + "\nSamples off by more than 1.5 sigma"+ bcolors.ENDC
-  print '\n{:>40}'.format(' Ntuple name          ')+'{:>16}'.format('Difference')+'{:>17}'.format('Old yield'),
-  print '{:>17}'.format('New yield')+'{:>17}'.format('Old entries')+'{:>17}'.format('New entries')
-  print '=' * 128
+  print (bcolors.FAIL + "\nSamples off by more than 1.5 sigma"+ bcolors.ENDC)
+  print ('\n{:>40}'.format(' Ntuple name          ')+'{:>16}'.format('Difference')+'{:>17}'.format('Old yield'),end='')
+  print ('{:>17}'.format('New yield')+'{:>17}'.format('Old entries')+'{:>17}'.format('New entries'))
+  print ('=' * 128)
 rows = sorted(rows, key=lambda rows: rows[1])
 line = 1
 for row in rows:
@@ -113,21 +118,21 @@ for row in rows:
   nn = row[5]
 
   ## Printing rows with significant differences
-  print '{:>40}'.format(ifile)+'{:>14.2f}'.format(diff)+' %'+'{:>17.2f}'.format(oldtot),
-  print '{:>17.2f}'.format(newtot)+'{:>17}'.format(no)+'{:>17}'.format(nn)
+  print ('{:>40}'.format(ifile)+'{:>14.2f}'.format(diff)+' %'+'{:>17.2f}'.format(oldtot),end='')
+  print ('{:>17.2f}'.format(newtot)+'{:>17}'.format(no)+'{:>17}'.format(nn))
   if line == 5 : 
     print
     line = 0
     line += 1
 
 if len(not_in_old) > 0:
-  print bcolors.BOLD + '\nNtuples not found in '+oldfolder+':'+ bcolors.ENDC
+  print (bcolors.BOLD + '\nNtuples not found in '+oldfolder+':'+ bcolors.ENDC)
   for ntu in not_in_old:
-    print '\t'+ntu
+    print ('\t'+ntu)
 if len(not_in_new) > 0:
-  print bcolors.BOLD + '\nNtuples not found in '+newfolder+':'+ bcolors.ENDC
+  print (bcolors.BOLD + '\nNtuples not found in '+newfolder+':'+ bcolors.ENDC)
   for ntu in not_in_new:
-    print '\t'+ntu
+    print ('\t'+ntu)
 
-print
+print ()
 sys.exit(0)

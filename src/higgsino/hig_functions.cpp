@@ -1,4 +1,5 @@
 #include "higgsino/hig_functions.hpp"
+#include "higgsino/apply_trigeffs.hpp"
 
 #include "TVector2.h"
 
@@ -357,6 +358,22 @@ const NamedFunc err_higtrig("err_higtrig", [](const Baby &b) -> NamedFunc::Scala
     return uncert;
   });
   
+const NamedFunc eff_higtrig_run2("eff_higtrig_run2", [](const Baby &b) -> NamedFunc::ScalarType{
+  float errup, errdown; // Not used, but for reference
+  float eff = 1.;
+  errup=0;errdown=0;
+  errup+=errdown;
+  if(b.type()>0 && b.type()<1000) eff = 1; // data
+
+  else if(b.nvlep()==0){
+    if(b.type()>=7000 && b.type()<8000) { // FAKE MET (QCD)
+      eff = get_0l_fakemet_trigeff.GetScalar(b);
+    } else { // TRUE MET
+      eff = get_0l_trigeff.GetScalar(b);
+    }
+  }
+  return eff;
+});
   
 ////// Efficiency of the MET[100||110||120] triggers in all 36.2 ifb
 const NamedFunc eff_higtrig("eff_higtrig", [](const Baby &b) -> NamedFunc::ScalarType{
