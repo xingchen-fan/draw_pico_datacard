@@ -1,5 +1,7 @@
 #include "higgsino/hig_functions.hpp"
-#include "higgsino/apply_trigeffs.hpp"
+#include "higgsino/apply_trigeffs2016.hpp"
+#include "higgsino/apply_trigeffs2017.hpp"
+#include "higgsino/apply_trigeffs2018.hpp"
 
 #include "TVector2.h"
 
@@ -367,9 +369,13 @@ const NamedFunc eff_higtrig_run2("eff_higtrig_run2", [](const Baby &b) -> NamedF
 
   else if(b.nvlep()==0){
     if(b.type()>=7000 && b.type()<8000) { // FAKE MET (QCD)
-      eff = get_0l_fakemet_trigeff.GetScalar(b);
+      if (b.SampleType()==2016) eff = get_0l_fakemet_trigeff2016.GetScalar(b);
+      else if (b.SampleType()==2017) eff = get_0l_fakemet_trigeff2017.GetScalar(b);
+      else if (b.SampleType()==2018) eff = get_0l_fakemet_trigeff2018.GetScalar(b);
     } else { // TRUE MET
-      eff = get_0l_trigeff.GetScalar(b);
+      if (b.SampleType()==2016) eff = get_0l_trigeff2016.GetScalar(b);
+      else if (b.SampleType()==2017) eff = get_0l_trigeff2017.GetScalar(b);
+      else if (b.SampleType()==2018) eff = get_0l_trigeff2018.GetScalar(b);
     }
   }
   return eff;
