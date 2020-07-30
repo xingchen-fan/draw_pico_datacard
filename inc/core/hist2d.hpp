@@ -52,7 +52,7 @@ public:
 
   std::string Name() const;
 
-  virtual bool is_2d_histogram() {return true;};
+  virtual bool is_2d_histogram() override {return true;};
 
   Hist2D & Weight(const NamedFunc &weight);
   Hist2D & Tag(const std::string &tag);

@@ -46,10 +46,10 @@ int main(int argc, char *argv[]){
   time(&begtime);
 
   //flags for which things to plot
-  bool do_variables = true;
+  bool do_variables = false;
   bool do_systematics = false;
-  bool do_efficiency = false;
-  int year = 2016;
+  bool do_efficiency = true;
+  int year = 2018;
   bool do_controlregions = false; //for do_variables, false will omit plots of 1l and 2l CRs. This speeds up processing by about 10~20x
 
   //don't change this, automatically set below
@@ -114,7 +114,9 @@ int main(int argc, char *argv[]){
   //named funcs
   //NamedFunc met_trigger = "HLT_PFMET110_PFMHT110_IDTight||HLT_PFMETNoMu110_PFMHTNoMu110_IDTight||HLT_PFMET120_PFMHT120_IDTight||HLT_PFMETNoMu120_PFMHTNoMu120_IDTight||HLT_PFMET120_PFMHT120_IDTight_PFHT60||HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60";
   const NamedFunc met_trigger("met_trigger", [](const Baby &b) -> NamedFunc::ScalarType{
-		  bool r_met_trigger = b.HLT_PFMET110_PFMHT110_IDTight()||b.HLT_PFMETNoMu110_PFMHTNoMu110_IDTight()||b.HLT_PFMET120_PFMHT120_IDTight()||b.HLT_PFMETNoMu120_PFMHTNoMu120_IDTight();
+		  //temp: use only MET120
+		  //bool r_met_trigger = b.HLT_PFMET110_PFMHT110_IDTight()||b.HLT_PFMETNoMu110_PFMHTNoMu110_IDTight()||b.HLT_PFMET120_PFMHT120_IDTight()||b.HLT_PFMETNoMu120_PFMHTNoMu120_IDTight()||b.HLT_PFMET120_PFMHT120_IDTight_PFHT60()||b.HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60();
+		  bool r_met_trigger = b.HLT_PFMET120_PFMHT120_IDTight()||b.HLT_PFMETNoMu120_PFMHTNoMu120_IDTight();
 		  return r_met_trigger;
   });
 
@@ -245,11 +247,30 @@ int main(int argc, char *argv[]){
   	pm.Push<Hist1D>(Axis(5, 2.5, 7.5, "njet", "N_{j}", {2.5,7.5}),
   	                "pass&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&200<met" && met_trigger, procs_data, all_plot_types);
 	//eff vs <m> higgs
-	//temp: use only met(nomu)120 trigger
-  	pm.Push<Hist1D>(Axis(20, 0., 250., "hig_cand_am[0]", "#LT m#RT [GeV]", {0.,250.}),
+  	pm.Push<Hist1D>(Axis(20, 0., 250., "hig_cand_am[0]", "#LT m#GT [GeV]", {0.,250.}),
   	                "pass&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&nmu==0&&200<met" && nhig_cand>0., procs_data, all_plot_types);
-  	pm.Push<Hist1D>(Axis(20, 0., 250., "hig_cand_am[0]", "#LT m#RT [GeV]", {0.,250.}),
-  	                "pass&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&nmu==0&&200<met&&(HLT_PFMET120_PFMHT120_IDTight||HLT_PFMETNoMu120_PFMHTNoMu120_IDTight)" && nhig_cand>0., procs_data, all_plot_types);
+  	pm.Push<Hist1D>(Axis(20, 0., 250., "hig_cand_am[0]", "#LT m#GT [GeV]", {0.,250.}),
+  	                "pass&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&nmu==0&&200<met" && nhig_cand>0. && met_trigger, procs_data, all_plot_types);
+	//eff vs <m> higgs 200<HT<300 for HT studies
+  	pm.Push<Hist1D>(Axis(20, 0., 250., "hig_cand_am[0]", "#LT m#GT [GeV]", {0.,250.}),
+  	                "pass&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&nmu==0&&150<met&&200<ht&&ht<300" && nhig_cand>0., procs_data, all_plot_types);
+  	pm.Push<Hist1D>(Axis(20, 0., 250., "hig_cand_am[0]", "#LT m#GT [GeV]", {0.,250.}),
+  	                "pass&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&nmu==0&&150<met&&200<ht&&ht<300" && nhig_cand>0. && met_trigger, procs_data, all_plot_types);
+	//eff vs <m> higgs 300<HT<400 for HT studies
+  	pm.Push<Hist1D>(Axis(20, 0., 250., "hig_cand_am[0]", "#LT m#GT [GeV]", {0.,250.}),
+  	                "pass&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&nmu==0&&150<met&&300<ht&&ht<400" && nhig_cand>0., procs_data, all_plot_types);
+  	pm.Push<Hist1D>(Axis(20, 0., 250., "hig_cand_am[0]", "#LT m#GT [GeV]", {0.,250.}),
+  	                "pass&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&nmu==0&&150<met&&300<ht&&ht<400" && nhig_cand>0. && met_trigger, procs_data, all_plot_types);
+	//eff vs <m> higgs 400<HT<500 for HT studies
+  	pm.Push<Hist1D>(Axis(20, 0., 250., "hig_cand_am[0]", "#LT m#GT [GeV]", {0.,250.}),
+  	                "pass&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&nmu==0&&150<met&&400<ht&&ht<500" && nhig_cand>0., procs_data, all_plot_types);
+  	pm.Push<Hist1D>(Axis(20, 0., 250., "hig_cand_am[0]", "#LT m#GT [GeV]", {0.,250.}),
+  	                "pass&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&nmu==0&&150<met&&400<ht&&ht<500" && nhig_cand>0. && met_trigger, procs_data, all_plot_types);
+	//eff vs <m> higgs 500<HT<600 for HT studies
+  	pm.Push<Hist1D>(Axis(20, 0., 250., "hig_cand_am[0]", "#LT m#GT [GeV]", {0.,250.}),
+  	                "pass&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&nmu==0&&150<met&&500<ht&&ht<600" && nhig_cand>0., procs_data, all_plot_types);
+  	pm.Push<Hist1D>(Axis(20, 0., 250., "hig_cand_am[0]", "#LT m#GT [GeV]", {0.,250.}),
+  	                "pass&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&nmu==0&&150<met&&500<ht&&ht<600" && nhig_cand>0. && met_trigger, procs_data, all_plot_types);
 	//eff vs drmax
   	pm.Push<Hist1D>(Axis(20, 0., 4., "hig_cand_drmax[0]", "#Delta R_{max}", {0.,4.}),
   	                "pass&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&200<met" && nhig_cand>0., procs_data, all_plot_types);
@@ -291,17 +312,17 @@ int main(int argc, char *argv[]){
   	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
   	                "pass&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&(met/met_calo<5)&&nmu==0" && el_max_pt > 30, procs_data, all_plot_types);
   	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                "pass&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&(met/met_calo<5)&&nmu==0&&(HLT_PFMET120_PFMHT120_IDTight||HLT_PFMETNoMu120_PFMHTNoMu120_IDTight)" && el_max_pt > 30, procs_data, all_plot_types);
+  	                "pass&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&(met/met_calo<5)&&nmu==0&&(HLT_PFMET120_PFMHT120_IDTight)" && el_max_pt > 30, procs_data, all_plot_types);
 	//MET120 MC
   	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
   	                "(pass&&stitch&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&(met/met_calo<5)&&nmu==0)*weight" && el_max_pt > 30, procs_mc, all_plot_types);
   	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                "(pass&&stitch&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&(met/met_calo<5)&&nmu==0&&(HLT_PFMET120_PFMHT120_IDTight||HLT_PFMETNoMu120_PFMHTNoMu120_IDTight))*weight" && el_max_pt>30, procs_mc, all_plot_types);
-	//MET120 MC vs <m>
+  	                "(pass&&stitch&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&(met/met_calo<5)&&nmu==0&&(HLT_PFMET120_PFMHT120_IDTight))*weight" && el_max_pt>30, procs_mc, all_plot_types);
+	//MET120 MC vs <m> - for <m> studies
   	pm.Push<Hist1D>(Axis(20, 0., 250., "hig_cand_am[0]", "<m> [GeV]", {0,250.}),
   	                "(pass&&stitch&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&met>=200&&!low_dphi_met&&nel==1&&nmu==0)*weight" && nhig_cand>0., procs_mc, all_plot_types);
   	pm.Push<Hist1D>(Axis(20, 0., 250., "hig_cand_am[0]", "<m> [GeV]", {0,250.}),
-  	                "(pass&&stitch&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&met>=200&&!low_dphi_met&&nel==1&&nmu==0&&(HLT_PFMET120_PFMHT120_IDTight||HLT_PFMETNoMu120_PFMHTNoMu120_IDTight))*weight" && nhig_cand>0., procs_mc, all_plot_types);
+  	                "(pass&&stitch&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&met>=200&&!low_dphi_met&&nel==1&&nmu==0&&(HLT_PFMET120_PFMHT120_IDTight))*weight" && nhig_cand>0., procs_mc, all_plot_types);
   }
   //0l systematics plots
   if (do_systematics) {
@@ -434,6 +455,14 @@ int main(int argc, char *argv[]){
   	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_data, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1 200<MET, 35.9 fb^{-1} (13 TeV); Offline N_{j}; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_nj");
 	pm_idx += 2;
   	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_data, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1 200<MET, 35.9 fb^{-1} (13 TeV); Offline #LT m#RT [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_higcandam");
+	pm_idx += 2;
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_data, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1 150<MET 200<HT<300, 35.9 fb^{-1} (13 TeV); Offline #LT m#RT [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_higcandamht200300");
+	pm_idx += 2;
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_data, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1 150<MET 300<HT<400, 35.9 fb^{-1} (13 TeV); Offline #LT m#RT [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_higcandamht300400");
+	pm_idx += 2;
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_data, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1 150<MET 400<HT<500, 35.9 fb^{-1} (13 TeV); Offline #LT m#RT [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_higcandamht400500");
+	pm_idx += 2;
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_data, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1 150<MET 500<HT<600, 35.9 fb^{-1} (13 TeV); Offline #LT m#RT [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_higcandamht500600");
 	pm_idx += 2;
   	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_data, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1 200<MET, 35.9 fb^{-1} (13 TeV); Offline #Delta R_{max}; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_higcanddrmax");
 	pm_idx += 2;

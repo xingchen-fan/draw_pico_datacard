@@ -223,10 +223,10 @@ int main(int argc, char *argv[]){
   pm.Push<Hist2D>(Axis(50, 0., 300., "met", "MET [GeV]", {}),
   	               Axis(20, 0., 250., "hig_cand_am[0]", "<m> [GeV]", {}),
   	               baseline_triggerregion && nhig_cand>0., procs_mc_all, twodim_plotopts);
-  pm.Push<Hist2D>(Axis(50, 0., 1000., "ht", "HT [GeV]", {}),
+  pm.Push<Hist2D>(Axis(50, 0., 800., "ht", "HT [GeV]", {}),
   	               Axis(20, 0., 250., "hig_cand_am[0]", "<m> [GeV]", {}),
   	               "stitch&&pass&&nlep==0&&njet>=3" && nhig_cand>0., procs_mc_all, twodim_plotopts);
-  pm.Push<Hist2D>(Axis(50, 0., 1000., "ht", "HT [GeV]", {}),
+  pm.Push<Hist2D>(Axis(50, 0., 800., "ht", "HT [GeV]", {}),
   	               Axis(20, 0., 250., "hig_cand_am[0]", "<m> [GeV]", {}),
   	               baseline_triggerregion && nhig_cand>0., procs_mc_all, twodim_plotopts);
 

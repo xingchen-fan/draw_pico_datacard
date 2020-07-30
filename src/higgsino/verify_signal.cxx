@@ -25,8 +25,8 @@ using namespace PlotOptTypes;
 
 namespace{
   // vector<string> sigm = {}; 
-  vector<string> mchi_sigm = {"225","400","400","700","700","700"}; 
-  vector<string> mlsp_sigm = {"0",  "0",  "150","0",  "150","450"}; 
+  vector<string> mchi_sigm = {"175","500","950","200","500","650"}; 
+  vector<string> mlsp_sigm = {"0",  "0",  "0","0","150","100"}; 
 }
   
 int main(){
@@ -41,18 +41,19 @@ int main(){
   string mc_production = "higgsino_humboldt"; // higgsino_eldorado
   string year = "2016"; // 2017, 2018
 
-  string foldermc(bfolder+"/cms25r5/pico/NanoAODv5/"+mc_production+"/"+year+"/mc/unskimmed/");
+  string foldermc(bfolder+"/cms25r5/pico/NanoAODv5/"+mc_production+"/"+year+"/mc/skim_met150/");
   string foldersig(bfolder+"/cms25r5/pico/NanoAODv5/"+mc_production+"/"+year+"/SMS-TChiHH_2D/unskimmed/");
   if (year == "2017") {
 	  lumi = 41.5;
+  	  vector<string> mlsp_sigm = {"0",  "0",  "150","275","0",  "300","550"}; 
   }
   if (year == "2018") {
 	  lumi = 60.0;
+  	  vector<string> mlsp_sigm = {"0",  "0",  "150","275","0",  "300","550"}; 
   }
 
   map<string, set<string>> mctags; 
-  mctags["tt"]     = set<string>({"*TTJets_*Lep*"});
-  mctags["ttx"]     = set<string>({"*_TTZ*.root", "*_TTW*.root",
+  mctags["ttx"]     = set<string>({"*TTJets_*Lep*","*_TTZ*.root", "*_TTW*.root",
                                      "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root"});
   mctags["vjets"]   = set<string>({"*_ZJet*.root", "*_WJetsToLNu*.root", "*DYJetsToLL*.root"});
   mctags["singlet"] = set<string>({"*_ST_*.root"});
@@ -72,8 +73,6 @@ int main(){
               attach_folder(foldermc,mctags["vjets"]),c_ps));
   procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X", Process::Type::background,1,
               attach_folder(foldermc, mctags["ttx"]),c_ps));
-  procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}", Process::Type::background,1,
-              attach_folder(foldermc, mctags["tt"]),c_ps));
   for (unsigned isig(0); isig<mchi_sigm.size(); isig++)
     procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+mchi_sigm[isig]+","+mlsp_sigm[isig]+")", 
       Process::Type::signal, 1, {foldersig+"*TChiHH_mChi-"+mchi_sigm[isig]+"_mLSP-"+mlsp_sigm[isig]+"*.root"}, "1"));
@@ -104,20 +103,28 @@ int main(){
     "nvlep==0 && njet>=4 && njet<=5",0,0,"weight"),
   TableRow("$N_\\text{b}\\geq 2$", 
     "nvlep==0 && njet>=4 && njet<=5 && nbt>=2",0,0,"weight"),
-  TableRow("$E_\\text{t}^\\text{miss}>150 \\text{ GeV}$", 
+  TableRow("$p_\\text{t}^\\text{miss}>150 \\text{ GeV}$", 
     "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150",0,0,"weight"),
   TableRow("$N_\\text{tk}=0$", 
     "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0",0,0,"weight"),
-  TableRow("$\\Delta\\phi_{1,2}>0.5,\\Delta\\phi_{3,4}>0.3$",        
-    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met",0,0,"weight"),
+  TableRow("$\\Delta\\phi_{1,2}>0.5,\\Delta\\phi_{3,4}>0.3,p^\\text{miss}_\\text{T}/H^\\text{miss}_\\text{T}<2,p^\\text{miss}_\\text{T}/p^\\text{miss}_\\text{T calo}<2$",        
+    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2",0,0,"weight"),
   TableRow("$\\Delta m<40 \\text{ GeV}$",        
-    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && hig_cand_dm[0]<=40",0,0,"weight"),
+    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40",0,0,"weight"),
   TableRow("$\\Delta R_\\text{max}<2.2$",        
-    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2",0,0,"weight"),
+    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2",0,0,"weight"),
   TableRow("$100<\\langle m\\rangle <140 \\text{ GeV}$",        
-    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140",0,0,"weight"),
-  TableRow("N_\\text{b}=4",        
-    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,"weight"),
+    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140",0,0,"weight"),
+  TableRow("$N_\\text{b}\\geq 3$",        
+    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3",0,0,"weight"),
+  TableRow("$N_\\text{b}=4$",        
+    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,"weight"),
+  TableRow("$p_\\text{T}^\\text{miss}>200 \\text{ GeV}$",        
+    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>200 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,"weight"),
+  TableRow("$p_\\text{T}^\\text{miss}>300 \\text{ GeV}$",        
+    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>300 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,"weight"),
+  TableRow("$p_\\text{T}^\\text{miss}>450 \\text{ GeV}$",        
+    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>450 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,"weight"),
 
   //TableRow("\\multicolumn{"+ncols+"}{c}{HIG: $100<\\left< m \\right>\\leq140$}\\\\%", 
   //  "met>1e6",0,1, "weight"),

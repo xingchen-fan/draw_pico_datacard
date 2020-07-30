@@ -194,7 +194,8 @@ void Hist2D::MakeOnePlot(const string &subdir){
 	      bkg_is_hist ? this_opt_.RightMargin() : 0.05,
 	      this_opt_.BottomMargin(),
 	      this_opt_.TopMargin());
-  // c.SetLogz();
+  if (this_opt_.YAxis() == YAxisType::log)
+    c.SetLogz();
 
   vector<TLine> lines = GetLines();
   vector<shared_ptr<TLatex> > labels = GetLabels(bkg_is_hist);

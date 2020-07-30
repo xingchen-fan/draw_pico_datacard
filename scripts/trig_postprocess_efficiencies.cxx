@@ -24,7 +24,9 @@ int trig_postprocess_efficiencies() {
     bool draw_1el_graphs = true;
     bool draw_1mu_graphs = true;
     bool draw_2l_graphs = true;
-    TFile* f = TFile::Open("ntuples/trig_eff_old_fullefficiencies.root");
+    //2016 is full efficienties
+    TFile* f = TFile::Open("ntuples/trig_eff_old_eff_2018.root");
+    TFile* f_qcd = TFile::Open("ntuples/rdfat_qcd2016_ht200900.root");
     std::vector<double> true_met_bins{150,155,160,165,170,175,180,185,190,195,200,210,220,230,240,250,275,300,350};
     std::vector<double> sys_met_bins{150,160,180,200,225,250,300,350};
     std::vector<double> fake_met_bins{150,155,160,165,170,175,180,185,190,195,200,210,220,230,240,250,275,300,350,400,450,500,550};
@@ -139,6 +141,8 @@ int trig_postprocess_efficiencies() {
 		errdown_values.push_back(eff_errs[2]);
 	    }
 	    //get new efficiencies from histograms
+            //TH2D* numerator_hist = static_cast<TH2D*>((f_qcd->Get("hist_MET_pt_ht_data_all;1"))->Clone());
+            //TH2D* denominator_hist = static_cast<TH2D*>((f_qcd->Get("hist_MET_pt_ht_data_all;2"))->Clone());
             TH2D* numerator_hist = static_cast<TH2D*>((f->Get("hist_fakemetht_numerator"))->Clone());
             TH2D* denominator_hist = static_cast<TH2D*>((f->Get("hist_fakemetht_denominator"))->Clone());
 	    TH1D* numerator_1d_hist = numerator_hist->ProjectionX("numerator_1d_hist",ht_bin+1,ht_bin+1);
