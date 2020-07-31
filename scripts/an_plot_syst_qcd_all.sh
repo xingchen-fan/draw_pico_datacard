@@ -1,5 +1,6 @@
-set -e // Exit when any command fails
+mkdir -p plots.trash
 mv plots/*.pdf plots.trash
+set -e // Exit when any command fails
 mkdir -p  plots.an/qcd/2016
 rm -f plots.an/qcd/2016/*.pdf
 mkdir -p  plots.an/qcd/2017
