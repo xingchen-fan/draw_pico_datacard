@@ -156,6 +156,13 @@ void Table::Print(double luminosity,
   string file_name = subdir != ""
     ? "tables/"+subdir+"/"+name_+"_lumi_"+fmt_lumi+".tex"
     : "tables/"+name_+"_lumi_"+fmt_lumi+".tex";
+  if (Contains(name_, "FixName:")) {
+    string tagName=name_;
+    ReplaceAll(tagName, "FixName:", "");
+    file_name = subdir != ""
+      ? "tables/"+subdir+"/"+tagName+".tex"
+      : "tables/"+tagName+".tex";
+  }
   std::ofstream file(file_name);
   if (print_pie_) file << fixed << setprecision(4);
   else file << fixed << setprecision(4);
