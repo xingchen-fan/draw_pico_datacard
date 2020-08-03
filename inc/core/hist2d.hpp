@@ -56,10 +56,12 @@ public:
 
   Hist2D & Weight(const NamedFunc &weight);
   Hist2D & Tag(const std::string &tag);
+  Hist2D & LuminosityTag(const std::string &tag);
 
   Axis xaxis_, yaxis_;
   NamedFunc cut_, weight_;
   std::string tag_;
+  std::string luminosity_tag_;//!<Filename tag to identify plot
   std::vector<PlotOpt> plot_options_;
 
   TH2D GetDataHist() const;

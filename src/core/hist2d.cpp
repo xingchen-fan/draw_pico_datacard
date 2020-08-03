@@ -429,7 +429,8 @@ vector<shared_ptr<TLatex> > Hist2D::GetLabels(bool bkg_is_hist) const{
   }
 
   ostringstream oss;
-  if (luminosity_<1.1) oss << "137 fb^{-1} (13 TeV)" << flush;
+  if (luminosity_tag_ != "") oss << luminosity_tag_ << " fb^{-1} (13 TeV)" << flush;
+  else if (luminosity_<1.1) oss << "137 fb^{-1} (13 TeV)" << flush;
   else oss << luminosity_ << " fb^{-1} (13 TeV)" << flush;
   labels.push_back(make_shared<TLatex>(right+0.01, top,
                                        oss.str().c_str()));
@@ -466,6 +467,11 @@ Hist2D & Hist2D::Weight(const NamedFunc &weight){
 
 Hist2D & Hist2D::Tag(const std::string &tag){
   tag_ = tag;
+  return *this;
+}
+
+Hist2D & Hist2D::LuminosityTag(const string &tag){
+  luminosity_tag_ = tag;
   return *this;
 }
 
