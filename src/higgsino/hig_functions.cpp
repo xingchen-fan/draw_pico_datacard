@@ -378,12 +378,32 @@ const NamedFunc eff_higtrig_run2("eff_higtrig_run2", [](const Baby &b) -> NamedF
   errup+=errdown;
   if(b.type()>0 && b.type()<1000) eff = 1; // data
 
-  else if(b.nvlep()==0){
+  else if(b.nvlep()==0){ // search MC sample and qcd MC control sample
     if(b.type()>=7000 && b.type()<8000) { // FAKE MET (QCD)
-      eff = get_0l_fakemet_trigeff2016.GetScalar(b);
+      if (b.SampleType()==2016) eff = get_0l_fakemet_trigeff2016.GetScalar(b);
+      else if (b.SampleType()==2017) eff = get_0l_fakemet_trigeff2017.GetScalar(b);
+      else if (b.SampleType()==2018) eff = get_0l_fakemet_trigeff2018.GetScalar(b);
     } else { // TRUE MET
-      eff = get_0l_trigeff2016.GetScalar(b);
+      if (b.SampleType()==2016) eff = get_0l_trigeff2016.GetScalar(b);
+      else if (b.SampleType()==2017) eff = get_0l_trigeff2017.GetScalar(b);
+      else if (b.SampleType()==2018) eff = get_0l_trigeff2018.GetScalar(b);
     }
+  } else if (b.nel()==1 && b.nmu()==0) { // 1 lepton MC control sample
+    if (b.SampleType()==2016) eff = get_1el_trigeff2016.GetScalar(b);
+    else if (b.SampleType()==2017) eff = get_1el_trigeff2017.GetScalar(b);
+    else if (b.SampleType()==2018) eff = get_1el_trigeff2018.GetScalar(b);
+  } else if (b.nel()==0 && b.nmu()==1) { // 1 lepton MC control sample
+    if (b.SampleType()==2016) eff = get_1mu_trigeff2016.GetScalar(b);
+    else if (b.SampleType()==2017) eff = get_1mu_trigeff2017.GetScalar(b);
+    else if (b.SampleType()==2018) eff = get_1mu_trigeff2018.GetScalar(b);
+  } else if (b.nel()==2 && b.nmu()==0) { // 2 lepton MC control sample
+    if (b.SampleType()==2016) eff = get_2el_trigeff2016.GetScalar(b);
+    else if (b.SampleType()==2017) eff = get_2el_trigeff2017.GetScalar(b);
+    else if (b.SampleType()==2018) eff = get_2el_trigeff2018.GetScalar(b);
+  } else if (b.nel()==0 && b.nmu()==2) { // 2 lepton MC control sample
+    if (b.SampleType()==2016) eff = get_2mu_trigeff2016.GetScalar(b);
+    else if (b.SampleType()==2017) eff = get_2mu_trigeff2017.GetScalar(b);
+    else if (b.SampleType()==2018) eff = get_2mu_trigeff2018.GetScalar(b);
   }
   return eff;
 });

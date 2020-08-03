@@ -117,12 +117,14 @@ int main(int argc, char *argv[]){
   }
   string total_luminosity_string = RoundNumber(total_luminosity, 1, 1).Data();
 
-  //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*w_years;
+  NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*w_years;
+  NamedFunc weight_notrgeff = "w_lumi*w_isr"*w_years;
   //if (years.size()==1 && *years.begin()==2016) weight *= "137.";
   //else weight *= w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig*w_years;
-  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years;
-  NamedFunc weight_notrgeff = "weight"*w_years;
+
+  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years;
+  //NamedFunc weight_notrgeff = "weight"*w_years;
 
   // Set MC 
   map<string, set<string>> mctags; 
@@ -242,8 +244,8 @@ int main(int argc, char *argv[]){
   search_procs_nisr.push_back(Process::MakeShared<Baby_pico>("N_{ISR} = 2", Process::Type::background,colors("nisr_2"),
                   attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]),"stitch&&nisr==2"));
 
-  //NamedFunc base_filters = HigUtilities::pass_2016 && "met/mht<2 && met/met_calo<2"; //since pass_fsjets is not quite usable...
-  NamedFunc base_filters = Functions::hem_veto && "pass && met/mht<2 && met/met_calo<2";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
+  NamedFunc base_filters = HigUtilities::pass_2016 && "met/mht<2 && met/met_calo<2"; //since pass_fsjets is not quite usable...
+  //NamedFunc base_filters = Functions::hem_veto && "pass && met/mht<2 && met/met_calo<2";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
 
   // resolved cuts
   NamedFunc search_resolved = 

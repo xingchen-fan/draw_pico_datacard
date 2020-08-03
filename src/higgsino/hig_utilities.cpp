@@ -254,7 +254,8 @@ namespace HigUtilities {
   
   void parseYears(string years_string, set<int> & years)
   {
-    if (years_string!="")
+    if (years_string == "run2") years = {2016, 2017, 2018};
+    else if (years_string!="")
     {
       size_t found = years_string.find(",");
       size_t start = 0;

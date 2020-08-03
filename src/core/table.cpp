@@ -32,10 +32,10 @@ namespace{
     auto pos_4 = x.find("{");
     auto pos_5 = x.find("}");
     if(pos_1 != string::npos
-       || pos_2 != string::npos
-       || pos_3 != string::npos
-       || pos_4 != string::npos
-       || pos_5 != string::npos){
+        || pos_2 != string::npos
+        || pos_3 != string::npos
+        || pos_4 != string::npos
+        || pos_5 != string::npos){
       x = "$"+x+"$";
     }
     return x;
@@ -43,7 +43,7 @@ namespace{
 }
 
 Table::TableColumn::TableColumn(const Table &table,
-				const shared_ptr<Process> &process):
+    const shared_ptr<Process> &process):
   FigureComponent(table, process),
   sumw_(table.rows_.size(), 0.),
   sumw2_(table.rows_.size(), 0.),
@@ -51,10 +51,10 @@ Table::TableColumn::TableColumn(const Table &table,
   cut_vector_(),
   wgt_vector_(),
   val_vector_(){
-  for(size_t irow = 0; irow < table.rows_.size(); ++irow){
-    proc_and_table_cut_.at(irow) = table.rows_.at(irow).cut_ && process->cut_;
+    for(size_t irow = 0; irow < table.rows_.size(); ++irow){
+      proc_and_table_cut_.at(irow) = table.rows_.at(irow).cut_ && process->cut_;
+    }
   }
-}
 
 void Table::TableColumn::RecordEvent(const Baby &baby){
   const Table& table = static_cast<const Table&>(figure_);
@@ -72,12 +72,12 @@ void Table::TableColumn::RecordEvent(const Baby &baby){
 
     if(cut.IsScalar()){
       if(!cut.GetScalar(baby)) continue;
-      
+
     }else{
       cut_vector_ = cut.GetVector(baby);
       if(!have_vector || cut_vector_.size() < min_vec_size){
-       have_vector = true;
-       min_vec_size = cut_vector_.size();
+        have_vector = true;
+        min_vec_size = cut_vector_.size();
       }
     }
 
@@ -87,8 +87,8 @@ void Table::TableColumn::RecordEvent(const Baby &baby){
     }else{
       wgt_vector_ = wgt.GetVector(baby);
       if(!have_vector || wgt_vector_.size() < min_vec_size){
-       have_vector = true;
-       min_vec_size = wgt_vector_.size();
+        have_vector = true;
+        min_vec_size = wgt_vector_.size();
       }
     }
 
@@ -97,25 +97,25 @@ void Table::TableColumn::RecordEvent(const Baby &baby){
       sumw2_.at(irow) += wgt_scalar*wgt_scalar;
     }else{
       for(size_t iobject = 0; iobject < min_vec_size; ++iobject){
-       NamedFunc::ScalarType this_cut = cut.IsScalar() ? true : cut_vector_.at(iobject);
-       if(!this_cut) continue;
-       NamedFunc::ScalarType this_wgt = wgt.IsScalar() ? wgt_scalar : wgt_vector_.at(iobject);
-       sumw_.at(irow) += this_wgt;
-       sumw2_.at(irow) += this_wgt*this_wgt;
+        NamedFunc::ScalarType this_cut = cut.IsScalar() ? true : cut_vector_.at(iobject);
+        if(!this_cut) continue;
+        NamedFunc::ScalarType this_wgt = wgt.IsScalar() ? wgt_scalar : wgt_vector_.at(iobject);
+        sumw_.at(irow) += this_wgt;
+        sumw2_.at(irow) += this_wgt*this_wgt;
       }
     }
   }
 }
 
 Table::Table(const string &name,
-             const vector<TableRow> &rows,
-             const vector<shared_ptr<Process> > &processes,
-	     bool do_zbi,
-	     bool print_table,
-	     bool print_pie,
-	     bool print_titlepie, 
-       bool do_eff,
-       bool do_unc):
+    const vector<TableRow> &rows,
+    const vector<shared_ptr<Process> > &processes,
+    bool do_zbi,
+    bool print_table,
+    bool print_pie,
+    bool print_titlepie, 
+    bool do_eff,
+    bool do_unc):
   Figure(),
   name_(name),
   rows_(rows),
@@ -129,33 +129,40 @@ Table::Table(const string &name,
   backgrounds_(),
   signals_(),
   datas_(){
-  for(const auto &process: processes){
-    switch(process->type_){
-    case Process::Type::data:
-      datas_.emplace_back(new TableColumn(*this, process));
-      break;
-    case Process::Type::background:
-      backgrounds_.emplace_back(new TableColumn(*this, process));
-      break;
-    case Process::Type::signal:
-      signals_.emplace_back(new TableColumn(*this, process));
-      break;
-    default:
-      break;
+    for(const auto &process: processes){
+      switch(process->type_){
+        case Process::Type::data:
+          datas_.emplace_back(new TableColumn(*this, process));
+          break;
+        case Process::Type::background:
+          backgrounds_.emplace_back(new TableColumn(*this, process));
+          break;
+        case Process::Type::signal:
+          signals_.emplace_back(new TableColumn(*this, process));
+          break;
+        default:
+          break;
+      }
     }
+
+
   }
 
-  
-}
-
 void Table::Print(double luminosity,
-                  const string &subdir){
+    const string &subdir){
   if(!print_table_) return;
   if(subdir != "") mkdir(("tables/"+subdir).c_str(), 0777);
   string fmt_lumi = CopyReplaceAll(RoundNumber(luminosity,1).Data(),".","p");
   string file_name = subdir != ""
     ? "tables/"+subdir+"/"+name_+"_lumi_"+fmt_lumi+".tex"
     : "tables/"+name_+"_lumi_"+fmt_lumi+".tex";
+  if (Contains(name_, "FixName:")) {
+    string tagName=name_;
+    ReplaceAll(tagName, "FixName:", "");
+    file_name = subdir != ""
+      ? "tables/"+subdir+"/"+tagName+".tex"
+      : "tables/"+tagName+".tex";
+  }
   std::ofstream file(file_name);
   if (print_pie_) file << fixed << setprecision(4);
   else file << fixed << setprecision(4);
@@ -238,15 +245,15 @@ Figure::FigureComponent * Table::GetComponent(const Process *process){
 
 const vector<unique_ptr<Table::TableColumn> >& Table::GetComponentList(const Process *process) const{
   switch(process->type_){
-  case Process::Type::data:
-    return datas_;
-  case Process::Type::background:
-    return backgrounds_;
-  case Process::Type::signal:
-    return signals_;
-  default:
-    ERROR("Did not understand process type "+to_string(static_cast<long>(process->type_))+".");
-    return backgrounds_;
+    case Process::Type::data:
+      return datas_;
+    case Process::Type::background:
+      return backgrounds_;
+    case Process::Type::signal:
+      return signals_;
+    default:
+      ERROR("Did not understand process type "+to_string(static_cast<long>(process->type_))+".");
+      return backgrounds_;
   }
 }
 void Table::PrintHeader(ofstream &file, double luminosity) const{
@@ -261,7 +268,7 @@ void Table::PrintHeader(ofstream &file, double luminosity) const{
   file << "\\begin{document}\n";
   file << "\\begin{preview}\n";
   file << "  \\begin{tabular}{ l";
-  
+
   if(backgrounds_.size() > 1){
     file << " | ";
     for(size_t i = 0; i < backgrounds_.size(); ++i){
@@ -271,7 +278,7 @@ void Table::PrintHeader(ofstream &file, double luminosity) const{
   }else if(backgrounds_.size() == 1){
     file << " | r";
   }
-  
+
   if(datas_.size() > 1){
     file << " | ";
     for(size_t i = 0; i < datas_.size(); ++i){
@@ -281,7 +288,7 @@ void Table::PrintHeader(ofstream &file, double luminosity) const{
   }else if(datas_.size() == 1){
     file << " | r";
   }
-  
+
   for(size_t i = 0; i < signals_.size(); ++i){
     if(do_zbi_) file << " | rrr"; // ***EDITED LINE CHANGED rr --> rrr***
     else file << " | r";
@@ -304,7 +311,7 @@ void Table::PrintHeader(ofstream &file, double luminosity) const{
   }else if(backgrounds_.size() == 1){
     file << " & " <<ToLatex(backgrounds_.front()->process_->name_);
   }
-  
+
   if(datas_.size() > 1){ 
     file << " & ";
     for(size_t i = 0; i < datas_.size(); ++i){
@@ -314,7 +321,7 @@ void Table::PrintHeader(ofstream &file, double luminosity) const{
   }else if(datas_.size() == 1){
     file << " & " << ToLatex(datas_.front()->process_->name_);
   }
-  
+
   for(size_t i = 0; i < signals_.size(); ++i){
     file << " & " << ToLatex(signals_.at(i)->process_->name_);
     if(do_zbi_){
@@ -344,48 +351,53 @@ void Table::PrintRow(ofstream &file, size_t irow, double luminosity) const{
       for(size_t i = 0; i < backgrounds_.size(); ++i){
         if (print_pie_) 
           file << " & " << luminosity*backgrounds_.at(i)->sumw_.at(irow)/totyield << "$\\pm$" 
-              << luminosity*sqrt(backgrounds_.at(i)->sumw2_.at(irow))/totyield;
+            << luminosity*sqrt(backgrounds_.at(i)->sumw2_.at(irow))/totyield;
         // changed these lines for efficiencies
-	if (do_eff_){
-	  if(irow==0)
-	    file << " & " << luminosity*backgrounds_.at(i)->sumw_.at(irow);
-	  else{
-	    double eff = 100*backgrounds_.at(i)->sumw_.at(irow)/backgrounds_.at(i)->sumw_.at(irow-1);
-	    double eff_relUnc = hypot(sqrt(backgrounds_.at(i)->sumw2_.at(irow))/backgrounds_.at(i)->sumw_.at(irow),sqrt(backgrounds_.at(i)->sumw2_.at(irow-1))/backgrounds_.at(i)->sumw_.at(irow-1));
-	    if(do_unc_){
-	      if(eff != eff || eff_relUnc != eff_relUnc)
-// 		file << " & \\num[parse-numbers=false]{" << eff << "}$\\pm$\\num[parse-numbers=false]{" << eff*eff_relUnc << "}";
-		file << " & " << setprecision(1) << eff << " $\\pm$ " << eff*eff_relUnc;
-	      else
-		file << " & " << setprecision(1) << eff << " $\\pm$ " << eff*eff_relUnc;
-	    }
-	    else
-	      file << " & " << eff;
-	  }
-	}
-	else
-          file << " & " << setw(10) << luminosity*backgrounds_.at(i)->sumw_.at(irow);
+        if (do_eff_){
+          if(irow==0)
+            file << " & " << luminosity*backgrounds_.at(i)->sumw_.at(irow);
+          else{
+            double eff = 100*backgrounds_.at(i)->sumw_.at(irow)/backgrounds_.at(i)->sumw_.at(irow-1);
+            double eff_relUnc = hypot(sqrt(backgrounds_.at(i)->sumw2_.at(irow))/backgrounds_.at(i)->sumw_.at(irow),sqrt(backgrounds_.at(i)->sumw2_.at(irow-1))/backgrounds_.at(i)->sumw_.at(irow-1));
+            if(do_unc_){
+              if(eff != eff || eff_relUnc != eff_relUnc)
+                // 		file << " & \\num[parse-numbers=false]{" << eff << "}$\\pm$\\num[parse-numbers=false]{" << eff*eff_relUnc << "}";
+                file << " & " << setprecision(1) << eff << " $\\pm$ " << eff*eff_relUnc;
+              else
+                file << " & " << setprecision(1) << eff << " $\\pm$ " << eff*eff_relUnc;
+            }
+            else
+              file << " & " << eff;
+          }
+        }
+        else
+          if(do_unc_) {
+            file << " & " << setw(10) << luminosity*backgrounds_.at(i)->sumw_.at(irow) << "$\\pm$" << luminosity*sqrt(backgrounds_.at(i)->sumw2_.at(irow));
+          } else
+            file << " & " << setw(10) << luminosity*backgrounds_.at(i)->sumw_.at(irow);
       }
       if (do_eff_){
-	if(irow==0)
-	  file << " & " << totyield;
-	else{
-	  double eff = 100*totyield / (luminosity*GetYield(backgrounds_, irow-1));
-	  double eff_relUnc = hypot(luminosity*GetError(backgrounds_,irow)/totyield, GetError(backgrounds_,irow-1)/GetYield(backgrounds_,irow-1));
-	  if(do_unc_){
-	    if(eff != eff || eff_relUnc != eff_relUnc)
-		    file << " & " << setprecision(1) << eff << " $\\pm$ " << eff*eff_relUnc;
-// 	      file << " & \\num[parse-numbers=false]{" << eff << "}$\\pm$\\num[parse-numbers=false]{" << eff*eff_relUnc << "}"; 
-	    else
-		    file << " & " << setprecision(1) << eff << " $\\pm$ " << eff*eff_relUnc;
-// 	      file << " & \\num{" << eff << "}$\\pm$\\num{" << eff*eff_relUnc << "}";
-	  }
-	  else
-	    file << " & " << eff;
-	}
+        if(irow==0)
+          file << " & " << totyield;
+        else{
+          double eff = 100*totyield / (luminosity*GetYield(backgrounds_, irow-1));
+          double eff_relUnc = hypot(luminosity*GetError(backgrounds_,irow)/totyield, GetError(backgrounds_,irow-1)/GetYield(backgrounds_,irow-1));
+          if(do_unc_){
+            if(eff != eff || eff_relUnc != eff_relUnc)
+              file << " & " << setprecision(1) << eff << " $\\pm$ " << eff*eff_relUnc;
+            // 	      file << " & \\num[parse-numbers=false]{" << eff << "}$\\pm$\\num[parse-numbers=false]{" << eff*eff_relUnc << "}"; 
+            else
+              file << " & " << setprecision(1) << eff << " $\\pm$ " << eff*eff_relUnc;
+            // 	      file << " & \\num{" << eff << "}$\\pm$\\num{" << eff*eff_relUnc << "}";
+          }
+          else
+            file << " & " << eff;
+        }
       }
-      else
-	file << " & " << setw(10) << totyield; // << "$\\pm$" << luminosity*GetError(backgrounds_, irow);
+      else {
+        if (do_unc_) file << " & " << setw(10) << totyield << "$\\pm$" << luminosity*GetError(backgrounds_, irow);
+        else file << " & " << setw(10) << totyield; // << "$\\pm$" << luminosity*GetError(backgrounds_, irow);
+      }
     }else if(backgrounds_.size() == 1){
       file << " & " << luminosity*GetYield(backgrounds_, irow) << "$\\pm$" << luminosity*GetError(backgrounds_, irow);
     }
@@ -401,32 +413,32 @@ void Table::PrintRow(ofstream &file, size_t irow, double luminosity) const{
 
     for(size_t i = 0; i < signals_.size(); ++i){
       if(do_eff_){
-	if(irow==0)
-	  file << " & " << luminosity*signals_.at(i)->sumw_.at(irow);
-	else if(irow<=3)
-	  file << " & " << setprecision(1) << 100*signals_.at(i)->sumw_.at(irow)/signals_.at(i)->sumw_.at(irow-1);
-	else
-	  file << " & " << setprecision(1) << 100*signals_.at(i)->sumw_.at(irow)/signals_.at(i)->sumw_.at(irow-1);
+        if(irow==0)
+          file << " & " << luminosity*signals_.at(i)->sumw_.at(irow);
+        else if(irow<=3)
+          file << " & " << setprecision(1) << 100*signals_.at(i)->sumw_.at(irow)/signals_.at(i)->sumw_.at(irow-1);
+        else
+          file << " & " << setprecision(1) << 100*signals_.at(i)->sumw_.at(irow)/signals_.at(i)->sumw_.at(irow-1);
       }
       else
-	file << " & " << luminosity*signals_.at(i)->sumw_.at(irow);
+        file << " & " << luminosity*signals_.at(i)->sumw_.at(irow);
       // file << " & " << luminosity*signals_.at(i)->sumw_.at(irow) << "$\\pm$" 
       //         << luminosity*sqrt(signals_.at(i)->sumw2_.at(irow));
       if(do_zbi_){
-	file << " & " << RooStats::NumberCountingUtils::BinomialExpZ(luminosity*signals_.at(i)->sumw_.at(irow),
-								     luminosity*GetYield(backgrounds_, irow),
-								     GetError(backgrounds_, irow)/GetYield(backgrounds_, irow));
-								     //hypot(GetError(backgrounds_, irow)/GetYield(backgrounds_, irow), 0.3));
-	//double sigma_b = hypot(luminosity*GetError(backgrounds_, irow), 0.3*luminosity*GetYield(backgrounds_, irow));
-	double sigma_b = luminosity*GetError(backgrounds_, irow);
-	double signalYield = luminosity*signals_.at(i)->sumw_.at(irow);
-	double bkgdYield = luminosity*GetYield(backgrounds_, irow);
-	double cowan1 = log((signalYield + bkgdYield)*(bkgdYield + sigma_b*sigma_b)/(bkgdYield*bkgdYield + (signalYield + bkgdYield)*sigma_b*sigma_b));
-	cowan1 = cowan1 * (signalYield + bkgdYield);
-	double cowan2 = log(1 + sigma_b*sigma_b*signalYield/(bkgdYield*(bkgdYield + sigma_b*sigma_b)));
-	cowan2 = cowan2 * bkgdYield*bkgdYield / (sigma_b*sigma_b);
-	double cowan = sqrt(2 * (cowan1 - cowan2));
-	file << " & " <<  cowan; // ***NEW LINE***
+        file << " & " << RooStats::NumberCountingUtils::BinomialExpZ(luminosity*signals_.at(i)->sumw_.at(irow),
+            luminosity*GetYield(backgrounds_, irow),
+            GetError(backgrounds_, irow)/GetYield(backgrounds_, irow));
+        //hypot(GetError(backgrounds_, irow)/GetYield(backgrounds_, irow), 0.3));
+        //double sigma_b = hypot(luminosity*GetError(backgrounds_, irow), 0.3*luminosity*GetYield(backgrounds_, irow));
+        double sigma_b = luminosity*GetError(backgrounds_, irow);
+        double signalYield = luminosity*signals_.at(i)->sumw_.at(irow);
+        double bkgdYield = luminosity*GetYield(backgrounds_, irow);
+        double cowan1 = log((signalYield + bkgdYield)*(bkgdYield + sigma_b*sigma_b)/(bkgdYield*bkgdYield + (signalYield + bkgdYield)*sigma_b*sigma_b));
+        cowan1 = cowan1 * (signalYield + bkgdYield);
+        double cowan2 = log(1 + sigma_b*sigma_b*signalYield/(bkgdYield*(bkgdYield + sigma_b*sigma_b)));
+        cowan2 = cowan2 * bkgdYield*bkgdYield / (sigma_b*sigma_b);
+        double cowan = sqrt(2 * (cowan1 - cowan2));
+        file << " & " <<  cowan; // ***NEW LINE***
       }
     }
   }else{
@@ -533,9 +545,9 @@ void Table::PrintFooter(ofstream &file) const{
     }
     file << " & SM Bkg.";
   }else if(backgrounds_.size() == 1){
-  file << " & " << ToLatex(backgrounds_.front()->process_->name_);
+    file << " & " << ToLatex(backgrounds_.front()->process_->name_);
   }
-  
+
   if(datas_.size() > 1){ 
     file << " & ";
     for(size_t i = 0; i < datas_.size(); ++i){
@@ -543,9 +555,9 @@ void Table::PrintFooter(ofstream &file) const{
     }
     file << " & Data Tot.";
   }else if(datas_.size() == 1){
-     file << " & " << ToLatex(datas_.front()->process_->name_);
+    file << " & " << ToLatex(datas_.front()->process_->name_);
   }
-  
+
   for(size_t i = 0; i < signals_.size(); ++i){
     file << " & " << ToLatex(signals_.at(i)->process_->name_);
     if(do_zbi_){
@@ -569,7 +581,7 @@ size_t Table::NumColumns() const{
 }
 
 double Table::GetYield(const vector<unique_ptr<TableColumn> > &columns,
-                       size_t irow){
+    size_t irow){
   double yield = 0.;
   for(const auto &column: columns){
     yield += column->sumw_.at(irow);
@@ -578,7 +590,7 @@ double Table::GetYield(const vector<unique_ptr<TableColumn> > &columns,
 }
 
 double Table::GetError(const vector<unique_ptr<TableColumn> > &columns,
-                       size_t irow){
+    size_t irow){
   double error = 0.;
   for(const auto &column: columns){
     error += column->sumw2_.at(irow);

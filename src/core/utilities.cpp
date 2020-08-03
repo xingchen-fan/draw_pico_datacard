@@ -165,6 +165,7 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "weight", "w");
   ReplaceAll(code, "nbm==0","0b");
   ReplaceAll(code, "nbm==1","1b");
+  ReplaceAll(code, "nbt==2&&nbm==2","2b");
   ReplaceAll(code, "nbt>=2&&nbm==3&&nbl==3","3b");
   ReplaceAll(code, "nbt>=2&&nbm>=3&&nbl>=4","4b");
   ReplaceAll(code, "nbt>=2&&nbm>=3","#geq3b");
