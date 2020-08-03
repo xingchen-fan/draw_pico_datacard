@@ -37,7 +37,7 @@ namespace{
   bool single_thread = false;
   bool unblind = false;
   // sample can be search, ttbar, zll, qcd
-  string sample = "search";
+  string sample_name = "search";
   string year_string = "2016";
 }
 
@@ -171,14 +171,14 @@ int main(int argc, char *argv[]){
   });
 
   string mc_skim_folder;
-  if (sample == "ttbar") mc_skim_folder = ttbar_mc_skim_folder;
-  else if (sample == "zll") mc_skim_folder = zll_mc_skim_folder;
-  else if (sample == "qcd") mc_skim_folder = qcd_mc_skim_folder;
+  if (sample_name == "ttbar") mc_skim_folder = ttbar_mc_skim_folder;
+  else if (sample_name == "zll") mc_skim_folder = zll_mc_skim_folder;
+  else if (sample_name == "qcd") mc_skim_folder = qcd_mc_skim_folder;
   else mc_skim_folder = search_mc_skim_folder;
   string data_skim_folder;
-  if (sample == "ttbar") data_skim_folder = ttbar_data_skim_folder;
-  else if (sample == "zll") data_skim_folder = zll_data_skim_folder;
-  else if (sample == "qcd") data_skim_folder = qcd_data_skim_folder;
+  if (sample_name == "ttbar") data_skim_folder = ttbar_data_skim_folder;
+  else if (sample_name == "zll") data_skim_folder = zll_data_skim_folder;
+  else if (sample_name == "qcd") data_skim_folder = qcd_data_skim_folder;
   else data_skim_folder = search_data_skim_folder;
 
   //NamedFunc base_resolved = 
@@ -296,9 +296,9 @@ int main(int argc, char *argv[]){
   // Draw n-1
   // Selection according to sample
   torch::OrderedDict<string, NamedFunc> map_resolved_cuts;
-  if (sample == "ttbar") map_resolved_cuts = ttbar_resolved_cuts;
-  else if (sample == "zll") map_resolved_cuts = zll_resolved_cuts;
-  else if (sample == "qcd") map_resolved_cuts = qcd_resolved_cuts;
+  if (sample_name == "ttbar") map_resolved_cuts = ttbar_resolved_cuts;
+  else if (sample_name == "zll") map_resolved_cuts = zll_resolved_cuts;
+  else if (sample_name == "qcd") map_resolved_cuts = qcd_resolved_cuts;
   else map_resolved_cuts = search_resolved_cuts;
 
   // Variables to draw
@@ -307,8 +307,8 @@ int main(int argc, char *argv[]){
     target_variables.insert(target_var.key());
   }
   target_variables.insert("ht");
-  if (sample=="zll") target_variables.insert("ll_pt");
-  if (sample=="ttbar") target_variables.insert("met");
+  if (sample_name=="zll") target_variables.insert("ll_pt");
+  if (sample_name=="ttbar") target_variables.insert("met");
 
 
   // Loop over variables
@@ -332,21 +332,21 @@ int main(int argc, char *argv[]){
     
     // Draw target_var
     // For special case
-    if (target_var == "met" && sample == "zll") {
+    if (target_var == "met" && sample_name == "zll") {
       pm.Push<Hist1D>(axis_dict[target_var+"_zll"],
         base_filters&&n_minus_1_cut,
-        procs, plt_lin).Weight(weight).Tag("FixName:fig_n-1_"+sample+"_"+target_var+"_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+        procs, plt_lin).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_"+target_var+"_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
     }
     // For log plots
     else if (std::find(log_plots.begin(), log_plots.end(), target_var) != log_plots.end()) {
       pm.Push<Hist1D>(axis_dict[target_var],
         base_filters&&n_minus_1_cut,
-        procs, plt_log).Weight(weight).Tag("FixName:fig_n-1_"+sample+"_"+target_var+"_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+        procs, plt_log).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_"+target_var+"_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
     // Normal case
     } else {
       pm.Push<Hist1D>(axis_dict[target_var],
         base_filters&&n_minus_1_cut,
-        procs, plt_lin).Weight(weight).Tag("FixName:fig_n-1_"+sample+"_"+target_var+"_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+        procs, plt_lin).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_"+target_var+"_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
     }
   }
 
@@ -359,24 +359,24 @@ int main(int argc, char *argv[]){
     base_filters&&resolved_cuts, procs, plt_2D).Weight(weight);
 
   //// Special case for zll. Draw but do not cut on ll_pt
-  //if (sample=="zll") {
+  //if (sample_name=="zll") {
   //  pm.Push<Hist1D>(Axis(16, 0, 400., "ll_pt[0]", "p_{ll} [GeV]", {75., 150., 200., 300}),
   //    base_filters&&resolved_cuts,
-  //    procs, plt_lin).Weight(weight).Tag("FixName:fig_n-1_"+sample+"_ll_pt_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+  //    procs, plt_lin).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ll_pt_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
   //}
   //// Special case for ttbar. Draw but do not cut on met
-  //if (sample=="ttbar") {
+  //if (sample_name=="ttbar") {
   //  pm.Push<Hist1D>(axis_dict["met"],
   //    base_filters&&resolved_cuts,
-  //    procs, plt_log).Weight(weight).Tag("FixName:fig_n-1_"+sample+"_met_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+  //    procs, plt_log).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_met_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
   //}
 
   //// Example
   //NamedFunc resolved_cuts = "1";
   //torch::OrderedDict<string, NamedFunc> map_resolved_cuts;
-  //if (sample == "ttbar") map_resolved_cuts = ttbar_resolved_cuts;
-  //else if (sample == "zll") map_resolved_cuts = zll_resolved_cuts;
-  //else if (sample == "qcd") map_resolved_cuts = qcd_resolved_cuts;
+  //if (sample_name == "ttbar") map_resolved_cuts = ttbar_resolved_cuts;
+  //else if (sample_name == "zll") map_resolved_cuts = zll_resolved_cuts;
+  //else if (sample_name == "qcd") map_resolved_cuts = qcd_resolved_cuts;
   //else map_resolved_cuts = search_resolved_cuts;
   //for (auto & item : map_resolved_cuts) {
   //  resolved_cuts = resolved_cuts && item.value();
@@ -417,7 +417,7 @@ void GetOptions(int argc, char *argv[]){
     case 0:
       optname = long_options[option_index].name;
       if(optname == "sample"){
-        sample = optarg;
+        sample_name = optarg;
       } else if (optname == "year") {
         year_string = optarg;
       } else if (optname == "unblind") {

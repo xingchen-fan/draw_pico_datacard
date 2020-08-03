@@ -1,5 +1,7 @@
 #include "higgsino/hig_functions.hpp"
-#include "higgsino/apply_trigeffs.hpp"
+#include "higgsino/apply_trigeffs2016.hpp"
+#include "higgsino/apply_trigeffs2017.hpp"
+#include "higgsino/apply_trigeffs2018.hpp"
 
 #include "TVector2.h"
 
@@ -9,6 +11,17 @@
 using namespace std;
 
 namespace Higfuncs{
+
+float signal_lepton_pt(std::vector<float>* const lep_pt, std::vector<bool>* const lep_sig) {
+  float r_signal_lepton_pt = 0;
+  for (unsigned int lep_idx = 0; lep_idx < lep_sig->size(); lep_idx++) {
+    if (lep_sig->at(lep_idx)) {
+      r_signal_lepton_pt = lep_pt->at(lep_idx);
+      break;
+    }
+  }
+  return r_signal_lepton_pt;
+}
 
 const NamedFunc ntrub("ntrub",[](const Baby &b) -> NamedFunc::ScalarType{
   int tmp_ntrub(0);
@@ -367,9 +380,9 @@ const NamedFunc eff_higtrig_run2("eff_higtrig_run2", [](const Baby &b) -> NamedF
 
   else if(b.nvlep()==0){
     if(b.type()>=7000 && b.type()<8000) { // FAKE MET (QCD)
-      eff = get_0l_fakemet_trigeff.GetScalar(b);
+      eff = get_0l_fakemet_trigeff2016.GetScalar(b);
     } else { // TRUE MET
-      eff = get_0l_trigeff.GetScalar(b);
+      eff = get_0l_trigeff2016.GetScalar(b);
     }
   }
   return eff;

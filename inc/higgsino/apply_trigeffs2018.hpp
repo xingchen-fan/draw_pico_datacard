@@ -1,5 +1,5 @@
-#ifndef H_APPLY_TRIGEFFS_2016
-#define H_APPLY_TRIGEFFS_2016
+#ifndef H_APPLY_TRIGEFFS_2018
+#define H_APPLY_TRIGEFFS_2018
 
 #include <cstddef>
 #include <string>

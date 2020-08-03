@@ -56,6 +56,9 @@ namespace Higfuncs{
   extern const NamedFunc mhig;
   extern const NamedFunc nb_exci;
   extern const NamedFunc nb_gs;
+
+  //helper function for trigger efficiencies
+  extern float signal_lepton_pt(std::vector<float>* const lep_pt, std::vector<bool>* const lep_sig);
     }
 
 #endif
