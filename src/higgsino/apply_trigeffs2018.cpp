@@ -1,6 +1,8 @@
+#include <vector>
 #include "core/baby.hpp"
 #include "core/process.hpp"
 #include "core/named_func.hpp"
+#include "higgsino/hig_functions.hpp"
 #include "higgsino/apply_trigeffs2018.hpp"
 
 namespace Higfuncs{
@@ -106,122 +108,122 @@ const NamedFunc get_0l_fakemet_trigeff2018("get_0l_fakemet_trigeff2018", [](cons
   float errup=0., errdown=0.; // Not used, but for reference
   float eff = 1., met = b.met(), ht = b.ht();
   errup+=errdown; //suppress unused warning
-  if (ht> 0 && ht<= 200 && met> 150 && met<= 155) {eff = 0.783069; errup = 0.0136199; errdown = 0.0142422;}
-  else if (ht> 200 && ht<= 600 && met> 150 && met<= 155) {eff = 0.76465; errup = 0.00349924; errdown = 0.00353528;}
-  else if (ht> 600 && ht<= 800 && met> 150 && met<= 155) {eff = 0.56146; errup = 0.0108663; errdown = 0.0109243;}
-  else if (ht> 800 && ht<= 1000 && met> 150 && met<= 155) {eff = 0.624842; errup = 0.00339922; errdown = 0.00341149;}
-  else if (ht> 1000 && ht<= 9999 && met> 150 && met<= 155) {eff = 0.466008; errup = 0.00230628; errdown = 0.00230483;}
-  else if (ht> 0 && ht<= 200 && met> 155 && met<= 160) {eff = 0.803213; errup = 0.0127787; errdown = 0.0134115;}
-  else if (ht> 200 && ht<= 600 && met> 155 && met<= 160) {eff = 0.772851; errup = 0.00347832; errdown = 0.00351597;}
-  else if (ht> 600 && ht<= 800 && met> 155 && met<= 160) {eff = 0.619071; errup = 0.0110367; errdown = 0.0111582;}
-  else if (ht> 800 && ht<= 1000 && met> 155 && met<= 160) {eff = 0.666379; errup = 0.00348106; errdown = 0.00349915;}
-  else if (ht> 1000 && ht<= 9999 && met> 155 && met<= 160) {eff = 0.509226; errup = 0.0025102; errdown = 0.00251067;}
-  else if (ht> 0 && ht<= 200 && met> 160 && met<= 165) {eff = 0.823529; errup = 0.0121963; errdown = 0.0128678;}
-  else if (ht> 200 && ht<= 600 && met> 160 && met<= 165) {eff = 0.777045; errup = 0.0035589; errdown = 0.00359946;}
-  else if (ht> 600 && ht<= 800 && met> 160 && met<= 165) {eff = 0.641411; errup = 0.0117358; errdown = 0.0119034;}
-  else if (ht> 800 && ht<= 1000 && met> 160 && met<= 165) {eff = 0.700949; errup = 0.00358966; errdown = 0.00361433;}
-  else if (ht> 1000 && ht<= 9999 && met> 160 && met<= 165) {eff = 0.540696; errup = 0.00271578; errdown = 0.00271818;}
-  else if (ht> 0 && ht<= 200 && met> 165 && met<= 170) {eff = 0.797505; errup = 0.0126284; errdown = 0.0132211;}
-  else if (ht> 200 && ht<= 600 && met> 165 && met<= 170) {eff = 0.78555; errup = 0.00355616; errdown = 0.0035991;}
-  else if (ht> 600 && ht<= 800 && met> 165 && met<= 170) {eff = 0.665031; errup = 0.0118898; errdown = 0.0120975;}
-  else if (ht> 800 && ht<= 1000 && met> 165 && met<= 170) {eff = 0.723216; errup = 0.0036945; errdown = 0.00372492;}
-  else if (ht> 1000 && ht<= 9999 && met> 165 && met<= 170) {eff = 0.584946; errup = 0.00287986; errdown = 0.00288564;}
-  else if (ht> 0 && ht<= 200 && met> 170 && met<= 175) {eff = 0.790654; errup = 0.0126188; errdown = 0.0131822;}
-  else if (ht> 200 && ht<= 600 && met> 170 && met<= 175) {eff = 0.787925; errup = 0.00359856; errdown = 0.00364326;}
-  else if (ht> 600 && ht<= 800 && met> 170 && met<= 175) {eff = 0.687737; errup = 0.0118419; errdown = 0.0120856;}
-  else if (ht> 800 && ht<= 1000 && met> 170 && met<= 175) {eff = 0.756919; errup = 0.00375845; errdown = 0.00379792;}
-  else if (ht> 1000 && ht<= 9999 && met> 170 && met<= 175) {eff = 0.614853; errup = 0.00306386; errdown = 0.00307294;}
-  else if (ht> 0 && ht<= 200 && met> 175 && met<= 180) {eff = 0.802715; errup = 0.012136; errdown = 0.0127043;}
-  else if (ht> 200 && ht<= 600 && met> 175 && met<= 180) {eff = 0.793769; errup = 0.00363703; errdown = 0.0036846;}
-  else if (ht> 600 && ht<= 800 && met> 175 && met<= 180) {eff = 0.72912; errup = 0.0123851; errdown = 0.0127404;}
-  else if (ht> 800 && ht<= 1000 && met> 175 && met<= 180) {eff = 0.777236; errup = 0.00383485; errdown = 0.00388201;}
-  else if (ht> 1000 && ht<= 9999 && met> 175 && met<= 180) {eff = 0.651016; errup = 0.00324028; errdown = 0.0032542;}
-  else if (ht> 0 && ht<= 200 && met> 180 && met<= 185) {eff = 0.810811; errup = 0.011716; errdown = 0.0122781;}
-  else if (ht> 200 && ht<= 600 && met> 180 && met<= 185) {eff = 0.797007; errup = 0.00369439; errdown = 0.00374461;}
-  else if (ht> 600 && ht<= 800 && met> 180 && met<= 185) {eff = 0.731029; errup = 0.0123471; errdown = 0.0127048;}
-  else if (ht> 800 && ht<= 1000 && met> 180 && met<= 185) {eff = 0.80504; errup = 0.00381664; errdown = 0.00387342;}
-  else if (ht> 1000 && ht<= 9999 && met> 180 && met<= 185) {eff = 0.678762; errup = 0.0034433; errdown = 0.00346269;}
-  else if (ht> 0 && ht<= 200 && met> 185 && met<= 190) {eff = 0.81283; errup = 0.0117133; errdown = 0.0122836;}
-  else if (ht> 200 && ht<= 600 && met> 185 && met<= 190) {eff = 0.797124; errup = 0.00377134; errdown = 0.00382372;}
-  else if (ht> 600 && ht<= 800 && met> 185 && met<= 190) {eff = 0.756178; errup = 0.0125133; errdown = 0.0129493;}
-  else if (ht> 800 && ht<= 1000 && met> 185 && met<= 190) {eff = 0.81854; errup = 0.00389061; errdown = 0.00395578;}
-  else if (ht> 1000 && ht<= 9999 && met> 185 && met<= 190) {eff = 0.718694; errup = 0.00354248; errdown = 0.0035696;}
-  else if (ht> 0 && ht<= 200 && met> 190 && met<= 195) {eff = 0.817032; errup = 0.0113684; errdown = 0.0119228;}
-  else if (ht> 200 && ht<= 600 && met> 190 && met<= 195) {eff = 0.802714; errup = 0.00377713; errdown = 0.00383181;}
-  else if (ht> 600 && ht<= 800 && met> 190 && met<= 195) {eff = 0.781277; errup = 0.0124058; errdown = 0.0129153;}
-  else if (ht> 800 && ht<= 1000 && met> 190 && met<= 195) {eff = 0.840313; errup = 0.00388819; errdown = 0.00396528;}
-  else if (ht> 1000 && ht<= 9999 && met> 190 && met<= 195) {eff = 0.741856; errup = 0.00368455; errdown = 0.00371883;}
-  else if (ht> 0 && ht<= 200 && met> 195 && met<= 200) {eff = 0.825083; errup = 0.0110439; errdown = 0.0116004;}
-  else if (ht> 200 && ht<= 600 && met> 195 && met<= 200) {eff = 0.80674; errup = 0.00382727; errdown = 0.00388508;}
-  else if (ht> 600 && ht<= 800 && met> 195 && met<= 200) {eff = 0.815399; errup = 0.011973; errdown = 0.0125808;}
-  else if (ht> 800 && ht<= 1000 && met> 195 && met<= 200) {eff = 0.857696; errup = 0.00386119; errdown = 0.00394919;}
-  else if (ht> 1000 && ht<= 9999 && met> 195 && met<= 200) {eff = 0.762597; errup = 0.00384232; errdown = 0.00388518;}
-  else if (ht> 0 && ht<= 200 && met> 200 && met<= 210) {eff = 0.822276; errup = 0.00773276; errdown = 0.00799867;}
-  else if (ht> 200 && ht<= 600 && met> 200 && met<= 210) {eff = 0.804838; errup = 0.00276043; errdown = 0.00279007;}
-  else if (ht> 600 && ht<= 800 && met> 200 && met<= 210) {eff = 0.834778; errup = 0.0084645; errdown = 0.00881621;}
-  else if (ht> 800 && ht<= 1000 && met> 200 && met<= 210) {eff = 0.879252; errup = 0.00270911; errdown = 0.0027619;}
-  else if (ht> 1000 && ht<= 9999 && met> 200 && met<= 210) {eff = 0.800344; errup = 0.00281079; errdown = 0.00284054;}
-  else if (ht> 0 && ht<= 200 && met> 210 && met<= 220) {eff = 0.814829; errup = 0.00756296; errdown = 0.00780333;}
-  else if (ht> 200 && ht<= 600 && met> 210 && met<= 220) {eff = 0.814466; errup = 0.00280749; errdown = 0.00284038;}
-  else if (ht> 600 && ht<= 800 && met> 210 && met<= 220) {eff = 0.857221; errup = 0.00825338; errdown = 0.00865716;}
-  else if (ht> 800 && ht<= 1000 && met> 210 && met<= 220) {eff = 0.895166; errup = 0.00278813; errdown = 0.00285418;}
-  else if (ht> 1000 && ht<= 9999 && met> 210 && met<= 220) {eff = 0.843622; errup = 0.00287179; errdown = 0.00291493;}
-  else if (ht> 0 && ht<= 200 && met> 220 && met<= 230) {eff = 0.807988; errup = 0.00760664; errdown = 0.00783779;}
-  else if (ht> 200 && ht<= 600 && met> 220 && met<= 230) {eff = 0.814443; errup = 0.00290636; errdown = 0.0029416;}
-  else if (ht> 600 && ht<= 800 && met> 220 && met<= 230) {eff = 0.865638; errup = 0.00822363; errdown = 0.00865626;}
-  else if (ht> 800 && ht<= 1000 && met> 220 && met<= 230) {eff = 0.918065; errup = 0.00264745; errdown = 0.00272631;}
-  else if (ht> 1000 && ht<= 9999 && met> 220 && met<= 230) {eff = 0.872208; errup = 0.00293961; errdown = 0.0029977;}
-  else if (ht> 0 && ht<= 200 && met> 230 && met<= 240) {eff = 0.828114; errup = 0.00701563; errdown = 0.0072444;}
-  else if (ht> 200 && ht<= 600 && met> 230 && met<= 240) {eff = 0.812111; errup = 0.00304631; errdown = 0.00308437;}
-  else if (ht> 600 && ht<= 800 && met> 230 && met<= 240) {eff = 0.912081; errup = 0.00696799; errdown = 0.00748204;}
-  else if (ht> 800 && ht<= 1000 && met> 230 && met<= 240) {eff = 0.928379; errup = 0.00268497; errdown = 0.00277924;}
-  else if (ht> 1000 && ht<= 9999 && met> 230 && met<= 240) {eff = 0.889586; errup = 0.00306626; errdown = 0.00314151;}
-  else if (ht> 0 && ht<= 200 && met> 240 && met<= 250) {eff = 0.828745; errup = 0.00718099; errdown = 0.0074219;}
-  else if (ht> 200 && ht<= 600 && met> 240 && met<= 250) {eff = 0.808351; errup = 0.0031814; errdown = 0.00322179;}
-  else if (ht> 600 && ht<= 800 && met> 240 && met<= 250) {eff = 0.906933; errup = 0.00730866; errdown = 0.0078387;}
-  else if (ht> 800 && ht<= 1000 && met> 240 && met<= 250) {eff = 0.940203; errup = 0.0026612; errdown = 0.00277416;}
-  else if (ht> 1000 && ht<= 9999 && met> 240 && met<= 250) {eff = 0.911654; errup = 0.00309177; errdown = 0.00319074;}
-  else if (ht> 0 && ht<= 200 && met> 250 && met<= 275) {eff = 0.82974; errup = 0.00445576; errdown = 0.00454893;}
-  else if (ht> 200 && ht<= 600 && met> 250 && met<= 275) {eff = 0.805113; errup = 0.00221366; errdown = 0.00223275;}
-  else if (ht> 600 && ht<= 800 && met> 250 && met<= 275) {eff = 0.931136; errup = 0.00416028; errdown = 0.00439877;}
-  else if (ht> 800 && ht<= 1000 && met> 250 && met<= 275) {eff = 0.951112; errup = 0.00170434; errdown = 0.00176156;}
-  else if (ht> 1000 && ht<= 9999 && met> 250 && met<= 275) {eff = 0.930972; errup = 0.00201305; errdown = 0.00206803;}
-  else if (ht> 0 && ht<= 200 && met> 275 && met<= 300) {eff = 0.839123; errup = 0.00470632; errdown = 0.00481832;}
-  else if (ht> 200 && ht<= 600 && met> 275 && met<= 300) {eff = 0.808875; errup = 0.00254223; errdown = 0.00256811;}
-  else if (ht> 600 && ht<= 800 && met> 275 && met<= 300) {eff = 0.950015; errup = 0.00378067; errdown = 0.00406072;}
-  else if (ht> 800 && ht<= 1000 && met> 275 && met<= 300) {eff = 0.963379; errup = 0.00172179; errdown = 0.00180134;}
-  else if (ht> 1000 && ht<= 9999 && met> 275 && met<= 300) {eff = 0.94979; errup = 0.0021136; errdown = 0.0021994;}
-  else if (ht> 0 && ht<= 200 && met> 300 && met<= 350) {eff = 0.85927; errup = 0.0037519; errdown = 0.00383613;}
-  else if (ht> 200 && ht<= 600 && met> 300 && met<= 350) {eff = 0.807335; errup = 0.00232967; errdown = 0.00235116;}
-  else if (ht> 600 && ht<= 800 && met> 300 && met<= 350) {eff = 0.961112; errup = 0.00252941; errdown = 0.00269201;}
-  else if (ht> 800 && ht<= 1000 && met> 300 && met<= 350) {eff = 0.968023; errup = 0.00143163; errdown = 0.0014949;}
-  else if (ht> 1000 && ht<= 9999 && met> 300 && met<= 350) {eff = 0.965564; errup = 0.00163386; errdown = 0.00171025;}
-  else if (ht> 0 && ht<= 200 && met> 350 && met<= 400) {eff = 0.876007; errup = 0.00517695; errdown = 0.00536483;}
-  else if (ht> 200 && ht<= 600 && met> 350 && met<= 400) {eff = 0.807657; errup = 0.00344952; errdown = 0.00349677;}
-  else if (ht> 600 && ht<= 800 && met> 350 && met<= 400) {eff = 0.972668; errup = 0.00240389; errdown = 0.0026182;}
-  else if (ht> 800 && ht<= 1000 && met> 350 && met<= 400) {eff = 0.975655; errup = 0.00170611; errdown = 0.00182667;}
-  else if (ht> 1000 && ht<= 9999 && met> 350 && met<= 400) {eff = 0.974032; errup = 0.00197332; errdown = 0.00212467;}
-  else if (ht> 0 && ht<= 200 && met> 400 && met<= 450) {eff = 0.896953; errup = 0.00720465; errdown = 0.00766138;}
-  else if (ht> 200 && ht<= 600 && met> 400 && met<= 450) {eff = 0.832974; errup = 0.00483036; errdown = 0.00494271;}
-  else if (ht> 600 && ht<= 800 && met> 400 && met<= 450) {eff = 0.981407; errup = 0.00237668; errdown = 0.00269446;}
-  else if (ht> 800 && ht<= 1000 && met> 400 && met<= 450) {eff = 0.983543; errup = 0.00192253; errdown = 0.0021567;}
-  else if (ht> 1000 && ht<= 9999 && met> 400 && met<= 450) {eff = 0.972542; errup = 0.00281052; errdown = 0.0031042;}
-  else if (ht> 0 && ht<= 200 && met> 450 && met<= 500) {eff = 0.925876; errup = 0.00968138; errdown = 0.0109088;}
-  else if (ht> 200 && ht<= 600 && met> 450 && met<= 500) {eff = 0.839387; errup = 0.00698255; errdown = 0.00723044;}
-  else if (ht> 600 && ht<= 800 && met> 450 && met<= 500) {eff = 0.983294; errup = 0.00279405; errdown = 0.00329469;}
-  else if (ht> 800 && ht<= 1000 && met> 450 && met<= 500) {eff = 0.984362; errup = 0.0024794; errdown = 0.00289914;}
-  else if (ht> 1000 && ht<= 9999 && met> 450 && met<= 500) {eff = 0.982897; errup = 0.00290135; errdown = 0.00342911;}
-  else if (ht> 0 && ht<= 200 && met> 500 && met<= 9999) {eff = 0.918994; errup = 0.0145423; errdown = 0.0171055;}
-  else if (ht> 200 && ht<= 600 && met> 500 && met<= 9999) {eff = 0.842346; errup = 0.0101654; errdown = 0.0107064;}
-  else if (ht> 600 && ht<= 800 && met> 500 && met<= 9999) {eff = 0.984349; errup = 0.00354204; errdown = 0.00443195;}
-  else if (ht> 800 && ht<= 1000 && met> 500 && met<= 9999) {eff = 0.987952; errup = 0.00288307; errdown = 0.00365891;}
-  else if (ht> 1000 && ht<= 9999 && met> 500 && met<= 9999) {eff = 0.983651; errup = 0.00379901; errdown = 0.0047816;}
+  if (ht> 0 && ht<= 200 && met> 150 && met<= 155) {eff = 0.202703; errup = 0.0577474; errdown = 0.0486331;}
+  else if (ht> 200 && ht<= 600 && met> 150 && met<= 155) {eff = 0.243401; errup = 0.00516343; errdown = 0.00509116;}
+  else if (ht> 600 && ht<= 800 && met> 150 && met<= 155) {eff = 0.289245; errup = 0.00570872; errdown = 0.00564355;}
+  else if (ht> 800 && ht<= 1000 && met> 150 && met<= 155) {eff = 0.330854; errup = 0.00511006; errdown = 0.0050709;}
+  else if (ht> 1000 && ht<= 9999 && met> 150 && met<= 155) {eff = 0.408515; errup = 0.0027316; errdown = 0.002726;}
+  else if (ht> 0 && ht<= 200 && met> 155 && met<= 160) {eff = 0.297872; errup = 0.0814059; errdown = 0.0715756;}
+  else if (ht> 200 && ht<= 600 && met> 155 && met<= 160) {eff = 0.30406; errup = 0.00619349; errdown = 0.00612423;}
+  else if (ht> 600 && ht<= 800 && met> 155 && met<= 160) {eff = 0.335865; errup = 0.00655117; errdown = 0.00648949;}
+  else if (ht> 800 && ht<= 1000 && met> 155 && met<= 160) {eff = 0.368558; errup = 0.00574175; errdown = 0.00570519;}
+  else if (ht> 1000 && ht<= 9999 && met> 155 && met<= 160) {eff = 0.449374; errup = 0.00301222; errdown = 0.00300853;}
+  else if (ht> 0 && ht<= 200 && met> 160 && met<= 165) {eff = 0.351351; errup = 0.0952483; errdown = 0.0860018;}
+  else if (ht> 200 && ht<= 600 && met> 160 && met<= 165) {eff = 0.347403; errup = 0.00698388; errdown = 0.00691979;}
+  else if (ht> 600 && ht<= 800 && met> 160 && met<= 165) {eff = 0.389544; errup = 0.00740883; errdown = 0.00735894;}
+  else if (ht> 800 && ht<= 1000 && met> 160 && met<= 165) {eff = 0.40968; errup = 0.00627806; errdown = 0.00624912;}
+  else if (ht> 1000 && ht<= 9999 && met> 160 && met<= 165) {eff = 0.479847; errup = 0.0032744; errdown = 0.00327268;}
+  else if (ht> 0 && ht<= 200 && met> 165 && met<= 170) {eff = 0.34375; errup = 0.103529; errdown = 0.0921925;}
+  else if (ht> 200 && ht<= 600 && met> 165 && met<= 170) {eff = 0.381182; errup = 0.0081055; errdown = 0.00804092;}
+  else if (ht> 600 && ht<= 800 && met> 165 && met<= 170) {eff = 0.442154; errup = 0.00811501; errdown = 0.00808473;}
+  else if (ht> 800 && ht<= 1000 && met> 165 && met<= 170) {eff = 0.463081; errup = 0.00702641; errdown = 0.00701198;}
+  else if (ht> 1000 && ht<= 9999 && met> 165 && met<= 170) {eff = 0.521223; errup = 0.00352075; errdown = 0.00352284;}
+  else if (ht> 0 && ht<= 200 && met> 170 && met<= 175) {eff = 0.375; errup = 0.122914; errdown = 0.110663;}
+  else if (ht> 200 && ht<= 600 && met> 170 && met<= 175) {eff = 0.469179; errup = 0.00908694; errdown = 0.00906691;}
+  else if (ht> 600 && ht<= 800 && met> 170 && met<= 175) {eff = 0.477634; errup = 0.00881021; errdown = 0.00879655;}
+  else if (ht> 800 && ht<= 1000 && met> 170 && met<= 175) {eff = 0.489059; errup = 0.00750549; errdown = 0.00750063;}
+  else if (ht> 1000 && ht<= 9999 && met> 170 && met<= 175) {eff = 0.556443; errup = 0.00377733; errdown = 0.00378382;}
+  else if (ht> 0 && ht<= 200 && met> 175 && met<= 180) {eff = 0.466667; errup = 0.15827; errdown = 0.152935;}
+  else if (ht> 200 && ht<= 600 && met> 175 && met<= 180) {eff = 0.496869; errup = 0.0097792; errdown = 0.00977685;}
+  else if (ht> 600 && ht<= 800 && met> 175 && met<= 180) {eff = 0.554628; errup = 0.00962846; errdown = 0.00966887;}
+  else if (ht> 800 && ht<= 1000 && met> 175 && met<= 180) {eff = 0.526151; errup = 0.00817664; errdown = 0.00819047;}
+  else if (ht> 1000 && ht<= 9999 && met> 175 && met<= 180) {eff = 0.591429; errup = 0.00405927; errdown = 0.00407168;}
+  else if (ht> 0 && ht<= 200 && met> 180 && met<= 185) {eff = 0.647059; errup = 0.129922; errdown = 0.150722;}
+  else if (ht> 200 && ht<= 600 && met> 180 && met<= 185) {eff = 0.562444; errup = 0.0106692; errdown = 0.0107261;}
+  else if (ht> 600 && ht<= 800 && met> 180 && met<= 185) {eff = 0.584582; errup = 0.0103731; errdown = 0.010447;}
+  else if (ht> 800 && ht<= 1000 && met> 180 && met<= 185) {eff = 0.570557; errup = 0.00855781; errdown = 0.00859949;}
+  else if (ht> 1000 && ht<= 9999 && met> 180 && met<= 185) {eff = 0.615664; errup = 0.00435457; errdown = 0.00437302;}
+  else if (ht> 0 && ht<= 200 && met> 185 && met<= 190) {eff = 0.714286; errup = 0.13123; errdown = 0.168877;}
+  else if (ht> 200 && ht<= 600 && met> 185 && met<= 190) {eff = 0.621965; errup = 0.0115951; errdown = 0.0117329;}
+  else if (ht> 600 && ht<= 800 && met> 185 && met<= 190) {eff = 0.626667; errup = 0.0111406; errdown = 0.0112735;}
+  else if (ht> 800 && ht<= 1000 && met> 185 && met<= 190) {eff = 0.577571; errup = 0.00930451; errdown = 0.00935887;}
+  else if (ht> 1000 && ht<= 9999 && met> 185 && met<= 190) {eff = 0.653083; errup = 0.00454038; errdown = 0.00456813;}
+  else if (ht> 0 && ht<= 200 && met> 190 && met<= 195) {eff = 0.636364; errup = 0.164762; errdown = 0.195231;}
+  else if (ht> 200 && ht<= 600 && met> 190 && met<= 195) {eff = 0.641304; errup = 0.0119969; errdown = 0.0121718;}
+  else if (ht> 600 && ht<= 800 && met> 190 && met<= 195) {eff = 0.657925; errup = 0.011646; errdown = 0.0118347;}
+  else if (ht> 800 && ht<= 1000 && met> 190 && met<= 195) {eff = 0.612853; errup = 0.00979111; errdown = 0.00988133;}
+  else if (ht> 1000 && ht<= 9999 && met> 190 && met<= 195) {eff = 0.688074; errup = 0.00471269; errdown = 0.00475151;}
+  else if (ht> 0 && ht<= 200 && met> 195 && met<= 200) {eff = 0.875; errup = 0.103637; errdown = 0.23225;}
+  else if (ht> 200 && ht<= 600 && met> 195 && met<= 200) {eff = 0.684962; errup = 0.0129659; errdown = 0.0132521;}
+  else if (ht> 600 && ht<= 800 && met> 195 && met<= 200) {eff = 0.682345; errup = 0.0120156; errdown = 0.0122569;}
+  else if (ht> 800 && ht<= 1000 && met> 195 && met<= 200) {eff = 0.651388; errup = 0.010154; errdown = 0.0102904;}
+  else if (ht> 1000 && ht<= 9999 && met> 195 && met<= 200) {eff = 0.708353; errup = 0.0049779; errdown = 0.00502779;}
+  else if (ht> 0 && ht<= 200 && met> 200 && met<= 210) {eff = 0.791667; errup = 0.0868677; errdown = 0.116379;}
+  else if (ht> 200 && ht<= 600 && met> 200 && met<= 210) {eff = 0.740741; errup = 0.00960556; errdown = 0.0098368;}
+  else if (ht> 600 && ht<= 800 && met> 200 && met<= 210) {eff = 0.735731; errup = 0.00881812; errdown = 0.00900652;}
+  else if (ht> 800 && ht<= 1000 && met> 200 && met<= 210) {eff = 0.686861; errup = 0.00769244; errdown = 0.00779483;}
+  else if (ht> 1000 && ht<= 9999 && met> 200 && met<= 210) {eff = 0.739948; errup = 0.00374889; errdown = 0.00378393;}
+  else if (ht> 0 && ht<= 200 && met> 210 && met<= 220) {eff = 0.75; errup = 0.132707; errdown = 0.1849;}
+  else if (ht> 200 && ht<= 600 && met> 210 && met<= 220) {eff = 0.803825; errup = 0.00997623; errdown = 0.0103627;}
+  else if (ht> 600 && ht<= 800 && met> 210 && met<= 220) {eff = 0.78953; errup = 0.00957715; errdown = 0.00989845;}
+  else if (ht> 800 && ht<= 1000 && met> 210 && met<= 220) {eff = 0.714932; errup = 0.00820568; errdown = 0.00834736;}
+  else if (ht> 1000 && ht<= 9999 && met> 210 && met<= 220) {eff = 0.78435; errup = 0.00396082; errdown = 0.00401366;}
+  else if (ht> 0 && ht<= 200 && met> 220 && met<= 230) {eff = 0.875; errup = 0.103637; errdown = 0.23225;}
+  else if (ht> 200 && ht<= 600 && met> 220 && met<= 230) {eff = 0.833603; errup = 0.010707; errdown = 0.0112662;}
+  else if (ht> 600 && ht<= 800 && met> 220 && met<= 230) {eff = 0.825459; errup = 0.00982864; errdown = 0.01027;}
+  else if (ht> 800 && ht<= 1000 && met> 220 && met<= 230) {eff = 0.745188; errup = 0.00901608; errdown = 0.00922602;}
+  else if (ht> 1000 && ht<= 9999 && met> 220 && met<= 230) {eff = 0.824385; errup = 0.00409059; errdown = 0.0041659;}
+  else if (ht> 0 && ht<= 200 && met> 230 && met<= 240) {eff = 1; errup = 0; errdown = 0.23126;}
+  else if (ht> 200 && ht<= 600 && met> 230 && met<= 240) {eff = 0.85963; errup = 0.0115907; errdown = 0.01241;}
+  else if (ht> 600 && ht<= 800 && met> 230 && met<= 240) {eff = 0.850206; errup = 0.0103481; errdown = 0.0109475;}
+  else if (ht> 800 && ht<= 1000 && met> 230 && met<= 240) {eff = 0.757143; errup = 0.0098043; errdown = 0.0100735;}
+  else if (ht> 1000 && ht<= 9999 && met> 230 && met<= 240) {eff = 0.835609; errup = 0.00441926; errdown = 0.00451523;}
+  else if (ht> 0 && ht<= 200 && met> 240 && met<= 250) {eff = 1; errup = 0; errdown = 0.308024;}
+  else if (ht> 200 && ht<= 600 && met> 240 && met<= 250) {eff = 0.902013; errup = 0.0109914; errdown = 0.0121363;}
+  else if (ht> 600 && ht<= 800 && met> 240 && met<= 250) {eff = 0.865828; errup = 0.0111558; errdown = 0.0119586;}
+  else if (ht> 800 && ht<= 1000 && met> 240 && met<= 250) {eff = 0.784155; errup = 0.0104025; errdown = 0.0107677;}
+  else if (ht> 1000 && ht<= 9999 && met> 240 && met<= 250) {eff = 0.866879; errup = 0.00454197; errdown = 0.00467439;}
+  else if (ht> 0 && ht<= 200 && met> 250 && met<= 275) {eff = 1; errup = 0; errdown = 0.601684;}
+  else if (ht> 200 && ht<= 600 && met> 250 && met<= 275) {eff = 0.940419; errup = 0.00674673; errdown = 0.00749814;}
+  else if (ht> 600 && ht<= 800 && met> 250 && met<= 275) {eff = 0.896878; errup = 0.00722917; errdown = 0.00768865;}
+  else if (ht> 800 && ht<= 1000 && met> 250 && met<= 275) {eff = 0.813946; errup = 0.00718428; errdown = 0.00739968;}
+  else if (ht> 1000 && ht<= 9999 && met> 250 && met<= 275) {eff = 0.889713; errup = 0.00306427; errdown = 0.00313953;}
+  else if (ht> 0 && ht<= 200 && met> 275 && met<= 300) {eff = 1; errup = 0; errdown = 0.601684;}
+  else if (ht> 200 && ht<= 600 && met> 275 && met<= 300) {eff = 0.959155; errup = 0.00743723; errdown = 0.00885222;}
+  else if (ht> 600 && ht<= 800 && met> 275 && met<= 300) {eff = 0.934353; errup = 0.00746562; errdown = 0.00829373;}
+  else if (ht> 800 && ht<= 1000 && met> 275 && met<= 300) {eff = 0.82008; errup = 0.00864714; errdown = 0.00897445;}
+  else if (ht> 1000 && ht<= 9999 && met> 275 && met<= 300) {eff = 0.917388; errup = 0.00326247; errdown = 0.00338145;}
+  else if (ht> 0 && ht<= 200 && met> 300 && met<= 350) {eff = 1; errup = 0; errdown = 0.841345;}
+  else if (ht> 200 && ht<= 600 && met> 300 && met<= 350) {eff = 0.963964; errup = 0.00721984; errdown = 0.00875676;}
+  else if (ht> 600 && ht<= 800 && met> 300 && met<= 350) {eff = 0.925249; errup = 0.00762407; errdown = 0.00836884;}
+  else if (ht> 800 && ht<= 1000 && met> 300 && met<= 350) {eff = 0.818534; errup = 0.00807502; errdown = 0.00835695;}
+  else if (ht> 1000 && ht<= 9999 && met> 300 && met<= 350) {eff = 0.940378; errup = 0.00263708; errdown = 0.00274835;}
+  else if (ht> 0 && ht<= 200 && met> 350 && met<= 400) {eff = 1.25382e-308; errup = 5.56355e-307; errdown = 1.78249e-306;}
+  else if (ht> 200 && ht<= 600 && met> 350 && met<= 400) {eff = 0.983471; errup = 0.0078941; errdown = 0.012876;}
+  else if (ht> 600 && ht<= 800 && met> 350 && met<= 400) {eff = 0.892; errup = 0.0140398; errdown = 0.0157188;}
+  else if (ht> 800 && ht<= 1000 && met> 350 && met<= 400) {eff = 0.831216; errup = 0.0114216; errdown = 0.0120465;}
+  else if (ht> 1000 && ht<= 9999 && met> 350 && met<= 400) {eff = 0.958167; errup = 0.00307583; errdown = 0.00329941;}
+  else if (ht> 0 && ht<= 200 && met> 400 && met<= 450) {eff = 9.53547e-322; errup = -1; errdown = -1;}
+  else if (ht> 200 && ht<= 600 && met> 400 && met<= 450) {eff = 0.969388; errup = 0.0166146; errdown = 0.0288818;}
+  else if (ht> 600 && ht<= 800 && met> 400 && met<= 450) {eff = 0.870833; errup = 0.022025; errdown = 0.0254039;}
+  else if (ht> 800 && ht<= 1000 && met> 400 && met<= 450) {eff = 0.876686; errup = 0.0146189; errdown = 0.0161656;}
+  else if (ht> 1000 && ht<= 9999 && met> 400 && met<= 450) {eff = 0.956439; errup = 0.00445297; errdown = 0.00490815;}
+  else if (ht> 0 && ht<= 200 && met> 450 && met<= 500) {eff = 1.0; errup = -1; errdown = -1;}
+  else if (ht> 200 && ht<= 600 && met> 450 && met<= 500) {eff = 0.961538; errup = 0.0318392; errdown = 0.0829559;}
+  else if (ht> 600 && ht<= 800 && met> 450 && met<= 500) {eff = 0.858268; errup = 0.0316515; errdown = 0.0379788;}
+  else if (ht> 800 && ht<= 1000 && met> 450 && met<= 500) {eff = 0.864151; errup = 0.0214229; errdown = 0.0244106;}
+  else if (ht> 1000 && ht<= 9999 && met> 450 && met<= 500) {eff = 0.970889; errup = 0.0047152; errdown = 0.00551772;}
+  else if (ht> 0 && ht<= 200 && met> 500 && met<= 9999) {eff = 1.0; errup = -1; errdown = -1;}
+  else if (ht> 200 && ht<= 600 && met> 500 && met<= 9999) {eff = 0.9; errup = 0.082873; errdown = 0.194135;}
+  else if (ht> 600 && ht<= 800 && met> 500 && met<= 9999) {eff = 0.892857; errup = 0.0416676; errdown = 0.0585112;}
+  else if (ht> 800 && ht<= 1000 && met> 500 && met<= 9999) {eff = 0.910828; errup = 0.0229624; errdown = 0.028904;}
+  else if (ht> 1000 && ht<= 9999 && met> 500 && met<= 9999) {eff = 0.975714; errup = 0.00579072; errdown = 0.00731565;}
   return eff;
 });
 
 const NamedFunc get_1el_trigeff2018("get_1el_trigeff2018", [](const Baby &b) -> NamedFunc::ScalarType{
   float errup=0., errdown=0.; // Not used, but for reference
-  float eff = 1., met = b.met(), el_pt = b.el_pt()->at(0); //assumes first lepton is signal
+  float eff = 1., met = b.met(), el_pt = signal_lepton_pt(b.el_pt(),b.el_sig());
   errup+=errdown; //suppress unused warning
   if (el_pt> 20 && el_pt<= 25 && met> 150 && met<= 110) {eff = 0.0613195; errup = 0.00423119; errdown = 0.00398277;}
   else if (el_pt> 25 && el_pt<= 30 && met> 150 && met<= 110) {eff = 0.065407; errup = 0.00505952; errdown = 0.00473156;}
@@ -288,7 +290,7 @@ const NamedFunc get_1el_trigeff2018("get_1el_trigeff2018", [](const Baby &b) -> 
 
 const NamedFunc get_1mu_trigeff2018("get_1mu_trigeff2018", [](const Baby &b) -> NamedFunc::ScalarType{
   float errup=0., errdown=0.; // Not used, but for reference
-  float eff = 1., met = b.met(), mu_pt = b.mu_pt()->at(0); //assumes first lepton is signal
+  float eff = 1., met = b.met(), mu_pt = signal_lepton_pt(b.mu_pt(),b.mu_sig());
   errup+=errdown; //suppress unused warning
   if (mu_pt> 20 && mu_pt<= 25 && met> 150 && met<= 110) {eff = 0.134868; errup = 0.00589481; errdown = 0.00568981;}
   else if (mu_pt> 25 && mu_pt<= 30 && met> 150 && met<= 110) {eff = 0.491734; errup = 0.0099961; errdown = 0.00998962;}
@@ -343,7 +345,7 @@ const NamedFunc get_1mu_trigeff2018("get_1mu_trigeff2018", [](const Baby &b) -> 
 
 const NamedFunc get_2el_trigeff2018("get_2el_trigeff2018", [](const Baby &b) -> NamedFunc::ScalarType{
   float errup=0., errdown=0.; // Not used, but for reference
-  float eff = 1., el_pt = b.el_pt()->at(0); //assumes first lepton is signal
+  float eff = 1., el_pt = signal_lepton_pt(b.el_pt(),b.el_sig());
   errup+=errdown; //suppress unused warning
   if (el_pt> 40 && el_pt<= 45) {eff = 0.832117; errup = 0.0319327; errdown = 0.0319327;}
   else if (el_pt> 45 && el_pt<= 50) {eff = 0.868687; errup = 0.0240023; errdown = 0.0240023;}
@@ -365,7 +367,7 @@ const NamedFunc get_2el_trigeff2018("get_2el_trigeff2018", [](const Baby &b) -> 
 
 const NamedFunc get_2mu_trigeff2018("get_2mu_trigeff2018", [](const Baby &b) -> NamedFunc::ScalarType{
   float errup=0., errdown=0.; // Not used, but for reference
-  float eff = 1., mu_pt = b.mu_pt()->at(0); //assumes first lepton is signal
+  float eff = 1., mu_pt = signal_lepton_pt(b.mu_pt(),b.mu_sig());
   errup+=errdown; //suppress unused warning
   if (mu_pt> 40 && mu_pt<= 45) {eff = 0.965812; errup = 0.0118789; errdown = 0.0118789;}
   else if (mu_pt> 45 && mu_pt<= 50) {eff = 0.935754; errup = 0.0129587; errdown = 0.0129587;}

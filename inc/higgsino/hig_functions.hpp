@@ -57,7 +57,6 @@ namespace Higfuncs{
   extern const NamedFunc nb_exci;
   extern const NamedFunc nb_gs;
 
-
   extern const NamedFunc h1b1_pt;
   extern const NamedFunc h1b2_pt;
   extern const NamedFunc h2b1_pt;
@@ -67,7 +66,8 @@ namespace Higfuncs{
   extern const NamedFunc h1_mass;
   extern const NamedFunc h2_mass;
 
-  extern const NamedFunc signal_lepton_pt;
-    }
+  extern const NamedFunc lead_signal_lepton_pt;
+  extern float signal_lepton_pt(std::vector<float>* const lep_pt, std::vector<bool>* const lep_sig);
+}
 
 #endif

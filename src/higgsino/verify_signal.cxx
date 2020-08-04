@@ -25,8 +25,6 @@ using namespace PlotOptTypes;
 
 namespace{
   // vector<string> sigm = {}; 
-  vector<string> mchi_sigm = {"175","500","950","200","500","650"}; 
-  vector<string> mlsp_sigm = {"0",  "0",  "0","0","150","100"}; 
 }
   
 int main(){
@@ -37,19 +35,19 @@ int main(){
 
   float lumi = 35.9;
   string bfolder = "/net/cms25";
+  vector<string> mchi_sigm = {"175","500","950","200","400","500","650"}; 
+  vector<string> mlsp_sigm = {"0",  "0",  "0","25","250","150","100"}; 
 
   string mc_production = "higgsino_humboldt"; // higgsino_eldorado
-  string year = "2016"; // 2017, 2018
+  string year = "2017"; // 2016, 2017, 2018
 
   string foldermc(bfolder+"/cms25r5/pico/NanoAODv5/"+mc_production+"/"+year+"/mc/skim_met150/");
   string foldersig(bfolder+"/cms25r5/pico/NanoAODv5/"+mc_production+"/"+year+"/SMS-TChiHH_2D/unskimmed/");
   if (year == "2017") {
 	  lumi = 41.5;
-  	  vector<string> mlsp_sigm = {"0",  "0",  "150","275","0",  "300","550"}; 
   }
   if (year == "2018") {
 	  lumi = 60.0;
-  	  vector<string> mlsp_sigm = {"0",  "0",  "150","275","0",  "300","550"}; 
   }
 
   map<string, set<string>> mctags; 
@@ -73,9 +71,11 @@ int main(){
               attach_folder(foldermc,mctags["vjets"]),c_ps));
   procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X", Process::Type::background,1,
               attach_folder(foldermc, mctags["ttx"]),c_ps));
-  for (unsigned isig(0); isig<mchi_sigm.size(); isig++)
+  for (unsigned isig(0); isig<mchi_sigm.size(); isig++) {
     procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+mchi_sigm[isig]+","+mlsp_sigm[isig]+")", 
       Process::Type::signal, 1, {foldersig+"*TChiHH_mChi-"+mchi_sigm[isig]+"_mLSP-"+mlsp_sigm[isig]+"*.root"}, "1"));
+      std::cout << foldersig+"*TChiHH_mChi-"+mchi_sigm[isig]+"_mLSP-"+mlsp_sigm[isig]+"*.root" << std::endl;
+  }
 
 
   string c_2bt  = "nbt>=2";

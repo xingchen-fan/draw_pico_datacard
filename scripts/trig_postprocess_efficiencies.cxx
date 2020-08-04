@@ -24,9 +24,12 @@ int trig_postprocess_efficiencies() {
     bool draw_1el_graphs = true;
     bool draw_1mu_graphs = true;
     bool draw_2l_graphs = true;
-    //2016 is full efficienties
+    //2016 rdfat_qcd2016_htrange.root and trig_eff_old_fullefficiencies.root
+    //2017 rdfat_qcd2017.root and trig_eff_old_eff_2017.root
+    //2017 rdfat_qcd2018.root and trig_eff_old_eff_2018.root
     TFile* f = TFile::Open("ntuples/trig_eff_old_eff_2018.root");
-    TFile* f_qcd = TFile::Open("ntuples/rdfat_qcd2016_ht200900.root");
+    TFile* f_qcd = TFile::Open("ntuples/rdfat_qcd2018.root");
+    std::string year = "2018";
     std::vector<double> true_met_bins{150,155,160,165,170,175,180,185,190,195,200,210,220,230,240,250,275,300,350};
     std::vector<double> sys_met_bins{150,160,180,200,225,250,300,350};
     std::vector<double> fake_met_bins{150,155,160,165,170,175,180,185,190,195,200,210,220,230,240,250,275,300,350,400,450,500,550};
@@ -38,10 +41,22 @@ int trig_postprocess_efficiencies() {
     std::vector<double> twomu_pt_bins{40,45,50,60};
     ofstream apply_effs_file;
     apply_effs_file.open("src/higgsino/apply_trigeffs.cpp");
+    apply_effs_file << "#include <vector>\n";
     apply_effs_file << "#include \"core/baby.hpp\"\n";
     apply_effs_file << "#include \"core/process.hpp\"\n";
     apply_effs_file << "#include \"core/named_func.hpp\"\n";
-    apply_effs_file << "#include \"higgsino/apply_trigeffs.hpp\"\n\n";
+    apply_effs_file << "#include \"higgsino/hig_functions.hpp\"\n";
+    apply_effs_file << "#include \"higgsino/apply_trigeffs" << year << ".hpp\"\n\n";
+    //apply_effs_file << "float signal_lepton_pt(std::vector<float>* const lep_pt, std::vector<bool>* const lep_sig) {\n";
+    //apply_effs_file << "  float r_signal_lepton_pt = 0;\n";
+    //apply_effs_file << "  for (unsigned int lep_idx = 0; lep_idx < lep_sig->size(); lep_idx++) {\n";
+    //apply_effs_file << "    if (lep_sig->at(lep_idx)) {\n";
+    //apply_effs_file << "      r_signal_lepton_pt = lep_pt->at(lep_idx);\n";
+    //apply_effs_file << "      break;\n";
+    //apply_effs_file << "    }\n";
+    //apply_effs_file << "  }\n";
+    //apply_effs_file << "  return r_signal_lepton_pt;\n";
+    //apply_effs_file << "}\n\n";
     apply_effs_file << "namespace Higfuncs{\n\n";
     //make graphs
     //true met histograms
@@ -90,7 +105,7 @@ int trig_postprocess_efficiencies() {
 	    truemet_canvas[ht_bin]->SaveAs(("plots/truemet_effhtbin_"+std::to_string(ht_bin)+".png").c_str());
 	}
 	//write out function to file
-        apply_effs_file << "const NamedFunc get_0l_trigeff(\"get_0l_trigeff\", [](const Baby &b) -> NamedFunc::ScalarType{\n";
+        apply_effs_file << "const NamedFunc get_0l_trigeff" << year << "(\"get_0l_trigeff" << year << "\", [](const Baby &b) -> NamedFunc::ScalarType{\n";
         apply_effs_file << "  float errup=0., errdown=0.; // Not used, but for reference\n";
         apply_effs_file << "  float eff = 1., met = b.met(), ht = b.ht();\n";
         apply_effs_file << "  errup+=errdown; //suppress unused warning\n";
@@ -141,10 +156,20 @@ int trig_postprocess_efficiencies() {
 		errdown_values.push_back(eff_errs[2]);
 	    }
 	    //get new efficiencies from histograms
-            //TH2D* numerator_hist = static_cast<TH2D*>((f_qcd->Get("hist_MET_pt_ht_data_all;1"))->Clone());
-            //TH2D* denominator_hist = static_cast<TH2D*>((f_qcd->Get("hist_MET_pt_ht_data_all;2"))->Clone());
-            TH2D* numerator_hist = static_cast<TH2D*>((f->Get("hist_fakemetht_numerator"))->Clone());
-            TH2D* denominator_hist = static_cast<TH2D*>((f->Get("hist_fakemetht_denominator"))->Clone());
+	    std::string qcdhist_name = "hist_MET_pt_ht_data_all";
+	    if (year == "2017") {
+	      qcdhist_name = "hist_MET_pt_ht_runcdef_all";
+	    }
+            TH2D* numerator_hist = static_cast<TH2D*>((f_qcd->Get((qcdhist_name+";1").c_str()))->Clone());
+            TH2D* denominator_hist = static_cast<TH2D*>((f_qcd->Get((qcdhist_name+";2").c_str()))->Clone());
+	    if (year == "2017") {
+              TH2D* run_b_numerator_hist = static_cast<TH2D*>((f_qcd->Get("hist_MET_pt_ht_runb_all;1"))->Clone());
+              TH2D* run_b_denominator_hist = static_cast<TH2D*>((f_qcd->Get("hist_MET_pt_ht_runb_all;2"))->Clone());
+	      numerator_hist->Add(run_b_numerator_hist);
+	      denominator_hist->Add(run_b_denominator_hist);
+	    }
+            //TH2D* numerator_hist = static_cast<TH2D*>((f->Get("hist_fakemetht_numerator"))->Clone());
+            //TH2D* denominator_hist = static_cast<TH2D*>((f->Get("hist_fakemetht_denominator"))->Clone());
 	    TH1D* numerator_1d_hist = numerator_hist->ProjectionX("numerator_1d_hist",ht_bin+1,ht_bin+1);
 	    TH1D* denominator_1d_hist = denominator_hist->ProjectionX("denominator_1d_hist",ht_bin+1,ht_bin+1);
 	    new_eff_plots.push_back(new TGraphAsymmErrors(numerator_1d_hist,denominator_1d_hist));
@@ -161,7 +186,7 @@ int trig_postprocess_efficiencies() {
 	    fakemet_canvas[ht_bin]->SaveAs(("plots/fakemet_effhtbin_"+std::to_string(ht_bin)+".png").c_str());
 	}
 	//write out function to file
-        apply_effs_file << "const NamedFunc get_0l_fakemet_trigeff(\"get_0l_fakemet_trigeff\", [](const Baby &b) -> NamedFunc::ScalarType{\n";
+        apply_effs_file << "const NamedFunc get_0l_fakemet_trigeff" << year << "(\"get_0l_fakemet_trigeff" << year << "\", [](const Baby &b) -> NamedFunc::ScalarType{\n";
         apply_effs_file << "  float errup=0., errdown=0.; // Not used, but for reference\n";
         apply_effs_file << "  float eff = 1., met = b.met(), ht = b.ht();\n";
         apply_effs_file << "  errup+=errdown; //suppress unused warning\n";
@@ -230,9 +255,9 @@ int trig_postprocess_efficiencies() {
 	    elmet_canvas[el_pt_bin]->SaveAs(("plots/elmet_effelptbin_"+std::to_string(el_pt_bin)+".png").c_str());
 	}
 	//write out function to file
-        apply_effs_file << "const NamedFunc get_1el_trigeff(\"get_1el_trigeff\", [](const Baby &b) -> NamedFunc::ScalarType{\n";
+        apply_effs_file << "const NamedFunc get_1el_trigeff" << year << "(\"get_1el_trigeff" << year << "\", [](const Baby &b) -> NamedFunc::ScalarType{\n";
         apply_effs_file << "  float errup=0., errdown=0.; // Not used, but for reference\n";
-        apply_effs_file << "  float eff = 1., met = b.met(), el_pt = b.el_pt()->at(0); //assumes first lepton is signal\n";
+        apply_effs_file << "  float eff = 1., met = b.met(), el_pt = signal_lepton_pt(b.el_pt(),b.el_sig());\n";
         apply_effs_file << "  errup+=errdown; //suppress unused warning\n";
 	bool first = true;
 	for (int met_bin = 0; met_bin < twodim_met_bins.size()-1; met_bin++) {
@@ -298,9 +323,9 @@ int trig_postprocess_efficiencies() {
 	    mumet_canvas[mu_pt_bin]->SaveAs(("plots/mumet_effmuptbin_"+std::to_string(mu_pt_bin)+".png").c_str());
 	}
 	//write out function to file
-        apply_effs_file << "const NamedFunc get_1mu_trigeff(\"get_1mu_trigeff\", [](const Baby &b) -> NamedFunc::ScalarType{\n";
+        apply_effs_file << "const NamedFunc get_1mu_trigeff" << year << "(\"get_1mu_trigeff" << year << "\", [](const Baby &b) -> NamedFunc::ScalarType{\n";
         apply_effs_file << "  float errup=0., errdown=0.; // Not used, but for reference\n";
-        apply_effs_file << "  float eff = 1., met = b.met(), mu_pt = b.mu_pt()->at(0); //assumes first lepton is signal\n";
+        apply_effs_file << "  float eff = 1., met = b.met(), mu_pt = signal_lepton_pt(b.mu_pt(),b.mu_sig());\n";
         apply_effs_file << "  errup+=errdown; //suppress unused warning\n";
 	bool first = true;
 	for (int met_bin = 0; met_bin < twodim_met_bins.size()-1; met_bin++) {
@@ -385,9 +410,9 @@ int trig_postprocess_efficiencies() {
         mumu_canvas->SaveAs("plots/mumu_eff.png");
 	//write out functions to file
 	//el function
-        apply_effs_file << "const NamedFunc get_2el_trigeff(\"get_2el_trigeff\", [](const Baby &b) -> NamedFunc::ScalarType{\n";
+        apply_effs_file << "const NamedFunc get_2el_trigeff" << year << "(\"get_2el_trigeff" << year << "\", [](const Baby &b) -> NamedFunc::ScalarType{\n";
         apply_effs_file << "  float errup=0., errdown=0.; // Not used, but for reference\n";
-        apply_effs_file << "  float eff = 1., el_pt = b.el_pt()->at(0); //assumes first lepton is signal\n";
+        apply_effs_file << "  float eff = 1., el_pt = signal_lepton_pt(b.el_pt(),b.el_sig());\n";
         apply_effs_file << "  errup+=errdown; //suppress unused warning\n";
 	bool first = true;
         double* eff_pts = new_el_eff->GetY();
@@ -404,9 +429,9 @@ int trig_postprocess_efficiencies() {
 	apply_effs_file << "  return eff;\n";
         apply_effs_file << "});\n\n";
 	//mu function
-        apply_effs_file << "const NamedFunc get_2mu_trigeff(\"get_2mu_trigeff\", [](const Baby &b) -> NamedFunc::ScalarType{\n";
+        apply_effs_file << "const NamedFunc get_2mu_trigeff" << year << "(\"get_2mu_trigeff" << year << "\", [](const Baby &b) -> NamedFunc::ScalarType{\n";
         apply_effs_file << "  float errup=0., errdown=0.; // Not used, but for reference\n";
-        apply_effs_file << "  float eff = 1., mu_pt = b.mu_pt()->at(0); //assumes first lepton is signal\n";
+        apply_effs_file << "  float eff = 1., mu_pt = signal_lepton_pt(b.mu_pt(),b.mu_sig());\n";
         apply_effs_file << "  errup+=errdown; //suppress unused warning\n";
 	first = true;
         eff_pts = new_mu_eff->GetY();

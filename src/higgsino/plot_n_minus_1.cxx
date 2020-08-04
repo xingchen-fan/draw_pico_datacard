@@ -213,7 +213,7 @@ int main(int argc, char *argv[]){
   torch::OrderedDict<string, NamedFunc> ttbar_resolved_cuts;
   ttbar_resolved_cuts.insert("nlep", "nlep==1");
   //ttbar_resolved_cuts.insert("lep_pt", "lep_pt[0]>30");
-  ttbar_resolved_cuts.insert("lep_pt", Higfuncs::signal_lepton_pt>30);
+  ttbar_resolved_cuts.insert("lep_pt", Higfuncs::lead_signal_lepton_pt>30);
   ttbar_resolved_cuts.insert("mt", "mt<=100");
   ttbar_resolved_cuts.insert("njet", "njet>=4&&njet<=5");
   ttbar_resolved_cuts.insert("hig_cand_drmax", "hig_cand_drmax[0]<2.2");
@@ -306,7 +306,7 @@ int main(int argc, char *argv[]){
   axis_dict.insert("hig_cand_dm",Axis(10,0,100,"hig_cand_dm[0]", "#Deltam [GeV]", {40.}));
   axis_dict.insert("btags",Axis(3, 1.5, 4.5, Higfuncs::hig_bcat, "N_{b}", {2.5}));
   //axis_dict.insert("lep_pt",Axis(10, 0, 300., "lep_pt[0]", "p_{l} [GeV]", {30}));
-  axis_dict.insert("lep_pt",Axis(10, 0, 300., Higfuncs::signal_lepton_pt, "p_{l} [GeV]", {30}));
+  axis_dict.insert("lep_pt",Axis(10, 0, 300., Higfuncs::lead_signal_lepton_pt, "p_{l} [GeV]", {30}));
   axis_dict.insert("mt",Axis(10, 0, 200., "mt", "m_{T} [GeV]", {100}));
   axis_dict.insert("dbtags",Axis(5, -0.5, 4.5, "nbm", "N_{b medium}", {}));
   axis_dict.insert("ll_pt",Axis(16, 0, 400., "ll_pt[0]", "p_{ll} [GeV]", {75., 150., 200., 300}));
