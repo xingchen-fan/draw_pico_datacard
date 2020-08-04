@@ -4,6 +4,8 @@
 #include "higgsino/apply_trigeffs2018.hpp"
 
 #include "TVector2.h"
+#include "TMath.h"
+#include "Math/Vector4D.h"
 
 #include "core/utilities.hpp"
 #include "core/config_parser.hpp"
@@ -819,6 +821,169 @@ const NamedFunc nb_gs("nb_gs",[](const Baby &b) -> NamedFunc::ScalarType{
       nb++;
   }
   return nb;
+});
+
+
+// Reconstruct higgs
+Double_t DeltaR(const ROOT::Math::PtEtaPhiMVector & v1, const ROOT::Math::PtEtaPhiMVector & v2)
+{
+   Double_t deta = v1.Eta()-v2.Eta();
+   Double_t dphi = TVector2::Phi_mpi_pi(v1.Phi()-v2.Phi());
+   return TMath::Sqrt( deta*deta+dphi*dphi );
+}
+
+bool greater_btag(pair<float, unsigned> bjet_1, pair<float, unsigned> bjet_2) {
+  return bjet_1.first > bjet_2.first;
+}
+
+bool smaller_dm(tuple<double, double, vector<unsigned> > higgs_1, tuple<double, double, vector<unsigned> > higgs_2) {
+  return get<0>(higgs_1) < get<0>(higgs_2);
+}
+
+vector<unsigned> get_higgs_bbjet_indices(vector<float> const & jet_m, vector<float> const & jet_deepcsv, vector<float> const & jet_pt, vector<float> const & jet_eta, vector<float> const & jet_phi, vector<bool> const & jet_islep) {
+  //cout<<"event start"<<endl;
+  // Reconstruct resolved
+  // Sort by btag
+  vector<pair<float, unsigned> > bjet;
+  for (unsigned ijet = 0; ijet < jet_m.size(); ijet++) {
+    // Filter jets
+    if (jet_pt[ijet]<=30) continue;
+    if (fabs(jet_eta[ijet])>2.4) continue;
+    if (jet_islep[ijet]) continue;
+    //cout<<"ijet ["<<ijet<<"] btag: "<<jet_deepcsv[ijet]<<" pt:"<<jet_pt[ijet]<<endl;
+    bjet.push_back({jet_deepcsv[ijet],ijet});
+  }
+  sort(bjet.begin(), bjet.end(), greater_btag);
+  //for (unsigned ibjet = 0; ibjet < bjet.size(); ibjet++) {
+  //  cout<<"ibjet ["<<ibjet<<"] btag: "<<bjet[ibjet].first<<" jet index: "<<bjet[ibjet].second<<endl;
+  //}
+  // Make three higgs candidates
+  vector<vector<unsigned> > higgs_bjet_indices = {{0,1,2,3}, {0,2,1,3}, {0,3,1,2}};
+  // higgs_info = [higgs_dm, higgs_am, higgs_jet_indices]
+  vector<tuple<double, double, vector<unsigned> > > higgs_info;
+  for (unsigned ihiggs = 0; ihiggs < higgs_bjet_indices.size(); ihiggs++) {
+    //cout<<"ihiggs ["<<ihiggs<<"] bjet index: "<<higgs_bjet_indices[ihiggs][0]<<" "<<higgs_bjet_indices[ihiggs][1]<<" "<<higgs_bjet_indices[ihiggs][2]<<" "<<higgs_bjet_indices[ihiggs][3]<<endl;
+    //cout<<"ihiggs ["<<ihiggs<<"] jet index: "<<bjet[higgs_bjet_indices[ihiggs][0]].second<<" "<<bjet[higgs_bjet_indices[ihiggs][1]].second<<" "<<bjet[higgs_bjet_indices[ihiggs][2]].second<<" "<<bjet[higgs_bjet_indices[ihiggs][3]].second<<endl;
+    ROOT::Math::PtEtaPhiMVector higgs1_b1 (jet_pt[bjet[higgs_bjet_indices[ihiggs][0]].second], jet_eta[bjet[higgs_bjet_indices[ihiggs][0]].second], jet_phi[bjet[higgs_bjet_indices[ihiggs][0]].second], jet_m[bjet[higgs_bjet_indices[ihiggs][0]].second]);
+    ROOT::Math::PtEtaPhiMVector higgs1_b2 (jet_pt[bjet[higgs_bjet_indices[ihiggs][1]].second], jet_eta[bjet[higgs_bjet_indices[ihiggs][1]].second], jet_phi[bjet[higgs_bjet_indices[ihiggs][1]].second], jet_m[bjet[higgs_bjet_indices[ihiggs][1]].second]);
+    ROOT::Math::PtEtaPhiMVector higgs2_b1 (jet_pt[bjet[higgs_bjet_indices[ihiggs][2]].second], jet_eta[bjet[higgs_bjet_indices[ihiggs][2]].second], jet_phi[bjet[higgs_bjet_indices[ihiggs][2]].second], jet_m[bjet[higgs_bjet_indices[ihiggs][2]].second]);
+    ROOT::Math::PtEtaPhiMVector higgs2_b2 (jet_pt[bjet[higgs_bjet_indices[ihiggs][3]].second], jet_eta[bjet[higgs_bjet_indices[ihiggs][3]].second], jet_phi[bjet[higgs_bjet_indices[ihiggs][3]].second], jet_m[bjet[higgs_bjet_indices[ihiggs][3]].second]);
+    //cout<<"ihiggs ["<<ihiggs<<"] higg1_b1 e: "<<higgs1_b1.E()<<" pt: "<<higgs1_b1.Pt()<<endl;
+    //cout<<"ihiggs ["<<ihiggs<<"] higg1_b2 e: "<<higgs1_b2.E()<<" pt: "<<higgs1_b2.Pt()<<endl;
+    //cout<<"ihiggs ["<<ihiggs<<"] higg2_b1 e: "<<higgs2_b1.E()<<" pt: "<<higgs2_b1.Pt()<<endl;
+    //cout<<"ihiggs ["<<ihiggs<<"] higg2_b2 e: "<<higgs2_b2.E()<<" pt: "<<higgs2_b2.Pt()<<endl;
+
+    ROOT::Math::PtEtaPhiMVector higgs1 = higgs1_b1 + higgs1_b2;
+    ROOT::Math::PtEtaPhiMVector higgs2 = higgs2_b1 + higgs2_b2;
+    //cout<<"ihiggs ["<<ihiggs<<"] higg1: "<<higgs1.E()<<endl;
+    //cout<<"ihiggs ["<<ihiggs<<"] higg2: "<<higgs2.E()<<endl;
+    //cout<<"ihiggs ["<<ihiggs<<"] am: "<<(higgs1.M() + higgs2.M())/2<<" dm: "<<fabs(higgs1.M()-higgs2.M())<<endl;
+
+    vector<unsigned> higgs_indices;
+    // Sort by higgs pt
+    if (higgs1.Pt()>higgs2.Pt()) {
+      higgs_indices = {bjet[higgs_bjet_indices[ihiggs][0]].second, bjet[higgs_bjet_indices[ihiggs][1]].second, bjet[higgs_bjet_indices[ihiggs][2]].second, bjet[higgs_bjet_indices[ihiggs][3]].second};
+    } else {
+      higgs_indices = {bjet[higgs_bjet_indices[ihiggs][2]].second, bjet[higgs_bjet_indices[ihiggs][3]].second, bjet[higgs_bjet_indices[ihiggs][0]].second, bjet[higgs_bjet_indices[ihiggs][1]].second};
+    }
+    //// Sort by dr
+    //if (DeltaR(higgs1_b1, higgs1_b2) < DeltaR(higgs2_b1, higgs2_b2)) {
+    //  higgs_indices = {bjet[higgs_bjet_indices[ihiggs][0]].second, bjet[higgs_bjet_indices[ihiggs][1]].second, bjet[higgs_bjet_indices[ihiggs][2]].second, bjet[higgs_bjet_indices[ihiggs][3]].second};
+    //} else {
+    //  higgs_indices = {bjet[higgs_bjet_indices[ihiggs][2]].second, bjet[higgs_bjet_indices[ihiggs][3]].second, bjet[higgs_bjet_indices[ihiggs][0]].second, bjet[higgs_bjet_indices[ihiggs][1]].second};
+    //}
+
+    higgs_info.push_back({fabs(higgs1.M()-higgs2.M()), (higgs1.M() + higgs2.M())/2, higgs_indices});
+  }
+  // Sort by dm
+  sort(higgs_info.begin(), higgs_info.end(), smaller_dm);
+  //cout<<"higgs [0] am: "<<get<1>(higgs_info[0])<<" dm: "<<get<0>(higgs_info[0])<<endl;
+  //cout<<"higgs [1] am: "<<get<1>(higgs_info[1])<<" dm: "<<get<0>(higgs_info[1])<<endl;
+  //cout<<"higgs [2] am: "<<get<1>(higgs_info[2])<<" dm: "<<get<0>(higgs_info[2])<<endl;
+  //cout<<"event end"<<endl;
+
+  return get<2>(higgs_info[0]);
+}
+
+const NamedFunc h1b1_pt("h1b1_pt",[](const Baby &b) -> NamedFunc::ScalarType{
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  return (*b.jet_pt())[bbjet_indices.at(0)];
+});
+
+const NamedFunc h1b2_pt("h1b2_pt",[](const Baby &b) -> NamedFunc::ScalarType{
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  return (*b.jet_pt())[bbjet_indices.at(1)];
+});
+
+const NamedFunc h2b1_pt("h2b1_pt",[](const Baby &b) -> NamedFunc::ScalarType{
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  return (*b.jet_pt())[bbjet_indices.at(2)];
+});
+
+const NamedFunc h2b2_pt("h2b2_pt",[](const Baby &b) -> NamedFunc::ScalarType{
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  return (*b.jet_pt())[bbjet_indices.at(3)];
+});
+
+const NamedFunc h1_dr("h1_dr",[](const Baby &b) -> NamedFunc::ScalarType{
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  ROOT::Math::PtEtaPhiMVector h1b1 ((*b.jet_pt())[bbjet_indices.at(0)], (*b.jet_eta())[bbjet_indices.at(0)], (*b.jet_phi())[bbjet_indices.at(0)], (*b.jet_m())[bbjet_indices.at(0)]);
+  ROOT::Math::PtEtaPhiMVector h1b2 ((*b.jet_pt())[bbjet_indices.at(1)], (*b.jet_eta())[bbjet_indices.at(1)], (*b.jet_phi())[bbjet_indices.at(1)], (*b.jet_m())[bbjet_indices.at(1)]);
+  return DeltaR(h1b1, h1b2);
+});
+
+const NamedFunc h2_dr("h2_dr",[](const Baby &b) -> NamedFunc::ScalarType{
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  ROOT::Math::PtEtaPhiMVector h2b1 ((*b.jet_pt())[bbjet_indices.at(2)], (*b.jet_eta())[bbjet_indices.at(2)], (*b.jet_phi())[bbjet_indices.at(2)], (*b.jet_m())[bbjet_indices.at(2)]);
+  ROOT::Math::PtEtaPhiMVector h2b2 ((*b.jet_pt())[bbjet_indices.at(3)], (*b.jet_eta())[bbjet_indices.at(3)], (*b.jet_phi())[bbjet_indices.at(3)], (*b.jet_m())[bbjet_indices.at(3)]);
+  return DeltaR(h2b1, h2b2);
+});
+
+const NamedFunc h1_mass("h1_mass",[](const Baby &b) -> NamedFunc::ScalarType{
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  ROOT::Math::PtEtaPhiMVector h1b1 ((*b.jet_pt())[bbjet_indices.at(0)], (*b.jet_eta())[bbjet_indices.at(0)], (*b.jet_phi())[bbjet_indices.at(0)], (*b.jet_m())[bbjet_indices.at(0)]);
+  ROOT::Math::PtEtaPhiMVector h1b2 ((*b.jet_pt())[bbjet_indices.at(1)], (*b.jet_eta())[bbjet_indices.at(1)], (*b.jet_phi())[bbjet_indices.at(1)], (*b.jet_m())[bbjet_indices.at(1)]);
+  ROOT::Math::PtEtaPhiMVector higgs1 = h1b1 + h1b2;
+  return higgs1.M();
+});
+
+const NamedFunc h2_mass("h2_mass",[](const Baby &b) -> NamedFunc::ScalarType{
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  ROOT::Math::PtEtaPhiMVector h2b1 ((*b.jet_pt())[bbjet_indices.at(2)], (*b.jet_eta())[bbjet_indices.at(2)], (*b.jet_phi())[bbjet_indices.at(2)], (*b.jet_m())[bbjet_indices.at(2)]);
+  ROOT::Math::PtEtaPhiMVector h2b2 ((*b.jet_pt())[bbjet_indices.at(3)], (*b.jet_eta())[bbjet_indices.at(3)], (*b.jet_phi())[bbjet_indices.at(3)], (*b.jet_m())[bbjet_indices.at(3)]);
+  ROOT::Math::PtEtaPhiMVector higgs2 = h2b1 + h2b2;
+  return higgs2.M();
+});
+
+const NamedFunc lead_signal_lepton_pt("lead_signal_lepton_pt",[](const Baby &b) -> NamedFunc::ScalarType{
+  // Search for signal electrons
+  float lead_electron_pt = -1;
+  for (unsigned iEl = 0; iEl < b.el_sig()->size(); ++iEl) {
+    if (b.el_sig()->at(iEl)) {
+      lead_electron_pt = b.el_pt()->at(iEl); 
+      break;
+    }
+  }
+  // Search for signal muons
+  float lead_muon_pt = -1;
+  for (unsigned iMu = 0; iMu < b.mu_sig()->size(); ++iMu) {
+    if (b.mu_sig()->at(iMu)) {
+      lead_muon_pt = b.mu_pt()->at(iMu); 
+      break;
+    }
+  }
+  // Warnings
+  if (lead_electron_pt==-1 && lead_muon_pt==-1) {
+    cout<<"[Warning] Higfuncs::lead_signal_lepton_pt => There is no signal leptons. Returning -1. nlep: "<<b.nlep()<<" nel: "<<b.nel()<<" nmu: "<<b.nmu()<<" nvmu: "<<b.nvmu()<<endl;
+    return -1;
+  } else if (lead_electron_pt != -1 && lead_muon_pt != -1) {
+    cout<<"[Warning] Higfuncs::lead_signal_lepton_pt => There is both a signal electron and signal muon. Returning -2."<<endl;
+    return -2;
+  } else if (lead_electron_pt != -1 && lead_muon_pt == -1) { // Electron case
+    return lead_electron_pt;
+  } else { // Muon case
+    return lead_muon_pt;
+  }
 });
 
 }

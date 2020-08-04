@@ -38,6 +38,7 @@ namespace{
   bool unblind = false;
   // sample can be search, ttbar, zll, qcd
   string sample_name = "search";
+  // year can be 2016, 2017, 2018 or 2016,2017,2018 or run2
   string year_string = "2016";
 }
 
@@ -91,8 +92,8 @@ int main(int argc, char *argv[]){
   if (unblind) plt_log = {log_norm_data};
 
   // Set options
-  //string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/";
-  string mc_base_folder = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado";
+  string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/";
+  //string mc_base_folder = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado";
   // preselect:
   //   ((nbt>=2 && njet>=4 && njet<=5)||(Sum$(fjet_pt>300 && fjet_msoftdrop>50)>1))
   //   nvlep==0 && ntk==0 && !low_dphi_met && met>150 && 
@@ -123,7 +124,8 @@ int main(int argc, char *argv[]){
   string zll_data_skim_folder = "data/merged_higmc_higlep2T/";
   string qcd_data_skim_folder = "data/merged_higmc_higqcd/";
 
-  string sig_base_folder = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado/";
+  //string sig_base_folder = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado/";
+  string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/";
   string sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_preselect/";
 
   set<int> years;
@@ -137,10 +139,11 @@ int main(int argc, char *argv[]){
   }
   string total_luminosity_string = RoundNumber(total_luminosity, 1, 1).Data();
 
-  //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*w_years;
+  NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*w_years;
   //if (years.size()==1 && *years.begin()==2016) weight *= "137.";
   //else weight *= w_years;
-  NamedFunc weight = "weight"*Higfuncs::eff_higtrig*w_years;
+  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig*w_years;
+  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years;
 
   // Set MC 
   map<string, set<string>> mctags; 
@@ -209,7 +212,8 @@ int main(int argc, char *argv[]){
   search_resolved_cuts.insert("btags", "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))");
   torch::OrderedDict<string, NamedFunc> ttbar_resolved_cuts;
   ttbar_resolved_cuts.insert("nlep", "nlep==1");
-  ttbar_resolved_cuts.insert("lep_pt", "lep_pt[0]>30");
+  //ttbar_resolved_cuts.insert("lep_pt", "lep_pt[0]>30");
+  ttbar_resolved_cuts.insert("lep_pt", Higfuncs::lead_signal_lepton_pt>30);
   ttbar_resolved_cuts.insert("mt", "mt<=100");
   ttbar_resolved_cuts.insert("njet", "njet>=4&&njet<=5");
   ttbar_resolved_cuts.insert("hig_cand_drmax", "hig_cand_drmax[0]<2.2");
@@ -255,21 +259,23 @@ int main(int argc, char *argv[]){
   procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGray+2,
                   attach_folder(mc_base_folder, years, mc_skim_folder, mctags["other"]),"stitch"));
 
-  ////vector<string> sigm = {"175", "400", "650"};
+  vector<string> sigm = {"175", "500", "950"};
   //vector<string> sigm = {"400"};
-  //for (unsigned isig(0); isig<sigm.size(); isig++){
-  //  procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigm[isig]+",1)", Process::Type::background, 
-  //    kRed, attach_folder(sig_base_folder, years, sig_skim_folder, {"*TChiHH_mChi-"+sigm[isig]+"_mLSP-0*.root"}), 
-  //    "stitch"));
-  //}
+  //vector<int> sig_colors = {kGreen+1, kRed, kBlue, kOrange}; // need sigm.size() >= sig_colors.size()
+  vector<int> sig_colors = {kSpring, kPink, kAzure, kOrange}; // need sigm.size() >= sig_colors.size()
+  for (unsigned isig(0); isig<sigm.size(); isig++){
+    procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigm[isig]+",1)", Process::Type::signal, 
+      sig_colors[isig], attach_folder(sig_base_folder, years, sig_skim_folder, {"*TChiHH_mChi-"+sigm[isig]+"_mLSP-0*.root"}), 
+      "stitch"));
+  }
 
   if (unblind) {
     procs.push_back(Process::MakeShared<Baby_pico>("Data", Process::Type::data, kBlack,
                     attach_folder(data_base_folder, years, data_skim_folder, {"*.root"}),"stitch"));
   }
 
-  //NamedFunc base_filters = HigUtilities::pass_2016 && "met/mht<2 && met/met_calo<2"; //since pass_fsjets is not quite usable...
-  NamedFunc base_filters = Functions::hem_veto && "pass && met/mht<2 && met/met_calo<2";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
+  NamedFunc base_filters = HigUtilities::pass_2016 && "met/mht<2 && met/met_calo<2" && "nlep==1"; //since pass_fsjets is not quite usable...
+  //NamedFunc base_filters = Functions::hem_veto && "pass && met/mht<2 && met/met_calo<2";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
 
   PlotMaker pm;
 
@@ -279,14 +285,28 @@ int main(int argc, char *argv[]){
   axis_dict.insert("nvlep",Axis(6, -0.5, 5.5, "nvlep", "N_{veto leps}", {0.5}));
   axis_dict.insert("nlep",Axis(5, 0.5, 5.5, "nlep", "N_{leps}", {}));
   axis_dict.insert("met",Axis(14, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}));
-  axis_dict.insert("ht",Axis(40, 0, 2000., "ht", "HT [GeV]", {}));
+  axis_dict.insert("ht",Axis(20, 0, 1000., "ht", "HT [GeV]", {}));
+  axis_dict.insert("h1b1_pt",Axis(16, 0, 480., h1b1_pt, "p_{T} lead higgs high-tag b jet [GeV]", {}));
+  axis_dict.insert("h1b2_pt",Axis(16, 0, 480., h1b2_pt, "p_{T} lead higgs low-tag b jet [GeV]", {}));
+  axis_dict.insert("h2b1_pt",Axis(16, 0, 480., h2b1_pt, "p_{T} sublead higgs high-tag b jet [GeV]", {}));
+  axis_dict.insert("h2b2_pt",Axis(16, 0, 480., h2b2_pt, "p_{T} sublead higgs low-tag b jet [GeV]", {}));
+  axis_dict.insert("h1_dr",Axis(20,0,4,h1_dr, "Lead higgs #DeltaR", {1.1, 2.2}));
+  axis_dict.insert("h2_dr",Axis(20,0,4,h2_dr, "Sublead higgs #DeltaR", {1.1, 2.2}));
+  axis_dict.insert("h1_mass",Axis(10, 0, 200, h1_mass, "Lead m_{bb} [GeV]", {100, 140}));
+  axis_dict.insert("h2_mass",Axis(10, 0, 200, h2_mass, "Sublead m_{bb} [GeV]", {100, 140}));
+  axis_dict.insert("jet_pt[0]",Axis(16, 0, 480., "jet_pt[0]", "p_{T} jet [0] [GeV]", {}));
+  axis_dict.insert("jet_pt[1]",Axis(16, 0, 480., "jet_pt[1]", "p_{T} jet [1] [GeV]", {}));
+  axis_dict.insert("jet_pt[2]",Axis(16, 0, 480., "jet_pt[2]", "p_{T} jet [2] [GeV]", {}));
+  axis_dict.insert("jet_pt[3]",Axis(16, 0, 480., "jet_pt[3]", "p_{T} jet [3] [GeV]", {}));
+  axis_dict.insert("jet_pt[4]",Axis(16, 0, 480., "jet_pt[4]", "p_{T} jet [4] [GeV]", {}));
   axis_dict.insert("met_zll",Axis(20, 0, 150., "met", "p_{T}^{miss} [GeV]", {30}));
   axis_dict.insert("njet",Axis(12, -0.5, 11.5, "njet", "N_{jets}", {3.5, 5.5}));
   axis_dict.insert("hig_cand_drmax",Axis(20,0,4,"hig_cand_drmax[0]", "#DeltaR_{max}", {1.1, 2.2}));
   axis_dict.insert("hig_cand_am",Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}));
   axis_dict.insert("hig_cand_dm",Axis(10,0,100,"hig_cand_dm[0]", "#Deltam [GeV]", {40.}));
   axis_dict.insert("btags",Axis(3, 1.5, 4.5, Higfuncs::hig_bcat, "N_{b}", {2.5}));
-  axis_dict.insert("lep_pt",Axis(10, 0, 300., "lep_pt[0]", "p_{l} [GeV]", {30}));
+  //axis_dict.insert("lep_pt",Axis(10, 0, 300., "lep_pt[0]", "p_{l} [GeV]", {30}));
+  axis_dict.insert("lep_pt",Axis(10, 0, 300., Higfuncs::lead_signal_lepton_pt, "p_{l} [GeV]", {30}));
   axis_dict.insert("mt",Axis(10, 0, 200., "mt", "m_{T} [GeV]", {100}));
   axis_dict.insert("dbtags",Axis(5, -0.5, 4.5, "nbm", "N_{b medium}", {}));
   axis_dict.insert("ll_pt",Axis(16, 0, 400., "ll_pt[0]", "p_{ll} [GeV]", {75., 150., 200., 300}));
@@ -303,10 +323,25 @@ int main(int argc, char *argv[]){
 
   // Variables to draw
   set<string> target_variables;
+  // Add all cut variables
   for (auto const & target_var : map_resolved_cuts) {
     target_variables.insert(target_var.key());
   }
+  // Add additional variables
   target_variables.insert("ht");
+  target_variables.insert("jet_pt[0]");
+  target_variables.insert("jet_pt[1]");
+  target_variables.insert("jet_pt[2]");
+  target_variables.insert("jet_pt[3]");
+  target_variables.insert("jet_pt[4]");
+  target_variables.insert("h1b1_pt");
+  target_variables.insert("h1b2_pt");
+  target_variables.insert("h2b1_pt");
+  target_variables.insert("h2b2_pt");
+  target_variables.insert("h1_dr");
+  target_variables.insert("h2_dr");
+  target_variables.insert("h1_mass");
+  target_variables.insert("h2_mass");
   if (sample_name=="zll") target_variables.insert("ll_pt");
   if (sample_name=="ttbar") target_variables.insert("met");
 
@@ -336,6 +371,10 @@ int main(int argc, char *argv[]){
       pm.Push<Hist1D>(axis_dict[target_var+"_zll"],
         base_filters&&n_minus_1_cut,
         procs, plt_lin).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_"+target_var+"_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+    } else if (target_var == "jet_pt[4]") {
+      pm.Push<Hist1D>(axis_dict[target_var],
+        base_filters&&n_minus_1_cut&&"njet>=5",
+        procs, plt_lin).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_"+target_var+"_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
     }
     // For log plots
     else if (std::find(log_plots.begin(), log_plots.end(), target_var) != log_plots.end()) {
@@ -356,7 +395,7 @@ int main(int argc, char *argv[]){
   }
   // Draw 2D ht vs met
   pm.Push<Hist2D>(axis_dict["ht"], axis_dict["met"],
-    base_filters&&resolved_cuts, procs, plt_2D).Weight(weight);
+    base_filters&&resolved_cuts, procs, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ht_vs_met_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
 
   //// Special case for zll. Draw but do not cut on ll_pt
   //if (sample_name=="zll") {

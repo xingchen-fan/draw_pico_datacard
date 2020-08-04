@@ -57,6 +57,16 @@ namespace Higfuncs{
   extern const NamedFunc nb_exci;
   extern const NamedFunc nb_gs;
 
-    }
+  extern const NamedFunc h1b1_pt;
+  extern const NamedFunc h1b2_pt;
+  extern const NamedFunc h2b1_pt;
+  extern const NamedFunc h2b2_pt;
+  extern const NamedFunc h1_dr;
+  extern const NamedFunc h2_dr;
+  extern const NamedFunc h1_mass;
+  extern const NamedFunc h2_mass;
+
+  extern const NamedFunc lead_signal_lepton_pt;
+}
 
 #endif
