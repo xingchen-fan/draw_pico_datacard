@@ -34,7 +34,7 @@ void GetOptions(int argc, char *argv[]);
 
 namespace{
   // sample can be search, ttbar, zll, qcd
-  string sample = "search";
+  string sample_name = "search";
   // year can be 2016, 2017, 2018 or 2016,2017,2018
   string year_string = "2016";
 }
@@ -75,7 +75,7 @@ string getLuminosityString(string const & year_string) {
 // sample: search/ttbar/zll/qcd
 // year_string: 2016/2017/2018/run2
 void addProcess(string const & processName, Process::Type type, int color, NamedFunc const & additionalCut, 
-  string const & nanoAodFolder, string const & production, string const & dataType, string const & fileTag, string const & sample, string const & year_string, 
+  string const & nanoAodFolder, string const & production, string const & dataType, string const & fileTag, string const & sample_name, string const & year_string, 
   vector<shared_ptr<Process> > & procs) {
   set<int> years;
   //years_a = {2016};
@@ -160,54 +160,54 @@ void addProcess(string const & processName, Process::Type type, int color, Named
   //folderDict.insert("signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higloose/");
   folderDict.insert("signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_preselect/");
 
-  if (sample == "ttbar") folderDict.insert("mc_skim_folder", folderDict["ttbar_mc_skim_folder"]);
-  else if (sample == "zll") folderDict.insert("mc_skim_folder", folderDict["zll_mc_skim_folder"]);
-  else if (sample == "qcd") folderDict.insert("mc_skim_folder", folderDict["qcd_mc_skim_folder"]);
+  if (sample_name == "ttbar") folderDict.insert("mc_skim_folder", folderDict["ttbar_mc_skim_folder"]);
+  else if (sample_name == "zll") folderDict.insert("mc_skim_folder", folderDict["zll_mc_skim_folder"]);
+  else if (sample_name == "qcd") folderDict.insert("mc_skim_folder", folderDict["qcd_mc_skim_folder"]);
   else folderDict.insert("mc_skim_folder", folderDict["search_mc_skim_folder"]);
 
   // Set paths
   set<string> pathNames;
   if (dataType == "signal") pathNames = attach_folder(folderDict["signal_production_folder"], years, folderDict["signal_skim_folder"], fileNames);
-  else pathNames = attach_folder(folderDict[dataType+"_production_folder"], years, folderDict[sample+"_"+dataType+"_skim_folder"], fileNames);
+  else pathNames = attach_folder(folderDict[dataType+"_production_folder"], years, folderDict[sample_name+"_"+dataType+"_skim_folder"], fileNames);
 
   procs.push_back(Process::MakeShared<Baby_pico>(processName, type, color, pathNames,"stitch"&&additionalCut));
 }
 
 void addAllMcProcesses(string const & processName_postfix, NamedFunc const & additionalCut, 
-  string const & nanoAodFolder, string const & production, string const & sample, string const & year_string, 
+  string const & nanoAodFolder, string const & production, string const & sample_name, string const & year_string, 
   vector<shared_ptr<Process> > & procs) {
   Palette colors("txt/colors.txt", "default");
   addProcess("t#bar{t}+X (#tau_{had}>0) "+processName_postfix, Process::Type::background, colors("tt_htau"), "ntrutauh>0"&&additionalCut,
-    nanoAodFolder, production, "mc", "tt", sample, year_string,
+    nanoAodFolder, production, "mc", "tt", sample_name, year_string,
     procs);
   addProcess("t#bar{t}+X (#tau_{had}=0) "+processName_postfix, Process::Type::background, colors("tt_1l"), "ntrutauh==0"&&additionalCut,
-    nanoAodFolder, production, "mc", "tt", sample, year_string,
+    nanoAodFolder, production, "mc", "tt", sample_name, year_string,
     procs);
   addProcess("Z+Jets "+processName_postfix, Process::Type::background, kOrange+1, additionalCut,
-    nanoAodFolder, production, "mc", "zjets", sample, year_string,
+    nanoAodFolder, production, "mc", "zjets", sample_name, year_string,
     procs);
   addProcess("W+Jets "+processName_postfix, Process::Type::background, kGreen+1, additionalCut,
-    nanoAodFolder, production, "mc", "wjets", sample, year_string,
+    nanoAodFolder, production, "mc", "wjets", sample_name, year_string,
     procs);
   addProcess("Single t "+processName_postfix, Process::Type::background, colors("single_t"), additionalCut,
-    nanoAodFolder, production, "mc", "single_t", sample, year_string,
+    nanoAodFolder, production, "mc", "single_t", sample_name, year_string,
     procs);
   addProcess("QCD "+processName_postfix, Process::Type::background, colors("other"), additionalCut,
-    nanoAodFolder, production, "mc", "qcd", sample, year_string,
+    nanoAodFolder, production, "mc", "qcd", sample_name, year_string,
     procs);
   addProcess("Other "+processName_postfix, Process::Type::background, kGray+2, additionalCut,
-    nanoAodFolder, production, "mc", "other", sample, year_string,
+    nanoAodFolder, production, "mc", "other", sample_name, year_string,
     procs);
 }
 
 void addMultipleSignalProcesses(string const & processName_postfix, NamedFunc const & additionalCut, 
-  string const & nanoAodFolder, string const & production, string const & sample, string const & year_string, 
+  string const & nanoAodFolder, string const & production, string const & sample_name, string const & year_string, 
   vector<shared_ptr<Process> > & procs) 
 {
   vector<string> sigm = {"175", "500", "950"};
   for (unsigned isig(0); isig<sigm.size(); isig++){
     addProcess("TChiHH("+sigm[isig]+",0) "+processName_postfix, Process::Type::signal, 1, additionalCut,
-      nanoAodFolder, production, "signal", sigm[isig]+"_0", sample, year_string,
+      nanoAodFolder, production, "signal", sigm[isig]+"_0", sample_name, year_string,
       procs);
   }
 }
@@ -226,7 +226,7 @@ int main(int argc, char *argv[]){
   // year_string: 2016/2017/2018/run2
   //string production_a = "higgsino_eldorado"; string nanoAodFolder_a = "/net/cms29/cms29r0/pico/NanoAODv5";
   string production_a = "higgsino_humboldt"; string nanoAodFolder_a = "/net/cms25/cms25r5/pico/NanoAODv5";
-  string sample_a = sample;
+  string sample_a = sample_name;
   string year_string_a = year_string;
 
   string total_luminosity_string = getLuminosityString(year_string_a);
@@ -391,7 +391,7 @@ void GetOptions(int argc, char *argv[]){
     case 0:
       optname = long_options[option_index].name;
       if(optname == "sample"){
-        sample = optarg;
+        sample_name = optarg;
       } else if (optname == "year") {
         year_string = optarg;
       } else {

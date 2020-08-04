@@ -584,4 +584,16 @@ namespace HigUtilities {
 
     return in_cuts;
   }
+
+  float signal_lepton_pt(std::vector<float>* const lep_pt, std::vector<bool>* const lep_sig) {
+    float r_signal_lepton_pt = 0;
+    for (unsigned int lep_idx = 0; lep_idx < lep_sig->size(); lep_idx++) {
+      if (lep_sig->at(lep_idx)) {
+        r_signal_lepton_pt = lep_pt->at(lep_idx);
+        break;
+      }
+    }
+    return r_signal_lepton_pt;
+  }
+
 }

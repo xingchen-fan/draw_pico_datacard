@@ -78,5 +78,7 @@ namespace HigUtilities {
   void fillAverageGenMetYields(std::vector<std::shared_ptr<Process> > & sampleProcesses, std::vector<std::pair<std::string, std::string> > sampleBins, std::string const & signalTag, std::string const & signalGenMetTag, std::string const & signalAverageGenMetTag, std::map<std::string, std::pair<GammaParams, TableRow> > & mYields, bool verbose=false);
 
   std::string to_pico_names(std::string in_cuts);
+
+  float signal_lepton_pt(std::vector<float>* const lep_pt, std::vector<bool>* const lep_sig);
 }
 #endif

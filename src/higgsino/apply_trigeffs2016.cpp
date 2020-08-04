@@ -2,7 +2,7 @@
 #include "core/baby.hpp"
 #include "core/process.hpp"
 #include "core/named_func.hpp"
-#include "higgsino/hig_functions.hpp"
+#include "higgsino/hig_utilities.hpp"
 #include "higgsino/apply_trigeffs2016.hpp"
 
 namespace Higfuncs{
@@ -223,7 +223,7 @@ const NamedFunc get_0l_fakemet_trigeff2016("get_0l_fakemet_trigeff2016", [](cons
 
 const NamedFunc get_1el_trigeff2016("get_1el_trigeff2016", [](const Baby &b) -> NamedFunc::ScalarType{
   float errup=0., errdown=0.; // Not used, but for reference
-  float eff = 1., met = b.met(), el_pt = signal_lepton_pt(b.el_pt(),b.el_sig());
+  float eff = 1., met = b.met(), el_pt = HigUtilities::signal_lepton_pt(b.el_pt(),b.el_sig());
   errup+=errdown; //suppress unused warning
   if (el_pt> 20 && el_pt<= 25 && met> 150 && met<= 110) {eff = 0.0582445; errup = 0.00513861; errdown = 0.00476062;}
   else if (el_pt> 25 && el_pt<= 30 && met> 150 && met<= 110) {eff = 0.157254; errup = 0.00903781; errdown = 0.00864611;}
@@ -290,7 +290,7 @@ const NamedFunc get_1el_trigeff2016("get_1el_trigeff2016", [](const Baby &b) -> 
 
 const NamedFunc get_1mu_trigeff2016("get_1mu_trigeff2016", [](const Baby &b) -> NamedFunc::ScalarType{
   float errup=0., errdown=0.; // Not used, but for reference
-  float eff = 1., met = b.met(), mu_pt = signal_lepton_pt(b.mu_pt(),b.mu_sig());
+  float eff = 1., met = b.met(), mu_pt = HigUtilities::signal_lepton_pt(b.mu_pt(),b.mu_sig());
   errup+=errdown; //suppress unused warning
   if (mu_pt> 20 && mu_pt<= 25 && met> 150 && met<= 110) {eff = 0.115848; errup = 0.00702761; errdown = 0.00668609;}
   else if (mu_pt> 25 && mu_pt<= 30 && met> 150 && met<= 110) {eff = 0.50953; errup = 0.0129078; errdown = 0.0129202;}
@@ -345,7 +345,7 @@ const NamedFunc get_1mu_trigeff2016("get_1mu_trigeff2016", [](const Baby &b) -> 
 
 const NamedFunc get_2el_trigeff2016("get_2el_trigeff2016", [](const Baby &b) -> NamedFunc::ScalarType{
   float errup=0., errdown=0.; // Not used, but for reference
-  float eff = 1., el_pt = signal_lepton_pt(b.el_pt(),b.el_sig());
+  float eff = 1., el_pt = HigUtilities::signal_lepton_pt(b.el_pt(),b.el_sig());
   errup+=errdown; //suppress unused warning
   if (el_pt> 40 && el_pt<= 45) {eff = 0.819209; errup = 0.0289267; errdown = 0.0289267;}
   else if (el_pt> 45 && el_pt<= 50) {eff = 0.887324; errup = 0.0216654; errdown = 0.0216654;}
@@ -367,7 +367,7 @@ const NamedFunc get_2el_trigeff2016("get_2el_trigeff2016", [](const Baby &b) -> 
 
 const NamedFunc get_2mu_trigeff2016("get_2mu_trigeff2016", [](const Baby &b) -> NamedFunc::ScalarType{
   float errup=0., errdown=0.; // Not used, but for reference
-  float eff = 1., mu_pt = signal_lepton_pt(b.mu_pt(),b.mu_sig());
+  float eff = 1., mu_pt = HigUtilities::signal_lepton_pt(b.mu_pt(),b.mu_sig());
   errup+=errdown; //suppress unused warning
   if (mu_pt> 40 && mu_pt<= 45) {eff = 0.933594; errup = 0.0155619; errdown = 0.0155619;}
   else if (mu_pt> 45 && mu_pt<= 50) {eff = 0.968288; errup = 0.00805725; errdown = 0.00805725;}
