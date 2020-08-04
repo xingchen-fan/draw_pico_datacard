@@ -966,7 +966,7 @@ const NamedFunc h2_mass("h2_mass",[](const Baby &b) -> NamedFunc::ScalarType{
   return higgs2.M();
 });
 
-const NamedFunc signal_lepton_pt("signal_lepton_pt",[](const Baby &b) -> NamedFunc::ScalarType{
+const NamedFunc lead_signal_lepton_pt("lead_signal_lepton_pt",[](const Baby &b) -> NamedFunc::ScalarType{
   // Search for signal electrons
   float lead_electron_pt = -1;
   for (unsigned iEl = 0; iEl < b.el_sig()->size(); ++iEl) {
@@ -985,10 +985,10 @@ const NamedFunc signal_lepton_pt("signal_lepton_pt",[](const Baby &b) -> NamedFu
   }
   // Warnings
   if (lead_electron_pt==-1 && lead_muon_pt==-1) {
-    cout<<"[Warning] Higfuncs::signal_lepton_pt => There is no signal leptons. Returning -1. nlep: "<<b.nlep()<<" nel: "<<b.nel()<<" nmu: "<<b.nmu()<<" nvmu: "<<b.nvmu()<<endl;
+    cout<<"[Warning] Higfuncs::lead_signal_lepton_pt => There is no signal leptons. Returning -1. nlep: "<<b.nlep()<<" nel: "<<b.nel()<<" nmu: "<<b.nmu()<<" nvmu: "<<b.nvmu()<<endl;
     return -1;
   } else if (lead_electron_pt != -1 && lead_muon_pt != -1) {
-    cout<<"[Warning] Higfuncs::signal_lepton_pt => There is both a signal electron and signal muon. Returning -2."<<endl;
+    cout<<"[Warning] Higfuncs::lead_signal_lepton_pt => There is both a signal electron and signal muon. Returning -2."<<endl;
     return -2;
   } else if (lead_electron_pt != -1 && lead_muon_pt == -1) { // Electron case
     return lead_electron_pt;
