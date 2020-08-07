@@ -129,6 +129,7 @@ Table::Table(const string &name,
   backgrounds_(),
   signals_(),
   datas_(){
+    precision_ = -1;
     for(const auto &process: processes){
       switch(process->type_){
         case Process::Type::data:
@@ -298,10 +299,14 @@ void Table::PrintHeader(ofstream &file, double luminosity) const{
   file << "    \\hline\\hline\n";
   if (luminosity_tag_ != "") file <<" \\multicolumn{1}{c|}{${\\cal L} = "<<setprecision(1)<<luminosity_tag_<<"$ fb$^{-1}$} ";
   else file <<" \\multicolumn{1}{c|}{${\\cal L} = "<<setprecision(1)<<luminosity<<"$ fb$^{-1}$} ";
-  if(do_unc_)
-    file <<setprecision(2);
-  else
-    file <<setprecision(1);
+  if (precision_<0) {
+    if(do_unc_)
+      file <<setprecision(2);
+    else
+      file <<setprecision(1);
+  } else {
+    file <<setprecision(precision_);
+  }
 
   if(backgrounds_.size() > 1){
     for(size_t i = 0; i < backgrounds_.size(); ++i){
@@ -420,10 +425,12 @@ void Table::PrintRow(ofstream &file, size_t irow, double luminosity) const{
         else
           file << " & " << setprecision(1) << 100*signals_.at(i)->sumw_.at(irow)/signals_.at(i)->sumw_.at(irow-1);
       }
-      else
-        file << " & " << luminosity*signals_.at(i)->sumw_.at(irow);
+      else {
+        if (do_unc_) file << " & " << luminosity*signals_.at(i)->sumw_.at(irow) << "$\\pm$"<< luminosity*sqrt(signals_.at(i)->sumw2_.at(irow));
+        else file << " & " << luminosity*signals_.at(i)->sumw_.at(irow);
       // file << " & " << luminosity*signals_.at(i)->sumw_.at(irow) << "$\\pm$" 
       //         << luminosity*sqrt(signals_.at(i)->sumw2_.at(irow));
+      }
       if(do_zbi_){
         file << " & " << RooStats::NumberCountingUtils::BinomialExpZ(luminosity*signals_.at(i)->sumw_.at(irow),
             luminosity*GetYield(backgrounds_, irow),

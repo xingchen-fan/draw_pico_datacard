@@ -60,6 +60,7 @@ public:
   FigureComponent * GetComponent(const Process *process) final;
 
   Table & LuminosityTag(const std::string &tag) {luminosity_tag_ = tag;return *this;}
+  Table & Precision(const int &precision) {precision_ = precision;return *this;}
   
   std::string luminosity_tag_;//!<Filename tag to identify plot
   std::string name_;
@@ -70,6 +71,7 @@ public:
   bool print_titlepie_;
   bool do_eff_;
   bool do_unc_;
+  int precision_;
   std::vector<PlotOpt> plot_options_;//!<Styles with which to draw pie chart
 
 private:
