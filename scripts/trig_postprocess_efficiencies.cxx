@@ -27,7 +27,7 @@ int trig_postprocess_efficiencies() {
     //2016 rdfat_qcd2016_htrange.root and trig_eff_old_fullefficiencies.root
     //2017 rdfat_qcd2017.root and trig_eff_old_eff_2017.root
     //2017 rdfat_qcd2018.root and trig_eff_old_eff_2018.root
-    TFile* f = TFile::Open("ntuples/trig_eff_old_eff_2018.root");
+    TFile* f = TFile::Open("ntuples/triggereff.root");
     TFile* f_qcd = TFile::Open("ntuples/rdfat_qcd2018.root");
     std::string year = "2018";
     std::vector<double> true_met_bins{150,155,160,165,170,175,180,185,190,195,200,210,220,230,240,250,275,300,350};
@@ -99,7 +99,7 @@ int trig_postprocess_efficiencies() {
 	    an_eff_plots[ht_bin]->Draw("AP");
 	    new_eff_plots[ht_bin]->Draw("P same");
 	    TLegend* leg = new TLegend(0.5,0.1,0.9,0.3);
-	    leg->AddEntry(new_eff_plots[ht_bin],"New Efficiency MET(110, 120, 120HT60)(NoMu)","f");
+	    leg->AddEntry(new_eff_plots[ht_bin],"New Efficiency MET(100, 110, 120)(NoMu)","f");
 	    leg->AddEntry(an_eff_plots[ht_bin],"AN Efficiency MET(100, 110, 120)(NoMu)","f");
 	    leg->Draw("same");
 	    truemet_canvas[ht_bin]->SaveAs(("plots/truemet_effhtbin_"+std::to_string(ht_bin)+".png").c_str());
@@ -160,16 +160,16 @@ int trig_postprocess_efficiencies() {
 	    if (year == "2017") {
 	      qcdhist_name = "hist_MET_pt_ht_runcdef_all";
 	    }
-            TH2D* numerator_hist = static_cast<TH2D*>((f_qcd->Get((qcdhist_name+";1").c_str()))->Clone());
-            TH2D* denominator_hist = static_cast<TH2D*>((f_qcd->Get((qcdhist_name+";2").c_str()))->Clone());
-	    if (year == "2017") {
-              TH2D* run_b_numerator_hist = static_cast<TH2D*>((f_qcd->Get("hist_MET_pt_ht_runb_all;1"))->Clone());
-              TH2D* run_b_denominator_hist = static_cast<TH2D*>((f_qcd->Get("hist_MET_pt_ht_runb_all;2"))->Clone());
-	      numerator_hist->Add(run_b_numerator_hist);
-	      denominator_hist->Add(run_b_denominator_hist);
-	    }
-            //TH2D* numerator_hist = static_cast<TH2D*>((f->Get("hist_fakemetht_numerator"))->Clone());
-            //TH2D* denominator_hist = static_cast<TH2D*>((f->Get("hist_fakemetht_denominator"))->Clone());
+            //TH2D* numerator_hist = static_cast<TH2D*>((f_qcd->Get((qcdhist_name+";1").c_str()))->Clone());
+            //TH2D* denominator_hist = static_cast<TH2D*>((f_qcd->Get((qcdhist_name+";2").c_str()))->Clone());
+	    //if (year == "2017") {
+            //  TH2D* run_b_numerator_hist = static_cast<TH2D*>((f_qcd->Get("hist_MET_pt_ht_runb_all;1"))->Clone());
+            //  TH2D* run_b_denominator_hist = static_cast<TH2D*>((f_qcd->Get("hist_MET_pt_ht_runb_all;2"))->Clone());
+	    //  numerator_hist->Add(run_b_numerator_hist);
+	    //  denominator_hist->Add(run_b_denominator_hist);
+	    //}
+            TH2D* numerator_hist = static_cast<TH2D*>((f->Get("hist_fakemetht_numerator"))->Clone());
+            TH2D* denominator_hist = static_cast<TH2D*>((f->Get("hist_fakemetht_denominator"))->Clone());
 	    TH1D* numerator_1d_hist = numerator_hist->ProjectionX("numerator_1d_hist",ht_bin+1,ht_bin+1);
 	    TH1D* denominator_1d_hist = denominator_hist->ProjectionX("denominator_1d_hist",ht_bin+1,ht_bin+1);
 	    new_eff_plots.push_back(new TGraphAsymmErrors(numerator_1d_hist,denominator_1d_hist));
@@ -180,7 +180,7 @@ int trig_postprocess_efficiencies() {
 	    an_eff_plots[ht_bin]->Draw("AP");
 	    new_eff_plots[ht_bin]->Draw("P same");
 	    TLegend* leg = new TLegend(0.5,0.1,0.9,0.3);
-	    leg->AddEntry(new_eff_plots[ht_bin],"New Efficiency MET(110, 120, 120HT60)(NoMu)","f");
+	    leg->AddEntry(new_eff_plots[ht_bin],"New Efficiency MET(100, 110, 120)(NoMu)","f");
 	    leg->AddEntry(an_eff_plots[ht_bin],"AN Efficiency MET(100, 110, 120)(NoMu)","f");
 	    leg->Draw("same");
 	    fakemet_canvas[ht_bin]->SaveAs(("plots/fakemet_effhtbin_"+std::to_string(ht_bin)+".png").c_str());
@@ -249,8 +249,8 @@ int trig_postprocess_efficiencies() {
 	    an_eff_plots[el_pt_bin]->Draw("AP");
 	    new_eff_plots[el_pt_bin]->Draw("P same");
 	    TLegend* leg = new TLegend(0.5,0.1,0.9,0.3);
-	    leg->AddEntry(new_eff_plots[el_pt_bin],"New Efficiency MET(110, 120, 120HT60)(NoMu) Ele(Iso27, Iso35, 115)","f");
-	    leg->AddEntry(an_eff_plots[el_pt_bin],"AN Efficiency MET(100, 110, 120)(NoMu) Ele(Iso27, 105, 115)","f");
+	    leg->AddEntry(new_eff_plots[el_pt_bin],"New Efficiency MET(100, 110, 120)(NoMu) Ele(Iso27, Iso35, 115)","f");
+	    leg->AddEntry(an_eff_plots[el_pt_bin],"AN Efficiency MET(100, 110, 120)(NoMu) Ele(Iso27LooseBarrel, Iso27, 105, 115)","f");
 	    leg->Draw("same");
 	    elmet_canvas[el_pt_bin]->SaveAs(("plots/elmet_effelptbin_"+std::to_string(el_pt_bin)+".png").c_str());
 	}
@@ -271,7 +271,7 @@ int trig_postprocess_efficiencies() {
 		}
 		else apply_effs_file << "  else if (el_pt> ";
 		apply_effs_file << el_pt_bins[el_pt_bin] << " && el_pt<= " << el_pt_upper;
-		apply_effs_file << " && met> " << fake_met_bins[met_bin] << " && met<= " << met_upper;
+		apply_effs_file << " && met> " << twodim_met_bins[met_bin] << " && met<= " << met_upper;
 		apply_effs_file << ") {eff = " << eff_pts[met_bin] << "; errup = " << new_eff_plots[el_pt_bin]->GetErrorYhigh(met_bin) << "; errdown = " << new_eff_plots[el_pt_bin]->GetErrorYlow(met_bin) << ";}\n";
 	    }
 	}
@@ -317,8 +317,8 @@ int trig_postprocess_efficiencies() {
 	    an_eff_plots[mu_pt_bin]->Draw("AP");
 	    new_eff_plots[mu_pt_bin]->Draw("P same");
 	    TLegend* leg = new TLegend(0.5,0.1,0.9,0.3);
-	    leg->AddEntry(new_eff_plots[mu_pt_bin],"New Efficiency MET(110, 120, 120HT60)(NoMu) Mu(Iso24, Iso27, 50)","f");
-	    leg->AddEntry(an_eff_plots[mu_pt_bin],"AN Efficiency MET(100, 110, 120)(NoMu) Mu(Iso24, 50)","f");
+	    leg->AddEntry(new_eff_plots[mu_pt_bin],"New Efficiency MET(100, 110, 120)(NoMu) Mu(Iso24, Iso27, 50)","f");
+	    leg->AddEntry(an_eff_plots[mu_pt_bin],"AN Efficiency MET(100, 110, 120)(NoMu) Mu(Iso24, IsoTk24, 50)","f");
 	    leg->Draw("same");
 	    mumet_canvas[mu_pt_bin]->SaveAs(("plots/mumet_effmuptbin_"+std::to_string(mu_pt_bin)+".png").c_str());
 	}
@@ -339,7 +339,7 @@ int trig_postprocess_efficiencies() {
 		}
 		else apply_effs_file << "  else if (mu_pt> ";
 		apply_effs_file << mu_pt_bins[mu_pt_bin] << " && mu_pt<= " << mu_pt_upper;
-		apply_effs_file << " && met> " << fake_met_bins[met_bin] << " && met<= " << met_upper;
+		apply_effs_file << " && met> " << twodim_met_bins[met_bin] << " && met<= " << met_upper;
 		apply_effs_file << ") {eff = " << eff_pts[met_bin] << "; errup = " << new_eff_plots[mu_pt_bin]->GetErrorYhigh(met_bin) << "; errdown = " << new_eff_plots[mu_pt_bin]->GetErrorYlow(met_bin) << ";}\n";
 	    }
 	}
@@ -375,7 +375,7 @@ int trig_postprocess_efficiencies() {
         new_el_eff->Draw("P same");
         TLegend* leg = new TLegend(0.5,0.1,0.9,0.3);
         leg->AddEntry(new_el_eff,"New Efficiency El(Iso27, Iso35, 115)","f");
-        leg->AddEntry(old_el_eff,"AN Efficiency El(Iso27, 105, 115)","f");
+        leg->AddEntry(old_el_eff,"AN Efficiency El(Iso27LooseBarrel, Iso27, 105, 115)","f");
         leg->Draw("same");
         elel_canvas->SaveAs("plots/elel_eff.png");
 	TCanvas* mumu_canvas = new TCanvas();
@@ -405,7 +405,7 @@ int trig_postprocess_efficiencies() {
         new_mu_eff->Draw("P same");
         TLegend* muleg = new TLegend(0.5,0.1,0.9,0.3);
         muleg->AddEntry(new_mu_eff,"New Efficiency Mu(Iso24, Iso27, 50)","f");
-        muleg->AddEntry(old_mu_eff,"AN Efficiency Mu(Iso24, 50)","f");
+        muleg->AddEntry(old_mu_eff,"AN Efficiency Mu(Iso24, IsoTk24, 50)","f");
         muleg->Draw("same");
         mumu_canvas->SaveAs("plots/mumu_eff.png");
 	//write out functions to file

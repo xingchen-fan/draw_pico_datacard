@@ -48,7 +48,7 @@ int main(){
   vector<string> mlsp_sigm2d = {"50","200","100"}; 
 
   string mc_production = "higgsino_humboldt"; // higgsino_eldorado
-  string year = "2016"; // 2016, 2017, 2018
+  string year = "2018"; // 2016, 2017, 2018
 
   string foldermc(bfolder+"/cms25r5/pico/NanoAODv5/"+mc_production+"/"+year+"/mc/skim_met150/");
   string foldersig(bfolder+"/cms25r5/pico/NanoAODv5/"+mc_production+"/"+year+"/SMS-TChiHH_2D/unskimmed/");

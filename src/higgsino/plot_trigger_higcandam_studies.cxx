@@ -42,7 +42,7 @@ int main(int argc, char *argv[]){
   time(&begtime);
 
   //flags for which things to plot
-  int year = 2018;
+  int year = 2016;
 
   //don't change this, automatically set below
   double lumi = 35.9;

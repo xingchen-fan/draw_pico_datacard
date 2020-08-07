@@ -49,7 +49,7 @@ int main(int argc, char *argv[]){
   bool do_variables = false;
   bool do_systematics = false;
   bool do_efficiency = true;
-  int year = 2018;
+  int year = 2016;
   bool do_controlregions = false; //for do_variables, false will omit plots of 1l and 2l CRs. This speeds up processing by about 10~20x
 
   //don't change this, automatically set below
@@ -92,17 +92,15 @@ int main(int argc, char *argv[]){
   	pro_data_all = Process::MakeShared<Baby_pico>("2018 Data", Process::Type::data, kBlack, str_data_all, "stitch");
   }
   else {
-  	string data_dir = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/2016/data/";
+  	string data_dir = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldtv2/2016/data/";
   	string mc_dir = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_humboldt/2016/mc/";
 	//default 2016
   	set<string> str_data({data_dir+"skim_met150/raw_pico_met150_SingleElectron*.root",data_dir+"skim_met150/raw_pico_met150_MET*.root",data_dir+"skim_met150/raw_pico_met150_SingleMuon*.root",data_dir+"skim_met150/raw_pico_met150_JetHT*.root"});
-  	//set<string> str_data({data_dir+"raw_pico_MET__Run2016B_ver1__*.root",data_dir+"raw_pico_SingleElectron__Run2016C__*.root",data_dir+"raw_pico_SingleMuon__Run2016B_ver1__*.root",data_dir+"raw_pico_JetHT__Run2016B_ver1__*.root"});
   	pro_data = Process::MakeShared<Baby_pico>("2016 Data", Process::Type::data, kBlack, str_data, "stitch");
-  	//set<string> str_mc({mc_dir+"/skim_met150/pico_met150*.root"});
   	set<string> str_mc({mc_dir+"skim_met150/pico_met150_TTJets_SingleLeptFromT*.root"});
   	pro_mc = Process::MakeShared<Baby_pico>("2016 MC", Process::Type::background, kBlack, str_mc, "stitch");
   	set<string> str_data_all({data_dir+"raw_pico/raw_pico_SingleElectron*.root",data_dir+"raw_pico/raw_pico_MET*.root",data_dir+"raw_pico/raw_pico_SingleMuon*.root",data_dir+"raw_pico/raw_pico_JetHT*.root"});
-  	pro_data_all = Process::MakeShared<Baby_pico>("2016 Data", Process::Type::data, kBlack, str_data, "stitch");
+  	pro_data_all = Process::MakeShared<Baby_pico>("2016 Data", Process::Type::data, kBlack, str_data_all, "stitch");
   }
   procs_data.push_back(pro_data);
   procs_mc.push_back(pro_mc);
@@ -116,7 +114,9 @@ int main(int argc, char *argv[]){
   const NamedFunc met_trigger("met_trigger", [](const Baby &b) -> NamedFunc::ScalarType{
 		  //temp: use only MET120
 		  //bool r_met_trigger = b.HLT_PFMET110_PFMHT110_IDTight()||b.HLT_PFMETNoMu110_PFMHTNoMu110_IDTight()||b.HLT_PFMET120_PFMHT120_IDTight()||b.HLT_PFMETNoMu120_PFMHTNoMu120_IDTight()||b.HLT_PFMET120_PFMHT120_IDTight_PFHT60()||b.HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60();
-		  bool r_met_trigger = b.HLT_PFMET120_PFMHT120_IDTight()||b.HLT_PFMETNoMu120_PFMHTNoMu120_IDTight();
+		  bool r_met_trigger = b.HLT_PFMET100_PFMHT100_IDTight()||b.HLT_PFMETNoMu100_PFMHTNoMu100_IDTight() ||
+		    b.HLT_PFMET110_PFMHT110_IDTight()||b.HLT_PFMETNoMu110_PFMHTNoMu110_IDTight() ||
+		    b.HLT_PFMET120_PFMHT120_IDTight()||b.HLT_PFMETNoMu120_PFMHTNoMu120_IDTight();
 		  return r_met_trigger;
   });
 
@@ -139,6 +139,22 @@ int main(int argc, char *argv[]){
 
   const NamedFunc jet_trigger("jet_trigger", [](const Baby &b) -> NamedFunc::ScalarType{
 		  return b.HLT_PFJet500();
+  });
+
+  const NamedFunc htjet_trigger("jet_trigger", [](const Baby &b) -> NamedFunc::ScalarType{
+		  bool r_htjet_trigger = b.HLT_PFJet500() || b.HLT_PFHT125() || b.HLT_PFHT200() ||
+		  			  b.HLT_PFHT250() || b.HLT_PFHT300() || b.HLT_PFHT350() ||
+					  b.HLT_PFHT400() || b.HLT_PFHT475() || b.HLT_PFHT600() ||
+					  b.HLT_PFHT650() || b.HLT_PFHT800() || b.HLT_PFHT900();
+		  return r_htjet_trigger;
+  });
+
+  const NamedFunc ht_trigger("jet_trigger", [](const Baby &b) -> NamedFunc::ScalarType{
+		  bool r_ht_trigger = b.HLT_PFHT125() || b.HLT_PFHT200() ||
+		  			  b.HLT_PFHT250() || b.HLT_PFHT300() || b.HLT_PFHT350() ||
+					  b.HLT_PFHT400() || b.HLT_PFHT475() || b.HLT_PFHT600() ||
+					  b.HLT_PFHT650() || b.HLT_PFHT800() || b.HLT_PFHT900();
+		  return r_ht_trigger;
   });
 
   const NamedFunc high_pt_jet("high_pt_jet", [](const Baby &b) -> NamedFunc::ScalarType{
@@ -397,7 +413,7 @@ int main(int argc, char *argv[]){
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
   	                "(stitch&&(HLT_Ele35_WPTight_Gsf||HLT_Ele27_WPTight_Gsf)&&pass&&njet>=3&&!low_dphi_met&&nel==1&&(met/met_calo<5)&&nmu==0&&(HLT_PFMET120_PFMHT120_IDTight_PFHT60||HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60))*weight" && el_max_pt > 30, procs_mc, all_plot_types);
   }
-  // trigger efficiency plots
+  // trigger efficiency plots and application file
   if (do_efficiency) {
   	pm.Push<Hist2D>(Axis(true_met_bins, "met", "MET", {}),
   	                Axis(ht_bins, "ht", "HT", {}),
@@ -407,30 +423,30 @@ int main(int argc, char *argv[]){
   	                "pass&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1" && met_trigger, procs_data, twodim_plotopts);
   	pm.Push<Hist2D>(Axis(fake_met_bins, "met", "MET", {}),
   	                Axis(ht_bins, "ht", "HT", {}),
-  	                "pass&&HLT_PFJet500&&low_dphi_met&&nvlep==0", procs_data, twodim_plotopts);
+  	                "pass&&low_dphi_met&&nvlep==0" && ht_trigger, procs_data, twodim_plotopts);
   	pm.Push<Hist2D>(Axis(fake_met_bins, "met", "MET", {}),
   	                Axis(ht_bins, "ht", "HT", {}),
-  	                "pass&&HLT_PFJet500&&low_dphi_met&&nvlep==0" && met_trigger, procs_data, twodim_plotopts);
+  	                "pass&&low_dphi_met&&nvlep==0" && ht_trigger && met_trigger, procs_data, twodim_plotopts);
   	pm.Push<Hist2D>(Axis(twodim_met_bins, "met", "MET", {}),
   	                Axis(el_pt_bins, "el_pt[0]", "Electron pt", {}),
-  	                "pass&&HLT_PFJet500&&njet>=2&&nel==1", procs_data_all, twodim_plotopts);
+  	                "pass&&njet>=2&&nel==1" && htjet_trigger, procs_data_all, twodim_plotopts);
   	pm.Push<Hist2D>(Axis(twodim_met_bins, "met", "MET", {}),
   	                Axis(el_pt_bins, "el_pt[0]", "Electron pt", {}),
-  	                "pass&&HLT_PFJet500&&njet>=2&&nel==1" && (met_trigger||el_trigger), procs_data_all, twodim_plotopts);
+  	                "pass&&njet>=2&&nel==1" && htjet_trigger && (met_trigger||el_trigger), procs_data_all, twodim_plotopts);
   	pm.Push<Hist2D>(Axis(twodim_met_bins, "met", "MET", {}),
   	                Axis(mu_pt_bins, "mu_pt[0]", "Muon pt", {}),
-  	                "pass&&HLT_PFJet500&&njet>=2&&nmu==1", procs_data_all, twodim_plotopts);
+  	                "pass&&njet>=2&&nmu==1" && htjet_trigger, procs_data_all, twodim_plotopts);
   	pm.Push<Hist2D>(Axis(twodim_met_bins, "met", "MET", {}),
   	                Axis(mu_pt_bins, "mu_pt[0]", "Muon pt", {}),
-  	                "pass&&HLT_PFJet500&&njet>=2&&nmu==1" && (met_trigger||mu_trigger), procs_data_all, twodim_plotopts);
+  	                "pass&&njet>=2&&nmu==1" && htjet_trigger && (met_trigger||mu_trigger), procs_data_all, twodim_plotopts);
   	pm.Push<Hist1D>(Axis(twoel_pt_bins, el_max_pt, "Offline Max Electron p_{T} [GeV]", {}),
-  	                "pass&&njet>=2&&nel==2&&(80<ll_m[0]&&ll_m[0]<100)" && (met_trigger||jet_trigger), procs_data_all, all_plot_types);
+  	                "pass&&njet>=2&&nel==2&&(80<ll_m[0]&&ll_m[0]<100)" && (met_trigger||htjet_trigger), procs_data_all, all_plot_types);
   	pm.Push<Hist1D>(Axis(twoel_pt_bins, el_max_pt, "Offline Max Electron p_{T} [GeV]", {}),
-  	                "pass&&njet>=2&&nel==2&&(80<ll_m[0]&&ll_m[0]<100)" && (met_trigger||jet_trigger) && el_trigger, procs_data_all, all_plot_types);
+  	                "pass&&njet>=2&&nel==2&&(80<ll_m[0]&&ll_m[0]<100)" && (met_trigger||htjet_trigger) && el_trigger, procs_data_all, all_plot_types);
   	pm.Push<Hist1D>(Axis(twomu_pt_bins, mu_max_pt, "Offline Max Muon p_{T} [GeV]", {}),
-  	                "pass&&njet>=2&&nmu==2&&(80<ll_m[0]&&ll_m[0]<100)" && (met_trigger||jet_trigger), procs_data_all, all_plot_types);
+  	                "pass&&njet>=2&&nmu==2&&(80<ll_m[0]&&ll_m[0]<100)" && (met_trigger||htjet_trigger), procs_data_all, all_plot_types);
   	pm.Push<Hist1D>(Axis(twomu_pt_bins, mu_max_pt, "Offline Max Muon p_{T} [GeV]", {}),
-  	                "pass&&njet>=2&&nmu==2&&(80<ll_m[0]&&ll_m[0]<100)" && (met_trigger||jet_trigger) && mu_trigger, procs_data_all, all_plot_types);
+  	                "pass&&njet>=2&&nmu==2&&(80<ll_m[0]&&ll_m[0]<100)" && (met_trigger||htjet_trigger) && mu_trigger, procs_data_all, all_plot_types);
   }
 
   if(single_thread) pm.multithreaded_ = false;

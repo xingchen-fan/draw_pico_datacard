@@ -24,6 +24,10 @@
 #include "core/event_scan.hpp"
 #include "core/utilities.hpp"
 #include "core/functions.hpp"
+#include "higgsino/apply_trigeffs2016.hpp"
+#include "higgsino/apply_trigeffs2017.hpp"
+#include "higgsino/apply_trigeffs2018.hpp"
+#include "core/cross_sections.hpp"
 #include "higgsino/hig_functions.hpp"
 #include "higgsino/hig_utilities.hpp"
 
@@ -49,7 +53,7 @@ const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
 
 namespace{
   bool single_thread = false;
-  string year_string = "2016";
+  string year_string = "2017";
   bool unblind = false;
 }
 
@@ -72,6 +76,7 @@ int main(int argc, char *argv[]){
   PlotOpt lin_norm = lin_norm_info().YAxis(YAxisType::linear).Title(TitleType::info);
   PlotOpt lin_norm_data = lin_norm_info().YAxis(YAxisType::linear).Title(TitleType::info).Bottom(BottomType::ratio);
   PlotOpt lin_shapes = lin_norm().Stack(StackType::shapes).Bottom(BottomType::ratio);
+  PlotOpt lin_shapes_no_overflow = lin_norm().Stack(StackType::shapes).Bottom(BottomType::off).Overflow(OverflowType::none);
   PlotOpt lin_shapes_info = lin_shapes().Title(TitleType::info).Bottom(BottomType::off);
   PlotOpt log_shapes = lin_norm().YAxis(YAxisType::log).Stack(StackType::shapes).Bottom(BottomType::ratio);
   PlotOpt log_shapes_info = lin_shapes().YAxis(YAxisType::log).Title(TitleType::info).Bottom(BottomType::off);
@@ -80,6 +85,7 @@ int main(int argc, char *argv[]){
   vector<PlotOpt> plt_lin = {lin_norm};
   vector<PlotOpt> plt_log = {log_norm};
   vector<PlotOpt> plt_shapes = {lin_shapes};
+  vector<PlotOpt> plt_shapes_no_overflow = {lin_shapes_no_overflow};
   vector<PlotOpt> plt_log_shapes = {log_shapes};
   vector<PlotOpt> plt_shapes_info = {lin_shapes_info};
   vector<PlotOpt> plt_log_shapes_info = {log_shapes_info};
@@ -89,7 +95,7 @@ int main(int argc, char *argv[]){
   // Set options
   string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/";
   //string mc_base_folder = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado";
-  string mc_skim_folder = "mc/merged_higmc_higloose/";
+  string mc_skim_folder = "mc/skim_met150/";
   string ttbar_mc_skim_folder = "mc/merged_higmc_higlep1T/";
   string zll_mc_skim_folder = "mc/merged_higmc_higlep2T/";
   string qcd_mc_skim_folder = "mc/merged_higmc_higqcd/";
@@ -104,11 +110,12 @@ int main(int argc, char *argv[]){
   string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/";
   //string sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higloose/";
   string sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_preselect/";
+  string foldersig = mc_base_folder+year_string+"/SMS-TChiHH_2D/unskimmed/";
 
   set<int> years;
   HigUtilities::parseYears(year_string, years);
   //years = {2016, 2017, 2018};
-  //years = {2016};
+  years = {2017};
   float total_luminosity = 0;
   for (auto const & year : years) {
     if (year == 2016) total_luminosity += 35.9;
@@ -155,12 +162,22 @@ int main(int argc, char *argv[]){
   });
 
   vector<shared_ptr<Process> > search_signal_procs;
-  //vector<string> sigm = {"175", "550", "950"}; 
-  vector<string> sigm = {"175", "550", "950"}; 
-  vector<int> sig_colors = {kGreen+1, kRed, kBlue, kOrange}; // need sigm.size() >= sig_colors.size()
-  for (unsigned isig(0); isig<sigm.size(); isig++){
-    search_signal_procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigm[isig]+",1)", Process::Type::signal, 
-      sig_colors[isig], attach_folder(sig_base_folder, years, sig_skim_folder, {"*TChiHH_mChi-"+sigm[isig]+"_mLSP-0*.root"}), "stitch"));
+  //If you modify mchi_sigm, modify mchi_sigm_int in the NamedFunc below
+  vector<string> mchi_sigm = {"175","500","900"}; 
+  vector<string> mlsp_sigm = {"0",  "0",  "0"}; 
+  vector<string> mchi_sigm2d = {"250","350","450"}; 
+  vector<string> mlsp_sigm2d = {"50","200","100"}; 
+  vector<int> sig_colors = {kGreen+1, kRed, kBlue}; // need sigm.size() <= sig_colors.size()
+  vector<int> sig_colors2d = {kOrange, kYellow, kCyan};
+  for (unsigned isig(0); isig<mchi_sigm.size(); isig++) {
+    search_signal_procs.push_back(Process::MakeShared<Baby_pico>("GMSB("+mchi_sigm[isig]+")", 
+      Process::Type::signal, sig_colors[isig], {foldersig+"*TChiHH_mChi-"+mchi_sigm[isig]+"_mLSP-"+mlsp_sigm[isig]+"*.root"}, "stitch"));
+      std::cout << foldersig+"*TChiHH_mChi-"+mchi_sigm[isig]+"_mLSP-"+mlsp_sigm[isig]+"*.root" << std::endl;
+  }
+  for (unsigned isig(0); isig<mchi_sigm2d.size(); isig++) {
+    search_signal_procs.push_back(Process::MakeShared<Baby_pico>("("+mchi_sigm2d[isig]+","+mlsp_sigm2d[isig]+")", 
+      Process::Type::signal, sig_colors2d[isig], {foldersig+"*TChiHH_mChi-"+mchi_sigm2d[isig]+"_mLSP-"+mlsp_sigm2d[isig]+"*.root"}, "stitch"));
+      std::cout << foldersig+"*TChiHH_mChi-"+mchi_sigm2d[isig]+"_mLSP-"+mlsp_sigm2d[isig]+"*.root" << std::endl;
   }
 
   vector<shared_ptr<Process> > search_procs;
@@ -183,9 +200,15 @@ int main(int argc, char *argv[]){
                   attach_folder(mc_base_folder, years, mc_skim_folder, mctags["qcd"]),"stitch")); 
   search_procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGray+2,
                   attach_folder(mc_base_folder, years, mc_skim_folder, mctags["other"]),"stitch"));
-  for (unsigned isig(0); isig<sigm.size(); isig++){
-    search_procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigm[isig]+",1)", Process::Type::signal, 
-      sig_colors[isig], attach_folder(sig_base_folder, years, sig_skim_folder, {"*TChiHH_mChi-"+sigm[isig]+"_mLSP-0*.root"}), "stitch"));
+  for (unsigned isig(0); isig<mchi_sigm.size(); isig++) {
+    search_procs.push_back(Process::MakeShared<Baby_pico>("GMSB("+mchi_sigm[isig]+")", 
+      Process::Type::signal, sig_colors[isig], {foldersig+"*TChiHH_mChi-"+mchi_sigm[isig]+"_mLSP-"+mlsp_sigm[isig]+"*.root"}, "stitch"));
+      std::cout << foldersig+"*TChiHH_mChi-"+mchi_sigm[isig]+"_mLSP-"+mlsp_sigm[isig]+"*.root" << std::endl;
+  }
+  for (unsigned isig(1); isig<mchi_sigm2d.size(); isig++) {
+    search_procs.push_back(Process::MakeShared<Baby_pico>("("+mchi_sigm2d[isig]+","+mlsp_sigm2d[isig]+")", 
+      Process::Type::signal, sig_colors2d[isig], {foldersig+"*TChiHH_mChi-"+mchi_sigm2d[isig]+"_mLSP-"+mlsp_sigm2d[isig]+"*.root"}, "stitch"));
+      std::cout << foldersig+"*TChiHH_mChi-"+mchi_sigm2d[isig]+"_mLSP-"+mlsp_sigm2d[isig]+"*.root" << std::endl;
   }
 
   if (unblind) {
@@ -193,59 +216,57 @@ int main(int argc, char *argv[]){
                     attach_folder(data_base_folder, years, data_skim_folder, {"*.root"}),"stitch"));
   }
 
-
-  // Set processes according to btag
-  // Getting colors
-  // TColor * color; float red, green, blue;
-  // color = gROOT->GetColor(kAzure+1); color->GetRGB(red,green,blue); cout<<red*255<<" "<<green*255<<" "<<blue*255<<endl;
-  vector<shared_ptr<Process> > search_procs_btag;
-  search_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. (0b)", Process::Type::background,colors("0b"),
-                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]),"stitch&&(nbm==0)"));
-  search_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. (1b)", Process::Type::background,colors("1b"),
-                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]),"stitch&&(nbm==1)"));
-  search_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. (2b)", Process::Type::background,colors("2b"),
-                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]),"stitch&&(nbm==2)"));
-
-  // Set processes according to true number of b
-  vector<shared_ptr<Process> > search_procs_trueB;
-  search_procs_trueB.push_back(Process::MakeShared<Baby_pico>
-    ("0 B-hadron",       Process::Type::background, colors("true_0b"), attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]), "stitch" && Functions::ntrub<1));
-  search_procs_trueB.push_back(Process::MakeShared<Baby_pico>
-    ("1 B-hadron",       Process::Type::background, colors("true_1b"), attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]), "stitch" && Functions::ntrub==1));
-  search_procs_trueB.push_back(Process::MakeShared<Baby_pico>
-    ("2 B-hadrons",      Process::Type::background, colors("true_2b"), attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]), "stitch" && Functions::ntrub==2));
-  search_procs_trueB.push_back(Process::MakeShared<Baby_pico>
-    ("3 B-hadrons",      Process::Type::background, colors("true_3b"), attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]),  "stitch"&& Functions::ntrub==3));
-  search_procs_trueB.push_back(Process::MakeShared<Baby_pico>
-    ("4 B-hadrons", Process::Type::background, colors("true_4b"), attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]), "stitch" && Functions::ntrub==4));
-
-  // Set processes according to true number of b simple version
-  vector<shared_ptr<Process> > search_procs_trueB012;
-  search_procs_trueB012.push_back(Process::MakeShared<Baby_pico>
-    ("0 B-hadron",       Process::Type::background, colors("true_0b"), attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]), "stitch" && Functions::ntrub<1));
-  search_procs_trueB012.push_back(Process::MakeShared<Baby_pico>
-    ("1 B-hadron",       Process::Type::background, colors("true_1b"), attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]), "stitch" && Functions::ntrub==1));
-  search_procs_trueB012.push_back(Process::MakeShared<Baby_pico>
-    ("2 B-hadrons",      Process::Type::background, colors("true_2b"), attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]), "stitch" && Functions::ntrub==2));
-
-  vector<shared_ptr<Process> > search_data_procs_btag;
-  search_data_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. (0b)", Process::Type::background,colors("0b"),
-                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]),"stitch&&(nbm==0)"));
-  search_data_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. (1b)", Process::Type::background,colors("1b"),
-                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]),"stitch&&(nbm==1)"));
-  search_data_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. (2b)", Process::Type::background,colors("2b"),
-                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]),"stitch&&(nbm==2)"));
-
-  vector<shared_ptr<Process> > search_procs_nisr;
-  search_procs_nisr.push_back(Process::MakeShared<Baby_pico>("N_{ISR} = 0", Process::Type::background,colors("nisr_0"),
-                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]),"stitch&&nisr==0"));
-  search_procs_nisr.push_back(Process::MakeShared<Baby_pico>("N_{ISR} = 1", Process::Type::background,colors("nisr_1"),
-                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]),"stitch&&nisr==1"));
-  search_procs_nisr.push_back(Process::MakeShared<Baby_pico>("N_{ISR} = 2", Process::Type::background,colors("nisr_2"),
-                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["all"]),"stitch&&nisr==2"));
-
   NamedFunc base_filters = HigUtilities::pass_2016 && "met/mht<2 && met/met_calo<2"; //since pass_fsjets is not quite usable...
   //NamedFunc base_filters = Functions::hem_veto && "pass && met/mht<2 && met/met_calo<2";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
+
+  //give the right weight for 2D Higgsino scans, 1D scans, and other stuff
+  //also applies trigger efficiencies
+  const NamedFunc mixed_model_weight("mixed_model_weight",[](const Baby &b) -> NamedFunc::ScalarType{
+    set<int> mchi_sigm_int = {175, 500, 900}; 
+    double trig_eff = 1.0;
+    double lumi_scale = 1.0;
+    if (b.SampleType()==2016) {
+      trig_eff = Higfuncs::get_0l_trigeff2016.GetScalar(b);
+      lumi_scale = 35.9;
+    }
+    else if (b.SampleType()==2017) {
+      trig_eff = Higfuncs::get_0l_trigeff2017.GetScalar(b);
+      lumi_scale = 41.5;
+    }
+    else if (b.SampleType()==2018) {
+      trig_eff = Higfuncs::get_0l_trigeff2018.GetScalar(b);
+      lumi_scale = 60.0;
+    }
+    if (b.mprod() == -999) {
+      //not signal
+      return b.weight()*trig_eff*lumi_scale;
+    }
+    if (mchi_sigm_int.count(b.mprod()) > 0) {
+      //1d signal
+      return b.weight()*trig_eff*lumi_scale;
+    }
+    double xsec1d, xsec2d, xsec1d_unc, xsec2d_unc;
+    xsec::higgsinoCrossSection(b.mprod(),xsec1d,xsec1d_unc);
+    xsec::higgsino2DCrossSection(b.mprod(),xsec2d,xsec2d_unc);
+    return b.weight()/xsec1d*xsec2d*trig_eff*lumi_scale;
+  });
+
+  const NamedFunc analysis_nb("analysis_nb",[](const Baby &b) -> NamedFunc::ScalarType{
+    unsigned int r_analysis_nb =  0;
+    if (b.nbt() < 2) {
+      r_analysis_nb =  b.nbt();
+    }
+    else if (b.nbm() < 3) {
+      r_analysis_nb = 2;
+    }
+    else if (b.nbl() < 4) {
+      r_analysis_nb = 3;
+    }
+    else {
+      r_analysis_nb = 4;
+    }
+    return r_analysis_nb;
+  });
 
   // resolved cuts
   NamedFunc search_resolved = 
@@ -267,40 +288,157 @@ int main(int argc, char *argv[]){
 
   PlotMaker pm;
 
-  pm.Push<Hist1D>(Axis(14, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}),
-    base_filters&&search_resolved,
-    search_signal_procs, plt_log_shapes_info).Weight(weight_notrgeff).Tag("FixName:selection__search_met_signal").LuminosityTag(total_luminosity_string);
-  pm.Push<Hist1D>(Axis(14, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}),
-    base_filters&&search_resolved,
-    search_procs, plt_log).Weight(weight).Tag("FixName:selection__search_met").LuminosityTag(total_luminosity_string);
-  // n-1 plots
-  pm.Push<Hist1D>(Axis(8, 3.5, 11.5, "njet", "N_{jets}", {3.5, 5.5}),
-    base_filters &&
-    "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&"
-    "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
-    "((nbt>=2&&nbm>=3&&nbl>=4))",
-    search_procs, plt_lin).Weight(weight).Tag("FixName:selection__search_njet").LuminosityTag(total_luminosity_string);
-  pm.Push<Hist1D>(Axis(10,0,100,"hig_cand_dm[0]", "#Deltam [GeV]", {40.}),
-    base_filters &&
-    "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
-    "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&"
-    "((nbt>=2&&nbm>=3&&nbl>=4))",
-    search_procs, plt_lin).Weight(weight).Tag("FixName:selection__search_hig_cand_dm").LuminosityTag(total_luminosity_string);
-  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
-    base_filters &&
-    "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
-    "hig_cand_drmax[0]<2.2&&hig_cand_dm[0]<40&&"
-    "((nbt>=2&&nbm>=3&&nbl>=4))",
-    search_procs, plt_lin).Weight(weight).Tag("FixName:selection__search_hig_cand_am").LuminosityTag(total_luminosity_string);
-  pm.Push<Hist1D>(Axis(20,0,4,"hig_cand_drmax[0]", "#DeltaR_{max}", {1.1, 2.2}),
-    base_filters &&
-    "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
-    "hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
-    "((nbt>=2&&nbm>=3&&nbl>=4))",
-    search_procs, plt_lin).Weight(weight).Tag("FixName:selection__search_hig_cand_drmax").LuminosityTag(total_luminosity_string);
+  //pm.Push<Hist1D>(Axis(14, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}),
+  //  base_filters&&search_resolved,
+  //  search_signal_procs, plt_log_shapes_info).Weight(weight_notrgeff).Tag("FixName:selection__search_met_signal").LuminosityTag(total_luminosity_string);
+  //pm.Push<Hist1D>(Axis(14, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}),
+  //  base_filters&&search_resolved,
+  //  search_procs, plt_log).Weight(weight).Tag("FixName:selection__search_met").LuminosityTag(total_luminosity_string);
+  for (int plot_type_idx = 0; plot_type_idx < 3; plot_type_idx++) {
+    vector<PlotOpt> plt_type = plt_log;
+    vector<PlotOpt> plt_type_signal = plt_log;
+    string plt_type_string = "log";
+    if (plot_type_idx == 1) {
+      plt_type = plt_shapes_info;
+      plt_type_signal = plt_shapes_no_overflow;
+      plt_type_string = "shapes";
+    }
+    else if (plot_type_idx == 2) {
+      plt_type = plt_lin;
+      plt_type_signal = plt_lin;
+      plt_type_string = "lin";
+    }
+
+    //signal only plots
+    pm.Push<Hist1D>(Axis(40, 150, 800, "met", "MET [GeV]", {200, 300, 450}),
+      HigUtilities::pass_2016 &&
+      "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+      //not applying additional nb, <m>, MET, or Delta R cuts associated with ABCD plain and bins
+      search_signal_procs, plt_type_signal).Weight(mixed_model_weight).Tag("FixName:selection__signalcomp_met_"+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+    pm.Push<Hist1D>(Axis(25, 0, 2.2, "hig_cand_drmax[0]", "#Delta R_{max}", {1.1}),
+      HigUtilities::pass_2016 &&
+      "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_am[0]<=200",
+      //not applying additional nb, <m>, MET, or Delta R cuts associated with ABCD plain and bins
+      search_signal_procs, plt_type_signal).Weight(mixed_model_weight).Tag("FixName:selection__signalcomp_higcanddrmax_"+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+
+    for (int require_nb4 = 0; require_nb4 < 2; require_nb4++) {
+      NamedFunc nb_cut = "1";
+      string nb_desc = "";
+      if (require_nb4 == 0 && plot_type_idx == 2) {
+	      //don't bother plotting linear plots w/o nb=4; signal too small to be visible
+	      continue;
+      }
+      if (require_nb4 == 1) {
+	      nb_cut = "nbm>=3 && nbl>=4";
+	      nb_desc = "nb4_";
+      }
+      
+      // n-1 plots
+      //  "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+      pm.Push<Hist1D>(Axis(40, 150, 800, "met", "MET [GeV]", {200, 300, 450}),
+        HigUtilities::pass_2016 && nb_cut &&
+        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_met_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+      pm.Push<Hist1D>(Axis(8, 3.5, 11.5, "njet", "N_{jets}", {3.5, 5.5}),
+        HigUtilities::pass_2016 && nb_cut &&
+        "nvlep==0 && 4 <= njet && nbt >= 2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_njet_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+      pm.Push<Hist1D>(Axis(4, -0.5, 3.5, "nvlep", "N_{vlep}", {0.5}),
+        HigUtilities::pass_2016 && nb_cut &&
+        "4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_nvlep_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+      if (require_nb4==0) {
+	//don't plot nb if we are requiring nb=4
+        pm.Push<Hist1D>(Axis(5, -0.5, 4.5, analysis_nb, "N_{b}", {1.5}),
+          HigUtilities::pass_2016 &&
+          "nvlep==0 && 4 <= njet && njet <= 5 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+          search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_nb_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+      }
+      pm.Push<Hist1D>(Axis(4, -0.5, 3.5, "ntk", "N_{isoTk}", {0.5}),
+        HigUtilities::pass_2016 && nb_cut &&
+        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_nisotk_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+      pm.Push<Hist1D>(Axis(40, 0, 3.2, "jet_met_dphi[0]", "#Delta#Phi_{1}", {0.5}),
+        HigUtilities::pass_2016 && nb_cut &&
+        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminusphi_dphi1_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+      pm.Push<Hist1D>(Axis(40, 0, 3.2, "jet_met_dphi[1]", "#Delta#Phi_{2}", {0.5}),
+        HigUtilities::pass_2016 && nb_cut &&
+        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminusphi_dphi2_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+      pm.Push<Hist1D>(Axis(40, 0, 3.2, "jet_met_dphi[2]", "#Delta#Phi_{3}", {0.3}),
+        HigUtilities::pass_2016 && nb_cut &&
+        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminusphi_dphi3_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+      pm.Push<Hist1D>(Axis(40, 0, 3.2, "jet_met_dphi[3]", "#Delta#Phi_{4}", {0.3}),
+        HigUtilities::pass_2016 && nb_cut &&
+        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminusphi_dphi4_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+      pm.Push<Hist1D>(Axis(40, 0, 3.2, "jet_met_dphi[0]", "#Delta#Phi_{1}", {0.5}),
+        HigUtilities::pass_2016 && nb_cut &&
+        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && jet_met_dphi[1]>0.5 && jet_met_dphi[2]>0.3 && jet_met_dphi[3]>0.3 && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_dphi1_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+      pm.Push<Hist1D>(Axis(40, 0, 3.2, "jet_met_dphi[1]", "#Delta#Phi_{2}", {0.5}),
+        HigUtilities::pass_2016 && nb_cut &&
+        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && jet_met_dphi[0]>0.5 && jet_met_dphi[2]>0.3 && jet_met_dphi[3]>0.3 && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_dphi2_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+      pm.Push<Hist1D>(Axis(40, 0, 3.2, "jet_met_dphi[2]", "#Delta#Phi_{3}", {0.3}),
+        HigUtilities::pass_2016 && nb_cut &&
+        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && jet_met_dphi[0]>0.5 && jet_met_dphi[1]>0.5 && jet_met_dphi[3]>0.3 && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_dphi3_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+      pm.Push<Hist1D>(Axis(40, 0, 3.2, "jet_met_dphi[3]", "#Delta#Phi_{4}", {0.3}),
+        HigUtilities::pass_2016 && nb_cut &&
+        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && jet_met_dphi[0]>0.5 && jet_met_dphi[1]>0.5 && jet_met_dphi[2]>0.3 && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_dphi4_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+      pm.Push<Hist1D>(Axis(40, 0, 8, "(met/mht)", "p^{miss}_{T}/H^{miss}_{T}", {2}),
+        HigUtilities::pass_2016 && nb_cut &&
+        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_metmht_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+      pm.Push<Hist1D>(Axis(40, 0, 8, "(met/met_calo)", "p^{miss}_{T}/p^{miss}_{Tcalo}", {2}),
+        HigUtilities::pass_2016 && nb_cut &&
+        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_metmetcalo_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+      pm.Push<Hist1D>(Axis(40, 0, 120, "hig_cand_dm[0]", "#Delta m_{HH} [GeV]", {40}),
+        HigUtilities::pass_2016 && nb_cut &&
+        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_higcanddm_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+      pm.Push<Hist1D>(Axis(40, 0, 4.0, "hig_cand_drmax[0]", "#Delta R_{max}", {2.2}),
+        HigUtilities::pass_2016 && nb_cut &&
+        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_am[0]<=200",
+        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_higcanddrmax_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+      pm.Push<Hist1D>(Axis(40, 0, 200, "hig_cand_am[0]", "#LT m_{bb} #GT [GeV]", {100,140}),
+        HigUtilities::pass_2016 && nb_cut &&
+        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_higcandam_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+      //non N-1 variables
+      pm.Push<Hist1D>(Axis(40, 0, 1200, "ht", "HT [GeV]", {}),
+        HigUtilities::pass_2016 && nb_cut &&
+        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__baseline_ht_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+    }
+  }
+
+  //pm.Push<Hist1D>(Axis(10,0,100,"hig_cand_dm[0]", "#Deltam [GeV]", {40.}),
+  //  base_filters &&
+  //  "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
+  //  "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&"
+  //  "((nbt>=2&&nbm>=3&&nbl>=4))",
+  //  search_procs, plt_lin).Weight(weight).Tag("FixName:selection__search_hig_cand_dm").LuminosityTag(total_luminosity_string);
+  //pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+  //  base_filters &&
+  //  "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
+  //  "hig_cand_drmax[0]<2.2&&hig_cand_dm[0]<40&&"
+  //  "((nbt>=2&&nbm>=3&&nbl>=4))",
+  //  search_procs, plt_lin).Weight(weight).Tag("FixName:selection__search_hig_cand_am").LuminosityTag(total_luminosity_string);
+  //pm.Push<Hist1D>(Axis(20,0,4,"hig_cand_drmax[0]", "#DeltaR_{max}", {1.1, 2.2}),
+  //  base_filters &&
+  //  "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
+  //  "hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
+  //  "((nbt>=2&&nbm>=3&&nbl>=4))",
+  //  search_procs, plt_lin).Weight(weight).Tag("FixName:selection__search_hig_cand_drmax").LuminosityTag(total_luminosity_string);
 
 
-  // 2b (met: 150, 200, 300, 400) low drmax
+  //// 2b (met: 150, 200, 300, 400) low drmax
   pm.Push<Table>("FixName:selection__search_pies__2b_met150_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>150 &&met<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
   pm.Push<Table>("FixName:selection__search_pies__2b_met200_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>200 &&met<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
   pm.Push<Table>("FixName:selection__search_pies__2b_met300_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>300 &&met<=400 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
