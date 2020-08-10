@@ -37,6 +37,7 @@ namespace{
   string sample_name = "search";
   // year can be 2016, 2017, 2018 or 2016,2017,2018
   string year_string = "2016";
+  bool unblind = false;
 }
 
 const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
@@ -151,26 +152,23 @@ void addProcess(string const & processName, Process::Type type, int color, Named
   folderDict.insert("qcd_mc_skim_folder", "mc/merged_higmc_higqcd/");
 
   folderDict.insert("data_production_folder", dataProductionFolder);
-  folderDict.insert("search_data_skim_folder","data/merged_higmc_higloose/");
-  folderDict.insert("ttbar_data_skim_folder","data/merged_higmc_higlep1T/");
-  folderDict.insert("zll_data_skim_folder","data/merged_higmc_higlep2T/");
-  folderDict.insert("qcd_data_skim_folder","data/merged_higmc_higqcd/");
+  folderDict.insert("search_data_skim_folder","data/merged_higdata_higloose/");
+  folderDict.insert("ttbar_data_skim_folder","data/merged_higdata_higlep1T/");
+  folderDict.insert("zll_data_skim_folder","data/merged_higdata_higlep2T/");
+  folderDict.insert("qcd_data_skim_folder","data/merged_higdata_higqcd/");
 
   folderDict.insert("signal_production_folder", signalProductionFolder);
-  //folderDict.insert("signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higloose/");
-  folderDict.insert("signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_preselect/");
-
-  if (sample_name == "ttbar") folderDict.insert("mc_skim_folder", folderDict["ttbar_mc_skim_folder"]);
-  else if (sample_name == "zll") folderDict.insert("mc_skim_folder", folderDict["zll_mc_skim_folder"]);
-  else if (sample_name == "qcd") folderDict.insert("mc_skim_folder", folderDict["qcd_mc_skim_folder"]);
-  else folderDict.insert("mc_skim_folder", folderDict["search_mc_skim_folder"]);
+  folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higloose/");
+  folderDict.insert("ttbar_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higlep1T/");
+  folderDict.insert("zll_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higlep2T/");
+  folderDict.insert("qcd_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higqcd/");
 
   // Set paths
   set<string> pathNames;
-  if (dataType == "signal") pathNames = attach_folder(folderDict["signal_production_folder"], years, folderDict["signal_skim_folder"], fileNames);
-  else pathNames = attach_folder(folderDict[dataType+"_production_folder"], years, folderDict[sample_name+"_"+dataType+"_skim_folder"], fileNames);
+  pathNames = attach_folder(folderDict[dataType+"_production_folder"], years, folderDict[sample_name+"_"+dataType+"_skim_folder"], fileNames);
 
-  procs.push_back(Process::MakeShared<Baby_pico>(processName, type, color, pathNames,"stitch"&&additionalCut));
+  if (dataType == "data") procs.push_back(Process::MakeShared<Baby_pico>(processName, type, color, pathNames, additionalCut));
+  else procs.push_back(Process::MakeShared<Baby_pico>(processName, type, color, pathNames,"stitch"&&additionalCut)); // mc, signal
 }
 
 void addAllMcProcesses(string const & processName_postfix, NamedFunc const & additionalCut, 
@@ -212,6 +210,23 @@ void addMultipleSignalProcesses(string const & processName_postfix, NamedFunc co
   }
 }
 
+void addDataProcess(string const & processName_postfix, NamedFunc const & additionalCut, 
+  string const & nanoAodFolder, string const & production, string const & sample, string const & year_string, 
+  vector<shared_ptr<Process> > & procs) 
+{
+    NamedFunc triggers_data = "1";
+    NamedFunc lepton_triggers = "(HLT_IsoMu24 || HLT_IsoMu27 || HLT_Mu50 || HLT_Ele27_WPTight_Gsf || HLT_Ele35_WPTight_Gsf || HLT_Ele115_CaloIdVT_GsfTrkIdT)";
+    NamedFunc met_triggers = "(HLT_PFMET110_PFMHT110_IDTight || HLT_PFMETNoMu110_PFMHTNoMu110_IDTight || HLT_PFMET120_PFMHT120_IDTight || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight || HLT_PFMET120_PFMHT120_IDTight_PFHT60 || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60)";
+    if (sample == "zll") triggers_data = lepton_triggers;
+    else if (sample == "ttbar") triggers_data = lepton_triggers || met_triggers;
+    else if (sample == "qcd") triggers_data = met_triggers;
+    else  triggers_data = met_triggers;
+
+    addProcess("Data"+processName_postfix, Process::Type::data, kBlack, triggers_data && additionalCut,
+      nanoAodFolder, production, "data", "", sample, year_string,
+      procs);
+}
+
 int main(int argc, char *argv[]){
   gErrorIgnoreLevel=6000; // Turns off ROOT errors due to missing branches
   GetOptions(argc, argv);
@@ -233,8 +248,8 @@ int main(int argc, char *argv[]){
 
   //    Define processes, including intersections
   //--------------------------------------------------
-  NamedFunc base_filters = HigUtilities::pass_2016 && "met/mht<2 && met/met_calo<2"; //since pass_fsjets is not quite usable...
-  //NamedFunc base_filters = Functions::hem_veto && "pass && met/mht<2 && met/met_calo<2";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
+  //NamedFunc base_filters = HigUtilities::pass_2016 && "met/mht<2 && met/met_calo<2"; //since pass_fsjets is not quite usable...
+  NamedFunc base_filters = Functions::hem_veto && "pass && met/mht<2 && met/met_calo<2";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
 
   NamedFunc search_resolved_cuts = 
                          "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
@@ -268,11 +283,17 @@ int main(int argc, char *argv[]){
     nanoAodFolder_a, production_a, 
     sample_a, year_string_a,
     procs);
+  if (unblind) {
+    addDataProcess("", base_filters&&resolved_cuts,
+      nanoAodFolder_a, production_a, 
+      sample_a, year_string_a,
+      procs);
+  }
 
-  NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*w_years;
+  //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*w_years;
   //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig_run2*w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig*w_years;
-  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years;
+  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years;
 
 
   //    Useful binning definitions
@@ -378,6 +399,7 @@ void GetOptions(int argc, char *argv[]){
     static struct option long_options[] = {
       {"sample", required_argument, 0, 0},
       {"year", required_argument, 0, 0},
+      {"unblind", no_argument, 0, 0},
       {0, 0, 0, 0}
     };
 
@@ -394,6 +416,8 @@ void GetOptions(int argc, char *argv[]){
         sample_name = optarg;
       } else if (optname == "year") {
         year_string = optarg;
+      } else if (optname == "unblind") {
+        unblind = true;
       } else {
         printf("Bad option! Found option name %s\n", optname.c_str());
         exit(1);
