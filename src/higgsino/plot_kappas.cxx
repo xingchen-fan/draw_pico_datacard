@@ -64,6 +64,7 @@ namespace{
   bool do_signal = false;
   bool do_zbi = false;
   bool do_incl_met = true;
+  bool do_bin_drmax = true;
   bool debug = false;
   bool do_highnb = false;
   bool do_midnb = false;
@@ -90,7 +91,7 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
                    vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &preds, 
                    vector<vector<float> > yieldsPlane, vector<shared_ptr<Process> > &proc_sigs);
 void plotKappa(abcd_def &abcd, vector<vector<vector<float> > >  &kappas, 
-               vector<vector<vector<float> > >  &kappas_mm, vector<vector<vector<float> > >  &kmcdat);
+               vector<vector<vector<float> > >  &kappas_mm, vector<vector<vector<float> > >  &kmcdat, float total_luminosity);
 vector<vector<float> > findPreds(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
                                  vector<vector<vector<float> > > &kappas, 
                                  vector<vector<vector<float> > > &kappas_mm, 
@@ -98,6 +99,22 @@ vector<vector<float> > findPreds(abcd_def &abcd, vector<vector<GammaParams> > &a
                                  vector<vector<vector<float> > > &preds);
 
 void GetOptions(int argc, char *argv[]);
+
+const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.SampleType()<0) return 1.;
+
+  double weight = 1;
+  //if (b.type()==106000) {
+  //  return 35.9;
+  //}
+  if (b.SampleType()==2016){
+    return weight*35.9;
+  } else if (b.SampleType()==2017){
+    return weight*41.5;
+  } else {
+    return weight*59.6;
+  }
+});
 
 int main(int argc, char *argv[]){
   gErrorIgnoreLevel=6000; // Turns off ROOT errors due to missing branches
@@ -126,14 +143,17 @@ int main(int argc, char *argv[]){
   }
   string total_luminosity_string = RoundNumber(total_luminosity, 1, 1).Data();
 
+  string higgsino_version = "";
+
   //string base_dir(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_eldorado/");
-  string base_dir("/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/");
+  string base_dir("/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/");
   //string base_dir("/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado");
-  string mc_skim_dir("mc/merged_higmc_preselect/"), data_skim_dir("mc/merged_higdata_higloose/");
-  if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "merged_higdata_higlep1T/";} 
-  else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "merged_higdata_higlep2T/";} 
-  else if (sample=="qcd") {mc_skim_dir = "mc/merged_higmc_higqcd/";  data_skim_dir = "merged_higdata_higqcd/";} 
-  string sig_skim_dir("SMS-TChiHH_2D/merged_higmc_preselect/");
+  string mc_skim_dir("mc/merged_higmc_higloose/"), data_skim_dir("data/merged_higdata_higloose/"), sig_skim_dir("SMS-TChiHH_2D/merged_higmc_higloose/");
+  //if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "data/merged_higdata_higlep1T/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higlep1T/";} 
+  if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "data/skim_higlep1T/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higlep1T/";} 
+  //else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "data/merged_higdata_higlep2T/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higlep2T/";} 
+  else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "data/skim_higlep2T/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higlep2T/";} 
+  else if (sample=="qcd") {mc_skim_dir = "mc/merged_higmc_higqcd/";  data_skim_dir = "data/merged_higdata_higqcd/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higqcd/";} 
 
   map<string, set<string>> mctags; 
   mctags["ttx"]     = set<string>({
@@ -168,8 +188,13 @@ int main(int argc, char *argv[]){
   else if (sample=="zll") baseline_s += " && nlep==2 && met<50 &&"+c_hig_trim;
   else if (sample=="qcd") baseline_s += " && nvlep==0 && ntk==0 && low_dphi_met &&"+c_hig_trim;
 
-  NamedFunc baseline = baseline_s && "stitch && pass && met/mht<2 && met/met_calo<2";
+  //NamedFunc baseline = baseline_s && "stitch && pass && met/mht<2 && met/met_calo<2";
+  NamedFunc baseline = baseline_s && "stitch && pass && weight<1.5";
   baseline = baseline && Functions::hem_veto;
+
+  if (sample=="ttbar") baseline = baseline && "met/met_calo<5" && Higfuncs::lead_signal_lepton_pt>30;
+  else if (sample=="zll") baseline = baseline && "met/met_calo<5";
+  else baseline = baseline && "met/mht<2 && met/met_calo<2";
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Defining processes //////////////////////////////////////////  
@@ -200,7 +225,13 @@ int main(int argc, char *argv[]){
       names_data = attach_folder(base_dir, years, mc_skim_dir, names_allmc);
     }
   }
-  NamedFunc base_data = baseline && "1"; //INSERT_TRIGGERS_HERE, these will depend on the sample!
+  NamedFunc base_data = baseline; 
+  NamedFunc lepton_triggers = "(HLT_IsoMu24 || HLT_IsoMu27 || HLT_Mu50 || HLT_Ele27_WPTight_Gsf || HLT_Ele35_WPTight_Gsf || HLT_Ele115_CaloIdVT_GsfTrkIdT)";
+  NamedFunc met_triggers = "(HLT_PFMET110_PFMHT110_IDTight || HLT_PFMETNoMu110_PFMHTNoMu110_IDTight || HLT_PFMET120_PFMHT120_IDTight || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight || HLT_PFMET120_PFMHT120_IDTight_PFHT60 || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60)";
+  if (sample=="zll") base_data = base_data && lepton_triggers;
+  else if (sample == "ttbar") base_data = base_data && (lepton_triggers || met_triggers);
+  else if (sample == "qcd") base_data = base_data && met_triggers;
+  else  base_data = base_data && met_triggers; // search
   if (alt_scen != "data") base_data = baseline;
   auto proc_data = Process::MakeShared<Baby_pico>("Data", Process::Type::data, kBlack, names_data,base_data);
 
@@ -221,7 +252,11 @@ int main(int argc, char *argv[]){
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Defining scenarios  //////////////////////////////////////////
   // NamedFunc nom_wgt = "w_lumi*w_isr"*HigUtilities::w_CNToN1N2*HigUtilities::w_years*Higfuncs::eff_higtrig;//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
-  NamedFunc nom_wgt = "w_lumi*w_isr"*HigUtilities::w_years*Higfuncs::eff_higtrig;//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
+  //NamedFunc nom_wgt = "w_lumi*w_isr"*HigUtilities::w_years*Higfuncs::eff_higtrig;//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
+  //NamedFunc nom_wgt = "weight"*w_years*Higfuncs::eff_higtrig_run2;//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
+  //NamedFunc nom_wgt = "weight"*Higfuncs::eff_higtrig_run2*w_years*Functions::w_pileup;
+  NamedFunc nom_wgt = "weight"*Higfuncs::eff_higtrig_run2*w_years;
+
   vector<string> scenarios;
   map<string, NamedFunc> weights;
   weights.emplace("nominal", nom_wgt);
@@ -253,12 +288,16 @@ int main(int argc, char *argv[]){
     metcuts.push_back(metdef+">200&&"+metdef+"<=300");
     metcuts.push_back(metdef+">300&&"+metdef+"<=400");
     metcuts.push_back(metdef+">400");
-  } else if (sample=="ttbar" || sample=="zll") {
+  } else if (sample=="zll") {
     metcuts.push_back(metdef+">0&&"+metdef+"<=75");
     metcuts.push_back(metdef+">75&&"+metdef+"<=150");
     metcuts.push_back(metdef+">150&&"+metdef+"<=200");
     metcuts.push_back(metdef+">200&&"+metdef+"<=300");
     metcuts.push_back(metdef+">300");
+  } else if (sample=="ttbar") {
+    metcuts.push_back(metdef+">0&&"+metdef+"<=75");
+    metcuts.push_back(metdef+">75&&"+metdef+"<=150");
+    metcuts.push_back(metdef+">150");
   }
   if (do_incl_met) {
     if (sample=="qcd") { // add an inclusive bin
@@ -283,9 +322,12 @@ int main(int argc, char *argv[]){
 
   vector<TString> planecuts;
   for (unsigned imet(0); imet<metcuts.size(); imet++){
-    // planecuts.push_back(metcuts[imet]);
+    if (!do_bin_drmax) {
+      planecuts.push_back(metcuts[imet]);
+    } else {
       planecuts.push_back(metcuts[imet] + "&& hig_cand_drmax[0]<=1.1");
       planecuts.push_back(metcuts[imet] + "&& hig_cand_drmax[0]>1.1");
+    }
   }
 
   ////// ABCD cuts
@@ -312,7 +354,6 @@ int main(int argc, char *argv[]){
         for(auto &ireg: abcd_regions){
           TString totcut = iplane+"&&"+ireg;
           totcut.ReplaceAll("nb_cr", nbcuts[0]).ReplaceAll("nb_sr",inb);
-
           table_cuts.push_back(TableRow(totcut.Data(), totcut.Data(),0,0,weights.at("nominal")));
           if(alt_scen != "data") 
             table_cuts_mm.push_back(TableRow(totcut.Data(), totcut.Data(),0,0,weights.at(iscen)));
@@ -385,7 +426,7 @@ int main(int argc, char *argv[]){
     
     //// Plotting kappa
     if (debug) cout<<"Making kappa plots."<<endl;
-    plotKappa(abcds[iscen], kappas, kappas_mm, kmcdat);
+    plotKappa(abcds[iscen], kappas, kappas_mm, kmcdat, total_luminosity);
   } // Loop over ABCD methods
 
   if(alt_scen=="data" || alt_scen=="mc_as_data" || alt_scen=="mc"){
@@ -564,7 +605,7 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
 
 //// Makes kappa plots
 void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas, 
-               vector<vector<vector<float> > > &kappas_mm, vector<vector<vector<float> > > &kmcdat){
+               vector<vector<vector<float> > > &kappas_mm, vector<vector<vector<float> > > &kmcdat, float total_luminosity){
 
   double markerSize = 1.1;
 
@@ -792,7 +833,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
 
   TString title = "";
   TString fontstyle = RoundNumber(opts.Font()+10,0);
-  if(alt_scen!="mc_as_data") title = "#font[42]{"+RoundNumber(lumi, 0)+" fb^{-1} (13 TeV)}";
+  if(alt_scen!="mc_as_data") title = "#font[42]{"+RoundNumber(total_luminosity, 0)+" fb^{-1} (13 TeV)}";
   if(sample=="search" && alt_scen != "data") title = "#font["+fontstyle+"]{"+abcd_title+"}";
   cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015, title);
 

@@ -231,12 +231,12 @@ int main(int argc, char *argv[]){
   //mctags["topx"]     = set<string>({"*_TTZ*.root", "*_TTW*.root",
   //                                   "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root", "*_ST_*.root"});
   mctags["wjets"]   = set<string>({"*_WJetsToLNu*.root"});
-  mctags["zjets"]   = set<string>({"*_ZJet*.root"});
+  mctags["zjets"]   = set<string>({"*_ZJet*.root", "*DYJetsToLL*.root"});
   mctags["qcd"]     = set<string>({"*_QCD_HT200to300_*","*_QCD_HT300to500_*","*_QCD_HT500to700_*",
                                    "*_QCD_HT700to1000_*", "*_QCD_HT1000to1500_*","*_QCD_HT1500to2000_*",
                                    "*_QCD_HT2000toInf_*"});
   mctags["other"]   = set<string>({"*_WH_HToBB*.root", "*_ZH_HToBB*.root",
-                                     "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root", "*DYJetsToLL*.root"});
+                                     "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"});
   mctags["all"] = set<string>({
                                "*TTJets_*Lept*",
                                "*TTJets_DiLept_Tune*", "*TTJets_HT*", "*TTJets_SingleLeptFromTbar_Tune*", "*TJets_SingleLeptFromT_Tune*",

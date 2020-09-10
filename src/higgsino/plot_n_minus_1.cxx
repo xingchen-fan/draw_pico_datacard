@@ -40,6 +40,8 @@ namespace{
   string sample_name = "search";
   // year can be 2016, 2017, 2018 or 2016,2017,2018 or run2
   string year_string = "2016";
+  // lepton type can be electron or muon. Used for ttbar and zll sample.
+  string lepton_type = "";
 }
 
 
@@ -91,8 +93,10 @@ int main(int argc, char *argv[]){
   if (unblind) plt_lin = {lin_norm_data};
   if (unblind) plt_log = {log_norm_data};
 
+  string higgsino_version = "";
+
   // Set options
-  string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/";
+  string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
   //string mc_base_folder = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado";
   // preselect:
   //   ((nbt>=2 && njet>=4 && njet<=5)||(Sum$(fjet_pt>300 && fjet_msoftdrop>50)>1))
@@ -118,15 +122,21 @@ int main(int argc, char *argv[]){
   //   met>150  // Since applied to met150 skim
   string qcd_mc_skim_folder = "mc/merged_higmc_higqcd/";
 
-  string data_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt";
-  string search_data_skim_folder = "data/merged_higmc_higloose/";
-  string ttbar_data_skim_folder = "data/merged_higmc_higlep1T/";
-  string zll_data_skim_folder = "data/merged_higmc_higlep2T/";
-  string qcd_data_skim_folder = "data/merged_higmc_higqcd/";
+  string data_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
+  string search_data_skim_folder = "data/merged_higdata_higloose/";
+  //string ttbar_data_skim_folder = "data/merged_higdata_higlep1T/";
+  string ttbar_data_skim_folder = "data/skim_higlep1T/";
+  //string zll_data_skim_folder = "data/merged_higdata_higlep2T/";
+  string zll_data_skim_folder = "data/skim_higlep2T/";
+  string qcd_data_skim_folder = "data/merged_higdata_higqcd/";
 
   //string sig_base_folder = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado/";
-  string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/";
-  string sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_preselect/";
+  string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
+  //string sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_preselect/";
+  string search_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higloose/";
+  string ttbar_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higlep1T/";
+  string zll_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higlep2T/";
+  string qcd_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higqcd/";
 
   set<int> years;
   HigUtilities::parseYears(year_string, years);
@@ -139,11 +149,12 @@ int main(int argc, char *argv[]){
   }
   string total_luminosity_string = RoundNumber(total_luminosity, 1, 1).Data();
 
-  NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*w_years;
+  //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*w_years;
   //if (years.size()==1 && *years.begin()==2016) weight *= "137.";
   //else weight *= w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig*w_years;
-  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years;
+  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years*Functions::w_pileup;
+  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years;
 
   // Set MC 
   map<string, set<string>> mctags; 
@@ -183,6 +194,19 @@ int main(int argc, char *argv[]){
   else if (sample_name == "zll") data_skim_folder = zll_data_skim_folder;
   else if (sample_name == "qcd") data_skim_folder = qcd_data_skim_folder;
   else data_skim_folder = search_data_skim_folder;
+  string sig_skim_folder;
+  if (sample_name == "ttbar") sig_skim_folder = ttbar_sig_skim_folder;
+  else if (sample_name == "zll") sig_skim_folder = zll_sig_skim_folder;
+  else if (sample_name == "qcd") sig_skim_folder = qcd_sig_skim_folder;
+  else sig_skim_folder = search_sig_skim_folder;
+
+  NamedFunc triggers_data = "1";
+  NamedFunc lepton_triggers = "(HLT_IsoMu24 || HLT_IsoMu27 || HLT_Mu50 || HLT_Ele27_WPTight_Gsf || HLT_Ele35_WPTight_Gsf || HLT_Ele115_CaloIdVT_GsfTrkIdT)";
+  NamedFunc met_triggers = "(HLT_PFMET110_PFMHT110_IDTight || HLT_PFMETNoMu110_PFMHTNoMu110_IDTight || HLT_PFMET120_PFMHT120_IDTight || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight || HLT_PFMET120_PFMHT120_IDTight_PFHT60 || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60)";
+  if (sample_name == "zll") triggers_data = lepton_triggers;
+  else if (sample_name == "ttbar") triggers_data = lepton_triggers || met_triggers;
+  else if (sample_name == "qcd") triggers_data = met_triggers;
+  else  triggers_data = met_triggers;
 
   //NamedFunc base_resolved = 
   //                       "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
@@ -210,8 +234,13 @@ int main(int argc, char *argv[]){
   search_resolved_cuts.insert("hig_cand_am", "hig_cand_am[0]<200");
   search_resolved_cuts.insert("hig_cand_dm", "hig_cand_dm[0]<40");
   search_resolved_cuts.insert("btags", "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))");
+  search_resolved_cuts.insert("mht_filter", "met/mht<2");
+  search_resolved_cuts.insert("met_calo_filter", "met/met_calo<2");
+  search_resolved_cuts.insert("weight", "weight<1.5");
   torch::OrderedDict<string, NamedFunc> ttbar_resolved_cuts;
-  ttbar_resolved_cuts.insert("nlep", "nlep==1");
+  if (lepton_type == "electron") ttbar_resolved_cuts.insert("nel", "nel==1");
+  else if (lepton_type == "muon") ttbar_resolved_cuts.insert("nmu", "nmu==1");
+  else ttbar_resolved_cuts.insert("nlep", "nlep==1");
   //ttbar_resolved_cuts.insert("lep_pt", "lep_pt[0]>30");
   ttbar_resolved_cuts.insert("lep_pt", Higfuncs::lead_signal_lepton_pt>30);
   ttbar_resolved_cuts.insert("mt", "mt<=100");
@@ -220,14 +249,22 @@ int main(int argc, char *argv[]){
   ttbar_resolved_cuts.insert("hig_cand_am", "hig_cand_am[0]<200");
   ttbar_resolved_cuts.insert("hig_cand_dm", "hig_cand_dm[0]<40");
   ttbar_resolved_cuts.insert("btags", "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))");
+  ttbar_resolved_cuts.insert("met_calo_filter", "met/met_calo<5");
+  ttbar_resolved_cuts.insert("weight", "weight<1.5");
   torch::OrderedDict<string, NamedFunc> zll_resolved_cuts;
-  zll_resolved_cuts.insert("nlep", "nlep==2");
+  if (lepton_type == "electron") zll_resolved_cuts.insert("nel", "nel==2");
+  else if (lepton_type == "muon") zll_resolved_cuts.insert("nmu", "nmu==2");
+  else zll_resolved_cuts.insert("nlep", "nlep==2");
+  zll_resolved_cuts.insert("lep_pt", Higfuncs::lead_signal_lepton_pt>30);
   zll_resolved_cuts.insert("njet", "njet>=4&&njet<=5");
   zll_resolved_cuts.insert("met", "met<50");
   zll_resolved_cuts.insert("hig_cand_drmax", "hig_cand_drmax[0]<2.2");
   zll_resolved_cuts.insert("hig_cand_am", "hig_cand_am[0]<200");
   zll_resolved_cuts.insert("hig_cand_dm", "hig_cand_dm[0]<40");
   zll_resolved_cuts.insert("dbtags", "(nbm==0||nbm==1||nbm==2||nbm>=3)");
+  //zll_resolved_cuts.insert("dbtags", "nbm==0");
+  zll_resolved_cuts.insert("met_calo_filter", "met/met_calo<5");
+  zll_resolved_cuts.insert("weight", "weight<1.5");
   torch::OrderedDict<string, NamedFunc> qcd_resolved_cuts;
   qcd_resolved_cuts.insert("low_dphi_met", "low_dphi_met");
   qcd_resolved_cuts.insert("nvlep", "nvlep==0");
@@ -237,6 +274,9 @@ int main(int argc, char *argv[]){
   qcd_resolved_cuts.insert("hig_cand_am", "hig_cand_am[0]<200");
   qcd_resolved_cuts.insert("hig_cand_dm", "hig_cand_dm[0]<40");
   qcd_resolved_cuts.insert("dbtags", "(nbm==0||nbm==1||nbm==2||nbm>=3)");
+  qcd_resolved_cuts.insert("mht_filter", "met/mht<2");
+  qcd_resolved_cuts.insert("met_calo_filter", "met/met_calo<2");
+  qcd_resolved_cuts.insert("weight", "weight<1.5");
 
   vector<shared_ptr<Process> > procs;
   // Set mc processes
@@ -264,27 +304,38 @@ int main(int argc, char *argv[]){
   //vector<int> sig_colors = {kGreen+1, kRed, kBlue, kOrange}; // need sigm.size() >= sig_colors.size()
   vector<int> sig_colors = {kSpring, kPink, kAzure, kOrange}; // need sigm.size() >= sig_colors.size()
   for (unsigned isig(0); isig<sigm.size(); isig++){
-    procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigm[isig]+",1)", Process::Type::signal, 
-      sig_colors[isig], attach_folder(sig_base_folder, years, sig_skim_folder, {"*TChiHH_mChi-"+sigm[isig]+"_mLSP-0*.root"}), 
-      "stitch"));
+    //procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigm[isig]+",1)", Process::Type::signal, 
+    //  sig_colors[isig], attach_folder(sig_base_folder, years, sig_skim_folder, {"*TChiHH_mChi-"+sigm[isig]+"_mLSP-0*.root"}), 
+    //  "stitch"));
   }
 
+  vector<shared_ptr<Process> > procs_data;
   if (unblind) {
     procs.push_back(Process::MakeShared<Baby_pico>("Data", Process::Type::data, kBlack,
-                    attach_folder(data_base_folder, years, data_skim_folder, {"*.root"}),"stitch"));
+                    attach_folder(data_base_folder, years, data_skim_folder, {"*.root"}),triggers_data));
+
+    procs_data.push_back(Process::MakeShared<Baby_pico>("Data", Process::Type::background, kBlack,
+                    attach_folder(data_base_folder, years, data_skim_folder, {"*.root"}),triggers_data));
   }
 
-  NamedFunc base_filters = HigUtilities::pass_2016 && "met/mht<2 && met/met_calo<2" && "nlep==1"; //since pass_fsjets is not quite usable...
+  //NamedFunc base_filters = HigUtilities::pass_2016 && "met/mht<2 && met/met_calo<2"; //since pass_fsjets is not quite usable...
   //NamedFunc base_filters = Functions::hem_veto && "pass && met/mht<2 && met/met_calo<2";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
+  NamedFunc base_filters = Functions::hem_veto && "pass";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
 
   PlotMaker pm;
 
   torch::OrderedDict<string, Axis> axis_dict;
   axis_dict.insert("ntk",Axis(10, -0.5, 9.5, "ntk", "Number of iso tk", {0.5}));
+  axis_dict.insert("npv",Axis(81, -0.5, 80.5, "npv", "Number of reconstructed primary vertices", {}));
+  axis_dict.insert("npu_tru_mean",Axis(81, -0.5, 80.5, "npu_tru_mean", "Mean true interaction vertices", {}));
   axis_dict.insert("low_dphi_met",Axis(2, -0.5, 1.5, "low_dphi_met", "Low #Delta #phi", {0.5}));
   axis_dict.insert("nvlep",Axis(6, -0.5, 5.5, "nvlep", "N_{veto leps}", {0.5}));
   axis_dict.insert("nlep",Axis(5, 0.5, 5.5, "nlep", "N_{leps}", {}));
-  axis_dict.insert("met",Axis(14, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}));
+  axis_dict.insert("nmu",Axis(5, 0.5, 5.5, "nmu", "N_{muons}", {}));
+  axis_dict.insert("nel",Axis(5, 0.5, 5.5, "nel", "N_{electrons}", {}));
+  axis_dict.insert("met",Axis(15, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}));
+  axis_dict.insert("met_detail",Axis(28, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}));
+  axis_dict.insert("mht_detail",Axis(28, 150, 850., "mht", "MHT [GeV]", {}));
   axis_dict.insert("ht",Axis(20, 0, 1000., "ht", "HT [GeV]", {}));
   axis_dict.insert("h1b1_pt",Axis(16, 0, 480., h1b1_pt, "p_{T} lead higgs high-tag b jet [GeV]", {}));
   axis_dict.insert("h1b2_pt",Axis(16, 0, 480., h1b2_pt, "p_{T} lead higgs low-tag b jet [GeV]", {}));
@@ -300,17 +351,22 @@ int main(int argc, char *argv[]){
   axis_dict.insert("jet_pt[3]",Axis(16, 0, 480., "jet_pt[3]", "p_{T} jet [3] [GeV]", {}));
   axis_dict.insert("jet_pt[4]",Axis(16, 0, 480., "jet_pt[4]", "p_{T} jet [4] [GeV]", {}));
   axis_dict.insert("met_zll",Axis(20, 0, 150., "met", "p_{T}^{miss} [GeV]", {30}));
+  axis_dict.insert("met_ttbar",Axis(16, 0, 800., "met", "p_{T}^{miss} [GeV]", {}));
   axis_dict.insert("njet",Axis(12, -0.5, 11.5, "njet", "N_{jets}", {3.5, 5.5}));
   axis_dict.insert("hig_cand_drmax",Axis(20,0,4,"hig_cand_drmax[0]", "#DeltaR_{max}", {1.1, 2.2}));
   axis_dict.insert("hig_cand_am",Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}));
   axis_dict.insert("hig_cand_dm",Axis(10,0,100,"hig_cand_dm[0]", "#Deltam [GeV]", {40.}));
   axis_dict.insert("btags",Axis(3, 1.5, 4.5, Higfuncs::hig_bcat, "N_{b}", {2.5}));
   //axis_dict.insert("lep_pt",Axis(10, 0, 300., "lep_pt[0]", "p_{l} [GeV]", {30}));
-  axis_dict.insert("lep_pt",Axis(10, 0, 300., Higfuncs::lead_signal_lepton_pt, "p_{l} [GeV]", {30}));
+  axis_dict.insert("lep_pt",Axis(10, 0, 300., Higfuncs::lead_signal_lepton_pt, "p_{t}^{l} [GeV]", {30}));
   axis_dict.insert("mt",Axis(10, 0, 200., "mt", "m_{T} [GeV]", {100}));
   axis_dict.insert("dbtags",Axis(5, -0.5, 4.5, "nbm", "N_{b medium}", {}));
-  axis_dict.insert("ll_pt",Axis(16, 0, 400., "ll_pt[0]", "p_{ll} [GeV]", {75., 150., 200., 300}));
-  vector<string> log_plots = {"met", "btags"};
+  axis_dict.insert("ll_pt",Axis(16, 0, 400., "ll_pt[0]", "p_{T}^{ll} [GeV]", {75., 150., 200., 300}));
+  axis_dict.insert("ll_m",Axis(16, 0, 400., "ll_m", "m^{ll} [GeV]", {80., 100.}));
+  axis_dict.insert("mht_filter",Axis(10, 0, 10, "met/mht", "MET/MHT", {2}));
+  axis_dict.insert("met_calo_filter",Axis(10, 0, 10, "met/met_calo", "MET/MET_calo", {2,5}));
+  axis_dict.insert("weight",Axis(80, 0, 20, "weight", "weight", {1.5}));
+  vector<string> log_plots = {"met", "btags", "weight"};
 
 
   // Draw n-1
@@ -329,6 +385,7 @@ int main(int argc, char *argv[]){
   }
   // Add additional variables
   target_variables.insert("ht");
+  //target_variables.insert("npu_tru_mean");
   target_variables.insert("jet_pt[0]");
   target_variables.insert("jet_pt[1]");
   target_variables.insert("jet_pt[2]");
@@ -342,8 +399,15 @@ int main(int argc, char *argv[]){
   target_variables.insert("h2_dr");
   target_variables.insert("h1_mass");
   target_variables.insert("h2_mass");
-  if (sample_name=="zll") target_variables.insert("ll_pt");
-  if (sample_name=="ttbar") target_variables.insert("met");
+  target_variables.insert("mht_filter");
+  target_variables.insert("npv");
+  if (sample_name=="zll") {
+    target_variables.insert("ll_pt");
+    //target_variables.insert("ll_m");
+  }
+  if (sample_name=="ttbar") {
+    target_variables.insert("met");
+  }
 
 
   // Loop over variables
@@ -353,7 +417,7 @@ int main(int argc, char *argv[]){
     for (auto const & cut_item : map_resolved_cuts) {
       // Remove plotting variable
       if (cut_item.key() == target_var) continue;
-      // Below are special conditions
+      // Below are special conditions. Ignore certain cuts.
       if (target_var == "njet") {
         if (cut_item.key() == "hig_cand_drmax") continue;
         if (cut_item.key() == "hig_cand_am") continue;
@@ -361,6 +425,13 @@ int main(int argc, char *argv[]){
       }
       if (target_var == "nlep") {
         if (cut_item.key() == "mt") continue;
+        if (cut_item.key() == "lep_pt") continue;
+      }
+      if (target_var == "sig_el_pt") {
+        n_minus_1_cut = n_minus_1_cut && "nel>=1";
+      }
+      if (target_var == "sig_mu_pt") {
+        n_minus_1_cut = n_minus_1_cut && "nmu>=1";
       }
       n_minus_1_cut = n_minus_1_cut && cut_item.value();
     }
@@ -371,6 +442,10 @@ int main(int argc, char *argv[]){
       pm.Push<Hist1D>(axis_dict[target_var+"_zll"],
         base_filters&&n_minus_1_cut,
         procs, plt_lin).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_"+target_var+"_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+    } else if (target_var == "met" && sample_name == "ttbar") {
+      pm.Push<Hist1D>(axis_dict[target_var+"_ttbar"],
+        base_filters&&n_minus_1_cut,
+        procs, plt_log).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_"+target_var+"_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
     } else if (target_var == "jet_pt[4]") {
       pm.Push<Hist1D>(axis_dict[target_var],
         base_filters&&n_minus_1_cut&&"njet>=5",
@@ -393,13 +468,32 @@ int main(int argc, char *argv[]){
   for (auto & item : map_resolved_cuts) {
     resolved_cuts = resolved_cuts && item.value();
   }
-  // Draw 2D ht vs met
-  pm.Push<Hist2D>(axis_dict["ht"], axis_dict["met"],
-    base_filters&&resolved_cuts, procs, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ht_vs_met_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+
+  //// Draw 2D ht vs met (MC)
+  //pm.Push<Hist2D>(axis_dict["ht"], axis_dict["met_detail"],
+  //  base_filters&&resolved_cuts, procs, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ht_vs_met__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+
+  //// Draw 2D ht vs met (Data)
+  //pm.Push<Hist2D>(axis_dict["ht"], axis_dict["met_detail"],
+  //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ht_vs_met__data__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+
+  //// Draw 2D ht vs mht (Data)
+  //pm.Push<Hist2D>(axis_dict["ht"], axis_dict["mht_detail"],
+  //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ht_vs_mht__data__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+
+  //// Draw 2D ht vs met for signal
+  //for (unsigned isig(0); isig<sigm.size(); isig++){
+  //  vector<shared_ptr<Process> > procs_signal;
+  //  procs_signal.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigm[isig]+",1)", Process::Type::background, 
+  //    sig_colors[isig], attach_folder(sig_base_folder, years, sig_skim_folder, {"*TChiHH_mChi-"+sigm[isig]+"_mLSP-0*.root"}), 
+  //    "stitch"));
+  //  pm.Push<Hist2D>(axis_dict["ht"], axis_dict["met_detail"],
+  //    base_filters&&resolved_cuts, procs_signal, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_sig"+sigm[isig]+"_ht_vs_met_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+  //}
 
   //// Special case for zll. Draw but do not cut on ll_pt
   //if (sample_name=="zll") {
-  //  pm.Push<Hist1D>(Axis(16, 0, 400., "ll_pt[0]", "p_{ll} [GeV]", {75., 150., 200., 300}),
+  //  pm.Push<Hist1D>(Axis(16, 0, 400., "ll_pt[0]", "p_{T}^{ll} [GeV]", {75., 150., 200., 300}),
   //    base_filters&&resolved_cuts,
   //    procs, plt_lin).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ll_pt_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
   //}
@@ -439,6 +533,7 @@ void GetOptions(int argc, char *argv[]){
       {"unblind", no_argument, 0, 0},
       {"sample", required_argument, 0, 0},
       {"year", required_argument, 0, 0},
+      {"lepton_type", required_argument, 0, 0},
       {0, 0, 0, 0}
     };
 
@@ -461,7 +556,9 @@ void GetOptions(int argc, char *argv[]){
         year_string = optarg;
       } else if (optname == "unblind") {
         unblind = true;
-      }else{
+      } else if (optname == "lepton_type") {
+        lepton_type = optarg;
+      } else{
         printf("Bad option! Found option name %s\n", optname.c_str());
       }
       break;

@@ -9,6 +9,8 @@ bool stitch_ht
 ####################   Global   ###################
 int npv
 int npv_good
+int npu_tru
+int npu_tru_mean
 float ht
 float ht5
 float mht
@@ -291,8 +293,8 @@ bool HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60
 #bool HLT_PFMETNoMu140_PFMHTNoMu140_IDTight
 #bool HLT_PFMET90_PFMHT90_IDTight
 #bool HLT_PFMETNoMu90_PFMHTNoMu90_IDTight
-#bool HLT_PFMET100_PFMHT100_IDTight
-#bool HLT_PFMETNoMu100_PFMHTNoMu100_IDTight
+bool HLT_PFMET100_PFMHT100_IDTight
+bool HLT_PFMETNoMu100_PFMHTNoMu100_IDTight
 #bool HLT_PFMET100_PFMHT100_IDTight_PFHT60
 #bool HLT_PFMETNoMu100_PFMHTNoMu100_IDTight_PFHT60
 #bool HLT_PFMET100_PFMHT100_IDTight_CaloBTagCSV_3p1
@@ -303,15 +305,17 @@ bool HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60
 bool HLT_PFJet500
 
 # HT triggers
-#bool HLT_PFHT125
-#bool HLT_PFHT200
-#bool HLT_PFHT300
-#bool HLT_PFHT400
-#bool HLT_PFHT475
-#bool HLT_PFHT600
-#bool HLT_PFHT650
-#bool HLT_PFHT800
-#bool HLT_PFHT900
+bool HLT_PFHT125
+bool HLT_PFHT200
+bool HLT_PFHT250
+bool HLT_PFHT300
+bool HLT_PFHT350
+bool HLT_PFHT400
+bool HLT_PFHT475
+bool HLT_PFHT600
+bool HLT_PFHT650
+bool HLT_PFHT800
+bool HLT_PFHT900
 #bool HLT_PFHT180
 #bool HLT_PFHT370
 #bool HLT_PFHT430
@@ -321,8 +325,6 @@ bool HLT_PFJet500
 #bool HLT_PFHT780
 #bool HLT_PFHT890
 #bool HLT_PFHT1050
-#bool HLT_PFHT250
-#bool HLT_PFHT350
 
 # ZGamma triggers
 bool HLT_Mu17_Photon30_IsoCaloId

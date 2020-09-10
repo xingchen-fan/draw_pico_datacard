@@ -240,7 +240,9 @@ int main(int argc, char *argv[]){
   // sample: search/ttbar/zll/qcd
   // year_string: 2016/2017/2018/run2
   //string production_a = "higgsino_eldorado"; string nanoAodFolder_a = "/net/cms29/cms29r0/pico/NanoAODv5";
-  string production_a = "higgsino_humboldt"; string nanoAodFolder_a = "/net/cms25/cms25r5/pico/NanoAODv5";
+  string higgsino_version = "v3";
+
+  string production_a = "higgsino_humboldt"+higgsino_version; string nanoAodFolder_a = "/net/cms25/cms25r5/pico/NanoAODv5";
   string sample_a = sample_name;
   string year_string_a = year_string;
 
@@ -249,21 +251,26 @@ int main(int argc, char *argv[]){
   //    Define processes, including intersections
   //--------------------------------------------------
   //NamedFunc base_filters = HigUtilities::pass_2016 && "met/mht<2 && met/met_calo<2"; //since pass_fsjets is not quite usable...
-  NamedFunc base_filters = Functions::hem_veto && "pass && met/mht<2 && met/met_calo<2";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
+  NamedFunc base_filters = Functions::hem_veto && "pass && weight < 10";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
 
   NamedFunc search_resolved_cuts = 
+                         "met/mht<2 && met/met_calo<2&&"
                          "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
                          "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
                          "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))";
   NamedFunc ttbar_resolved_cuts = 
-                         "nlep==1&&lep_pt[0]>30&&mt<=100&&njet>=4&&njet<=5&&"
+                         "met/met_calo<5&&"
+                         "nlep==1&&mt<=100&&njet>=4&&njet<=5&&"
                          "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
-                         "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))";
+                         "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))"
+                         && Higfuncs::lead_signal_lepton_pt>30;
   NamedFunc zll_resolved_cuts =
+                         "met/met_calo<5&&"
                          "nlep==2&&njet>=4&&njet<=5&&met<50&&"
                          "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
                          "(nbm==0||nbm==1||nbm==2||nbm>=3)";
   NamedFunc qcd_resolved_cuts =
+                         "met/mht<2 && met/met_calo<2&&"
                          "low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
                          "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
                          "(nbm==0||nbm==1||nbm==2||nbm>=3)";
@@ -293,7 +300,8 @@ int main(int argc, char *argv[]){
   //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*w_years;
   //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig_run2*w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig*w_years;
-  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years;
+  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years;
+  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years*Functions::w_pileup;
 
 
   //    Useful binning definitions

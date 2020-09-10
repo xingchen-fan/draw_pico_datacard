@@ -108,7 +108,7 @@ int main(int argc, char *argv[]){
   // Sample specific kappa
   if (sample_name=="zll" || sample_name=="search") 
     procs.push_back(Process::MakeShared<Baby_pico>("Z#rightarrow#nu#nu", Process::Type::background, 
-      kOrange+1, attach_folder(mc_base_folder, years, mc_skim_folder,{"*_ZJet*.root"}), base_filters));
+      kOrange+1, attach_folder(mc_base_folder, years, mc_skim_folder,{"*_ZJet*.root", "*DYJetsToLL*.root"}), base_filters));
   if (sample_name=="qcd") 
     procs.push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background, 
       colors("other"),attach_folder(mc_base_folder, years, mc_skim_folder,qcdtags), base_filters)); 
