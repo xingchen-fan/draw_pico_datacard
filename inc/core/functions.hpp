@@ -14,6 +14,7 @@ namespace Functions{
   extern const NamedFunc boostedRegionIdx;
   extern const NamedFunc amBoostedRegionIdx;
   extern const NamedFunc ntrub;
+  extern const NamedFunc w_pileup;
 
   bool IsGoodJet(const Baby &b, std::size_t ijet);
 

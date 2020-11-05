@@ -91,14 +91,17 @@ int main(int argc, char *argv[]){
   string qcd_mc_skim_folder = "mc/merged_higmc_higqcd/";
 
   string data_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt";
-  string data_skim_folder = "data/merged_higmc_higloose/";
-  string ttbar_data_skim_folder = "data/merged_higmc_higlep1T/";
-  string zll_data_skim_folder = "data/merged_higmc_higlep2T/";
-  string qcd_data_skim_folder = "data/merged_higmc_higqcd/";
+  string data_skim_folder = "data/merged_higdata_higloose/";
+  string ttbar_data_skim_folder = "data/merged_higdata_higlep1T/";
+  string zll_data_skim_folder = "data/merged_higdata_higlep2T/";
+  string qcd_data_skim_folder = "data/merged_higdata_higqcd/";
 
   //string sig_base_folder = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado/";
   string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/";
-  string sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higloose/";
+  string search_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higloose/";
+  string ttbar_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higlep1T/";
+  string zll_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higlep2T/";
+  string qcd_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higqcd/";
 
   set<int> years;
   HigUtilities::parseYears(year_string, years);
@@ -117,6 +120,10 @@ int main(int argc, char *argv[]){
   //else weight *= w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig*w_years;
   NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years;
+  NamedFunc triggers_data = "1";
+  NamedFunc lepton_triggers = "(HLT_IsoMu24 || HLT_IsoMu27 || HLT_Mu50 || HLT_Ele27_WPTight_Gsf || HLT_Ele35_WPTight_Gsf || HLT_Ele115_CaloIdVT_GsfTrkIdT)";
+  NamedFunc met_triggers = "(HLT_PFMET110_PFMHT110_IDTight || HLT_PFMETNoMu110_PFMHTNoMu110_IDTight || HLT_PFMET120_PFMHT120_IDTight || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight || HLT_PFMET120_PFMHT120_IDTight_PFHT60 || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60)";
+  triggers_data = met_triggers;
 
   // Set MC 
   map<string, set<string>> mctags; 
@@ -169,7 +176,7 @@ int main(int argc, char *argv[]){
 
   if (unblind) {
     qcd_procs.push_back(Process::MakeShared<Baby_pico>("Data", Process::Type::data, kBlack,
-                    attach_folder(data_base_folder, years, qcd_data_skim_folder, {"*.root"}),"stitch"));
+                    attach_folder(data_base_folder, years, qcd_data_skim_folder, {"*.root"}),triggers_data));
   }
 
 
@@ -208,12 +215,23 @@ int main(int argc, char *argv[]){
     ("2 B-hadrons",      Process::Type::background, colors("true_2b"), attach_folder(mc_base_folder, years, qcd_mc_skim_folder, mctags["all"]), "stitch" && Functions::ntrub==2));
 
   vector<shared_ptr<Process> > qcd_data_procs_btag;
-  qcd_data_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. (0b)", Process::Type::background,colors("0b"),
-                  attach_folder(mc_base_folder, years, qcd_mc_skim_folder, mctags["all"]),"stitch&&(nbm==0)"));
-  qcd_data_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. (1b)", Process::Type::background,colors("1b"),
-                  attach_folder(mc_base_folder, years, qcd_mc_skim_folder, mctags["all"]),"stitch&&(nbm==1)"));
-  qcd_data_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. (2b)", Process::Type::background,colors("2b"),
-                  attach_folder(mc_base_folder, years, qcd_mc_skim_folder, mctags["all"]),"stitch&&(nbm==2)"));
+  if (unblind) {
+    qcd_data_procs_btag.push_back(Process::MakeShared<Baby_pico>("0b Data", Process::Type::background, colors("0b"),
+                    attach_folder(data_base_folder, years, qcd_data_skim_folder, {"*.root"}),
+                    "(nbm==0)" && triggers_data
+                    ));
+    qcd_data_procs_btag.push_back(Process::MakeShared<Baby_pico>("1b Data", Process::Type::data, kBlack,
+                    attach_folder(data_base_folder, years, qcd_data_skim_folder, {"*.root"}),
+                    "(nbm==1)" && triggers_data
+                    ));
+  } else {
+    qcd_data_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. (0b)", Process::Type::background,colors("0b"),
+                    attach_folder(mc_base_folder, years, qcd_mc_skim_folder, mctags["all"]),"stitch&&(nbm==0)"));
+    qcd_data_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. (1b)", Process::Type::background,colors("1b"),
+                    attach_folder(mc_base_folder, years, qcd_mc_skim_folder, mctags["all"]),"stitch&&(nbm==1)"));
+    //qcd_data_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. (2b)", Process::Type::background,colors("2b"),
+    //                attach_folder(mc_base_folder, years, qcd_mc_skim_folder, mctags["all"]),"stitch&&(nbm==2)"));
+  }
 
   vector<shared_ptr<Process> > qcd_procs_nisr;
   qcd_procs_nisr.push_back(Process::MakeShared<Baby_pico>("N_{ISR} = 0", Process::Type::background,colors("nisr_0"),
@@ -310,6 +328,21 @@ int main(int argc, char *argv[]){
     "hig_cand_drmax[0]>=1.1&&"
     "(nbm==1)", 
     qcd_procs, plt_lin).Weight(weight).Tag("FixName:syst__qcd_amjj_1b_highdrmax").LuminosityTag(total_luminosity_string);
+
+  // [<m>;no <m>] (0b): Extra plot to compare with AN-2016
+  pm.Push<Hist1D>(Axis(25, 0, 250, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&
+    "low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
+    "hig_cand_drmax[0]<2.2&&hig_cand_dm[0]<40&&"
+    "(nbm==0)", 
+    qcd_procs, plt_lin).Weight(weight).Tag("FixName:syst__qcd_amjj_0b").LuminosityTag(total_luminosity_string);
+  // [<m>;no <m>] (1b): Extra plot to compare with AN-2016
+  pm.Push<Hist1D>(Axis(25, 0, 250, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&
+    "low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
+    "hig_cand_drmax[0]<2.2&&hig_cand_dm[0]<40&&"
+    "(nbm==1)", 
+    qcd_procs, plt_lin).Weight(weight).Tag("FixName:syst__qcd_amjj_1b").LuminosityTag(total_luminosity_string);
 
   // [<m> shapes (true 2b, 3b, 4b);(low, high) drmax]
   pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),

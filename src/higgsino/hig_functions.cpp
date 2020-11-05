@@ -614,160 +614,159 @@ const NamedFunc eff_higtrig("eff_higtrig", [](const Baby &b) -> NamedFunc::Scala
       else if(ht> 800 && ht<=1000 && met> 300 && met<=9999) {eff = 1.000; errup = 0.000; errdown = 0.003;}
       else if(ht>1000 && ht<=9999 && met> 300 && met<=9999) {eff = 0.987; errup = 0.005; errdown = 0.008;}
     }
-    
-  //   //// MET || Ele27 || Ele105 || Ele115
-  //   //// "(trig[13]||trig[33]||trig[14]||trig[15]||trig[30]||trig[31]||trig[22]||trig[40]||trig[24]||trig[41])"
-  // } else if(b.nel()==1 && b.nmu()==0){
-  //   vector<float> lep_pt; 
-  //   if (b.lep_pt()->size()>0) lep_pt.push_back(b.lep_pt()->at(0));
-  //   else lep_pt.push_back(0);
-  //   if(lep_pt[0]>  20 && lep_pt[0]<=  25 && met>=0 && met<= 110) {eff=0.160; errup=0.019; errdown = 0.017;}
-  //   else if(lep_pt[0]> 25 && lep_pt[0]<=  30 && met>=0 && met<= 110) {eff=0.400; errup=0.024; errdown=0.024;}
-  //   else if(lep_pt[0]> 30 && lep_pt[0]<= 110 && met>=0 && met<= 110) {eff=0.728; errup=0.006; errdown=0.006;}
-  //   else if(lep_pt[0]>110 && lep_pt[0]<= 120 && met>=0 && met<= 110) {eff=0.880; errup=0.017; errdown=0.019;}
-  //   else if(lep_pt[0]>120 && lep_pt[0]<=9999 && met>=0 && met<= 110) {eff=0.950; errup=0.003; errdown=0.003;}
-  //   else if(lep_pt[0]> 20 && lep_pt[0]<=  25 && met>110 && met<= 120) {eff=0.244; errup=0.024; errdown=0.023;}
-  //   else if(lep_pt[0]> 25 && lep_pt[0]<=  30 && met>110 && met<= 120) {eff=0.420; errup=0.027; errdown=0.027;}
-  //   else if(lep_pt[0]> 30 && lep_pt[0]<= 110 && met>110 && met<= 120) {eff=0.761; errup=0.007; errdown=0.007;}
-  //   else if(lep_pt[0]>110 && lep_pt[0]<= 120 && met>110 && met<= 120) {eff=0.918; errup=0.015; errdown=0.017;}
-  //   else if(lep_pt[0]>120 && lep_pt[0]<=9999 && met>110 && met<= 120) {eff=0.958; errup=0.003; errdown=0.003;}
-  //   else if(lep_pt[0]> 20 && lep_pt[0]<=  25 && met>120 && met<= 130) {eff=0.331; errup=0.030; errdown=0.029;}
-  //   else if(lep_pt[0]> 25 && lep_pt[0]<=  30 && met>120 && met<= 130) {eff=0.500; errup=0.031; errdown=0.031;}
-  //   else if(lep_pt[0]> 30 && lep_pt[0]<= 110 && met>120 && met<= 130) {eff=0.800; errup=0.007; errdown=0.007;}
-  //   else if(lep_pt[0]>110 && lep_pt[0]<= 120 && met>120 && met<= 130) {eff=0.928; errup=0.015; errdown=0.018;}
-  //   else if(lep_pt[0]>120 && lep_pt[0]<=9999 && met>120 && met<= 130) {eff=0.960; errup=0.003; errdown=0.003;}
-  //   else if(lep_pt[0]> 20 && lep_pt[0]<=  25 && met>130 && met<= 140) {eff=0.491; errup=0.031; errdown=0.031;}
-  //   else if(lep_pt[0]> 25 && lep_pt[0]<=  30 && met>130 && met<= 140) {eff=0.608; errup=0.033; errdown=0.034;}
-  //   else if(lep_pt[0]> 30 && lep_pt[0]<= 110 && met>130 && met<= 140) {eff=0.831; errup=0.007; errdown=0.007;}
-  //   else if(lep_pt[0]>110 && lep_pt[0]<= 120 && met>130 && met<= 140) {eff=0.931; errup=0.016; errdown=0.020;}
-  //   else if(lep_pt[0]>120 && lep_pt[0]<=9999 && met>130 && met<= 140) {eff=0.967; errup=0.003; errdown=0.003;}
-  //   else if(lep_pt[0]> 20 && lep_pt[0]<=  25 && met>140 && met<= 150) {eff=0.573; errup=0.033; errdown=0.033;}
-  //   else if(lep_pt[0]> 25 && lep_pt[0]<=  30 && met>140 && met<= 150) {eff=0.677; errup=0.035; errdown=0.037;}
-  //   else if(lep_pt[0]> 30 && lep_pt[0]<= 110 && met>140 && met<= 150) {eff=0.856; errup=0.007; errdown=0.007;}
-  //   else if(lep_pt[0]>110 && lep_pt[0]<= 120 && met>140 && met<= 150) {eff=0.923; errup=0.018; errdown=0.022;}
-  //   else if(lep_pt[0]>120 && lep_pt[0]<=9999 && met>140 && met<= 150) {eff=0.971; errup=0.003; errdown=0.004;}
-  //   else if(lep_pt[0]> 20 && lep_pt[0]<=  25 && met>150 && met<= 160) {eff=0.643; errup=0.037; errdown=0.039;}
-  //   else if(lep_pt[0]> 25 && lep_pt[0]<=  30 && met> 150 && met<= 160) {eff=0.738; errup=0.033; errdown=0.036;}
-  //   else if(lep_pt[0]> 30 && lep_pt[0]<= 110 && met> 150 && met<= 160) {eff=0.871; errup=0.007; errdown=0.007;}
-  //   else if(lep_pt[0]>110 && lep_pt[0]<= 120 && met> 150 && met<= 160) {eff=0.935; errup=0.016; errdown=0.021;}
-  //   else if(lep_pt[0]>120 && lep_pt[0]<=9999 && met> 150 && met<= 160) {eff=0.982; errup=0.003; errdown=0.003;}
-  //   else if(lep_pt[0]> 20 && lep_pt[0]<=  25 && met> 160 && met<= 170) {eff=0.760; errup=0.034; errdown=0.038;}
-  //   else if(lep_pt[0]> 25 && lep_pt[0]<=  30 && met> 160 && met<= 170) {eff=0.792; errup=0.034; errdown=0.038;}
-  //   else if(lep_pt[0]> 30 && lep_pt[0]<= 110 && met> 160 && met<= 170) {eff=0.910; errup=0.007; errdown=0.007;}
-  //   else if(lep_pt[0]>110 && lep_pt[0]<= 120 && met> 160 && met<= 170) {eff=0.970; errup=0.013; errdown=0.020;}
-  //   else if(lep_pt[0]>120 && lep_pt[0]<=9999 && met> 160 && met<= 170) {eff=0.981; errup=0.003; errdown=0.004;}
-  //   else if(lep_pt[0]> 20 && lep_pt[0]<=  25 && met> 170 && met<= 180) {eff=0.829; errup=0.033; errdown=0.038;}
-  //   else if(lep_pt[0]> 25 && lep_pt[0]<=  30 && met> 170 && met<= 180) {eff=0.863; errup=0.031; errdown=0.037;}
-  //   else if(lep_pt[0]> 30 && lep_pt[0]<= 110 && met> 170 && met<= 180) {eff=0.937; errup=0.006; errdown=0.006;}
-  //   else if(lep_pt[0]>110 && lep_pt[0]<= 120 && met> 170 && met<= 180) {eff=0.988; errup=0.008; errdown=0.016;}
-  //   else if(lep_pt[0]>120 && lep_pt[0]<=9999 && met> 170 && met<= 180) {eff=0.982; errup=0.003; errdown=0.004;}
-  //   else if(lep_pt[0]> 20 && lep_pt[0]<=  25 && met> 180 && met<= 190) {eff=0.761; errup=0.041; errdown=0.046;}
-  //   else if(lep_pt[0]> 25 && lep_pt[0]<=  30 && met> 180 && met<= 190) {eff=0.863; errup=0.032; errdown=0.038;}
-  //   else if(lep_pt[0]> 30 && lep_pt[0]<= 110 && met> 180 && met<= 190) {eff=0.939; errup=0.006; errdown=0.007;}
-  //   else if(lep_pt[0]>110 && lep_pt[0]<= 120 && met> 180 && met<= 190) {eff=0.969; errup=0.015; errdown=0.024;}
-  //   else if(lep_pt[0]>120 && lep_pt[0]<=9999 && met> 180 && met<= 190) {eff=0.984; errup=0.003; errdown=0.004;}
-  //   else if(lep_pt[0]> 20 && lep_pt[0]<=  25 && met> 190 && met<= 200) {eff=0.892; errup=0.033; errdown=0.042;}
-  //   else if(lep_pt[0]> 25 && lep_pt[0]<=  30 && met> 190 && met<= 200) {eff=0.902; errup=0.030; errdown=0.039;}
-  //   else if(lep_pt[0]> 30 && lep_pt[0]<= 110 && met> 190 && met<= 200) {eff=0.956; errup=0.006; errdown=0.006;}
-  //   else if(lep_pt[0]>110 && lep_pt[0]<= 120 && met> 190 && met<= 200) {eff=0.983; errup=0.011; errdown=0.022;}
-  //   else if(lep_pt[0]>120 && lep_pt[0]<=9999 && met> 190 && met<= 200) {eff=0.993; errup=0.002; errdown=0.003;}
-  //   else if(lep_pt[0]> 20 && lep_pt[0]<=  25 && met> 200 && met<= 210) {eff=0.950; errup=0.021; errdown=0.032;}
-  //   else if(lep_pt[0]> 25 && lep_pt[0]<=  30 && met> 200 && met<= 210) {eff=0.951; errup=0.023; errdown=0.037;}
-  //   else if(lep_pt[0]> 30 && lep_pt[0]<= 110 && met> 200 && met<= 210) {eff=0.973; errup=0.005; errdown=0.005;}
-  //   else if(lep_pt[0]>110 && lep_pt[0]<= 120 && met> 200 && met<= 210) {eff=1.000; errup=0.000; errdown=0.018;}
-  //   else if(lep_pt[0]>120 && lep_pt[0]<=9999 && met> 200 && met<= 210) {eff=0.985; errup=0.003; errdown=0.004;}
-  //   else if(lep_pt[0]> 20 && lep_pt[0]<=  25 && met> 210 && met<=9999) {eff=0.974; errup=0.005; errdown=0.006;}
-  //   else if(lep_pt[0]> 25 && lep_pt[0]<=  30 && met> 210 && met<=9999) {eff=0.981; errup=0.004; errdown=0.005;}
-  //   else if(lep_pt[0]> 30 && lep_pt[0]<= 110 && met> 210 && met<=9999) {eff=0.992; errup=0.001; errdown=0.001;}
-  //   else if(lep_pt[0]>110 && lep_pt[0]<= 120 && met> 210 && met<=9999) {eff=0.997; errup=0.002; errdown=0.003;}
-  //   else if(lep_pt[0]>120 && lep_pt[0]<=9999 && met> 210 && met<=9999) {eff=0.996; errup=0.001; errdown=0.001;}
-    
-  //   //// MET || Mu24 || Mu50
-  //   //// "(trig[13]||trig[33]||trig[14]||trig[15]||trig[30]||trig[31]||trig[19]||trig[55]||trig[21])"
-  // } else if(b.nel()==0 && b.nmu()==1){
-  //   vector<float> lep_pt; 
-  //   if (b.lep_pt()->size()>0) lep_pt.push_back(b.lep_pt()->at(0));
-  //   else lep_pt.push_back(0);
-  //   if(lep_pt[0]>  20 && lep_pt[0]<=  25 && met>= 0 && met<= 110) {eff=0.271; errup=0.017; errdown = 0.016;}
-  //   else if(lep_pt[0]>25 && lep_pt[0]<=  30 && met>= 0 && met<= 110) {eff=0.725; errup=0.017; errdown=0.018;}
-  //   else if(lep_pt[0]>30 && lep_pt[0]<=  50 && met>= 0 && met<= 110) {eff=0.814; errup=0.008; errdown=0.009;}
-  //   else if(lep_pt[0]>50 && lep_pt[0]<=9999 && met>= 0 && met<= 110) {eff=0.964; errup=0.002; errdown=0.002;}
-  //   else if(lep_pt[0]>20 && lep_pt[0]<=  25 && met> 110 && met<= 120) {eff=0.363; errup=0.020; errdown=0.020;}
-  //   else if(lep_pt[0]>25 && lep_pt[0]<=  30 && met> 110 && met<= 120) {eff=0.755; errup=0.018; errdown=0.019;}
-  //   else if(lep_pt[0]>30 && lep_pt[0]<=  50 && met> 110 && met<= 120) {eff=0.842; errup=0.009; errdown=0.009;}
-  //   else if(lep_pt[0]>50 && lep_pt[0]<=9999 && met> 110 && met<= 120) {eff=0.969; errup=0.002; errdown=0.002;}
-  //   else if(lep_pt[0]>20 && lep_pt[0]<=  25 && met> 120 && met<= 130) {eff=0.452; errup=0.022; errdown=0.022;}
-  //   else if(lep_pt[0]>25 && lep_pt[0]<=  30 && met> 120 && met<= 130) {eff=0.824; errup=0.018; errdown=0.019;}
-  //   else if(lep_pt[0]>30 && lep_pt[0]<=  50 && met> 120 && met<= 130) {eff=0.869; errup=0.009; errdown=0.009;}
-  //   else if(lep_pt[0]>50 && lep_pt[0]<=9999 && met> 120 && met<= 130) {eff=0.971; errup=0.002; errdown=0.002;}
-  //   else if(lep_pt[0]>20 && lep_pt[0]<=  25 && met> 130 && met<= 140) {eff=0.590; errup=0.025; errdown=0.025;}
-  //   else if(lep_pt[0]>25 && lep_pt[0]<=  30 && met> 130 && met<= 140) {eff=0.875; errup=0.017; errdown=0.019;}
-  //   else if(lep_pt[0]>30 && lep_pt[0]<=  50 && met> 130 && met<= 140) {eff=0.904; errup=0.008; errdown=0.009;}
-  //   else if(lep_pt[0]>50 && lep_pt[0]<=9999 && met> 130 && met<= 140) {eff=0.972; errup=0.002; errdown=0.002;}
-  //   else if(lep_pt[0]>20 && lep_pt[0]<=  25 && met> 140 && met<= 150) {eff=0.660; errup=0.026; errdown=0.027;}
-  //   else if(lep_pt[0]>25 && lep_pt[0]<=  30 && met> 140 && met<= 150) {eff=0.891; errup=0.017; errdown=0.019;}
-  //   else if(lep_pt[0]>30 && lep_pt[0]<=  50 && met> 140 && met<= 150) {eff=0.938; errup=0.007; errdown=0.008;}
-  //   else if(lep_pt[0]>50 && lep_pt[0]<=9999 && met> 140 && met<= 150) {eff=0.980; errup=0.002; errdown=0.002;}
-  //   else if(lep_pt[0]>20 && lep_pt[0]<=  25 && met> 150 && met<= 160) {eff=0.778; errup=0.024; errdown=0.026;}
-  //   else if(lep_pt[0]>25 && lep_pt[0]<=  30 && met> 150 && met<= 160) {eff=0.915; errup=0.016; errdown=0.019;}
-  //   else if(lep_pt[0]>30 && lep_pt[0]<=  50 && met> 150 && met<= 160) {eff=0.940; errup=0.008; errdown=0.009;}
-  //   else if(lep_pt[0]>50 && lep_pt[0]<=9999 && met> 150 && met<= 160) {eff=0.984; errup=0.002; errdown=0.002;}
-  //   else if(lep_pt[0]>20 && lep_pt[0]<=  25 && met> 160 && met<= 170) {eff=0.798; errup=0.026; errdown=0.029;}
-  //   else if(lep_pt[0]>25 && lep_pt[0]<=  30 && met> 160 && met<= 170) {eff=0.946; errup=0.015; errdown=0.020;}
-  //   else if(lep_pt[0]>30 && lep_pt[0]<=  50 && met> 160 && met<= 170) {eff=0.967; errup=0.006; errdown=0.008;}
-  //   else if(lep_pt[0]>50 && lep_pt[0]<=9999 && met> 160 && met<= 170) {eff=0.991; errup=0.002; errdown=0.002;}
-  //   else if(lep_pt[0]>20 && lep_pt[0]<=  25 && met> 170 && met<= 180) {eff=0.885; errup=0.022; errdown=0.025;}
-  //   else if(lep_pt[0]>25 && lep_pt[0]<=  30 && met> 170 && met<= 180) {eff=0.937; errup=0.016; errdown=0.021;}
-  //   else if(lep_pt[0]>30 && lep_pt[0]<=  50 && met> 170 && met<= 180) {eff=0.977; errup=0.006; errdown=0.007;}
-  //   else if(lep_pt[0]>50 && lep_pt[0]<=9999 && met> 170 && met<= 180) {eff=0.987; errup=0.002; errdown=0.002;}
-  //   else if(lep_pt[0]>20 && lep_pt[0]<=  25 && met> 180 && met<= 190) {eff=0.927; errup=0.019; errdown=0.024;}
-  //   else if(lep_pt[0]>25 && lep_pt[0]<=  30 && met> 180 && met<= 190) {eff=0.958; errup=0.014; errdown=0.019;}
-  //   else if(lep_pt[0]>30 && lep_pt[0]<=  50 && met> 180 && met<= 190) {eff=0.974; errup=0.006; errdown=0.008;}
-  //   else if(lep_pt[0]>50 && lep_pt[0]<=9999 && met> 180 && met<= 190) {eff=0.992; errup=0.002; errdown=0.002;}
-  //   else if(lep_pt[0]>20 && lep_pt[0]<=  25 && met> 190 && met<= 200) {eff=0.921; errup=0.019; errdown=0.024;}
-  //   else if(lep_pt[0]>25 && lep_pt[0]<=  30 && met> 190 && met<= 200) {eff=0.965; errup=0.014; errdown=0.020;}
-  //   else if(lep_pt[0]>30 && lep_pt[0]<=  50 && met> 190 && met<= 200) {eff=0.991; errup=0.004; errdown=0.006;}
-  //   else if(lep_pt[0]>50 && lep_pt[0]<=9999 && met> 190 && met<= 200) {eff=0.991; errup=0.002; errdown=0.002;}
-  //   else if(lep_pt[0]>20 && lep_pt[0]<=  25 && met> 200 && met<= 210) {eff=0.926; errup=0.022; errdown=0.028;}
-  //   else if(lep_pt[0]>25 && lep_pt[0]<=  30 && met> 200 && met<= 210) {eff=0.994; errup=0.005; errdown=0.015;}
-  //   else if(lep_pt[0]>30 && lep_pt[0]<=  50 && met> 200 && met<= 210) {eff=0.994; errup=0.003; errdown=0.006;}
-  //   else if(lep_pt[0]>50 && lep_pt[0]<=9999 && met> 200 && met<= 210) {eff=0.994; errup=0.002; errdown=0.002;}
-  //   else if(lep_pt[0]>20 && lep_pt[0]<=  25 && met> 210 && met<=9999) {eff=0.981; errup=0.004; errdown=0.004;}
-  //   else if(lep_pt[0]>25 && lep_pt[0]<=  30 && met> 210 && met<=9999) {eff=0.994; errup=0.002; errdown=0.003;}
-  //   else if(lep_pt[0]>30 && lep_pt[0]<=  50 && met> 210 && met<=9999) {eff=0.996; errup=0.001; errdown=0.001;}
-  //   else if(lep_pt[0]>50 && lep_pt[0]<=9999 && met> 210 && met<=9999) {eff=0.997; errup=0.000; errdown=0.000;}
-    
-  //   //// Ele27 || Ele105 || Ele115
-  //   //// "(trig[22]||trig[40]||trig[24]||trig[41])"
-  // } else if(b.nel()==2 && b.nmu()==0){
-  //   vector<float> lep_pt; 
-  //   if (b.lep_pt()->size()>0) lep_pt.push_back(b.lep_pt()->at(0));
-  //   else lep_pt.push_back(0);
-  //   if(lep_pt[0]>  40 && lep_pt[0]<=  45) {eff = 0.944; errup = 0.015; errdown = 0.019;}
-  //   else if(lep_pt[0]>  45 && lep_pt[0]<=  50) {eff = 0.910; errup = 0.015; errdown = 0.017;}
-  //   else if(lep_pt[0]>  50 && lep_pt[0]<=  55) {eff = 0.927; errup = 0.013; errdown = 0.015;}
-  //   else if(lep_pt[0]>  55 && lep_pt[0]<=  60) {eff = 0.912; errup = 0.013; errdown = 0.015;}
-  //   else if(lep_pt[0]>  60 && lep_pt[0]<=  65) {eff = 0.941; errup = 0.011; errdown = 0.013;}
-  //   else if(lep_pt[0]>  65 && lep_pt[0]<=  70) {eff = 0.901; errup = 0.014; errdown = 0.016;}
-  //   else if(lep_pt[0]>  70 && lep_pt[0]<=  75) {eff = 0.921; errup = 0.013; errdown = 0.016;}
-  //   else if(lep_pt[0]>  75 && lep_pt[0]<=  80) {eff = 0.947; errup = 0.011; errdown = 0.014;}
-  //   else if(lep_pt[0]>  80 && lep_pt[0]<=  85) {eff = 0.954; errup = 0.011; errdown = 0.013;}
-  //   else if(lep_pt[0]>  85 && lep_pt[0]<=  90) {eff = 0.939; errup = 0.012; errdown = 0.014;}
-  //   else if(lep_pt[0]>  90 && lep_pt[0]<=  95) {eff = 0.940; errup = 0.012; errdown = 0.015;}
-  //   else if(lep_pt[0]>  95 && lep_pt[0]<= 100) {eff = 0.932; errup = 0.014; errdown = 0.017;}
-  //   else if(lep_pt[0]> 100 && lep_pt[0]<= 105) {eff = 0.934; errup = 0.014; errdown = 0.017;}
-  //   else if(lep_pt[0]> 105 && lep_pt[0]<= 110) {eff = 0.965; errup = 0.010; errdown = 0.014;}
-  //   else if(lep_pt[0]> 110 && lep_pt[0]<=9999) {eff = 0.994; errup = 0.001; errdown = 0.001;}
-    
-  //   //// Mu24 || Mu50
-  //   //// "(trig[19]||trig[55]||trig[21])"
-  // } else if(b.nel()==0 && b.nmu()==2){
-  //   vector<float> lep_pt; 
-  //   if (b.lep_pt()->size()>0) lep_pt.push_back(b.lep_pt()->at(0));
-  //   else lep_pt.push_back(0);
-  //   if(lep_pt[0]>  40 && lep_pt[0]<=  45) {eff = 0.959; errup = 0.010; errdown = 0.012;}
-  //   if(lep_pt[0]>  45 && lep_pt[0]<=  50) {eff = 0.970; errup = 0.006; errdown = 0.007;}
-  //   if(lep_pt[0]>  50 && lep_pt[0]<=9999) {eff = 0.982; errup = 0.000; errdown = 0.000;}
+     //// MET || Ele27 || Ele105 || Ele115
+     //// "(trig[13]||trig[33]||trig[14]||trig[15]||trig[30]||trig[31]||trig[22]||trig[40]||trig[24]||trig[41])"
+   } else if(b.nel()==1 && b.nmu()==0){
+     vector<float> lep_pt; 
+     if (b.lep_pt()->size()>0) lep_pt.push_back(b.lep_pt()->at(0));
+     else lep_pt.push_back(0);
+     if(lep_pt[0]>  20 && lep_pt[0]<=  25 && met>=0 && met<= 110) {eff=0.160; errup=0.019; errdown = 0.017;}
+     else if(lep_pt[0]> 25 && lep_pt[0]<=  30 && met>=0 && met<= 110) {eff=0.400; errup=0.024; errdown=0.024;}
+     else if(lep_pt[0]> 30 && lep_pt[0]<= 110 && met>=0 && met<= 110) {eff=0.728; errup=0.006; errdown=0.006;}
+     else if(lep_pt[0]>110 && lep_pt[0]<= 120 && met>=0 && met<= 110) {eff=0.880; errup=0.017; errdown=0.019;}
+     else if(lep_pt[0]>120 && lep_pt[0]<=9999 && met>=0 && met<= 110) {eff=0.950; errup=0.003; errdown=0.003;}
+     else if(lep_pt[0]> 20 && lep_pt[0]<=  25 && met>110 && met<= 120) {eff=0.244; errup=0.024; errdown=0.023;}
+     else if(lep_pt[0]> 25 && lep_pt[0]<=  30 && met>110 && met<= 120) {eff=0.420; errup=0.027; errdown=0.027;}
+     else if(lep_pt[0]> 30 && lep_pt[0]<= 110 && met>110 && met<= 120) {eff=0.761; errup=0.007; errdown=0.007;}
+     else if(lep_pt[0]>110 && lep_pt[0]<= 120 && met>110 && met<= 120) {eff=0.918; errup=0.015; errdown=0.017;}
+     else if(lep_pt[0]>120 && lep_pt[0]<=9999 && met>110 && met<= 120) {eff=0.958; errup=0.003; errdown=0.003;}
+     else if(lep_pt[0]> 20 && lep_pt[0]<=  25 && met>120 && met<= 130) {eff=0.331; errup=0.030; errdown=0.029;}
+     else if(lep_pt[0]> 25 && lep_pt[0]<=  30 && met>120 && met<= 130) {eff=0.500; errup=0.031; errdown=0.031;}
+     else if(lep_pt[0]> 30 && lep_pt[0]<= 110 && met>120 && met<= 130) {eff=0.800; errup=0.007; errdown=0.007;}
+     else if(lep_pt[0]>110 && lep_pt[0]<= 120 && met>120 && met<= 130) {eff=0.928; errup=0.015; errdown=0.018;}
+     else if(lep_pt[0]>120 && lep_pt[0]<=9999 && met>120 && met<= 130) {eff=0.960; errup=0.003; errdown=0.003;}
+     else if(lep_pt[0]> 20 && lep_pt[0]<=  25 && met>130 && met<= 140) {eff=0.491; errup=0.031; errdown=0.031;}
+     else if(lep_pt[0]> 25 && lep_pt[0]<=  30 && met>130 && met<= 140) {eff=0.608; errup=0.033; errdown=0.034;}
+     else if(lep_pt[0]> 30 && lep_pt[0]<= 110 && met>130 && met<= 140) {eff=0.831; errup=0.007; errdown=0.007;}
+     else if(lep_pt[0]>110 && lep_pt[0]<= 120 && met>130 && met<= 140) {eff=0.931; errup=0.016; errdown=0.020;}
+     else if(lep_pt[0]>120 && lep_pt[0]<=9999 && met>130 && met<= 140) {eff=0.967; errup=0.003; errdown=0.003;}
+     else if(lep_pt[0]> 20 && lep_pt[0]<=  25 && met>140 && met<= 150) {eff=0.573; errup=0.033; errdown=0.033;}
+     else if(lep_pt[0]> 25 && lep_pt[0]<=  30 && met>140 && met<= 150) {eff=0.677; errup=0.035; errdown=0.037;}
+     else if(lep_pt[0]> 30 && lep_pt[0]<= 110 && met>140 && met<= 150) {eff=0.856; errup=0.007; errdown=0.007;}
+     else if(lep_pt[0]>110 && lep_pt[0]<= 120 && met>140 && met<= 150) {eff=0.923; errup=0.018; errdown=0.022;}
+     else if(lep_pt[0]>120 && lep_pt[0]<=9999 && met>140 && met<= 150) {eff=0.971; errup=0.003; errdown=0.004;}
+     else if(lep_pt[0]> 20 && lep_pt[0]<=  25 && met>150 && met<= 160) {eff=0.643; errup=0.037; errdown=0.039;}
+     else if(lep_pt[0]> 25 && lep_pt[0]<=  30 && met> 150 && met<= 160) {eff=0.738; errup=0.033; errdown=0.036;}
+     else if(lep_pt[0]> 30 && lep_pt[0]<= 110 && met> 150 && met<= 160) {eff=0.871; errup=0.007; errdown=0.007;}
+     else if(lep_pt[0]>110 && lep_pt[0]<= 120 && met> 150 && met<= 160) {eff=0.935; errup=0.016; errdown=0.021;}
+     else if(lep_pt[0]>120 && lep_pt[0]<=9999 && met> 150 && met<= 160) {eff=0.982; errup=0.003; errdown=0.003;}
+     else if(lep_pt[0]> 20 && lep_pt[0]<=  25 && met> 160 && met<= 170) {eff=0.760; errup=0.034; errdown=0.038;}
+     else if(lep_pt[0]> 25 && lep_pt[0]<=  30 && met> 160 && met<= 170) {eff=0.792; errup=0.034; errdown=0.038;}
+     else if(lep_pt[0]> 30 && lep_pt[0]<= 110 && met> 160 && met<= 170) {eff=0.910; errup=0.007; errdown=0.007;}
+     else if(lep_pt[0]>110 && lep_pt[0]<= 120 && met> 160 && met<= 170) {eff=0.970; errup=0.013; errdown=0.020;}
+     else if(lep_pt[0]>120 && lep_pt[0]<=9999 && met> 160 && met<= 170) {eff=0.981; errup=0.003; errdown=0.004;}
+     else if(lep_pt[0]> 20 && lep_pt[0]<=  25 && met> 170 && met<= 180) {eff=0.829; errup=0.033; errdown=0.038;}
+     else if(lep_pt[0]> 25 && lep_pt[0]<=  30 && met> 170 && met<= 180) {eff=0.863; errup=0.031; errdown=0.037;}
+     else if(lep_pt[0]> 30 && lep_pt[0]<= 110 && met> 170 && met<= 180) {eff=0.937; errup=0.006; errdown=0.006;}
+     else if(lep_pt[0]>110 && lep_pt[0]<= 120 && met> 170 && met<= 180) {eff=0.988; errup=0.008; errdown=0.016;}
+     else if(lep_pt[0]>120 && lep_pt[0]<=9999 && met> 170 && met<= 180) {eff=0.982; errup=0.003; errdown=0.004;}
+     else if(lep_pt[0]> 20 && lep_pt[0]<=  25 && met> 180 && met<= 190) {eff=0.761; errup=0.041; errdown=0.046;}
+     else if(lep_pt[0]> 25 && lep_pt[0]<=  30 && met> 180 && met<= 190) {eff=0.863; errup=0.032; errdown=0.038;}
+     else if(lep_pt[0]> 30 && lep_pt[0]<= 110 && met> 180 && met<= 190) {eff=0.939; errup=0.006; errdown=0.007;}
+     else if(lep_pt[0]>110 && lep_pt[0]<= 120 && met> 180 && met<= 190) {eff=0.969; errup=0.015; errdown=0.024;}
+     else if(lep_pt[0]>120 && lep_pt[0]<=9999 && met> 180 && met<= 190) {eff=0.984; errup=0.003; errdown=0.004;}
+     else if(lep_pt[0]> 20 && lep_pt[0]<=  25 && met> 190 && met<= 200) {eff=0.892; errup=0.033; errdown=0.042;}
+     else if(lep_pt[0]> 25 && lep_pt[0]<=  30 && met> 190 && met<= 200) {eff=0.902; errup=0.030; errdown=0.039;}
+     else if(lep_pt[0]> 30 && lep_pt[0]<= 110 && met> 190 && met<= 200) {eff=0.956; errup=0.006; errdown=0.006;}
+     else if(lep_pt[0]>110 && lep_pt[0]<= 120 && met> 190 && met<= 200) {eff=0.983; errup=0.011; errdown=0.022;}
+     else if(lep_pt[0]>120 && lep_pt[0]<=9999 && met> 190 && met<= 200) {eff=0.993; errup=0.002; errdown=0.003;}
+     else if(lep_pt[0]> 20 && lep_pt[0]<=  25 && met> 200 && met<= 210) {eff=0.950; errup=0.021; errdown=0.032;}
+     else if(lep_pt[0]> 25 && lep_pt[0]<=  30 && met> 200 && met<= 210) {eff=0.951; errup=0.023; errdown=0.037;}
+     else if(lep_pt[0]> 30 && lep_pt[0]<= 110 && met> 200 && met<= 210) {eff=0.973; errup=0.005; errdown=0.005;}
+     else if(lep_pt[0]>110 && lep_pt[0]<= 120 && met> 200 && met<= 210) {eff=1.000; errup=0.000; errdown=0.018;}
+     else if(lep_pt[0]>120 && lep_pt[0]<=9999 && met> 200 && met<= 210) {eff=0.985; errup=0.003; errdown=0.004;}
+     else if(lep_pt[0]> 20 && lep_pt[0]<=  25 && met> 210 && met<=9999) {eff=0.974; errup=0.005; errdown=0.006;}
+     else if(lep_pt[0]> 25 && lep_pt[0]<=  30 && met> 210 && met<=9999) {eff=0.981; errup=0.004; errdown=0.005;}
+     else if(lep_pt[0]> 30 && lep_pt[0]<= 110 && met> 210 && met<=9999) {eff=0.992; errup=0.001; errdown=0.001;}
+     else if(lep_pt[0]>110 && lep_pt[0]<= 120 && met> 210 && met<=9999) {eff=0.997; errup=0.002; errdown=0.003;}
+     else if(lep_pt[0]>120 && lep_pt[0]<=9999 && met> 210 && met<=9999) {eff=0.996; errup=0.001; errdown=0.001;}
+  
+     //// MET || Mu24 || Mu50
+     //// "(trig[13]||trig[33]||trig[14]||trig[15]||trig[30]||trig[31]||trig[19]||trig[55]||trig[21])"
+   } else if(b.nel()==0 && b.nmu()==1){
+     vector<float> lep_pt; 
+     if (b.lep_pt()->size()>0) lep_pt.push_back(b.lep_pt()->at(0));
+     else lep_pt.push_back(0);
+     if(lep_pt[0]>  20 && lep_pt[0]<=  25 && met>= 0 && met<= 110) {eff=0.271; errup=0.017; errdown = 0.016;}
+     else if(lep_pt[0]>25 && lep_pt[0]<=  30 && met>= 0 && met<= 110) {eff=0.725; errup=0.017; errdown=0.018;}
+     else if(lep_pt[0]>30 && lep_pt[0]<=  50 && met>= 0 && met<= 110) {eff=0.814; errup=0.008; errdown=0.009;}
+     else if(lep_pt[0]>50 && lep_pt[0]<=9999 && met>= 0 && met<= 110) {eff=0.964; errup=0.002; errdown=0.002;}
+     else if(lep_pt[0]>20 && lep_pt[0]<=  25 && met> 110 && met<= 120) {eff=0.363; errup=0.020; errdown=0.020;}
+     else if(lep_pt[0]>25 && lep_pt[0]<=  30 && met> 110 && met<= 120) {eff=0.755; errup=0.018; errdown=0.019;}
+     else if(lep_pt[0]>30 && lep_pt[0]<=  50 && met> 110 && met<= 120) {eff=0.842; errup=0.009; errdown=0.009;}
+     else if(lep_pt[0]>50 && lep_pt[0]<=9999 && met> 110 && met<= 120) {eff=0.969; errup=0.002; errdown=0.002;}
+     else if(lep_pt[0]>20 && lep_pt[0]<=  25 && met> 120 && met<= 130) {eff=0.452; errup=0.022; errdown=0.022;}
+     else if(lep_pt[0]>25 && lep_pt[0]<=  30 && met> 120 && met<= 130) {eff=0.824; errup=0.018; errdown=0.019;}
+     else if(lep_pt[0]>30 && lep_pt[0]<=  50 && met> 120 && met<= 130) {eff=0.869; errup=0.009; errdown=0.009;}
+     else if(lep_pt[0]>50 && lep_pt[0]<=9999 && met> 120 && met<= 130) {eff=0.971; errup=0.002; errdown=0.002;}
+     else if(lep_pt[0]>20 && lep_pt[0]<=  25 && met> 130 && met<= 140) {eff=0.590; errup=0.025; errdown=0.025;}
+     else if(lep_pt[0]>25 && lep_pt[0]<=  30 && met> 130 && met<= 140) {eff=0.875; errup=0.017; errdown=0.019;}
+     else if(lep_pt[0]>30 && lep_pt[0]<=  50 && met> 130 && met<= 140) {eff=0.904; errup=0.008; errdown=0.009;}
+     else if(lep_pt[0]>50 && lep_pt[0]<=9999 && met> 130 && met<= 140) {eff=0.972; errup=0.002; errdown=0.002;}
+     else if(lep_pt[0]>20 && lep_pt[0]<=  25 && met> 140 && met<= 150) {eff=0.660; errup=0.026; errdown=0.027;}
+     else if(lep_pt[0]>25 && lep_pt[0]<=  30 && met> 140 && met<= 150) {eff=0.891; errup=0.017; errdown=0.019;}
+     else if(lep_pt[0]>30 && lep_pt[0]<=  50 && met> 140 && met<= 150) {eff=0.938; errup=0.007; errdown=0.008;}
+     else if(lep_pt[0]>50 && lep_pt[0]<=9999 && met> 140 && met<= 150) {eff=0.980; errup=0.002; errdown=0.002;}
+     else if(lep_pt[0]>20 && lep_pt[0]<=  25 && met> 150 && met<= 160) {eff=0.778; errup=0.024; errdown=0.026;}
+     else if(lep_pt[0]>25 && lep_pt[0]<=  30 && met> 150 && met<= 160) {eff=0.915; errup=0.016; errdown=0.019;}
+     else if(lep_pt[0]>30 && lep_pt[0]<=  50 && met> 150 && met<= 160) {eff=0.940; errup=0.008; errdown=0.009;}
+     else if(lep_pt[0]>50 && lep_pt[0]<=9999 && met> 150 && met<= 160) {eff=0.984; errup=0.002; errdown=0.002;}
+     else if(lep_pt[0]>20 && lep_pt[0]<=  25 && met> 160 && met<= 170) {eff=0.798; errup=0.026; errdown=0.029;}
+     else if(lep_pt[0]>25 && lep_pt[0]<=  30 && met> 160 && met<= 170) {eff=0.946; errup=0.015; errdown=0.020;}
+     else if(lep_pt[0]>30 && lep_pt[0]<=  50 && met> 160 && met<= 170) {eff=0.967; errup=0.006; errdown=0.008;}
+     else if(lep_pt[0]>50 && lep_pt[0]<=9999 && met> 160 && met<= 170) {eff=0.991; errup=0.002; errdown=0.002;}
+     else if(lep_pt[0]>20 && lep_pt[0]<=  25 && met> 170 && met<= 180) {eff=0.885; errup=0.022; errdown=0.025;}
+     else if(lep_pt[0]>25 && lep_pt[0]<=  30 && met> 170 && met<= 180) {eff=0.937; errup=0.016; errdown=0.021;}
+     else if(lep_pt[0]>30 && lep_pt[0]<=  50 && met> 170 && met<= 180) {eff=0.977; errup=0.006; errdown=0.007;}
+     else if(lep_pt[0]>50 && lep_pt[0]<=9999 && met> 170 && met<= 180) {eff=0.987; errup=0.002; errdown=0.002;}
+     else if(lep_pt[0]>20 && lep_pt[0]<=  25 && met> 180 && met<= 190) {eff=0.927; errup=0.019; errdown=0.024;}
+     else if(lep_pt[0]>25 && lep_pt[0]<=  30 && met> 180 && met<= 190) {eff=0.958; errup=0.014; errdown=0.019;}
+     else if(lep_pt[0]>30 && lep_pt[0]<=  50 && met> 180 && met<= 190) {eff=0.974; errup=0.006; errdown=0.008;}
+     else if(lep_pt[0]>50 && lep_pt[0]<=9999 && met> 180 && met<= 190) {eff=0.992; errup=0.002; errdown=0.002;}
+     else if(lep_pt[0]>20 && lep_pt[0]<=  25 && met> 190 && met<= 200) {eff=0.921; errup=0.019; errdown=0.024;}
+     else if(lep_pt[0]>25 && lep_pt[0]<=  30 && met> 190 && met<= 200) {eff=0.965; errup=0.014; errdown=0.020;}
+     else if(lep_pt[0]>30 && lep_pt[0]<=  50 && met> 190 && met<= 200) {eff=0.991; errup=0.004; errdown=0.006;}
+     else if(lep_pt[0]>50 && lep_pt[0]<=9999 && met> 190 && met<= 200) {eff=0.991; errup=0.002; errdown=0.002;}
+     else if(lep_pt[0]>20 && lep_pt[0]<=  25 && met> 200 && met<= 210) {eff=0.926; errup=0.022; errdown=0.028;}
+     else if(lep_pt[0]>25 && lep_pt[0]<=  30 && met> 200 && met<= 210) {eff=0.994; errup=0.005; errdown=0.015;}
+     else if(lep_pt[0]>30 && lep_pt[0]<=  50 && met> 200 && met<= 210) {eff=0.994; errup=0.003; errdown=0.006;}
+     else if(lep_pt[0]>50 && lep_pt[0]<=9999 && met> 200 && met<= 210) {eff=0.994; errup=0.002; errdown=0.002;}
+     else if(lep_pt[0]>20 && lep_pt[0]<=  25 && met> 210 && met<=9999) {eff=0.981; errup=0.004; errdown=0.004;}
+     else if(lep_pt[0]>25 && lep_pt[0]<=  30 && met> 210 && met<=9999) {eff=0.994; errup=0.002; errdown=0.003;}
+     else if(lep_pt[0]>30 && lep_pt[0]<=  50 && met> 210 && met<=9999) {eff=0.996; errup=0.001; errdown=0.001;}
+     else if(lep_pt[0]>50 && lep_pt[0]<=9999 && met> 210 && met<=9999) {eff=0.997; errup=0.000; errdown=0.000;}
+  
+     //// Ele27 || Ele105 || Ele115
+     //// "(trig[22]||trig[40]||trig[24]||trig[41])"
+   } else if(b.nel()==2 && b.nmu()==0){
+     vector<float> lep_pt; 
+     if (b.lep_pt()->size()>0) lep_pt.push_back(b.lep_pt()->at(0));
+     else lep_pt.push_back(0);
+     if(lep_pt[0]>  40 && lep_pt[0]<=  45) {eff = 0.944; errup = 0.015; errdown = 0.019;}
+     else if(lep_pt[0]>  45 && lep_pt[0]<=  50) {eff = 0.910; errup = 0.015; errdown = 0.017;}
+     else if(lep_pt[0]>  50 && lep_pt[0]<=  55) {eff = 0.927; errup = 0.013; errdown = 0.015;}
+     else if(lep_pt[0]>  55 && lep_pt[0]<=  60) {eff = 0.912; errup = 0.013; errdown = 0.015;}
+     else if(lep_pt[0]>  60 && lep_pt[0]<=  65) {eff = 0.941; errup = 0.011; errdown = 0.013;}
+     else if(lep_pt[0]>  65 && lep_pt[0]<=  70) {eff = 0.901; errup = 0.014; errdown = 0.016;}
+     else if(lep_pt[0]>  70 && lep_pt[0]<=  75) {eff = 0.921; errup = 0.013; errdown = 0.016;}
+     else if(lep_pt[0]>  75 && lep_pt[0]<=  80) {eff = 0.947; errup = 0.011; errdown = 0.014;}
+     else if(lep_pt[0]>  80 && lep_pt[0]<=  85) {eff = 0.954; errup = 0.011; errdown = 0.013;}
+     else if(lep_pt[0]>  85 && lep_pt[0]<=  90) {eff = 0.939; errup = 0.012; errdown = 0.014;}
+     else if(lep_pt[0]>  90 && lep_pt[0]<=  95) {eff = 0.940; errup = 0.012; errdown = 0.015;}
+     else if(lep_pt[0]>  95 && lep_pt[0]<= 100) {eff = 0.932; errup = 0.014; errdown = 0.017;}
+     else if(lep_pt[0]> 100 && lep_pt[0]<= 105) {eff = 0.934; errup = 0.014; errdown = 0.017;}
+     else if(lep_pt[0]> 105 && lep_pt[0]<= 110) {eff = 0.965; errup = 0.010; errdown = 0.014;}
+     else if(lep_pt[0]> 110 && lep_pt[0]<=9999) {eff = 0.994; errup = 0.001; errdown = 0.001;}
+  
+     //// Mu24 || Mu50
+     //// "(trig[19]||trig[55]||trig[21])"
+   } else if(b.nel()==0 && b.nmu()==2){
+     vector<float> lep_pt; 
+     if (b.lep_pt()->size()>0) lep_pt.push_back(b.lep_pt()->at(0));
+     else lep_pt.push_back(0);
+     if(lep_pt[0]>  40 && lep_pt[0]<=  45) {eff = 0.959; errup = 0.010; errdown = 0.012;}
+     if(lep_pt[0]>  45 && lep_pt[0]<=  50) {eff = 0.970; errup = 0.006; errdown = 0.007;}
+     if(lep_pt[0]>  50 && lep_pt[0]<=9999) {eff = 0.982; errup = 0.000; errdown = 0.000;}
   }
   return eff;
  });
@@ -977,13 +976,50 @@ const NamedFunc lead_signal_lepton_pt("lead_signal_lepton_pt",[](const Baby &b) 
     cout<<"[Warning] Higfuncs::lead_signal_lepton_pt => There is no signal leptons. Returning -1. nlep: "<<b.nlep()<<" nel: "<<b.nel()<<" nmu: "<<b.nmu()<<" nvmu: "<<b.nvmu()<<endl;
     return -1;
   } else if (lead_electron_pt != -1 && lead_muon_pt != -1) {
-    cout<<"[Warning] Higfuncs::lead_signal_lepton_pt => There is both a signal electron and signal muon. Returning -2."<<endl;
-    return -2;
+    // Return max pt
+    return max(lead_electron_pt, lead_muon_pt);
   } else if (lead_electron_pt != -1 && lead_muon_pt == -1) { // Electron case
     return lead_electron_pt;
   } else { // Muon case
     return lead_muon_pt;
   }
 });
+
+const NamedFunc lead_signal_muon_pt("lead_signal_muon_pt",[](const Baby &b) -> NamedFunc::ScalarType{
+  // Search for signal muons
+  float lead_muon_pt = -1;
+  for (unsigned iMu = 0; iMu < b.mu_sig()->size(); ++iMu) {
+    if (b.mu_sig()->at(iMu)) {
+      lead_muon_pt = b.mu_pt()->at(iMu); 
+      break;
+    }
+  }
+  // Warnings
+  if (lead_muon_pt==-1) {
+    cout<<"[Warning] Higfuncs::lead_signal_muon_pt => There is no signal muons. Returning -1. nlep: "<<b.nlep()<<" nel: "<<b.nel()<<" nmu: "<<b.nmu()<<" nvmu: "<<b.nvmu()<<endl;
+    return -1;
+  } else { // Muon case
+    return lead_muon_pt;
+  }
+});
+
+const NamedFunc lead_signal_electron_pt("lead_signal_electron_pt",[](const Baby &b) -> NamedFunc::ScalarType{
+  // Search for signal electrons
+  float lead_electron_pt = -1;
+  for (unsigned iEl = 0; iEl < b.el_sig()->size(); ++iEl) {
+    if (b.el_sig()->at(iEl)) {
+      lead_electron_pt = b.el_pt()->at(iEl); 
+      break;
+    }
+  }
+  // Warnings
+  if (lead_electron_pt==-1) {
+    cout<<"[Warning] Higfuncs::lead_signal_electron_pt => There is no electron leptons. Returning -1. nlep: "<<b.nlep()<<" nel: "<<b.nel()<<" nmu: "<<b.nmu()<<" nvmu: "<<b.nvmu()<<endl;
+    return -1;
+  } else {
+    return lead_electron_pt;
+  }
+});
+
 
 }
