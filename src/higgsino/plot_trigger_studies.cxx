@@ -29,7 +29,7 @@
 #include "core/cross_sections.hpp"
 #include "higgsino/apply_trigeffs2016.hpp"
 #include "higgsino/apply_trigeffs2017.hpp"
-#include "higgsino/apply_trigeffs2018temp.hpp"
+#include "higgsino/apply_trigeffs2018.hpp"
 #include "higgsino/hig_functions.hpp"
 #include "higgsino/hig_utilities.hpp"
 
@@ -217,7 +217,7 @@ int main(int argc, char *argv[]){
       trig_eff = Higfuncs::get_0l_trigeff2017.GetScalar(b);
     }
     else if (b.SampleType()==2018) {
-      trig_eff = Higfuncs::get_0l_trigeff2018temp.GetScalar(b);
+      trig_eff = Higfuncs::get_0l_trigeff2018.GetScalar(b);
     }
     return trig_eff;
   });

@@ -63,7 +63,6 @@ int main(int argc, char *argv[]){
   shared_ptr<Process> pro_met2016c = Process::MakeShared<Baby_pico>("MET\\_2016RunC", Process::Type::data, kBlack, {filter_production_dir+"2016/data/raw_pico/raw_pico_MET__Run2016C*.root"}, "1");
   shared_ptr<Process> pro_met2018d = Process::MakeShared<Baby_pico>("MET\\_2018RunD", Process::Type::data, kBlack, {production_dir+"2018/data/raw_pico/raw_pico_MET__Run2018D*.root"}, "1");
   shared_ptr<Process> pro_egamma2018d = Process::MakeShared<Baby_pico>("EGamma\\_2018RunD", Process::Type::data, kBlack, {production_dir+"2018/data/skim_met150/raw_pico_met150_EGamma__Run2018D*.root"}, "1");
-  shared_ptr<Process> pro_met2018d = Process::MakeShared<Baby_pico>("MET\\_2018RunD", Process::Type::data, kBlack, {production_dir+"2018/data/raw_pico/raw_pico_MET__Run2018D*.root"}, "1");
   vector<shared_ptr<Process> > procs_all = {pro_met2016c,pro_met2018d};
 
   vector<shared_ptr<Process> > signal_procs;
@@ -171,6 +170,10 @@ int main(int argc, char *argv[]){
     return r_pass_htratio_dphi_tight_fixed;
   });
 
+  const NamedFunc htratio("htratio", [](const Baby &b) -> NamedFunc::ScalarType{
+    return b.ht5()/b.ht();
+  });
+
   const NamedFunc pass_boostedhemveto("pass_boostedhemveto", [](const Baby &b) -> NamedFunc::ScalarType{
     for (unsigned int el_idx = 0; el_idx < b.el_pt()->size(); el_idx++) {
       if (b.el_miniso()->at(el_idx) < 0.1 && -3.0 < b.el_eta()->at(el_idx) && b.el_eta()->at(el_idx) < -1.4 && -1.57 < b.el_phi()->at(el_idx) && b.el_phi()->at(el_idx) < -0.87) {
@@ -190,9 +193,15 @@ int main(int argc, char *argv[]){
 
   PlotMaker pm;
 
-  pm.Push<Hist2D>(Axis(20, 0, 1000, mt2, "M_{T2} [GeV]", {}),Axis(20, 0, 1000, mt2, "M_{T2} [GeV]", {}),
-    cms_baseline && "100<=hig_cand_am[0]&&hig_cand_am[0]<140" && met_bin_cuts && drmax_bin_cuts && nb_bin_cuts && njet_bin_cuts,
-    search_procs, twodim_plotopts).Weight(mixed_model_weight).Tag(("FixName:mt2_lin_"+met_filename+drmax_filename+nb_filename+njet_filename).c_str()).LuminosityTag(total_luminosity_string);
+  pm.Push<Hist2D>(Axis(100, 0, 3.14, "jet_met_dphi", "#Delta#phi", {}), Axis(100, 0, 500, "jet_pt", "Jet p_{T} [GeV]", {}),
+    "2.4<=jet_eta&&jet_eta<5.0",
+    procs_all, twodim_plotopts).Weight(mixed_model_weight).Tag("FixName:EcalNoiseJetFilter_plot").LuminosityTag("137 fb^{-1}");
+  pm.Push<Hist2D>(Axis(100, 0, 3.14, "jet_met_dphi[0]", "Jet 1 p_{T} [GeV]", {}), Axis(100, 0, 3.0, htratio, "H_{T5}/H_{T}", {}), 
+    "njet>=1",
+    procs_all, twodim_plotopts).Weight(mixed_model_weight).Tag("FixName:HTRatioDPhiTightFilter_plot").LuminosityTag("137 fb^{-1}");
+  //pm.Push<Hist2D>(Axis(100, 0, 3.14, "jet_met_dphi", "#Delta#phi", {}), Axis(100, 0, 500, "jet_pt", "Jet p_{T} [GeV]", {}),
+  //  "2.4<=jet_eta&&jet_eta<5.0",
+  //  search_procs, twodim_plotopts).Weight(mixed_model_weight).Tag(("FixName:EcalNoiseJetFilter_plot").LuminosityTag(total_luminosity_string);
 
   pm.Push<Table>("cutflow", vector<TableRow>{
   TableRow("MET>150", 
