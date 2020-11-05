@@ -65,6 +65,7 @@ public:
   std::vector<PlotOpt> plot_options_;
 
   TH2D GetDataHist() const;
+  TH2D GetBkgHist(bool bkg_is_hist) const;
 
 private:
   std::vector<std::unique_ptr<SingleHist2D> > backgrounds_;
@@ -80,7 +81,6 @@ private:
   Hist2D() = delete;
 
   void MakeOnePlot(const std::string &subdir);
-  TH2D GetBkgHist(bool bkg_is_hist) const;
   std::vector<TGraph> GetGraphs(const std::vector<std::unique_ptr<SingleHist2D> > &components,
 				bool lumi_weighted) const;
   std::vector<TLine> GetLines() const;

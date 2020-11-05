@@ -10,7 +10,12 @@
 #include "TGraphAsymmErrors.h"
 
 //helper functions
+void draw_2d_graphs(TFile * new_graph_file, std::vector<std::string> new_numerator_name, std::vector<std::string> new_denominator_name, std::vector<double> y_bins, std::vector<double> x_bins, std::string y_var_name, std::string y_title_name, std::string y_expression, std::string x_var_name, std::string x_title_name, std::string x_expression, std::vector<float>(*an_eff_func)(float x, float y), std::string cuts_string, std::string lumi_string, std::string new_trigger_string, std::string old_trigger_string, std::string plot_name, ofstream &out_file, std::string func_name, std::string year, std::string img_file_extension);
+void draw_1d_graphs(TFile * new_graph_file, std::string new_numerator_name, std::string new_denominator_name, std::string new_ratio_name, std::vector<double> x_bins, std::string x_var_name, std::string x_title_name, std::string x_expression, std::vector<float>(*an_eff_func)(float x), std::string cuts_string, std::string lumi_string, std::string new_trigger_string, std::string old_trigger_string, std::string plot_name, ofstream &out_file, std::string func_name, std::string year, std::string img_file_extension);
+void make_efficiency_plot(TH1D* hist_num, TH1D* hist_den, TGraphAsymmErrors* hist_ratio, std::string lumi_string, std::string title, std::string xaxis, std::string yaxis, std::string units, std::string out_filename, std::string out_file_extension, bool var_width_bins, bool is_simulation);
 std::vector<float> geteff_0l(float met, float ht);
+std::vector<float> geteff_0l_prereminiaod(float met, float ht);
+std::vector<float> geteff_0l_2018finebins(float met, float ht);
 std::vector<float> geteff_0l_fakemet(float met, float ht);
 std::vector<float> geteff_1el(float met, float el_pt);
 std::vector<float> geteff_1mu(float met, float mu_pt);
@@ -21,19 +26,33 @@ int trig_postprocess_efficiencies() {
     //boolean flags to set what to do
     bool draw_truemet_graphs = true;
     bool draw_fakemet_graphs = true;
-    bool draw_1el_graphs = true;
-    bool draw_1mu_graphs = true;
-    bool draw_2l_graphs = true;
+    bool draw_1el_graphs = false;
+    bool draw_1mu_graphs = false;
+    bool draw_2l_graphs = false;
     //2016 rdfat_qcd2016_htrange.root and trig_eff_old_fullefficiencies.root
     //2017 rdfat_qcd2017.root and trig_eff_old_eff_2017.root
     //2017 rdfat_qcd2018.root and trig_eff_old_eff_2018.root
-    TFile* f = TFile::Open("ntuples/triggereff.root");
-    TFile* f_qcd = TFile::Open("ntuples/rdfat_qcd2018.root");
+    //TFile* f = TFile::Open("ntuples/trig_eff_old_eff_2016_looseidjets.root");
+    TFile* f = TFile::Open("ntuples/higcandamstudies_effs_2018ambb200toInf.root");
+    //TFile* f = TFile::Open("ntuples/trig_eff_old_eff_2016_reminimet.root");
+    TFile* f_qcd = TFile::Open("ntuples/rdfat_qcd2016_htrange.root");
     std::string year = "2018";
+    std::string lumi_string = "35.9 fb^{-1} (13 TeV)";
+    if (year == "2017") {
+    	lumi_string = "41.5 fb^{-1} (13 TeV)";
+    }
+    else if (year == "2018") {
+    	lumi_string = "60 fb^{-1} (13 TeV)";
+    }
+    std::string img_file_extension = ".png";
+    std::string met_trigger_string = "MET(NoMu)(110|120|120HT60)";
+    std::string el_trigger_string = "El(Iso27|Iso35|115)";
+    std::string mu_trigger_string = "Mu(Iso24|Iso27|50)";
     std::vector<double> true_met_bins{150,155,160,165,170,175,180,185,190,195,200,210,220,230,240,250,275,300,350};
     std::vector<double> sys_met_bins{150,160,180,200,225,250,300,350};
     std::vector<double> fake_met_bins{150,155,160,165,170,175,180,185,190,195,200,210,220,230,240,250,275,300,350,400,450,500,550};
-    std::vector<double> ht_bins{0,200,600,800,1000,1200};
+    std::vector<double> ht_bins{0,200,250,300,350,400,600,800,1000,1200};
+    //std::vector<double> ht_bins{0,200,600,800,1000,1200};
     std::vector<double> twodim_met_bins{0,110,120,130,140,150,160,170,180,190,200,210,250};
     std::vector<double> el_pt_bins{20,25,30,110,120,150};
     std::vector<double> mu_pt_bins{20,25,30,50,100};
@@ -45,413 +64,277 @@ int trig_postprocess_efficiencies() {
     apply_effs_file << "#include \"core/baby.hpp\"\n";
     apply_effs_file << "#include \"core/process.hpp\"\n";
     apply_effs_file << "#include \"core/named_func.hpp\"\n";
-    apply_effs_file << "#include \"higgsino/hig_functions.hpp\"\n";
+    apply_effs_file << "#include \"higgsino/hig_utilities.hpp\"\n";
+    //apply_effs_file << "#include \"higgsino/hig_functions.hpp\"\n";
     apply_effs_file << "#include \"higgsino/apply_trigeffs" << year << ".hpp\"\n\n";
-    //apply_effs_file << "float signal_lepton_pt(std::vector<float>* const lep_pt, std::vector<bool>* const lep_sig) {\n";
-    //apply_effs_file << "  float r_signal_lepton_pt = 0;\n";
-    //apply_effs_file << "  for (unsigned int lep_idx = 0; lep_idx < lep_sig->size(); lep_idx++) {\n";
-    //apply_effs_file << "    if (lep_sig->at(lep_idx)) {\n";
-    //apply_effs_file << "      r_signal_lepton_pt = lep_pt->at(lep_idx);\n";
-    //apply_effs_file << "      break;\n";
-    //apply_effs_file << "    }\n";
-    //apply_effs_file << "  }\n";
-    //apply_effs_file << "  return r_signal_lepton_pt;\n";
-    //apply_effs_file << "}\n\n";
     apply_effs_file << "namespace Higfuncs{\n\n";
     //make graphs
     //true met histograms
     if (draw_truemet_graphs) {
-	//loop over ht - each ht bin is a new TGraphAsymmErrors
-	std::vector<TCanvas*> truemet_canvas;
-	std::vector<TGraphAsymmErrors*> an_eff_plots;
-	std::vector<TGraphAsymmErrors*> new_eff_plots;
-	for (int ht_bin = 0; ht_bin < ht_bins.size()-1; ht_bin++) {
-	    double ht_value = (ht_bins[ht_bin]+ht_bins[ht_bin+1])/2;
-	    truemet_canvas.push_back(new TCanvas());
-	    truemet_canvas[ht_bin]->cd();
-	    truemet_canvas[ht_bin]->SetGrid();
-	    std::vector<double> met_values;
-	    std::vector<double> met_range_values;
-	    std::vector<double> eff_values;
-	    std::vector<double> errup_values;
-	    std::vector<double> errdown_values;
-	    //loop over met bins for old efficiencies
-	    for (int met_bin = 0; met_bin < true_met_bins.size()-1; met_bin++) {
-	        double met_value = (true_met_bins[met_bin]+true_met_bins[met_bin+1])/2;
-	        double met_bin_range = (true_met_bins[met_bin+1]-true_met_bins[met_bin])/2;
-	        met_values.push_back(met_value);
-	        met_range_values.push_back(met_bin_range);
-		std::vector<float> eff_errs = geteff_0l(met_value, ht_value);
-		eff_values.push_back(eff_errs[0]);
-		errup_values.push_back(eff_errs[1]);
-		errdown_values.push_back(eff_errs[2]);
-	    }
-	    //get new efficiencies from histograms
-            TH2D* numerator_hist = static_cast<TH2D*>((f->Get("hist_realmetht_numerator"))->Clone());
-            TH2D* denominator_hist = static_cast<TH2D*>((f->Get("hist_realmetht_denominator"))->Clone());
-	    TH1D* numerator_1d_hist = numerator_hist->ProjectionX("numerator_1d_hist",ht_bin+1,ht_bin+1);
-	    TH1D* denominator_1d_hist = denominator_hist->ProjectionX("denominator_1d_hist",ht_bin+1,ht_bin+1);
-	    new_eff_plots.push_back(new TGraphAsymmErrors(numerator_1d_hist,denominator_1d_hist));
-	    an_eff_plots.push_back(new TGraphAsymmErrors(met_values.size(),met_values.data(),eff_values.data(),met_range_values.data(),met_range_values.data(),errdown_values.data(),errup_values.data()));
-	    an_eff_plots[ht_bin]->SetTitle(("0l trigger efficiency HT#in ["+std::to_string(ht_bins[ht_bin])+","+std::to_string(ht_bins[ht_bin+1])+"]; MET; Efficiency").c_str());
-  	    an_eff_plots[ht_bin]->GetYaxis()->SetRangeUser(0,1.4);
-	    an_eff_plots[ht_bin]->SetLineColor(kRed);
-	    an_eff_plots[ht_bin]->Draw("AP");
-	    new_eff_plots[ht_bin]->Draw("P same");
-	    TLegend* leg = new TLegend(0.5,0.1,0.9,0.3);
-	    leg->AddEntry(new_eff_plots[ht_bin],"New Efficiency MET(100, 110, 120)(NoMu)","f");
-	    leg->AddEntry(an_eff_plots[ht_bin],"AN Efficiency MET(100, 110, 120)(NoMu)","f");
-	    leg->Draw("same");
-	    truemet_canvas[ht_bin]->SaveAs(("plots/truemet_effhtbin_"+std::to_string(ht_bin)+".png").c_str());
-	}
-	//write out function to file
-        apply_effs_file << "const NamedFunc get_0l_trigeff" << year << "(\"get_0l_trigeff" << year << "\", [](const Baby &b) -> NamedFunc::ScalarType{\n";
-        apply_effs_file << "  float errup=0., errdown=0.; // Not used, but for reference\n";
-        apply_effs_file << "  float eff = 1., met = b.met(), ht = b.ht();\n";
-        apply_effs_file << "  errup+=errdown; //suppress unused warning\n";
-	bool first = true;
-	for (int met_bin = 0; met_bin < true_met_bins.size()-1; met_bin++) {
-	    double met_upper = met_bin==(true_met_bins.size()-2) ? 9999 : true_met_bins[met_bin+1];
-	    for (int ht_bin = 0; ht_bin < ht_bins.size()-1; ht_bin++) {
-	        double ht_upper = ht_bin==(ht_bins.size()-2) ? 9999 : ht_bins[ht_bin+1];
-		double* eff_pts = new_eff_plots[ht_bin]->GetY();
-                if (first) {
-		    apply_effs_file << "  if (ht> ";
-		    first = false;
-		}
-		else apply_effs_file << "  else if (ht> ";
-		apply_effs_file << ht_bins[ht_bin] << " && ht<= " << ht_upper;
-		apply_effs_file << " && met> " << true_met_bins[met_bin] << " && met<= " << met_upper;
-		apply_effs_file << ") {eff = " << eff_pts[met_bin] << "; errup = " << new_eff_plots[ht_bin]->GetErrorYhigh(met_bin) << "; errdown = " << new_eff_plots[ht_bin]->GetErrorYlow(met_bin) << ";}\n";
-	    }
-	}
-	apply_effs_file << "  return eff;\n";
-        apply_effs_file << "});\n\n";
+        draw_2d_graphs(f, {"hist_realmetht_numerator"}, {"hist_realmetht_denominator"}, ht_bins, true_met_bins, "ht", "H_{T}", "b.ht()", "met", "p_{T}^{miss}", "b.met()", &geteff_0l_2018finebins, "Denom: [el27|el35], N_{j}#geq 3, high #Delta #phi, N_{e}=1", lumi_string, "MET_MHT(NoMu)(110|120|120HT60) N_{j}=4 200 GeV #leq #LT m_{bb} #GT", "MET_MHT(NoMu)(110|120|120HT60) Nominal", "truemet_effhtbin", apply_effs_file, "get_0l_trigeff", year, img_file_extension);
     }
     //fake met histograms
     if (draw_fakemet_graphs) {
-	//loop over ht - each ht bin is a new TGraphAsymmErrors
-	std::vector<TCanvas*> fakemet_canvas;
-	std::vector<TGraphAsymmErrors*> an_eff_plots;
-	std::vector<TGraphAsymmErrors*> new_eff_plots;
-	for (int ht_bin = 0; ht_bin < ht_bins.size()-1; ht_bin++) {
-	    double ht_value = (ht_bins[ht_bin]+ht_bins[ht_bin+1])/2;
-	    fakemet_canvas.push_back(new TCanvas());
-	    fakemet_canvas[ht_bin]->cd();
-	    fakemet_canvas[ht_bin]->SetGrid();
-	    std::vector<double> met_values;
-	    std::vector<double> met_range_values;
-	    std::vector<double> eff_values;
-	    std::vector<double> errup_values;
-	    std::vector<double> errdown_values;
-	    //loop over met bins for old efficiencies
-	    for (int met_bin = 0; met_bin < fake_met_bins.size()-1; met_bin++) {
-	        double met_value = (fake_met_bins[met_bin]+fake_met_bins[met_bin+1])/2;
-	        double met_bin_range = (fake_met_bins[met_bin+1]-fake_met_bins[met_bin])/2;
-	        met_values.push_back(met_value);
-	        met_range_values.push_back(met_bin_range);
-		std::vector<float> eff_errs = geteff_0l_fakemet(met_value, ht_value);
-		eff_values.push_back(eff_errs[0]);
-		errup_values.push_back(eff_errs[1]);
-		errdown_values.push_back(eff_errs[2]);
-	    }
-	    //get new efficiencies from histograms
-	    std::string qcdhist_name = "hist_MET_pt_ht_data_all";
-	    if (year == "2017") {
-	      qcdhist_name = "hist_MET_pt_ht_runcdef_all";
-	    }
-            //TH2D* numerator_hist = static_cast<TH2D*>((f_qcd->Get((qcdhist_name+";1").c_str()))->Clone());
-            //TH2D* denominator_hist = static_cast<TH2D*>((f_qcd->Get((qcdhist_name+";2").c_str()))->Clone());
-	    //if (year == "2017") {
-            //  TH2D* run_b_numerator_hist = static_cast<TH2D*>((f_qcd->Get("hist_MET_pt_ht_runb_all;1"))->Clone());
-            //  TH2D* run_b_denominator_hist = static_cast<TH2D*>((f_qcd->Get("hist_MET_pt_ht_runb_all;2"))->Clone());
-	    //  numerator_hist->Add(run_b_numerator_hist);
-	    //  denominator_hist->Add(run_b_denominator_hist);
-	    //}
-            TH2D* numerator_hist = static_cast<TH2D*>((f->Get("hist_fakemetht_numerator"))->Clone());
-            TH2D* denominator_hist = static_cast<TH2D*>((f->Get("hist_fakemetht_denominator"))->Clone());
-	    TH1D* numerator_1d_hist = numerator_hist->ProjectionX("numerator_1d_hist",ht_bin+1,ht_bin+1);
-	    TH1D* denominator_1d_hist = denominator_hist->ProjectionX("denominator_1d_hist",ht_bin+1,ht_bin+1);
-	    new_eff_plots.push_back(new TGraphAsymmErrors(numerator_1d_hist,denominator_1d_hist));
-	    an_eff_plots.push_back(new TGraphAsymmErrors(met_values.size(),met_values.data(),eff_values.data(),met_range_values.data(),met_range_values.data(),errdown_values.data(),errup_values.data()));
-	    an_eff_plots[ht_bin]->SetTitle(("0l fake met (QCD) trigger efficiency HT#in ["+std::to_string(ht_bins[ht_bin])+","+std::to_string(ht_bins[ht_bin+1])+"]; MET; Efficiency").c_str());
-  	    an_eff_plots[ht_bin]->GetYaxis()->SetRangeUser(0,1.4);
-	    an_eff_plots[ht_bin]->SetLineColor(kRed);
-	    an_eff_plots[ht_bin]->Draw("AP");
-	    new_eff_plots[ht_bin]->Draw("P same");
-	    TLegend* leg = new TLegend(0.5,0.1,0.9,0.3);
-	    leg->AddEntry(new_eff_plots[ht_bin],"New Efficiency MET(100, 110, 120)(NoMu)","f");
-	    leg->AddEntry(an_eff_plots[ht_bin],"AN Efficiency MET(100, 110, 120)(NoMu)","f");
-	    leg->Draw("same");
-	    fakemet_canvas[ht_bin]->SaveAs(("plots/fakemet_effhtbin_"+std::to_string(ht_bin)+".png").c_str());
-	}
-	//write out function to file
-        apply_effs_file << "const NamedFunc get_0l_fakemet_trigeff" << year << "(\"get_0l_fakemet_trigeff" << year << "\", [](const Baby &b) -> NamedFunc::ScalarType{\n";
-        apply_effs_file << "  float errup=0., errdown=0.; // Not used, but for reference\n";
-        apply_effs_file << "  float eff = 1., met = b.met(), ht = b.ht();\n";
-        apply_effs_file << "  errup+=errdown; //suppress unused warning\n";
-	bool first = true;
-	for (int met_bin = 0; met_bin < fake_met_bins.size()-1; met_bin++) {
-	    double met_upper = met_bin==(fake_met_bins.size()-2) ? 9999 : fake_met_bins[met_bin+1];
-	    for (int ht_bin = 0; ht_bin < ht_bins.size()-1; ht_bin++) {
-	        double ht_upper = ht_bin==(ht_bins.size()-2) ? 9999 : ht_bins[ht_bin+1];
-		double* eff_pts = new_eff_plots[ht_bin]->GetY();
-                if (first) {
-		    apply_effs_file << "  if (ht> ";
-		    first = false;
-		}
-		else apply_effs_file << "  else if (ht> ";
-		apply_effs_file << ht_bins[ht_bin] << " && ht<= " << ht_upper;
-		apply_effs_file << " && met> " << fake_met_bins[met_bin] << " && met<= " << met_upper;
-		apply_effs_file << ") {eff = " << eff_pts[met_bin] << "; errup = " << new_eff_plots[ht_bin]->GetErrorYhigh(met_bin) << "; errdown = " << new_eff_plots[ht_bin]->GetErrorYlow(met_bin) << ";}\n";
-	    }
-	}
-	apply_effs_file << "  return eff;\n";
-        apply_effs_file << "});\n\n";
+        draw_2d_graphs(f, {"hist_fakemetht_numerator"}, {"hist_fakemetht_denominator"}, ht_bins, fake_met_bins, "ht", "H_{T}", "b.ht()", "met", "p_{T}^{miss}", "b.met()", &geteff_0l_fakemet, "Denom: OR:HT, low #Delta #phi, N_{l veto}=0", lumi_string, met_trigger_string, "MET(100, 110, 120)(NoMu)", "fakemet_effhtbin", apply_effs_file, "get_0l_fakemet_trigeff", year, img_file_extension);
+        //draw_2d_graphs(f_qcd, {"hist_MET_pt_ht_data_all;1"}, {"hist_MET_pt_ht_data_all;2"}, ht_bins, fake_met_bins, "ht", "H_{T}", "b.ht()", "met", "p_{T}^{miss}", "b.met()", &geteff_0l_fakemet, "Denom: HT[200,900], low #Delta #phi, N_{l veto}=0", lumi_string, met_trigger_string, "MET(100, 110, 120)(NoMu)", "fakemet_effhtbin", apply_effs_file, "get_0l_fakemet_trigeff", year, img_file_extension);
+        //draw_2d_graphs(f_qcd, {"hist_MET_pt_ht_runcdef_all;1","hist_MET_pt_ht_runb_all;1"}, {"hist_MET_pt_ht_runcdef_all;2","hist_MET_pt_ht_runb_all;2"}, ht_bins, fake_met_bins, "ht", "H_{T}", "b.ht()", "met", "p_{T}^{miss}", "b.met()", &geteff_0l_fakemet, "Denom: HT[200,900], low #Delta #phi, N_{l veto}=0", lumi_string, met_trigger_string, "MET(100, 110, 120)(NoMu)", "fakemet_effhtbin", apply_effs_file, "get_0l_fakemet_trigeff", year, img_file_extension);
     }
     //1el region graphs
     if (draw_1el_graphs) {
-	//loop over el_pt - each el_pt bin is a new TGraphAsymmErrors
-	std::vector<TCanvas*> elmet_canvas;
-	std::vector<TGraphAsymmErrors*> an_eff_plots;
-	std::vector<TGraphAsymmErrors*> new_eff_plots;
-	for (int el_pt_bin = 0; el_pt_bin < el_pt_bins.size()-1; el_pt_bin++) {
-	    double el_pt_value = (el_pt_bins[el_pt_bin]+el_pt_bins[el_pt_bin+1])/2;
-	    elmet_canvas.push_back(new TCanvas());
-	    elmet_canvas[el_pt_bin]->cd();
-	    elmet_canvas[el_pt_bin]->SetGrid();
-	    std::vector<double> met_values;
-	    std::vector<double> met_range_values;
-	    std::vector<double> eff_values;
-	    std::vector<double> errup_values;
-	    std::vector<double> errdown_values;
-	    //loop over met bins for old efficiencies
-	    for (int met_bin = 0; met_bin < twodim_met_bins.size()-1; met_bin++) {
-	        double met_value = (twodim_met_bins[met_bin]+twodim_met_bins[met_bin+1])/2;
-	        double met_bin_range = (twodim_met_bins[met_bin+1]-twodim_met_bins[met_bin])/2;
-	        met_values.push_back(met_value);
-	        met_range_values.push_back(met_bin_range);
-		std::vector<float> eff_errs = geteff_1el(met_value, el_pt_value);
-		eff_values.push_back(eff_errs[0]);
-		errup_values.push_back(eff_errs[1]);
-		errdown_values.push_back(eff_errs[2]);
-	    }
-	    //get new efficiencies from histograms
-            TH2D* numerator_hist = static_cast<TH2D*>((f->Get("hist_metelpt_numerator"))->Clone());
-            TH2D* denominator_hist = static_cast<TH2D*>((f->Get("hist_metelpt_denominator"))->Clone());
-	    TH1D* numerator_1d_hist = numerator_hist->ProjectionX("numerator_1d_hist",el_pt_bin+1,el_pt_bin+1);
-	    TH1D* denominator_1d_hist = denominator_hist->ProjectionX("denominator_1d_hist",el_pt_bin+1,el_pt_bin+1);
-	    new_eff_plots.push_back(new TGraphAsymmErrors(numerator_1d_hist,denominator_1d_hist));
-	    an_eff_plots.push_back(new TGraphAsymmErrors(met_values.size(),met_values.data(),eff_values.data(),met_range_values.data(),met_range_values.data(),errdown_values.data(),errup_values.data()));
-	    an_eff_plots[el_pt_bin]->SetTitle(("1e trigger efficiency p_{Te}#in ["+std::to_string(el_pt_bins[el_pt_bin])+","+std::to_string(el_pt_bins[el_pt_bin+1])+"]; MET; Efficiency").c_str());
-  	    an_eff_plots[el_pt_bin]->GetYaxis()->SetRangeUser(0,1.4);
-	    an_eff_plots[el_pt_bin]->SetLineColor(kRed);
-	    an_eff_plots[el_pt_bin]->Draw("AP");
-	    new_eff_plots[el_pt_bin]->Draw("P same");
-	    TLegend* leg = new TLegend(0.5,0.1,0.9,0.3);
-	    leg->AddEntry(new_eff_plots[el_pt_bin],"New Efficiency MET(100, 110, 120)(NoMu) Ele(Iso27, Iso35, 115)","f");
-	    leg->AddEntry(an_eff_plots[el_pt_bin],"AN Efficiency MET(100, 110, 120)(NoMu) Ele(Iso27LooseBarrel, Iso27, 105, 115)","f");
-	    leg->Draw("same");
-	    elmet_canvas[el_pt_bin]->SaveAs(("plots/elmet_effelptbin_"+std::to_string(el_pt_bin)+".png").c_str());
-	}
-	//write out function to file
-        apply_effs_file << "const NamedFunc get_1el_trigeff" << year << "(\"get_1el_trigeff" << year << "\", [](const Baby &b) -> NamedFunc::ScalarType{\n";
-        apply_effs_file << "  float errup=0., errdown=0.; // Not used, but for reference\n";
-        apply_effs_file << "  float eff = 1., met = b.met(), el_pt = signal_lepton_pt(b.el_pt(),b.el_sig());\n";
-        apply_effs_file << "  errup+=errdown; //suppress unused warning\n";
-	bool first = true;
-	for (int met_bin = 0; met_bin < twodim_met_bins.size()-1; met_bin++) {
-	    double met_upper = met_bin==(twodim_met_bins.size()-2) ? 9999 : twodim_met_bins[met_bin+1];
-	    for (int el_pt_bin = 0; el_pt_bin < el_pt_bins.size()-1; el_pt_bin++) {
-	        double el_pt_upper = el_pt_bin==(el_pt_bins.size()-2) ? 9999 : el_pt_bins[el_pt_bin+1];
-		double* eff_pts = new_eff_plots[el_pt_bin]->GetY();
-                if (first) {
-		    apply_effs_file << "  if (el_pt> ";
-		    first = false;
-		}
-		else apply_effs_file << "  else if (el_pt> ";
-		apply_effs_file << el_pt_bins[el_pt_bin] << " && el_pt<= " << el_pt_upper;
-		apply_effs_file << " && met> " << twodim_met_bins[met_bin] << " && met<= " << met_upper;
-		apply_effs_file << ") {eff = " << eff_pts[met_bin] << "; errup = " << new_eff_plots[el_pt_bin]->GetErrorYhigh(met_bin) << "; errdown = " << new_eff_plots[el_pt_bin]->GetErrorYlow(met_bin) << ";}\n";
-	    }
-	}
-	apply_effs_file << "  return eff;\n";
-        apply_effs_file << "});\n\n";
+        draw_2d_graphs(f, {"hist_metelpt_numerator"}, {"hist_metelpt_denominator"}, el_pt_bins, twodim_met_bins, "el_pt", "p_{Te}", "HigUtilities::signal_lepton_pt(b.el_pt(),b.el_sig())", "met", "p_{T}^{miss}", "b.met()", &geteff_1el, "Denom: Jet500, N_{j}#geq 2, N_{e}=1", lumi_string, met_trigger_string+"|"+el_trigger_string, "MET(100, 110, 120)(NoMu) Ele(Iso27lBar, Iso27, 105, 115)", "elmet_effelptbin", apply_effs_file, "get_1el_trigeff", year, img_file_extension);
     }
     if (draw_1mu_graphs) {
-	//loop over el_pt - each el_pt bin is a new TGraphAsymmErrors
-	std::vector<TCanvas*> mumet_canvas;
-	std::vector<TGraphAsymmErrors*> an_eff_plots;
-	std::vector<TGraphAsymmErrors*> new_eff_plots;
-	for (int mu_pt_bin = 0; mu_pt_bin < mu_pt_bins.size()-1; mu_pt_bin++) {
-	    double mu_pt_value = (mu_pt_bins[mu_pt_bin]+mu_pt_bins[mu_pt_bin+1])/2;
-	    mumet_canvas.push_back(new TCanvas());
-	    mumet_canvas[mu_pt_bin]->cd();
-	    mumet_canvas[mu_pt_bin]->SetGrid();
-	    std::vector<double> met_values;
-	    std::vector<double> met_range_values;
-	    std::vector<double> eff_values;
-	    std::vector<double> errup_values;
-	    std::vector<double> errdown_values;
-	    //loop over met bins for old efficiencies
-	    for (int met_bin = 0; met_bin < twodim_met_bins.size()-1; met_bin++) {
-	        double met_value = (twodim_met_bins[met_bin]+twodim_met_bins[met_bin+1])/2;
-	        double met_bin_range = (twodim_met_bins[met_bin+1]-twodim_met_bins[met_bin])/2;
-	        met_values.push_back(met_value);
-	        met_range_values.push_back(met_bin_range);
-		std::vector<float> eff_errs = geteff_1mu(met_value, mu_pt_value);
-		eff_values.push_back(eff_errs[0]);
-		errup_values.push_back(eff_errs[1]);
-		errdown_values.push_back(eff_errs[2]);
-	    }
-	    //get new efficiencies from histograms
-            TH2D* numerator_hist = static_cast<TH2D*>((f->Get("hist_metmupt_numerator"))->Clone());
-            TH2D* denominator_hist = static_cast<TH2D*>((f->Get("hist_metmupt_denominator"))->Clone());
-	    TH1D* numerator_1d_hist = numerator_hist->ProjectionX("numerator_1d_hist",mu_pt_bin+1,mu_pt_bin+1);
-	    TH1D* denominator_1d_hist = denominator_hist->ProjectionX("denominator_1d_hist",mu_pt_bin+1,mu_pt_bin+1);
-	    new_eff_plots.push_back(new TGraphAsymmErrors(numerator_1d_hist,denominator_1d_hist));
-	    an_eff_plots.push_back(new TGraphAsymmErrors(met_values.size(),met_values.data(),eff_values.data(),met_range_values.data(),met_range_values.data(),errdown_values.data(),errup_values.data()));
-	    an_eff_plots[mu_pt_bin]->SetTitle(("1#mu trigger efficiency p_{T#mu}#in ["+std::to_string(mu_pt_bins[mu_pt_bin])+","+std::to_string(mu_pt_bins[mu_pt_bin+1])+"]; MET; Efficiency").c_str());
-  	    an_eff_plots[mu_pt_bin]->GetYaxis()->SetRangeUser(0,1.4);
-	    an_eff_plots[mu_pt_bin]->SetLineColor(kRed);
-	    an_eff_plots[mu_pt_bin]->Draw("AP");
-	    new_eff_plots[mu_pt_bin]->Draw("P same");
-	    TLegend* leg = new TLegend(0.5,0.1,0.9,0.3);
-	    leg->AddEntry(new_eff_plots[mu_pt_bin],"New Efficiency MET(100, 110, 120)(NoMu) Mu(Iso24, Iso27, 50)","f");
-	    leg->AddEntry(an_eff_plots[mu_pt_bin],"AN Efficiency MET(100, 110, 120)(NoMu) Mu(Iso24, IsoTk24, 50)","f");
-	    leg->Draw("same");
-	    mumet_canvas[mu_pt_bin]->SaveAs(("plots/mumet_effmuptbin_"+std::to_string(mu_pt_bin)+".png").c_str());
-	}
-	//write out function to file
-        apply_effs_file << "const NamedFunc get_1mu_trigeff" << year << "(\"get_1mu_trigeff" << year << "\", [](const Baby &b) -> NamedFunc::ScalarType{\n";
-        apply_effs_file << "  float errup=0., errdown=0.; // Not used, but for reference\n";
-        apply_effs_file << "  float eff = 1., met = b.met(), mu_pt = signal_lepton_pt(b.mu_pt(),b.mu_sig());\n";
-        apply_effs_file << "  errup+=errdown; //suppress unused warning\n";
-	bool first = true;
-	for (int met_bin = 0; met_bin < twodim_met_bins.size()-1; met_bin++) {
-	    double met_upper = met_bin==(twodim_met_bins.size()-2) ? 9999 : twodim_met_bins[met_bin+1];
-	    for (int mu_pt_bin = 0; mu_pt_bin < mu_pt_bins.size()-1; mu_pt_bin++) {
-	        double mu_pt_upper = mu_pt_bin==(mu_pt_bins.size()-2) ? 9999 : mu_pt_bins[mu_pt_bin+1];
-		double* eff_pts = new_eff_plots[mu_pt_bin]->GetY();
-                if (first) {
-		    apply_effs_file << "  if (mu_pt> ";
-		    first = false;
-		}
-		else apply_effs_file << "  else if (mu_pt> ";
-		apply_effs_file << mu_pt_bins[mu_pt_bin] << " && mu_pt<= " << mu_pt_upper;
-		apply_effs_file << " && met> " << twodim_met_bins[met_bin] << " && met<= " << met_upper;
-		apply_effs_file << ") {eff = " << eff_pts[met_bin] << "; errup = " << new_eff_plots[mu_pt_bin]->GetErrorYhigh(met_bin) << "; errdown = " << new_eff_plots[mu_pt_bin]->GetErrorYlow(met_bin) << ";}\n";
-	    }
-	}
-	apply_effs_file << "  return eff;\n";
-        apply_effs_file << "});\n\n";
+        draw_2d_graphs(f, {"hist_metmupt_numerator"}, {"hist_metmupt_denominator"}, mu_pt_bins, twodim_met_bins, "mu_pt", "p_{T#mu}", "HigUtilities::signal_lepton_pt(b.mu_pt(),b.mu_sig())", "met", "p_{T}^{miss}", "b.met()", &geteff_1mu, "Denom: Jet500, N_{j}#geq 2, N_{#mu}=1", lumi_string, met_trigger_string+"|"+mu_trigger_string, "MET(100, 110, 120)(NoMu) Mu(Iso24, IsoTk24, 50)", "mumet_effmuptbin", apply_effs_file, "get_1mu_trigeff", year, img_file_extension);
     }
     if (draw_2l_graphs) {
-	//loop over el_pt - each el_pt bin is a new TGraphAsymmErrors
-	TCanvas* elel_canvas = new TCanvas();
-	elel_canvas->cd();
-	elel_canvas->SetGrid();
-	std::vector<double> el_pt_values;
-	std::vector<double> el_pt_range_values;
-	std::vector<double> el_eff_values;
-	std::vector<double> el_errup_values;
-	std::vector<double> el_errdown_values;
-	for (int el_pt_bin = 0; el_pt_bin < twoel_pt_bins.size()-1; el_pt_bin++) {
-	    double el_pt_value = (twoel_pt_bins[el_pt_bin]+twoel_pt_bins[el_pt_bin+1])/2;
-	    double el_pt_range_value = (twoel_pt_bins[el_pt_bin+1]-twoel_pt_bins[el_pt_bin])/2;
-	    std::vector<float> eff_errs = geteff_2el(el_pt_value);
-	    el_pt_values.push_back(el_pt_value);
-	    el_pt_range_values.push_back(el_pt_range_value);
-	    el_eff_values.push_back(eff_errs[0]);
-	    el_errup_values.push_back(eff_errs[1]);
-	    el_errdown_values.push_back(eff_errs[2]);
-	}
-        TGraphAsymmErrors* new_el_eff = static_cast<TGraphAsymmErrors*>((f->Get("hist_elel_ratio"))->Clone());
-        TGraphAsymmErrors* old_el_eff = new TGraphAsymmErrors(el_pt_values.size(),el_pt_values.data(),el_eff_values.data(),el_pt_range_values.data(),el_pt_range_values.data(),el_errdown_values.data(),el_errup_values.data());
-        old_el_eff->SetTitle("2e trigger efficiency; Max Electron Pt (GeV); Efficiency");
-        old_el_eff->GetYaxis()->SetRangeUser(0,1.4);
-        old_el_eff->SetLineColor(kRed);
-        old_el_eff->Draw("AP");
-        new_el_eff->Draw("P same");
-        TLegend* leg = new TLegend(0.5,0.1,0.9,0.3);
-        leg->AddEntry(new_el_eff,"New Efficiency El(Iso27, Iso35, 115)","f");
-        leg->AddEntry(old_el_eff,"AN Efficiency El(Iso27LooseBarrel, Iso27, 105, 115)","f");
-        leg->Draw("same");
-        elel_canvas->SaveAs("plots/elel_eff.png");
-	TCanvas* mumu_canvas = new TCanvas();
-	mumu_canvas->cd();
-	mumu_canvas->SetGrid();
-	std::vector<double> mu_pt_values;
-	std::vector<double> mu_pt_range_values;
-	std::vector<double> mu_eff_values;
-	std::vector<double> mu_errup_values;
-	std::vector<double> mu_errdown_values;
-	for (int mu_pt_bin = 0; mu_pt_bin < twomu_pt_bins.size()-1; mu_pt_bin++) {
-	    double mu_pt_value = (twomu_pt_bins[mu_pt_bin]+twomu_pt_bins[mu_pt_bin+1])/2;
-	    double mu_pt_range_value = (twomu_pt_bins[mu_pt_bin+1]-twomu_pt_bins[mu_pt_bin])/2;
-	    std::vector<float> eff_errs = geteff_2mu(mu_pt_value);
-	    mu_pt_values.push_back(mu_pt_value);
-	    mu_pt_range_values.push_back(mu_pt_range_value);
-	    mu_eff_values.push_back(eff_errs[0]);
-	    mu_errup_values.push_back(eff_errs[1]);
-	    mu_errdown_values.push_back(eff_errs[2]);
-	}
-        TGraphAsymmErrors* new_mu_eff = static_cast<TGraphAsymmErrors*>((f->Get("hist_mumu_ratio"))->Clone());
-        TGraphAsymmErrors* old_mu_eff = new TGraphAsymmErrors(mu_pt_values.size(),mu_pt_values.data(),mu_eff_values.data(),mu_pt_range_values.data(),mu_pt_range_values.data(),mu_errdown_values.data(),mu_errup_values.data());
-        old_mu_eff->SetTitle("2#mu trigger efficiency; Max Muon Pt (GeV); Efficiency");
-        old_mu_eff->GetYaxis()->SetRangeUser(0,1.4);
-        old_mu_eff->SetLineColor(kRed);
-        old_mu_eff->Draw("AP");
-        new_mu_eff->Draw("P same");
-        TLegend* muleg = new TLegend(0.5,0.1,0.9,0.3);
-        muleg->AddEntry(new_mu_eff,"New Efficiency Mu(Iso24, Iso27, 50)","f");
-        muleg->AddEntry(old_mu_eff,"AN Efficiency Mu(Iso24, IsoTk24, 50)","f");
-        muleg->Draw("same");
-        mumu_canvas->SaveAs("plots/mumu_eff.png");
-	//write out functions to file
-	//el function
-        apply_effs_file << "const NamedFunc get_2el_trigeff" << year << "(\"get_2el_trigeff" << year << "\", [](const Baby &b) -> NamedFunc::ScalarType{\n";
-        apply_effs_file << "  float errup=0., errdown=0.; // Not used, but for reference\n";
-        apply_effs_file << "  float eff = 1., el_pt = signal_lepton_pt(b.el_pt(),b.el_sig());\n";
-        apply_effs_file << "  errup+=errdown; //suppress unused warning\n";
-	bool first = true;
-        double* eff_pts = new_el_eff->GetY();
-        for (int el_pt_bin = 0; el_pt_bin < twoel_pt_bins.size()-1; el_pt_bin++) {
-            double el_pt_upper = el_pt_bin==(twoel_pt_bins.size()-2) ? 9999 : twoel_pt_bins[el_pt_bin+1];
-            if (first) {
-                apply_effs_file << "  if (el_pt> ";
-                first = false;
-            }
-            else apply_effs_file << "  else if (el_pt> ";
-            apply_effs_file << twoel_pt_bins[el_pt_bin] << " && el_pt<= " << el_pt_upper;
-            apply_effs_file << ") {eff = " << eff_pts[el_pt_bin] << "; errup = " << new_el_eff->GetErrorYhigh(el_pt_bin) << "; errdown = " << new_el_eff->GetErrorYlow(el_pt_bin) << ";}\n";
-        }
-	apply_effs_file << "  return eff;\n";
-        apply_effs_file << "});\n\n";
-	//mu function
-        apply_effs_file << "const NamedFunc get_2mu_trigeff" << year << "(\"get_2mu_trigeff" << year << "\", [](const Baby &b) -> NamedFunc::ScalarType{\n";
-        apply_effs_file << "  float errup=0., errdown=0.; // Not used, but for reference\n";
-        apply_effs_file << "  float eff = 1., mu_pt = signal_lepton_pt(b.mu_pt(),b.mu_sig());\n";
-        apply_effs_file << "  errup+=errdown; //suppress unused warning\n";
-	first = true;
-        eff_pts = new_mu_eff->GetY();
-        for (int mu_pt_bin = 0; mu_pt_bin < twomu_pt_bins.size()-1; mu_pt_bin++) {
-            double mu_pt_upper = mu_pt_bin==(twomu_pt_bins.size()-2) ? 9999 : twomu_pt_bins[mu_pt_bin+1];
-            if (first) {
-                apply_effs_file << "  if (mu_pt> ";
-                first = false;
-            }
-            else apply_effs_file << "  else if (mu_pt> ";
-            apply_effs_file << twomu_pt_bins[mu_pt_bin] << " && mu_pt<= " << mu_pt_upper;
-            apply_effs_file << ") {eff = " << eff_pts[mu_pt_bin] << "; errup = " << new_mu_eff->GetErrorYhigh(mu_pt_bin) << "; errdown = " << new_mu_eff->GetErrorYlow(mu_pt_bin) << ";}\n";
-        }
-	apply_effs_file << "  return eff;\n";
-        apply_effs_file << "});\n\n";
+	draw_1d_graphs(f, "hist_elel_numerator", "hist_elel_denominator", "hist_elel_ratio", twoel_pt_bins, "el_pt", "Max p_{Te}", "HigUtilities::signal_lepton_pt(b.el_pt(),b.el_sig())",&geteff_2el,"Denom: MET(110|120|120HT60)|Jet500, N_{j}#geq 2, N_{e}=2",lumi_string,el_trigger_string,"El(Iso27, Iso27lBar, 105, 115)","elel_eff",apply_effs_file,"get_2el_trigeff",year,img_file_extension);
+	draw_1d_graphs(f, "hist_mumu_numerator", "hist_mumu_denominator", "hist_mumu_ratio", twomu_pt_bins, "mu_pt", "Max p_{T#mu}", "HigUtilities::signal_lepton_pt(b.mu_pt(),b.mu_sig())",&geteff_2mu,"Denom: MET(110|120|120HT60)|Jet500, N_{j}#geq 2, N_{#mu}=2",lumi_string,mu_trigger_string,"Mu(Iso24, IsoTk24, 50)","mumu_eff",apply_effs_file,"get_2mu_trigeff",year,img_file_extension);
     }
     apply_effs_file << "}\n";
     apply_effs_file.close();
     std::cout << "Wrote src/higgsino/apply_trigeffs.cpp" << std::endl;
     return 0;
+}
+
+void draw_2d_graphs(TFile * new_graph_file, std::vector<std::string> new_numerator_name, std::vector<std::string> new_denominator_name, std::vector<double> y_bins, std::vector<double> x_bins, std::string y_var_name, std::string y_title_name, std::string y_expression, std::string x_var_name, std::string x_title_name, std::string x_expression, std::vector<float>(*an_eff_func)(float x, float y), std::string cuts_string, std::string lumi_string, std::string new_trigger_string, std::string old_trigger_string, std::string plot_name, ofstream &out_file, std::string func_name, std::string year, std::string img_file_extension) {
+	//loop over ht - each ht bin is a new TGraphAsymmErrors
+	std::vector<TCanvas*> overlay_canvas;
+	std::vector<TGraphAsymmErrors*> an_eff_plots;
+	std::vector<TGraphAsymmErrors*> new_eff_plots;
+	for (int y_bin = 0; y_bin < y_bins.size()-1; y_bin++) {
+	    double y_value = (y_bins[y_bin]+y_bins[y_bin+1])/2;
+	    overlay_canvas.push_back(new TCanvas());
+	    overlay_canvas[y_bin]->cd();
+	    overlay_canvas[y_bin]->SetGrid();
+	    std::vector<double> x_values;
+	    std::vector<double> x_range_values;
+	    std::vector<double> eff_values;
+	    std::vector<double> errup_values;
+	    std::vector<double> errdown_values;
+	    //loop over met bins for old efficiencies
+	    for (int x_bin = 0; x_bin < x_bins.size()-1; x_bin++) {
+	        double x_value = (x_bins[x_bin]+x_bins[x_bin+1])/2;
+	        double x_bin_range = (x_bins[x_bin+1]-x_bins[x_bin])/2;
+	        x_values.push_back(x_value);
+	        x_range_values.push_back(x_bin_range);
+		std::vector<float> eff_errs = (*an_eff_func)(x_value, y_value);
+		eff_values.push_back(eff_errs[0]);
+		errup_values.push_back(eff_errs[1]);
+		errdown_values.push_back(eff_errs[2]);
+	    }
+	    //get new efficiencies from histograms
+            TH2D* numerator_hist = static_cast<TH2D*>((new_graph_file->Get(new_numerator_name[0].c_str()))->Clone());
+            TH2D* denominator_hist = static_cast<TH2D*>((new_graph_file->Get(new_denominator_name[0].c_str()))->Clone());
+	    for (int new_hist_idx = 1; new_hist_idx < new_numerator_name.size(); new_hist_idx++) {
+              TH2D* numerator2_hist = static_cast<TH2D*>((new_graph_file->Get(new_numerator_name[new_hist_idx].c_str()))->Clone());
+              TH2D* denominator2_hist = static_cast<TH2D*>((new_graph_file->Get(new_denominator_name[new_hist_idx].c_str()))->Clone());
+	      numerator_hist->Add(numerator2_hist);
+	      denominator_hist->Add(denominator2_hist);
+	    }
+	    TH1D* numerator_1d_hist = numerator_hist->ProjectionX("numerator_1d_hist",y_bin+1,y_bin+1);
+	    TH1D* denominator_1d_hist = denominator_hist->ProjectionX("denominator_1d_hist",y_bin+1,y_bin+1);
+	    new_eff_plots.push_back(new TGraphAsymmErrors(numerator_1d_hist,denominator_1d_hist));
+	    an_eff_plots.push_back(new TGraphAsymmErrors(x_values.size(),x_values.data(),eff_values.data(),x_range_values.data(),x_range_values.data(),errdown_values.data(),errup_values.data()));
+	    an_eff_plots[y_bin]->SetTitle(("Trigger efficiency "+y_title_name+"#in ["+std::to_string(y_bins[y_bin])+","+std::to_string(y_bins[y_bin+1])+"]; "+x_title_name+"; Efficiency").c_str());
+  	    an_eff_plots[y_bin]->GetYaxis()->SetRangeUser(0,1.4);
+	    an_eff_plots[y_bin]->SetLineColor(kRed);
+	    an_eff_plots[y_bin]->Draw("AP");
+	    new_eff_plots[y_bin]->Draw("P same");
+	    TLegend* leg = new TLegend(0.5,0.1,0.9,0.3);
+	    leg->AddEntry(new_eff_plots[y_bin],("New Efficiency "+new_trigger_string).c_str(),"f");
+	    leg->AddEntry(an_eff_plots[y_bin],("AN Efficiency "+old_trigger_string).c_str(),"f");
+	    leg->Draw("same");
+	    overlay_canvas[y_bin]->SaveAs(("plots/"+plot_name+"_"+std::to_string(y_bin)+img_file_extension).c_str());
+    	    make_efficiency_plot(numerator_1d_hist,denominator_1d_hist,new_eff_plots[y_bin],lumi_string,cuts_string+", "+y_title_name+"#in ["+std::to_string(y_bins[y_bin])+", "+std::to_string(y_bins[y_bin+1])+"]",x_title_name,"Efficiency "+new_trigger_string,"GeV",plot_name+"_"+std::to_string(y_bin),img_file_extension,true,false);
+	}
+	//write out function to file
+        out_file << "const NamedFunc " << func_name << year << "(\"" << func_name << year << "\", [](const Baby &b) -> NamedFunc::ScalarType{\n";
+        out_file << "  float errup=0., errdown=0.; // Not used, but for reference\n";
+        out_file << "  float eff = 1., " << x_var_name << " = " << x_expression << ", " << y_var_name << " = " << y_expression << ";\n";
+        out_file << "  errup+=errdown; //suppress unused warning\n";
+	bool first = true;
+	for (int x_bin = 0; x_bin < x_bins.size()-1; x_bin++) {
+	    double x_upper = x_bin==(x_bins.size()-2) ? 9999 : x_bins[x_bin+1];
+	    for (int y_bin = 0; y_bin < y_bins.size()-1; y_bin++) {
+	        double y_upper = y_bin==(y_bins.size()-2) ? 9999 : y_bins[y_bin+1];
+		double* eff_pts = new_eff_plots[y_bin]->GetY();
+                if (first) {
+		    out_file << "  if (" << y_var_name << "> ";
+		    first = false;
+		}
+		else out_file << "  else if (" << y_var_name << "> ";
+		out_file << y_bins[y_bin] << " && " << y_var_name << "<= " << y_upper;
+		out_file << " && " << x_var_name << "> " << x_bins[x_bin] << " && " << x_var_name << "<= " << x_upper;
+		out_file << ") {eff = " << eff_pts[x_bin] << "; errup = " << new_eff_plots[y_bin]->GetErrorYhigh(x_bin) << "; errdown = " << new_eff_plots[y_bin]->GetErrorYlow(x_bin) << ";}\n";
+	    }
+	}
+	out_file << "  return eff;\n";
+        out_file << "});\n\n";
+}
+
+void draw_1d_graphs(TFile * new_graph_file, std::string new_numerator_name, std::string new_denominator_name, std::string new_ratio_name, std::vector<double> x_bins, std::string x_var_name, std::string x_title_name, std::string x_expression, std::vector<float>(*an_eff_func)(float x), std::string cuts_string, std::string lumi_string, std::string new_trigger_string, std::string old_trigger_string, std::string plot_name, ofstream &out_file, std::string func_name, std::string year, std::string img_file_extension) {
+	TCanvas* overlay_canvas = new TCanvas();
+	overlay_canvas->cd();
+	overlay_canvas->SetGrid();
+	std::vector<double> x_values;
+	std::vector<double> x_range_values;
+	std::vector<double> x_eff_values;
+	std::vector<double> x_errup_values;
+	std::vector<double> x_errdown_values;
+	for (int x_bin = 0; x_bin < x_bins.size()-1; x_bin++) {
+	    double x_value = (x_bins[x_bin]+x_bins[x_bin+1])/2;
+	    double x_range_value = (x_bins[x_bin+1]-x_bins[x_bin])/2;
+	    std::vector<float> eff_errs = (*an_eff_func)(x_value);
+	    x_values.push_back(x_value);
+	    x_range_values.push_back(x_range_value);
+	    x_eff_values.push_back(eff_errs[0]);
+	    x_errup_values.push_back(eff_errs[1]);
+	    x_errdown_values.push_back(eff_errs[2]);
+	}
+        TH1D* numerator_hist = static_cast<TH1D*>((new_graph_file->Get(new_numerator_name.c_str()))->Clone());
+        TH1D* denominator_hist = static_cast<TH1D*>((new_graph_file->Get(new_denominator_name.c_str()))->Clone());
+        TGraphAsymmErrors* new_eff_hist = static_cast<TGraphAsymmErrors*>((new_graph_file->Get(new_ratio_name.c_str()))->Clone());
+        TGraphAsymmErrors* old_eff_hist = new TGraphAsymmErrors(x_values.size(),x_values.data(),x_eff_values.data(),x_range_values.data(),x_range_values.data(),x_errdown_values.data(),x_errup_values.data());
+        old_eff_hist->SetTitle(("Trigger efficiency; " + x_title_name + " (GeV); Efficiency").c_str());
+        old_eff_hist->GetYaxis()->SetRangeUser(0,1.4);
+        old_eff_hist->SetLineColor(kRed);
+        old_eff_hist->Draw("AP");
+        new_eff_hist->Draw("P same");
+        TLegend* leg = new TLegend(0.5,0.1,0.9,0.3);
+	leg->AddEntry(new_eff_hist,("New Efficiency "+new_trigger_string).c_str(),"f");
+        leg->AddEntry(old_eff_hist,("AN Efficiency "+old_trigger_string).c_str(),"f");
+        leg->Draw("same");
+        overlay_canvas->SaveAs(("plots/"+plot_name+img_file_extension).c_str());
+    	make_efficiency_plot(numerator_hist,denominator_hist,new_eff_hist,lumi_string,cuts_string,x_title_name,"Efficiency "+new_trigger_string,"GeV",plot_name,img_file_extension,true,false);
+	//write out functions to file
+        out_file << "const NamedFunc " << func_name << year << "(\"" << func_name << year << "\", [](const Baby &b) -> NamedFunc::ScalarType{\n";
+        out_file << "  float errup=0., errdown=0.; // Not used, but for reference\n";
+        out_file << "  float eff = 1., " << x_var_name << " = " << x_expression << ";\n";
+        out_file << "  errup+=errdown; //suppress unused warning\n";
+	bool first = true;
+        double* eff_x_vals = new_eff_hist->GetY();
+        for (int x_bin = 0; x_bin < x_bins.size()-1; x_bin++) {
+            double x_upper = x_bin==(x_bins.size()-2) ? 9999 : x_bins[x_bin+1];
+            if (first) {
+                out_file << "  if (" << x_var_name << "> ";
+                first = false;
+            }
+            else out_file << "  else if (" << x_var_name << "> ";
+            out_file << x_bins[x_bin] << " && " << x_var_name << "<= " << x_upper;
+            out_file << ") {eff = " << eff_x_vals[x_bin] << "; errup = " << new_eff_hist->GetErrorYhigh(x_bin) << "; errdown = " << new_eff_hist->GetErrorYlow(x_bin) << ";}\n";
+        }
+	out_file << "  return eff;\n";
+        out_file << "});\n\n";
+}
+
+void make_efficiency_plot(TH1D* hist_num, TH1D* hist_den, TGraphAsymmErrors* hist_ratio, std::string lumi_string, std::string title, std::string xaxis, std::string yaxis, std::string units, std::string out_filename, std::string out_file_extension, bool var_width_bins, bool is_simulation) {
+	//draw ratio and axis labels
+	gStyle->SetOptStat(0);
+	TCanvas* can = new TCanvas(("can_"+out_filename).c_str(),"can",1024,1024);
+	can->cd();
+	TPad* pad = new TPad(("pad_"+out_filename).c_str(),"pad",0.,0.,1.0,1.0);
+	pad->Draw();
+	pad->cd();
+	pad->SetGrid();
+	gPad->SetMargin(0.15,0.15,0.15,0.15);
+
+	double xlow = hist_den->GetBinLowEdge(1);
+	double xhigh = hist_den->GetBinLowEdge(hist_den->GetNbinsX())+hist_den->GetBinWidth(hist_den->GetNbinsX());
+	double bin_size = (xhigh-xlow)/hist_den->GetNbinsX();
+	hist_ratio->GetXaxis()->SetRangeUser(xlow, xhigh);
+	if (yaxis.size() > 40) {
+		hist_ratio->GetYaxis()->SetTitleSize(0.025);
+		hist_ratio->GetYaxis()->SetTitleOffset(1.6);
+	}
+	else {
+		hist_ratio->GetYaxis()->SetTitleOffset(1.4);
+	}
+	hist_ratio->GetYaxis()->SetRangeUser(0, 1.4);
+	if (units == "") {
+		hist_ratio->SetTitle((";"+xaxis+";"+yaxis).c_str());
+	}
+	else {
+		hist_ratio->SetTitle((";"+xaxis+"("+units+");"+yaxis).c_str());
+	}
+	hist_ratio->SetLineWidth(2);
+	hist_ratio->Draw("AP");
+
+	//draw overlay text
+	TLatex t;
+	t.SetTextColor(kBlack);
+	t.SetTextSize(0.04);
+	if (!is_simulation) {
+		t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}");
+	}
+	else {
+		t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Simulation}}");
+	}
+	t.SetTextAlign(31);
+	t.DrawLatexNDC(0.845,0.87,("#font[42]{"+lumi_string+"}").c_str());
+	t.SetTextAlign(33);
+	t.SetTextSize(0.03);
+	if (title.size() < 66) {
+		t.DrawLatexNDC(0.825,0.83,("#font[42]{"+title+"}").c_str());
+	}
+	else {
+		//title too long, draw on separate lines
+		unsigned int right_split_comma_pos = 999;
+		for (unsigned int string_pos = 65; string_pos > 0; string_pos --) {
+			if (title[string_pos]==',') {
+				//split title at this comma
+				right_split_comma_pos = string_pos;
+				break;
+			}
+		}
+		if (right_split_comma_pos == 999) {
+			//unable to find splitting comma, just let it draw off histogram
+			t.DrawLatexNDC(0.825,0.83,("#font[42]{"+title+"}").c_str());
+		}
+		else {
+			t.DrawLatexNDC(0.825,0.83,("#font[42]{"+title.substr(0,right_split_comma_pos+1)+"}").c_str());
+			t.DrawLatexNDC(0.825,0.78,("#font[42]{"+title.substr(right_split_comma_pos+1,title.size()-right_split_comma_pos-1)+"}").c_str());
+		}
+	}
+	
+	//draw numerator and denominator histograms
+	double hist_den_max = hist_den->GetBinContent(hist_den->GetMaximumBin());
+	hist_den->Scale(0.5/hist_den_max);
+	hist_den->SetLineStyle(2);
+	hist_den->SetLineColor(kBlue);
+	hist_den->SetLineWidth(2);
+	hist_den->SetFillStyle(0);
+	hist_den->Draw("same hist");
+
+	hist_num->Scale(0.5/hist_den_max);
+	hist_num->SetLineColor(kBlue);
+	hist_num->SetLineWidth(2);
+	hist_num->SetFillStyle(0);
+	//hist_num->SetFillColor(kBlue);
+	hist_num->Draw("same hist");
+
+	hist_ratio->Draw("P");
+
+	//draw right axis
+	pad->Update();
+	TGaxis *norm_axis = new TGaxis(gPad->GetUxmax(), gPad->GetUymin(), gPad->GetUxmax(), gPad->GetUymax(), 0, 2.8*hist_den_max, 505, "+L");
+	norm_axis->SetTickLength(0.3);
+	norm_axis->SetLabelSize(0.03);
+	if (units != "" && !var_width_bins) {
+		norm_axis->SetTitle(("Events/("+std::to_string(static_cast<int>(bin_size))+" "+units+")").c_str());
+	}
+	else {
+		norm_axis->SetTitle("Events/bin");
+	}
+	norm_axis->SetTitleColor(kBlue);
+	norm_axis->SetTitleFont(42);
+	norm_axis->SetTitleOffset(1.6);
+	norm_axis->SetLineColor(kBlue);
+	norm_axis->SetLabelColor(kBlue);
+	norm_axis->Draw();
+
+	//save
+	can->Update();
+	can->SaveAs(("plots/trig_eff_resolved_"+out_filename+out_file_extension).c_str());
 }
 
 std::vector<float> geteff_0l(float met, float ht) {
@@ -553,6 +436,279 @@ std::vector<float> geteff_0l(float met, float ht) {
     r_geteff_0l.push_back(errdown);
     return r_geteff_0l;
 }
+
+std::vector<float> geteff_0l_prereminiaod(float met, float ht) {
+    float errup = 0., errdown = 0.; 
+    float eff = 1.;
+    if(ht>   0 && ht<= 200 && met> 150 && met<= 155) {eff = 0.491; errup = 0.013; errdown = 0.013;}
+    else if(ht> 200 && ht<= 600 && met> 150 && met<= 155) {eff = 0.574; errup = 0.005; errdown = 0.005;}
+    else if(ht> 600 && ht<= 800 && met> 150 && met<= 155) {eff = 0.515; errup = 0.022; errdown = 0.022;}
+    else if(ht> 800 && ht<=1000 && met> 150 && met<= 155) {eff = 0.538; errup = 0.041; errdown = 0.041;}
+    else if(ht>1000 && ht<=9999 && met> 150 && met<= 155) {eff = 0.483; errup = 0.051; errdown = 0.050;}
+    else if(ht>   0 && ht<= 200 && met> 155 && met<= 160) {eff = 0.569; errup = 0.014; errdown = 0.015;}
+    else if(ht> 200 && ht<= 600 && met> 155 && met<= 160) {eff = 0.638; errup = 0.006; errdown = 0.006;}
+    else if(ht> 600 && ht<= 800 && met> 155 && met<= 160) {eff = 0.641; errup = 0.023; errdown = 0.024;}
+    else if(ht> 800 && ht<=1000 && met> 155 && met<= 160) {eff = 0.477; errup = 0.044; errdown = 0.044;}
+    else if(ht>1000 && ht<=9999 && met> 155 && met<= 160) {eff = 0.570; errup = 0.052; errdown = 0.053;}
+    else if(ht>   0 && ht<= 200 && met> 160 && met<= 165) {eff = 0.591; errup = 0.016; errdown = 0.016;}
+    else if(ht> 200 && ht<= 600 && met> 160 && met<= 165) {eff = 0.694; errup = 0.006; errdown = 0.006;}
+    else if(ht> 600 && ht<= 800 && met> 160 && met<= 165) {eff = 0.691; errup = 0.022; errdown = 0.023;}
+    else if(ht> 800 && ht<=1000 && met> 160 && met<= 165) {eff = 0.588; errup = 0.043; errdown = 0.044;}
+    else if(ht>1000 && ht<=9999 && met> 160 && met<= 165) {eff = 0.576; errup = 0.056; errdown = 0.058;}
+    else if(ht>   0 && ht<= 200 && met> 165 && met<= 170) {eff = 0.652; errup = 0.018; errdown = 0.018;}
+    else if(ht> 200 && ht<= 600 && met> 165 && met<= 170) {eff = 0.741; errup = 0.006; errdown = 0.006;}
+    else if(ht> 600 && ht<= 800 && met> 165 && met<= 170) {eff = 0.712; errup = 0.022; errdown = 0.023;}
+    else if(ht> 800 && ht<=1000 && met> 165 && met<= 170) {eff = 0.682; errup = 0.040; errdown = 0.043;}
+    else if(ht>1000 && ht<=9999 && met> 165 && met<= 170) {eff = 0.580; errup = 0.053; errdown = 0.055;}
+    else if(ht>   0 && ht<= 200 && met> 170 && met<= 175) {eff = 0.676; errup = 0.020; errdown = 0.020;}
+    else if(ht> 200 && ht<= 600 && met> 170 && met<= 175) {eff = 0.787; errup = 0.006; errdown = 0.006;}
+    else if(ht> 600 && ht<= 800 && met> 170 && met<= 175) {eff = 0.765; errup = 0.022; errdown = 0.024;}
+    else if(ht> 800 && ht<=1000 && met> 170 && met<= 175) {eff = 0.608; errup = 0.042; errdown = 0.043;}
+    else if(ht>1000 && ht<=9999 && met> 170 && met<= 175) {eff = 0.631; errup = 0.057; errdown = 0.060;}
+    else if(ht>   0 && ht<= 200 && met> 175 && met<= 180) {eff = 0.685; errup = 0.021; errdown = 0.021;}
+    else if(ht> 200 && ht<= 600 && met> 175 && met<= 180) {eff = 0.820; errup = 0.006; errdown = 0.006;}
+    else if(ht> 600 && ht<= 800 && met> 175 && met<= 180) {eff = 0.752; errup = 0.025; errdown = 0.027;}
+    else if(ht> 800 && ht<=1000 && met> 175 && met<= 180) {eff = 0.832; errup = 0.036; errdown = 0.043;}
+    else if(ht>1000 && ht<=9999 && met> 175 && met<= 180) {eff = 0.731; errup = 0.053; errdown = 0.060;}
+    else if(ht>   0 && ht<= 200 && met> 180 && met<= 185) {eff = 0.768; errup = 0.021; errdown = 0.023;}
+    else if(ht> 200 && ht<= 600 && met> 180 && met<= 185) {eff = 0.852; errup = 0.006; errdown = 0.006;}
+    else if(ht> 600 && ht<= 800 && met> 180 && met<= 185) {eff = 0.805; errup = 0.023; errdown = 0.025;}
+    else if(ht> 800 && ht<=1000 && met> 180 && met<= 185) {eff = 0.778; errup = 0.042; errdown = 0.047;}
+    else if(ht>1000 && ht<=9999 && met> 180 && met<= 185) {eff = 0.742; errup = 0.057; errdown = 0.065;}
+    else if(ht>   0 && ht<= 200 && met> 185 && met<= 190) {eff = 0.752; errup = 0.025; errdown = 0.027;}
+    else if(ht> 200 && ht<= 600 && met> 185 && met<= 190) {eff = 0.881; errup = 0.005; errdown = 0.006;}
+    else if(ht> 600 && ht<= 800 && met> 185 && met<= 190) {eff = 0.873; errup = 0.019; errdown = 0.021;}
+    else if(ht> 800 && ht<=1000 && met> 185 && met<= 190) {eff = 0.865; errup = 0.037; errdown = 0.046;}
+    else if(ht>1000 && ht<=9999 && met> 185 && met<= 190) {eff = 0.797; errup = 0.047; errdown = 0.056;}
+    else if(ht>   0 && ht<= 200 && met> 190 && met<= 195) {eff = 0.789; errup = 0.026; errdown = 0.029;}
+    else if(ht> 200 && ht<= 600 && met> 190 && met<= 195) {eff = 0.904; errup = 0.005; errdown = 0.005;}
+    else if(ht> 600 && ht<= 800 && met> 190 && met<= 195) {eff = 0.875; errup = 0.019; errdown = 0.022;}
+    else if(ht> 800 && ht<=1000 && met> 190 && met<= 195) {eff = 0.844; errup = 0.038; errdown = 0.046;}
+    else if(ht>1000 && ht<=9999 && met> 190 && met<= 195) {eff = 0.779; errup = 0.047; errdown = 0.054;}
+    else if(ht>   0 && ht<= 200 && met> 195 && met<= 200) {eff = 0.733; errup = 0.033; errdown = 0.035;}
+    else if(ht> 200 && ht<= 600 && met> 195 && met<= 200) {eff = 0.912; errup = 0.005; errdown = 0.005;}
+    else if(ht> 600 && ht<= 800 && met> 195 && met<= 200) {eff = 0.864; errup = 0.021; errdown = 0.024;}
+    else if(ht> 800 && ht<=1000 && met> 195 && met<= 200) {eff = 0.863; errup = 0.036; errdown = 0.045;}
+    else if(ht>1000 && ht<=9999 && met> 195 && met<= 200) {eff = 0.769; errup = 0.055; errdown = 0.064;}
+    else if(ht>   0 && ht<= 200 && met> 200 && met<= 210) {eff = 0.810; errup = 0.024; errdown = 0.026;}
+    else if(ht> 200 && ht<= 600 && met> 200 && met<= 210) {eff = 0.936; errup = 0.003; errdown = 0.004;}
+    else if(ht> 600 && ht<= 800 && met> 200 && met<= 210) {eff = 0.922; errup = 0.012; errdown = 0.014;}
+    else if(ht> 800 && ht<=1000 && met> 200 && met<= 210) {eff = 0.881; errup = 0.025; errdown = 0.030;}
+    else if(ht>1000 && ht<=9999 && met> 200 && met<= 210) {eff = 0.808; errup = 0.036; errdown = 0.041;}
+    else if(ht>   0 && ht<= 200 && met> 210 && met<= 220) {eff = 0.839; errup = 0.030; errdown = 0.034;}
+    else if(ht> 200 && ht<= 600 && met> 210 && met<= 220) {eff = 0.963; errup = 0.003; errdown = 0.003;}
+    else if(ht> 600 && ht<= 800 && met> 210 && met<= 220) {eff = 0.948; errup = 0.011; errdown = 0.013;}
+    else if(ht> 800 && ht<=1000 && met> 210 && met<= 220) {eff = 0.899; errup = 0.024; errdown = 0.030;}
+    else if(ht>1000 && ht<=9999 && met> 210 && met<= 220) {eff = 0.914; errup = 0.026; errdown = 0.035;}
+    else if(ht>   0 && ht<= 200 && met> 220 && met<= 230) {eff = 0.891; errup = 0.028; errdown = 0.035;}
+    else if(ht> 200 && ht<= 600 && met> 220 && met<= 230) {eff = 0.963; errup = 0.003; errdown = 0.004;}
+    else if(ht> 600 && ht<= 800 && met> 220 && met<= 230) {eff = 0.955; errup = 0.011; errdown = 0.014;}
+    else if(ht> 800 && ht<=1000 && met> 220 && met<= 230) {eff = 0.945; errup = 0.019; errdown = 0.026;}
+    else if(ht>1000 && ht<=9999 && met> 220 && met<= 230) {eff = 0.928; errup = 0.026; errdown = 0.037;}
+    else if(ht>   0 && ht<= 200 && met> 230 && met<= 240) {eff = 0.854; errup = 0.040; errdown = 0.050;}
+    else if(ht> 200 && ht<= 600 && met> 230 && met<= 240) {eff = 0.981; errup = 0.003; errdown = 0.003;}
+    else if(ht> 600 && ht<= 800 && met> 230 && met<= 240) {eff = 0.966; errup = 0.010; errdown = 0.013;}
+    else if(ht> 800 && ht<=1000 && met> 230 && met<= 240) {eff = 0.968; errup = 0.015; errdown = 0.025;}
+    else if(ht>1000 && ht<=9999 && met> 230 && met<= 240) {eff = 1.000; errup = 0.000; errdown = 0.019;}
+    else if(ht>   0 && ht<= 200 && met> 240 && met<= 250) {eff = 0.800; errup = 0.059; errdown = 0.073;}
+    else if(ht> 200 && ht<= 600 && met> 240 && met<= 250) {eff = 0.981; errup = 0.003; errdown = 0.004;}
+    else if(ht> 600 && ht<= 800 && met> 240 && met<= 250) {eff = 0.990; errup = 0.006; errdown = 0.010;}
+    else if(ht> 800 && ht<=1000 && met> 240 && met<= 250) {eff = 0.980; errup = 0.013; errdown = 0.026;}
+    else if(ht>1000 && ht<=9999 && met> 240 && met<= 250) {eff = 0.921; errup = 0.034; errdown = 0.050;}
+    else if(ht>   0 && ht<= 200 && met> 250 && met<= 275) {eff = 0.894; errup = 0.038; errdown = 0.052;}
+    else if(ht> 200 && ht<= 600 && met> 250 && met<= 275) {eff = 0.989; errup = 0.002; errdown = 0.002;}
+    else if(ht> 600 && ht<= 800 && met> 250 && met<= 275) {eff = 0.989; errup = 0.004; errdown = 0.007;}
+    else if(ht> 800 && ht<=1000 && met> 250 && met<= 275) {eff = 0.980; errup = 0.009; errdown = 0.015;}
+    else if(ht>1000 && ht<=9999 && met> 250 && met<= 275) {eff = 0.952; errup = 0.018; errdown = 0.025;}
+    else if(ht>   0 && ht<= 200 && met> 275 && met<= 300) {eff = 0.879; errup = 0.057; errdown = 0.086;}
+    else if(ht> 200 && ht<= 600 && met> 275 && met<= 300) {eff = 0.993; errup = 0.002; errdown = 0.002;}
+    else if(ht> 600 && ht<= 800 && met> 275 && met<= 300) {eff = 0.989; errup = 0.005; errdown = 0.008;}
+    else if(ht> 800 && ht<=1000 && met> 275 && met<= 300) {eff = 0.978; errup = 0.012; errdown = 0.021;}
+    else if(ht>1000 && ht<=9999 && met> 275 && met<= 300) {eff = 0.992; errup = 0.007; errdown = 0.018;}
+    else if(ht>   0 && ht<= 200 && met> 300 && met<=9999) {eff = 0.828; errup = 0.072; errdown = 0.100;}
+    else if(ht> 200 && ht<= 600 && met> 300 && met<=9999) {eff = 0.995; errup = 0.001; errdown = 0.002;}
+    else if(ht> 600 && ht<= 800 && met> 300 && met<=9999) {eff = 0.995; errup = 0.002; errdown = 0.003;}
+    else if(ht> 800 && ht<=1000 && met> 300 && met<=9999) {eff = 0.997; errup = 0.002; errdown = 0.005;}
+    else if(ht>1000 && ht<=9999 && met> 300 && met<=9999) {eff = 0.985; errup = 0.005; errdown = 0.008;}
+    std::vector<float> r_geteff_0l_prereminiaod;
+    r_geteff_0l_prereminiaod.push_back(eff);
+    r_geteff_0l_prereminiaod.push_back(errup);
+    r_geteff_0l_prereminiaod.push_back(errdown);
+    return r_geteff_0l_prereminiaod;
+}
+
+std::vector<float> geteff_0l_2018finebins(float met, float ht) {
+    float errup = 0., errdown = 0.; 
+    float eff = 1.;
+    if (ht> 0 && ht<= 200 && met> 150 && met<= 155) {eff = 0.122642; errup = 0.0212439; errdown = 0.0186726;}
+    else if (ht> 200 && ht<= 250 && met> 150 && met<= 155) {eff = 0.130435; errup = 0.0125863; errdown = 0.0116741;}
+    else if (ht> 250 && ht<= 300 && met> 150 && met<= 155) {eff = 0.134969; errup = 0.0101357; errdown = 0.00955337;}
+    else if (ht> 300 && ht<= 350 && met> 150 && met<= 155) {eff = 0.179238; errup = 0.0111008; errdown = 0.0106048;}
+    else if (ht> 350 && ht<= 400 && met> 150 && met<= 155) {eff = 0.213115; errup = 0.0130803; errdown = 0.0125388;}
+    else if (ht> 400 && ht<= 600 && met> 150 && met<= 155) {eff = 0.258382; errup = 0.0095876; errdown = 0.00936642;}
+    else if (ht> 600 && ht<= 800 && met> 150 && met<= 155) {eff = 0.291034; errup = 0.0178485; errdown = 0.017249;}
+    else if (ht> 800 && ht<= 1000 && met> 150 && met<= 155) {eff = 0.285714; errup = 0.0339588; errdown = 0.0318416;}
+    else if (ht> 1000 && ht<= 9999 && met> 150 && met<= 155) {eff = 0.39759; errup = 0.0607156; errdown = 0.0579928;}
+    else if (ht> 0 && ht<= 200 && met> 155 && met<= 160) {eff = 0.119469; errup = 0.0256237; errdown = 0.021921;}
+    else if (ht> 200 && ht<= 250 && met> 155 && met<= 160) {eff = 0.127874; errup = 0.0139386; errdown = 0.0128095;}
+    else if (ht> 250 && ht<= 300 && met> 155 && met<= 160) {eff = 0.171642; errup = 0.0122984; errdown = 0.0116614;}
+    else if (ht> 300 && ht<= 350 && met> 155 && met<= 160) {eff = 0.222609; errup = 0.0129474; errdown = 0.0124481;}
+    else if (ht> 350 && ht<= 400 && met> 155 && met<= 160) {eff = 0.263158; errup = 0.0146105; errdown = 0.0141235;}
+    else if (ht> 400 && ht<= 600 && met> 155 && met<= 160) {eff = 0.310575; errup = 0.0108379; errdown = 0.0106387;}
+    else if (ht> 600 && ht<= 800 && met> 155 && met<= 160) {eff = 0.361486; errup = 0.0208167; errdown = 0.0203293;}
+    else if (ht> 800 && ht<= 1000 && met> 155 && met<= 160) {eff = 0.368421; errup = 0.0346778; errdown = 0.0334478;}
+    else if (ht> 1000 && ht<= 9999 && met> 155 && met<= 160) {eff = 0.460674; errup = 0.058579; errdown = 0.0576084;}
+    else if (ht> 0 && ht<= 200 && met> 160 && met<= 165) {eff = 0.239766; errup = 0.0371352; errdown = 0.0338313;}
+    else if (ht> 200 && ht<= 250 && met> 160 && met<= 165) {eff = 0.165714; errup = 0.0178444; errdown = 0.0164978;}
+    else if (ht> 250 && ht<= 300 && met> 160 && met<= 165) {eff = 0.218468; errup = 0.014753; errdown = 0.0140937;}
+    else if (ht> 300 && ht<= 350 && met> 160 && met<= 165) {eff = 0.272291; errup = 0.0144826; errdown = 0.014031;}
+    else if (ht> 350 && ht<= 400 && met> 160 && met<= 165) {eff = 0.315158; errup = 0.0160875; errdown = 0.0156703;}
+    else if (ht> 400 && ht<= 600 && met> 160 && met<= 165) {eff = 0.353541; errup = 0.0114188; errdown = 0.0112579;}
+    else if (ht> 600 && ht<= 800 && met> 160 && met<= 165) {eff = 0.404514; errup = 0.0214718; errdown = 0.0211265;}
+    else if (ht> 800 && ht<= 1000 && met> 160 && met<= 165) {eff = 0.423963; errup = 0.0361381; errdown = 0.0353913;}
+    else if (ht> 1000 && ht<= 9999 && met> 160 && met<= 165) {eff = 0.485294; errup = 0.067645; errdown = 0.0671647;}
+    else if (ht> 0 && ht<= 200 && met> 165 && met<= 170) {eff = 0.170732; errup = 0.0345745; errdown = 0.0301595;}
+    else if (ht> 200 && ht<= 250 && met> 165 && met<= 170) {eff = 0.231423; errup = 0.0210776; errdown = 0.0198764;}
+    else if (ht> 250 && ht<= 300 && met> 165 && met<= 170) {eff = 0.250605; errup = 0.0159899; errdown = 0.0153622;}
+    else if (ht> 300 && ht<= 350 && met> 165 && met<= 170) {eff = 0.322545; errup = 0.0163709; errdown = 0.0159609;}
+    else if (ht> 350 && ht<= 400 && met> 165 && met<= 170) {eff = 0.371134; errup = 0.0181475; errdown = 0.0178033;}
+    else if (ht> 400 && ht<= 600 && met> 165 && met<= 170) {eff = 0.41153; errup = 0.0120906; errdown = 0.0119872;}
+    else if (ht> 600 && ht<= 800 && met> 165 && met<= 170) {eff = 0.498092; errup = 0.0227778; errdown = 0.0227702;}
+    else if (ht> 800 && ht<= 1000 && met> 165 && met<= 170) {eff = 0.55814; errup = 0.0358168; errdown = 0.0363931;}
+    else if (ht> 1000 && ht<= 9999 && met> 165 && met<= 170) {eff = 0.491525; errup = 0.073022; errdown = 0.072701;}
+    else if (ht> 0 && ht<= 200 && met> 170 && met<= 175) {eff = 0.222222; errup = 0.0401202; errdown = 0.0358944;}
+    else if (ht> 200 && ht<= 250 && met> 170 && met<= 175) {eff = 0.222772; errup = 0.0226446; errdown = 0.0211924;}
+    else if (ht> 250 && ht<= 300 && met> 170 && met<= 175) {eff = 0.306519; errup = 0.0181313; errdown = 0.0175734;}
+    else if (ht> 300 && ht<= 350 && met> 170 && met<= 175) {eff = 0.392512; errup = 0.0176975; errdown = 0.0174288;}
+    else if (ht> 350 && ht<= 400 && met> 170 && met<= 175) {eff = 0.436496; errup = 0.0197607; errdown = 0.0195683;}
+    else if (ht> 400 && ht<= 600 && met> 170 && met<= 175) {eff = 0.461292; errup = 0.0129502; errdown = 0.0128994;}
+    else if (ht> 600 && ht<= 800 && met> 170 && met<= 175) {eff = 0.494845; errup = 0.0237191; errdown = 0.0236969;}
+    else if (ht> 800 && ht<= 1000 && met> 170 && met<= 175) {eff = 0.571429; errup = 0.0388945; errdown = 0.0397352;}
+    else if (ht> 1000 && ht<= 9999 && met> 170 && met<= 175) {eff = 0.490909; errup = 0.0759035; errdown = 0.0755329;}
+    else if (ht> 0 && ht<= 200 && met> 175 && met<= 180) {eff = 0.371429; errup = 0.0529955; errdown = 0.0503158;}
+    else if (ht> 200 && ht<= 250 && met> 175 && met<= 180) {eff = 0.260223; errup = 0.0295143; errdown = 0.0276121;}
+    else if (ht> 250 && ht<= 300 && met> 175 && met<= 180) {eff = 0.297597; errup = 0.0209546; errdown = 0.020172;}
+    else if (ht> 300 && ht<= 350 && met> 175 && met<= 180) {eff = 0.423462; errup = 0.0195036; errdown = 0.0192764;}
+    else if (ht> 350 && ht<= 400 && met> 175 && met<= 180) {eff = 0.454688; errup = 0.0205212; errdown = 0.0203741;}
+    else if (ht> 400 && ht<= 600 && met> 175 && met<= 180) {eff = 0.531828; errup = 0.0133698; errdown = 0.0134145;}
+    else if (ht> 600 && ht<= 800 && met> 175 && met<= 180) {eff = 0.571726; errup = 0.0234207; errdown = 0.0237322;}
+    else if (ht> 800 && ht<= 1000 && met> 175 && met<= 180) {eff = 0.610063; errup = 0.0409415; errdown = 0.0424324;}
+    else if (ht> 1000 && ht<= 9999 && met> 175 && met<= 180) {eff = 0.580247; errup = 0.0595044; errdown = 0.0616911;}
+    else if (ht> 0 && ht<= 200 && met> 180 && met<= 185) {eff = 0.366197; errup = 0.0658302; errdown = 0.061636;}
+    else if (ht> 200 && ht<= 250 && met> 180 && met<= 185) {eff = 0.325301; errup = 0.032382; errdown = 0.0308877;}
+    else if (ht> 250 && ht<= 300 && met> 180 && met<= 185) {eff = 0.383367; errup = 0.0231356; errdown = 0.0226412;}
+    else if (ht> 300 && ht<= 350 && met> 180 && met<= 185) {eff = 0.496711; errup = 0.0210872; errdown = 0.0210759;}
+    else if (ht> 350 && ht<= 400 && met> 180 && met<= 185) {eff = 0.504472; errup = 0.0220125; errdown = 0.0220292;}
+    else if (ht> 400 && ht<= 600 && met> 180 && met<= 185) {eff = 0.588571; errup = 0.0143876; errdown = 0.0145364;}
+    else if (ht> 600 && ht<= 800 && met> 180 && met<= 185) {eff = 0.627792; errup = 0.0249557; errdown = 0.0256216;}
+    else if (ht> 800 && ht<= 1000 && met> 180 && met<= 185) {eff = 0.684211; errup = 0.0395467; errdown = 0.0421709;}
+    else if (ht> 1000 && ht<= 9999 && met> 180 && met<= 185) {eff = 0.673077; errup = 0.0701338; errdown = 0.0776765;}
+    else if (ht> 0 && ht<= 200 && met> 185 && met<= 190) {eff = 0.351852; errup = 0.0766005; errdown = 0.070409;}
+    else if (ht> 200 && ht<= 250 && met> 185 && met<= 190) {eff = 0.316327; errup = 0.0366848; errdown = 0.0346732;}
+    else if (ht> 250 && ht<= 300 && met> 185 && met<= 190) {eff = 0.399015; errup = 0.0257635; errdown = 0.0252416;}
+    else if (ht> 300 && ht<= 350 && met> 185 && met<= 190) {eff = 0.507463; errup = 0.0224907; errdown = 0.0225198;}
+    else if (ht> 350 && ht<= 400 && met> 185 && met<= 190) {eff = 0.554217; errup = 0.0231396; errdown = 0.0233669;}
+    else if (ht> 400 && ht<= 600 && met> 185 && met<= 190) {eff = 0.611481; errup = 0.0143732; errdown = 0.0145641;}
+    else if (ht> 600 && ht<= 800 && met> 185 && met<= 190) {eff = 0.71916; errup = 0.0237003; errdown = 0.0249143;}
+    else if (ht> 800 && ht<= 1000 && met> 185 && met<= 190) {eff = 0.70068; errup = 0.0395557; errdown = 0.042519;}
+    else if (ht> 1000 && ht<= 9999 && met> 185 && met<= 190) {eff = 0.733333; errup = 0.0604819; errdown = 0.0692961;}
+    else if (ht> 0 && ht<= 200 && met> 190 && met<= 195) {eff = 0.490196; errup = 0.0791382; errdown = 0.0787056;}
+    else if (ht> 200 && ht<= 250 && met> 190 && met<= 195) {eff = 0.369565; errup = 0.0455675; errdown = 0.04352;}
+    else if (ht> 250 && ht<= 300 && met> 190 && met<= 195) {eff = 0.487395; errup = 0.0278511; errdown = 0.0277768;}
+    else if (ht> 300 && ht<= 350 && met> 190 && met<= 195) {eff = 0.551648; errup = 0.0242673; errdown = 0.0245047;}
+    else if (ht> 350 && ht<= 400 && met> 190 && met<= 195) {eff = 0.640177; errup = 0.0233036; errdown = 0.0239519;}
+    else if (ht> 400 && ht<= 600 && met> 190 && met<= 195) {eff = 0.694849; errup = 0.0146384; errdown = 0.0150297;}
+    else if (ht> 600 && ht<= 800 && met> 190 && met<= 195) {eff = 0.757033; errup = 0.0222484; errdown = 0.0236385;}
+    else if (ht> 800 && ht<= 1000 && met> 190 && met<= 195) {eff = 0.706422; errup = 0.0459098; errdown = 0.0500708;}
+    else if (ht> 1000 && ht<= 9999 && met> 190 && met<= 195) {eff = 0.784314; errup = 0.060366; errdown = 0.0732403;}
+    else if (ht> 0 && ht<= 200 && met> 195 && met<= 200) {eff = 0.456522; errup = 0.0843446; errdown = 0.0822059;}
+    else if (ht> 200 && ht<= 250 && met> 195 && met<= 200) {eff = 0.417266; errup = 0.0458914; errdown = 0.0446046;}
+    else if (ht> 250 && ht<= 300 && met> 195 && met<= 200) {eff = 0.479839; errup = 0.0337545; errdown = 0.033582;}
+    else if (ht> 300 && ht<= 350 && met> 195 && met<= 200) {eff = 0.619403; errup = 0.0251162; errdown = 0.0257397;}
+    else if (ht> 350 && ht<= 400 && met> 195 && met<= 200) {eff = 0.708134; errup = 0.0228827; errdown = 0.0239305;}
+    else if (ht> 400 && ht<= 600 && met> 195 && met<= 200) {eff = 0.738119; errup = 0.0142303; errdown = 0.014729;}
+    else if (ht> 600 && ht<= 800 && met> 195 && met<= 200) {eff = 0.765579; errup = 0.0236936; errdown = 0.025368;}
+    else if (ht> 800 && ht<= 1000 && met> 195 && met<= 200) {eff = 0.838462; errup = 0.0331385; errdown = 0.0389371;}
+    else if (ht> 1000 && ht<= 9999 && met> 195 && met<= 200) {eff = 0.854167; errup = 0.0521736; errdown = 0.0696889;}
+    else if (ht> 0 && ht<= 200 && met> 200 && met<= 210) {eff = 0.489362; errup = 0.0828031; errdown = 0.0822917;}
+    else if (ht> 200 && ht<= 250 && met> 200 && met<= 210) {eff = 0.497512; errup = 0.0376673; errdown = 0.0376409;}
+    else if (ht> 250 && ht<= 300 && met> 200 && met<= 210) {eff = 0.55122; errup = 0.0256192; errdown = 0.025881;}
+    else if (ht> 300 && ht<= 350 && met> 200 && met<= 210) {eff = 0.704762; errup = 0.0186144; errdown = 0.0192922;}
+    else if (ht> 350 && ht<= 400 && met> 200 && met<= 210) {eff = 0.692982; errup = 0.0180615; errdown = 0.0186487;}
+    else if (ht> 400 && ht<= 600 && met> 200 && met<= 210) {eff = 0.780797; errup = 0.0102914; errdown = 0.0106404;}
+    else if (ht> 600 && ht<= 800 && met> 200 && met<= 210) {eff = 0.808346; errup = 0.0157387; errdown = 0.0167385;}
+    else if (ht> 800 && ht<= 1000 && met> 200 && met<= 210) {eff = 0.831111; errup = 0.0255639; errdown = 0.0287601;}
+    else if (ht> 1000 && ht<= 9999 && met> 200 && met<= 210) {eff = 0.808081; errup = 0.0409706; errdown = 0.0479423;}
+    else if (ht> 0 && ht<= 200 && met> 210 && met<= 220) {eff = 0.483871; errup = 0.104506; errdown = 0.103306;}
+    else if (ht> 200 && ht<= 250 && met> 210 && met<= 220) {eff = 0.540984; errup = 0.0486311; errdown = 0.0493602;}
+    else if (ht> 250 && ht<= 300 && met> 210 && met<= 220) {eff = 0.64966; errup = 0.0289352; errdown = 0.0300132;}
+    else if (ht> 300 && ht<= 350 && met> 210 && met<= 220) {eff = 0.745011; errup = 0.02104; errdown = 0.0221836;}
+    else if (ht> 350 && ht<= 400 && met> 210 && met<= 220) {eff = 0.807339; errup = 0.0172063; errdown = 0.0183941;}
+    else if (ht> 400 && ht<= 600 && met> 210 && met<= 220) {eff = 0.843686; errup = 0.00958472; errdown = 0.0100706;}
+    else if (ht> 600 && ht<= 800 && met> 210 && met<= 220) {eff = 0.855691; errup = 0.016083; errdown = 0.0176198;}
+    else if (ht> 800 && ht<= 1000 && met> 210 && met<= 220) {eff = 0.881356; errup = 0.0247115; errdown = 0.0295042;}
+    else if (ht> 1000 && ht<= 9999 && met> 210 && met<= 220) {eff = 0.904255; errup = 0.0306225; errdown = 0.0406577;}
+    else if (ht> 0 && ht<= 200 && met> 220 && met<= 230) {eff = 0.48; errup = 0.11804; errdown = 0.116172;}
+    else if (ht> 200 && ht<= 250 && met> 220 && met<= 230) {eff = 0.606557; errup = 0.0681557; errdown = 0.0720644;}
+    else if (ht> 250 && ht<= 300 && met> 220 && met<= 230) {eff = 0.71028; errup = 0.0322193; errdown = 0.0343263;}
+    else if (ht> 300 && ht<= 350 && met> 220 && met<= 230) {eff = 0.786145; errup = 0.0230637; errdown = 0.0248994;}
+    else if (ht> 350 && ht<= 400 && met> 220 && met<= 230) {eff = 0.862233; errup = 0.0170569; errdown = 0.0188968;}
+    else if (ht> 400 && ht<= 600 && met> 220 && met<= 230) {eff = 0.895041; errup = 0.00888288; errdown = 0.00956615;}
+    else if (ht> 600 && ht<= 800 && met> 220 && met<= 230) {eff = 0.904555; errup = 0.0138249; errdown = 0.0157168;}
+    else if (ht> 800 && ht<= 1000 && met> 220 && met<= 230) {eff = 0.871345; errup = 0.026085; errdown = 0.0309063;}
+    else if (ht> 1000 && ht<= 9999 && met> 220 && met<= 230) {eff = 0.90411; errup = 0.0346819; errdown = 0.0478258;}
+    else if (ht> 0 && ht<= 200 && met> 230 && met<= 240) {eff = 0.769231; errup = 0.122762; errdown = 0.174724;}
+    else if (ht> 200 && ht<= 250 && met> 230 && met<= 240) {eff = 0.693548; errup = 0.0625479; errdown = 0.0695754;}
+    else if (ht> 250 && ht<= 300 && met> 230 && met<= 240) {eff = 0.797203; errup = 0.0347354; errdown = 0.0393038;}
+    else if (ht> 300 && ht<= 350 && met> 230 && met<= 240) {eff = 0.845283; errup = 0.0226675; errdown = 0.0254881;}
+    else if (ht> 350 && ht<= 400 && met> 230 && met<= 240) {eff = 0.860795; errup = 0.0187573; errdown = 0.0209613;}
+    else if (ht> 400 && ht<= 600 && met> 230 && met<= 240) {eff = 0.905303; errup = 0.00908059; errdown = 0.00988813;}
+    else if (ht> 600 && ht<= 800 && met> 230 && met<= 240) {eff = 0.950276; errup = 0.0114386; errdown = 0.0142225;}
+    else if (ht> 800 && ht<= 1000 && met> 230 && met<= 240) {eff = 0.93662; errup = 0.0204296; errdown = 0.0276037;}
+    else if (ht> 1000 && ht<= 9999 && met> 230 && met<= 240) {eff = 0.926471; errup = 0.0313933; errdown = 0.0466809;}
+    else if (ht> 0 && ht<= 200 && met> 240 && met<= 250) {eff = 0.777778; errup = 0.142118; errdown = 0.221429;}
+    else if (ht> 200 && ht<= 250 && met> 240 && met<= 250) {eff = 0.710526; errup = 0.079119; errdown = 0.0919475;}
+    else if (ht> 250 && ht<= 300 && met> 240 && met<= 250) {eff = 0.90625; errup = 0.0299992; errdown = 0.0398737;}
+    else if (ht> 300 && ht<= 350 && met> 240 && met<= 250) {eff = 0.889503; errup = 0.0236512; errdown = 0.0284485;}
+    else if (ht> 350 && ht<= 400 && met> 240 && met<= 250) {eff = 0.910448; errup = 0.0176206; errdown = 0.0210035;}
+    else if (ht> 400 && ht<= 600 && met> 240 && met<= 250) {eff = 0.95747; errup = 0.00667779; errdown = 0.00775661;}
+    else if (ht> 600 && ht<= 800 && met> 240 && met<= 250) {eff = 0.951009; errup = 0.011596; errdown = 0.0145137;}
+    else if (ht> 800 && ht<= 1000 && met> 240 && met<= 250) {eff = 0.954198; errup = 0.0180192; errdown = 0.0263551;}
+    else if (ht> 1000 && ht<= 9999 && met> 240 && met<= 250) {eff = 0.918033; errup = 0.0349473; errdown = 0.0516466;}
+    else if (ht> 0 && ht<= 200 && met> 250 && met<= 275) {eff = 1; errup = 0; errdown = 0.168149;}
+    else if (ht> 200 && ht<= 250 && met> 250 && met<= 275) {eff = 0.842105; errup = 0.0607858; errdown = 0.0823864;}
+    else if (ht> 250 && ht<= 300 && met> 250 && met<= 275) {eff = 0.899083; errup = 0.0291936; errdown = 0.0376284;}
+    else if (ht> 300 && ht<= 350 && met> 250 && met<= 275) {eff = 0.931034; errup = 0.0157707; errdown = 0.0194683;}
+    else if (ht> 350 && ht<= 400 && met> 250 && met<= 275) {eff = 0.959732; errup = 0.00929028; errdown = 0.0115918;}
+    else if (ht> 400 && ht<= 600 && met> 250 && met<= 275) {eff = 0.966937; errup = 0.0044709; errdown = 0.00509401;}
+    else if (ht> 600 && ht<= 800 && met> 250 && met<= 275) {eff = 0.974152; errup = 0.00634696; errdown = 0.00807148;}
+    else if (ht> 800 && ht<= 1000 && met> 250 && met<= 275) {eff = 0.978495; errup = 0.00849786; errdown = 0.012624;}
+    else if (ht> 1000 && ht<= 9999 && met> 250 && met<= 275) {eff = 0.966102; errup = 0.0161538; errdown = 0.0259913;}
+    else if (ht> 0 && ht<= 200 && met> 275 && met<= 300) {eff = 0.571429; errup = 0.222488; errdown = 0.247841;}
+    else if (ht> 200 && ht<= 250 && met> 275 && met<= 300) {eff = 0.684211; errup = 0.117339; errdown = 0.140625;}
+    else if (ht> 250 && ht<= 300 && met> 275 && met<= 300) {eff = 0.942308; errup = 0.0312343; errdown = 0.0529489;}
+    else if (ht> 300 && ht<= 350 && met> 275 && met<= 300) {eff = 0.954955; errup = 0.0193206; errdown = 0.0293233;}
+    else if (ht> 350 && ht<= 400 && met> 275 && met<= 300) {eff = 0.99095; errup = 0.00584319; errdown = 0.0118111;}
+    else if (ht> 400 && ht<= 600 && met> 275 && met<= 300) {eff = 0.986908; errup = 0.00357144; errdown = 0.00468848;}
+    else if (ht> 600 && ht<= 800 && met> 275 && met<= 300) {eff = 0.983539; errup = 0.00567656; errdown = 0.00801774;}
+    else if (ht> 800 && ht<= 1000 && met> 275 && met<= 300) {eff = 0.984293; errup = 0.00853626; errdown = 0.0150422;}
+    else if (ht> 1000 && ht<= 9999 && met> 275 && met<= 300) {eff = 0.961039; errup = 0.0211298; errdown = 0.0364494;}
+    else if (ht> 0 && ht<= 200 && met> 300 && met<= 9999) {eff = 0.666667; errup = 0.277375; errdown = 0.414535;}
+    else if (ht> 200 && ht<= 250 && met> 300 && met<= 9999) {eff = 0.866667; errup = 0.0856323; errdown = 0.149537;}
+    else if (ht> 250 && ht<= 300 && met> 300 && met<= 9999) {eff = 0.903226; errup = 0.052199; errdown = 0.0852576;}
+    else if (ht> 300 && ht<= 350 && met> 300 && met<= 9999) {eff = 1; errup = 0; errdown = 0.0263287;}
+    else if (ht> 350 && ht<= 400 && met> 300 && met<= 9999) {eff = 0.992424; errup = 0.00626787; errdown = 0.0172039;}
+    else if (ht> 400 && ht<= 600 && met> 300 && met<= 9999) {eff = 0.994275; errup = 0.00226865; errdown = 0.00340387;}
+    else if (ht> 600 && ht<= 800 && met> 300 && met<= 9999) {eff = 0.990369; errup = 0.00381366; errdown = 0.00570799;}
+    else if (ht> 800 && ht<= 1000 && met> 300 && met<= 9999) {eff = 0.996047; errup = 0.00326998; errdown = 0.00902991;}
+    else if (ht> 1000 && ht<= 9999 && met> 300 && met<= 9999) {eff = 1; errup = 0; errdown = 0.0128813;}
+    std::vector<float> r_geteff_0l_2018finebins;
+    r_geteff_0l_2018finebins.push_back(eff);
+    r_geteff_0l_2018finebins.push_back(errup);
+    r_geteff_0l_2018finebins.push_back(errdown);
+    return r_geteff_0l_2018finebins;
+}
+
 
 std::vector<float> geteff_0l_fakemet(float met, float ht) {
     float errup = 0., errdown = 0.; 

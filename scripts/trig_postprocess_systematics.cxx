@@ -17,9 +17,9 @@ std::string make_systematic_table_row(std::vector<double> values, bool total=fal
 std::vector<double> add_variations_quadrature(std::vector<std::vector<double>> values);
 
 int trig_postprocess_systematics() {
-	bool do_datamc = true;
-	TFile* f = TFile::Open("ntuples/trig_eff_old_sys6_2017.root");
-	int year = 2017;
+	bool do_datamc = false;
+	TFile* f = TFile::Open("ntuples/trig_eff_2018_full.root");
+	int year = 2018;
 	ofstream table_file;
 	std::vector<std::vector<double>> variations_table;
 	std::vector<double> variations_row;
@@ -32,7 +32,7 @@ int trig_postprocess_systematics() {
 	table_file << "\\begin{tabular}{lccccccc}\\hline \\hline \n";
         table_file << "E$_\\text{T}^\\text{miss}$ range& [150,160]& [160,180]& [180,200]& [200,225]& [225,250]& [250,300]& [300+]\\\\ \\hline \\hline \n";
 	table_file << "\\multicolumn{8}{c}{Kinematic variations}\\\\ \\hline \n";
-	table_file << make_systematic_table_row(static_cast<TGraphAsymmErrors*>(f->Get("hist_nj3_ratio")),"$N_\\text{jets}>3$ (Nominal)") << "\n";
+	table_file << make_systematic_table_row(static_cast<TGraphAsymmErrors*>(f->Get("hist_nj3_ratio")),"$N_\\text{jets}\\geq 4$ (Nominal)") << "\n";
 	variations_table.push_back(get_systematic_table_values(static_cast<TGraphAsymmErrors*>(f->Get("hist_nj3_ratio"))));
 	table_file << make_systematic_table_row(static_cast<TGraphAsymmErrors*>(f->Get("hist_nj4_ratio")),"$N_\\text{jets}=4$") << "\n";
 	variations_table.push_back(get_systematic_table_values(static_cast<TGraphAsymmErrors*>(f->Get("hist_nj4_ratio"))));
@@ -44,23 +44,23 @@ int trig_postprocess_systematics() {
 	variations_table.push_back(get_systematic_table_values(static_cast<TGraphAsymmErrors*>(f->Get("hist_nb1_ratio"))));
 	table_file << make_systematic_table_row(static_cast<TGraphAsymmErrors*>(f->Get("hist_nb2_ratio")),"$N_\\text{b}\\geq2$") << "\n";
 	variations_table.push_back(get_systematic_table_values(static_cast<TGraphAsymmErrors*>(f->Get("hist_nb2_ratio"))));
-	table_file << make_systematic_table_row(static_cast<TGraphAsymmErrors*>(f->Get("hist_amlow_ratio")),"$\\langle m\\rangle\\le$ 140 GeV ") << "\n";
+	table_file << make_systematic_table_row(static_cast<TGraphAsymmErrors*>(f->Get("hist_amlow_ratio")),"$\\langle m\\rangle\\le$ 140 GeV, 300 $\\leq H_{T} <$ 400 GeV") << "\n";
 	variations_table.push_back(get_systematic_table_values(static_cast<TGraphAsymmErrors*>(f->Get("hist_amlow_ratio"))));
-	table_file << make_systematic_table_row(static_cast<TGraphAsymmErrors*>(f->Get("hist_amhigh_ratio")),"$\\langle m\\rangle >$ 140 GeV ") << "\n";
+	table_file << make_systematic_table_row(static_cast<TGraphAsymmErrors*>(f->Get("hist_amhigh_ratio")),"$\\langle m\\rangle >$ 140 GeV, 300 $\\leq H_{T} <$ 400 GeV") << "\n";
 	variations_table.push_back(get_systematic_table_values(static_cast<TGraphAsymmErrors*>(f->Get("hist_amhigh_ratio"))));
-	table_file << make_systematic_table_row(static_cast<TGraphAsymmErrors*>(f->Get("hist_drmaxlow_ratio")),"$\\Delta R_\\text{max}\\le 2.2$") << "\n";
+	table_file << make_systematic_table_row(static_cast<TGraphAsymmErrors*>(f->Get("hist_drmaxlow_ratio")),"$\\Delta R_\\text{max}< 2.2$") << "\n";
 	variations_table.push_back(get_systematic_table_values(static_cast<TGraphAsymmErrors*>(f->Get("hist_drmaxlow_ratio"))));
-	table_file << make_systematic_table_row(static_cast<TGraphAsymmErrors*>(f->Get("hist_drmaxhigh_ratio")),"$\\Delta R_\\text{max}> 2.2$") << "\\hline \n";
+	table_file << make_systematic_table_row(static_cast<TGraphAsymmErrors*>(f->Get("hist_drmaxhigh_ratio")),"$\\Delta R_\\text{max}\\geq 2.2$") << "\\hline \n";
 	variations_table.push_back(get_systematic_table_values(static_cast<TGraphAsymmErrors*>(f->Get("hist_drmaxhigh_ratio"))));
 	variations_row = get_systematic_table_variations(variations_table);
 	systematics_rows.push_back(variations_row);
 	table_file << make_systematic_table_row(variations_row) << "\n";
 	table_file << "\\multicolumn{8}{c}{Reference trigger (for $p_\\text{Tjet}>500$ GeV)}\\\\ \\hline \n";
 	if (year == 2016)
-		table_file << make_systematic_table_row(static_cast<TGraphAsymmErrors*>(f->Get("hist_nj3jet500_ratio")),"Ele27 (Nominal)") << "\n";
+		table_file << make_systematic_table_row(static_cast<TGraphAsymmErrors*>(f->Get("hist_isoeljet500_ratio")),"Ele27 (Nominal)") << "\n";
 	else
-		table_file << make_systematic_table_row(static_cast<TGraphAsymmErrors*>(f->Get("hist_nj3jet500_ratio")),"Ele35 (Nominal)") << "\n";
-	reference_table.push_back(get_systematic_table_values(static_cast<TGraphAsymmErrors*>(f->Get("hist_nj3jet500_ratio"))));
+		table_file << make_systematic_table_row(static_cast<TGraphAsymmErrors*>(f->Get("hist_isoeljet500_ratio")),"Ele35 (Nominal)") << "\n";
+	reference_table.push_back(get_systematic_table_values(static_cast<TGraphAsymmErrors*>(f->Get("hist_isoeljet500_ratio"))));
 	table_file << make_systematic_table_row(static_cast<TGraphAsymmErrors*>(f->Get("hist_jetjet500_ratio")),"Jet500") << "\\hline \n";
 	reference_table.push_back(get_systematic_table_values(static_cast<TGraphAsymmErrors*>(f->Get("hist_jetjet500_ratio"))));
 	reference_row = get_systematic_table_variations(reference_table);
