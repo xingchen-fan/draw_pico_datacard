@@ -33,6 +33,12 @@ using namespace PlotOptTypes;
 
 namespace{
   bool single_thread = false;
+  bool do_variables = true;
+  bool do_systematics = true;
+  bool do_efficiency = true;
+  std::string year_string = "2016";
+  std::string out_filename = "triggereff.root";
+  bool do_controlregions = true; //false will omit plots of 1l and 2l CRs, speeding up processing by about 10~20x
 }
 
 //helper function declaration
@@ -46,22 +52,24 @@ int main(int argc, char *argv[]){
   time_t begtime, endtime;
   time(&begtime);
 
-  //flags for which things to plot
-  bool do_variables = true;
-  bool do_systematics = true;
-  bool do_efficiency = true;
-  int year = 2016;
-  bool do_controlregions = true; //for do_variables, false will omit plots of 1l and 2l CRs. This speeds up processing by about 10~20x
-
   //don't change this, automatically set below
   double lumi = 35.9;
   Palette colors("txt/colors.txt", "default");
+  int year = 2016;
   // Define 1D+2D plot types of interest
   PlotOpt lin_lumi("txt/plot_styles.txt", "Std1D");
   lin_lumi.Title(TitleType::info).Overflow(OverflowType::overflow);
   vector<PlotOpt> all_plot_types = {lin_lumi};
   PlotOpt style2D("txt/plot_styles.txt", "Scatter");
   vector<PlotOpt> twodim_plotopts = {style2D().Title(TitleType::info).Overflow(OverflowType::overflow)};
+
+  if (year_string=="2016") year = 2016;
+  else if (year_string=="2017") year = 2017;
+  else if (year_string=="2018") year = 2018;
+  else {
+    std::cout << "ERROR: unsupported year." << std::endl;
+    return 1;
+  }
 
   vector<shared_ptr<Process> > procs_data = {};
   vector<shared_ptr<Process> > procs_mc = {};
@@ -83,7 +91,7 @@ int main(int argc, char *argv[]){
   }
   else if (year == 2018) {
   	lumi = 60.0;
-  	string data_dir = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/2018/data/";
+  	string data_dir = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/2018/data/";
   	string mc_dir = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/2018/mc/";
   	set<string> str_data({data_dir+"skim_met150/raw_pico_met150_EGamma*.root",data_dir+"skim_met150/raw_pico_met150_MET*.root",data_dir+"skim_met150/raw_pico_met150_SingleMuon*.root",data_dir+"skim_met150/raw_pico_met150_JetHT*.root"});
   	pro_data = Process::MakeShared<Baby_pico>("2018 Data", Process::Type::data, kBlack, str_data, "stitch");
@@ -120,8 +128,8 @@ int main(int argc, char *argv[]){
 		  //  b.HLT_PFMET110_PFMHT110_IDTight()||b.HLT_PFMETNoMu110_PFMHTNoMu110_IDTight() ||
 		  //  b.HLT_PFMET120_PFMHT120_IDTight()||b.HLT_PFMETNoMu120_PFMHTNoMu120_IDTight();
 		  bool r_met_trigger = b.HLT_PFMET110_PFMHT110_IDTight()||b.HLT_PFMETNoMu110_PFMHTNoMu110_IDTight() ||
-		    b.HLT_PFMET120_PFMHT120_IDTight()||b.HLT_PFMETNoMu120_PFMHTNoMu120_IDTight() ||
-		    b.HLT_PFMET120_PFMHT120_IDTight_PFHT60()||b.HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60();
+		    b.HLT_PFMET120_PFMHT120_IDTight()||b.HLT_PFMETNoMu120_PFMHTNoMu120_IDTight();
+		    //b.HLT_PFMET120_PFMHT120_IDTight_PFHT60()||b.HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60();
 		  return r_met_trigger;
   });
 
@@ -149,15 +157,9 @@ int main(int argc, char *argv[]){
 		  return r_htjet_trigger;
   });
 
-  const NamedFunc ht_trigger("ht_trigger", [](const Baby &b) -> NamedFunc::ScalarType{
-		  //currently just comment and uncomment for different productions...
-		  //bool r_ht_trigger = b.HLT_PFHT200() ||
-		  //			  b.HLT_PFHT250() || b.HLT_PFHT300() || b.HLT_PFHT350() ||
-		  //      		  b.HLT_PFHT400() || b.HLT_PFHT475() || b.HLT_PFHT600() ||
-		  //      		  b.HLT_PFHT650() || b.HLT_PFHT800() || b.HLT_PFHT900();
-		  bool r_ht_trigger = b.HLT_PFJet500();
-		  return r_ht_trigger;
-  });
+  //currently just comment and uncomment for different productions...
+  //const NamedFunc ht_trigger = "HLT_PFJet500";
+  const NamedFunc ht_trigger = "(HLT_PFHT125 || HLT_PFHT200 || HLT_PFHT300 || HLT_PFHT400 || HLT_PFHT475 || HLT_PFHT600 || HLT_PFHT650 || HLT_PFHT800 || HLT_PFHT900 || HLT_PFHT180 || HLT_PFHT370 || HLT_PFHT430 || HLT_PFHT510 || HLT_PFHT590 || HLT_PFHT680 || HLT_PFHT780 || HLT_PFHT890 || HLT_PFHT1050 || HLT_PFHT250 || HLT_PFHT350)";
 
   const NamedFunc ht_loose_jets("ht_loose_jets", [](const Baby &b) -> NamedFunc::ScalarType{
 		  float r_ht_loose_jets = 0;
@@ -516,7 +518,7 @@ int main(int argc, char *argv[]){
   pm.MakePlots(lumi);
 
   //save plots to root file
-  TFile* out_file = TFile::Open("ntuples/triggereff.root","RECREATE");
+  TFile* out_file = TFile::Open(("ntuples/"+out_filename).c_str(),"RECREATE");
   int pm_idx = 0;
   if (do_variables) {
 	//-------------6.2 table 1 plots (MET and HT dependenece)-------------
@@ -624,11 +626,6 @@ int main(int argc, char *argv[]){
   }
   out_file->Close();
 
-  // vector<GammaParams> yields = cutflow.BackgroundYield(lumi);
-  // for(const auto &yield: yields){
-  //   cout << yield << endl;
-  // }
-
   time(&endtime);
   cout<<endl<<"Processing took "<<difftime(endtime, begtime)<<" seconds"<<endl<<endl;
 }
@@ -671,6 +668,12 @@ void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
       {"single_thread", no_argument, 0, 's'},
+      {"out", required_argument, 0, 0},
+      {"year", required_argument, 0, 0},
+      {"noplots", no_argument, 0, 0},
+      {"nosystematics", no_argument, 0, 0},
+      {"noefficiency", no_argument, 0, 0},
+      {"nocr", no_argument, 0, 0},
       {0, 0, 0, 0}
     };
 
@@ -687,7 +690,18 @@ void GetOptions(int argc, char *argv[]){
       break;
     case 0:
       optname = long_options[option_index].name;
-      if(false){
+      if(optname == "year"){
+        year_string = optarg;
+      } else if (optname == "noplots") {
+        do_variables = false;
+      } else if (optname == "nosystematics") {
+        do_systematics = false;
+      } else if (optname == "noefficiency") {
+        do_efficiency = false;
+      } else if (optname == "nocr") {
+        do_controlregions = false;
+      } else if (optname == "out") {
+        out_filename = optarg;
       }else{
         printf("Bad option! Found option name %s\n", optname.c_str());
       }

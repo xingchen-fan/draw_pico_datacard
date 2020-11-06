@@ -1021,5 +1021,23 @@ const NamedFunc lead_signal_electron_pt("lead_signal_electron_pt",[](const Baby 
   }
 });
 
+const NamedFunc pass_ecalnoisejet("pass_ecalnoisejet", [](const Baby &b) -> NamedFunc::ScalarType{
+  //check top two highest pt jets in eta 2.4 to 5.0 region, if either has pt>250 and is closely aligned or anti-aligned with MET, then the event is vetoed
+  if ((b.type()%100) <= (26*2)) return true; //skip 2016
+  int counter = 0;
+  bool r_pass_ecalnoisejet;
+  bool goodjet[2] = {true, true};
+  double dphi = 0.;
+  for (unsigned int jet_idx = 0; jet_idx < b.jet_pt()->size(); jet_idx++) {
+    if (counter >= 2) break;
+    if (b.jet_pt()->at(jet_idx)>30 && fabs(b.jet_eta()->at(jet_idx))>2.4 && fabs(b.jet_eta()->at(jet_idx))<5.0) {
+      dphi = fabs(TVector2::Phi_mpi_pi(b.jet_phi()->at(jet_idx)-b.met_phi()));
+      if (b.jet_pt()->at(jet_idx)>250 && (dphi > 2.6 || dphi < 0.1)) goodjet[counter] = false;
+      ++counter;
+    }
+  }
+  r_pass_ecalnoisejet = goodjet[0] && goodjet[1];
+  return r_pass_ecalnoisejet;
+});
 
 }

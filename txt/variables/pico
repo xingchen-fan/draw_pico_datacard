@@ -78,6 +78,7 @@ std::vector<float> jet_breg_corr
 std::vector<float> jet_breg_res
 std::vector<float> jet_deepcsv
 std::vector<float> jet_deepflav
+std::vector<float> jet_ne_emef
 std::vector<float> jet_qgl
 std::vector<bool>  jet_islep
 std::vector<bool>  jet_isphoton

@@ -36,10 +36,14 @@
 #include "higgsino/apply_trigeffs2018.hpp"
 
 using namespace std;
+using namespace Higfuncs;
 using namespace PlotOptTypes;
 
 namespace{
   bool single_thread = false;
+  bool do_metsync = false;
+  bool do_mc_efficiency = false;
+  bool do_data_efficiency = false;
 }
 
 int main(int argc, char *argv[]){
@@ -58,43 +62,76 @@ int main(int argc, char *argv[]){
   PlotOpt style2D("txt/plot_styles.txt", "Scatter");
   vector<PlotOpt> twodim_plotopts = {style2D().Title(TitleType::info).Overflow(OverflowType::overflow)};
 
-  string production_dir = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/";
-  string filter_production_dir = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_filtersync/";
-  shared_ptr<Process> pro_met2016c = Process::MakeShared<Baby_pico>("MET\\_2016RunC", Process::Type::data, kBlack, {filter_production_dir+"2016/data/raw_pico/raw_pico_MET__Run2016C*.root"}, "1");
+  string production_dir = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
+  shared_ptr<Process> pro_met2016c = Process::MakeShared<Baby_pico>("MET\\_2016RunC", Process::Type::data, kBlack, {production_dir+"2016/data/raw_pico/raw_pico_MET__Run2016C*.root"}, "1");
   shared_ptr<Process> pro_met2018d = Process::MakeShared<Baby_pico>("MET\\_2018RunD", Process::Type::data, kBlack, {production_dir+"2018/data/raw_pico/raw_pico_MET__Run2018D*.root"}, "1");
   shared_ptr<Process> pro_egamma2018d = Process::MakeShared<Baby_pico>("EGamma\\_2018RunD", Process::Type::data, kBlack, {production_dir+"2018/data/skim_met150/raw_pico_met150_EGamma__Run2018D*.root"}, "1");
-  vector<shared_ptr<Process> > procs_all = {pro_met2016c,pro_met2018d};
+  vector<shared_ptr<Process> > procs_metsync = {pro_met2016c};
 
-  vector<shared_ptr<Process> > signal_procs;
+  string production2017_dir = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldtv3/";
+  shared_ptr<Process> pro_met2017c = Process::MakeShared<Baby_pico>("MET\\_2017RunC", Process::Type::data, kBlack, {production_dir+"2017/data/raw_pico/raw_pico_MET__Run2017C*.root"}, "1");
+  vector<shared_ptr<Process> > procs_met2017c = {pro_met2017c};
+
+  // Set MC 
+  vector<shared_ptr<Process> > mc_procs;
+  map<string, set<string>> mctags; 
+  string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/";
+  string mc_skim_folder = "mc/skim_met150/";
+  std::set<int> years = {2016};
+  // Set base tags
+  mctags["tt"]     = set<string>({"*TTJets_SingleLept*","TTJets_DiLept*",
+                                  "*_TTZ*.root", "*_TTW*.root",
+                                 "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root"});
+  mctags["single_t"] = set<string>({"*_ST_*.root"});
+  mctags["vjets"]   = set<string>({"*_ZJet*.root", "*_WJetsToLNu*.root"});
+  mctags["zjets"]   = set<string>({"*_ZJet*.root", "*DYJetsToLL*.root"});
+  mctags["wjets"]   = set<string>({"*_WJetsToLNu*.root"});
+  mctags["qcd"]     = set<string>({"*_QCD_HT200to300_*","*_QCD_HT300to500_*","*_QCD_HT500to700_*",
+                                   "*_QCD_HT700to1000_*", "*_QCD_HT1000to1500_*","*_QCD_HT1500to2000_*",
+                                   "*_QCD_HT2000toInf_*"});
+  mctags["other"]   = set<string>({"*_WH_HToBB*.root", "*_ZH_HToBB*.root",
+                                     "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"});
+  // Combine all tags
+  mctags["all"] = set<string>({"*TTJets_SingleLept*",
+                               "*TTJets_DiLept*",
+                               "*_TTZ*.root", "*_TTW*.root",
+                               "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root", "*_ST_*.root",
+                               "*_WJetsToLNu*.root", "*_ZJet*.root",
+                               "*_QCD_HT200to300_*","*_QCD_HT300to500_*","*_QCD_HT500to700_*",
+                               "*_QCD_HT1000to1500_*","*_QCD_HT1500to2000_*",
+                               "*_QCD_HT2000toInf_*",
+                               "*_WH_HToBB*.root", "*_ZH_HToBB*.root",
+                               "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root", "*DYJetsToLL*.root"
+  });
+  // Set mc processes
+  mc_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X", Process::Type::background,colors("tt_1l"),
+                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["tt"]),"stitch"));
+  mc_procs.push_back(Process::MakeShared<Baby_pico>("V+jets", Process::Type::background, kOrange+1,
+                  attach_folder(mc_base_folder, years, mc_skim_folder,mctags["vjets"]),"stitch"));
+  mc_procs.push_back(Process::MakeShared<Baby_pico>("Single t", Process::Type::background,colors("single_t"),
+                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["single_t"]),"stitch"));
+  mc_procs.push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background, colors("other"),
+                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["qcd"]),"stitch")); 
+  mc_procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGray+2,
+                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["other"]),"stitch"));
+  //add signal pts
   vector<string> mchi_sigm = {"175","500","900"}; 
   vector<string> mlsp_sigm = {"0",  "0",  "0"}; 
   vector<string> mchi_sigm2d = {"250","350","450"}; 
   vector<string> mlsp_sigm2d = {"50","200","100"}; 
   vector<int> sig_colors = {kGreen+1, kRed, kBlue}; // need sigm.size() <= sig_colors.size()
   vector<int> sig_colors2d = {kOrange, kYellow, kCyan};
-  string foldersig = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/2016/SMS-TChiHH_2D/unskimmed/";
+  string foldersig = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/2016/SMS-TChiHH_2D/skim_met150/";
   for (unsigned isig(0); isig<mchi_sigm.size(); isig++) {
-    signal_procs.push_back(Process::MakeShared<Baby_pico>("GMSB("+mchi_sigm[isig]+")", 
+    mc_procs.push_back(Process::MakeShared<Baby_pico>("GMSB("+mchi_sigm[isig]+")", 
       Process::Type::signal, sig_colors[isig], {foldersig+"*TChiHH_mChi-"+mchi_sigm[isig]+"_mLSP-"+mlsp_sigm[isig]+"*.root"}, "stitch"));
     std::cout << foldersig+"*TChiHH_mChi-"+mchi_sigm[isig]+"_mLSP-"+mlsp_sigm[isig]+"*.root" << std::endl;
   }
   for (unsigned isig(1); isig<mchi_sigm2d.size(); isig++) {
-    signal_procs.push_back(Process::MakeShared<Baby_pico>("("+mchi_sigm2d[isig]+","+mlsp_sigm2d[isig]+")", 
+    mc_procs.push_back(Process::MakeShared<Baby_pico>("("+mchi_sigm2d[isig]+","+mlsp_sigm2d[isig]+")", 
       Process::Type::signal, sig_colors2d[isig], {foldersig+"*TChiHH_mChi-"+mchi_sigm2d[isig]+"_mLSP-"+mlsp_sigm2d[isig]+"*.root"}, "stitch"));
     std::cout << foldersig+"*TChiHH_mChi-"+mchi_sigm2d[isig]+"_mLSP-"+mlsp_sigm2d[isig]+"*.root" << std::endl;
   }
-
-  const NamedFunc npicojet("npicojet", [](const Baby &b) -> NamedFunc::ScalarType{
-    return static_cast<int>(b.jet_pt()->size());
-  });
-
-  const NamedFunc npicoel("npicoel", [](const Baby &b) -> NamedFunc::ScalarType{
-    return static_cast<int>(b.el_pt()->size());
-  });
-
-  const NamedFunc npicomu("npicomu", [](const Baby &b) -> NamedFunc::ScalarType{
-    return static_cast<int>(b.mu_pt()->size());
-  });
 
   const NamedFunc mixed_model_weight("mixed_model_weight",[](const Baby &b) -> NamedFunc::ScalarType{
     set<int> mchi_sigm_int = {175, 500, 900}; 
@@ -138,31 +175,24 @@ int main(int argc, char *argv[]){
     }
     return mht_vec.Phi();
   });
-  
-  const NamedFunc pass_ecalnoisejet("pass_ecalnoisejet", [](const Baby &b) -> NamedFunc::ScalarType{
-    //check top two highest pt jets in eta 2.4 to 5.0 region, if either has pt>250 and is closely aligned or anti-aligned with MET, then the event is vetoed
-    if ((b.type()%100) <= (26*2)) return true; //skip 2016 for now
-    int counter = 0;
-    bool r_pass_ecalnoisejet;
-    bool goodjet[2] = {true, true};
-    double dphi = 0.;
+
+  const NamedFunc old_pass_low_neutral_jet("old_pass_low_neutral_jet", [](const Baby &b) -> NamedFunc::ScalarType{
+    //emulate pass_low_neutral_jet used in humboldt production
     for (unsigned int jet_idx = 0; jet_idx < b.jet_pt()->size(); jet_idx++) {
-      if (counter >= 2) break;
-      if (b.jet_pt()->at(jet_idx)>30 && fabs(b.jet_eta()->at(jet_idx))>2.4 && fabs(b.jet_eta()->at(jet_idx))<5.0) {
-        dphi = fabs(TVector2::Phi_mpi_pi(b.jet_phi()->at(jet_idx)-b.met_phi()));
-	if (b.jet_pt()->at(jet_idx)>250 && (dphi > 2.6 || dphi < 0.1)) goodjet[counter] = false;
-	++counter;
-      }
+      if (b.jet_pt()->at(jet_idx)<=30 || fabs(b.jet_eta()->at(jet_idx))>2.4) continue;
+      float dphi = fabs(TVector2::Phi_mpi_pi(b.jet_phi()->at(jet_idx)-b.met_phi()));
+      if (b.jet_ne_emef()->at(jet_idx) <0.03 && dphi>(TMath::Pi()-0.4))
+        return false;
+      break; //only apply to leading jet
     }
-    r_pass_ecalnoisejet = goodjet[0] && goodjet[1];
-    return r_pass_ecalnoisejet;
+    return true;
   });
 
   const NamedFunc pass_htratio_dphi_tight_fixed("pass_htratio_dphi_tight_fixed", [](const Baby &b) -> NamedFunc::ScalarType{
     bool r_pass_htratio_dphi_tight_fixed = true;
     float ht_ratio = b.ht5()/b.ht();
     for (unsigned int jet_idx = 0; jet_idx < b.jet_pt()->size(); jet_idx++) {
-      //if (b.jet_pt()->at(jet_idx) < 30 || fabs(b.jet_eta()->at(jet_idx)) > 2.4) continue;
+      if (b.jet_pt()->at(jet_idx) < 30 || fabs(b.jet_eta()->at(jet_idx)) > 2.4) continue;
       if (ht_ratio > 1.2 && fabs(TVector2::Phi_mpi_pi(b.jet_phi()->at(jet_idx)-b.met_phi())) < (5.3*ht_ratio - 4.78)) 
         r_pass_htratio_dphi_tight_fixed = false;
       break;
@@ -171,7 +201,8 @@ int main(int argc, char *argv[]){
   });
 
   const NamedFunc htratio("htratio", [](const Baby &b) -> NamedFunc::ScalarType{
-    return b.ht5()/b.ht();
+    float r_ht_ratio = b.ht5()/b.ht();
+    return r_ht_ratio;
   });
 
   const NamedFunc pass_boostedhemveto("pass_boostedhemveto", [](const Baby &b) -> NamedFunc::ScalarType{
@@ -191,120 +222,136 @@ int main(int argc, char *argv[]){
     return true;
   });
 
+  NamedFunc baseline = "stitch&&150<=met&&nvlep==0&&ntk==0&&4<=njet&&njet<=5&&2<=nbt&&!low_dphi_met&&hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200";
+  NamedFunc oneel_baseline = "stitch&&150<=met&&nlep==1&&nel==1&&ntk==0&&4<=njet&&njet<=5&&2<=nbt&&!low_dphi_met&&hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200";
+
   PlotMaker pm;
 
   pm.Push<Hist2D>(Axis(100, 0, 3.14, "jet_met_dphi", "#Delta#phi", {}), Axis(100, 0, 500, "jet_pt", "Jet p_{T} [GeV]", {}),
     "2.4<=jet_eta&&jet_eta<5.0",
-    procs_all, twodim_plotopts).Weight(mixed_model_weight).Tag("FixName:EcalNoiseJetFilter_plot").LuminosityTag("137 fb^{-1}");
+    procs_met2017c, twodim_plotopts).Weight(mixed_model_weight).Tag("FixName:EcalNoiseJetFilter_plot").LuminosityTag("137 fb^{-1}");
   pm.Push<Hist2D>(Axis(100, 0, 3.14, "jet_met_dphi[0]", "Jet 1 p_{T} [GeV]", {}), Axis(100, 0, 3.0, htratio, "H_{T5}/H_{T}", {}), 
     "njet>=1",
-    procs_all, twodim_plotopts).Weight(mixed_model_weight).Tag("FixName:HTRatioDPhiTightFilter_plot").LuminosityTag("137 fb^{-1}");
-  //pm.Push<Hist2D>(Axis(100, 0, 3.14, "jet_met_dphi", "#Delta#phi", {}), Axis(100, 0, 500, "jet_pt", "Jet p_{T} [GeV]", {}),
-  //  "2.4<=jet_eta&&jet_eta<5.0",
-  //  search_procs, twodim_plotopts).Weight(mixed_model_weight).Tag(("FixName:EcalNoiseJetFilter_plot").LuminosityTag(total_luminosity_string);
+    procs_met2017c, twodim_plotopts).Weight(mixed_model_weight).Tag("FixName:HTRatioDPhiTightFilter_plot").LuminosityTag("137 fb^{-1}");
 
-  pm.Push<Table>("cutflow", vector<TableRow>{
-  TableRow("MET>150", 
-    "1",0,0, mixed_model_weight),
-  TableRow("Trigger HLT_Ele35_WPTight_Gsf", 
-    "HLT_Ele35_WPTight_Gsf",0,0, mixed_model_weight),
-  TableRow("N_{l}=1", 
-    "HLT_Ele35_WPTight_Gsf&&nlep==1",0,0, mixed_model_weight),
-  TableRow("High \\Delta \\phi", 
-    "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met",0,0, mixed_model_weight),
-  TableRow("$N_{pv good}>0$", 
-    "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0",0,0, mixed_model_weight),
-  TableRow("globalSuperTightHalo2016Filter", 
-    "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight",0,0, mixed_model_weight),
-  TableRow("HBHENoiseFilter", 
-    "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight&&pass_hbhe",0,0, mixed_model_weight),
-  TableRow("HBHENoiseIsoFilter", 
-    "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso",0,0, mixed_model_weight),
-  TableRow("EcalDeadCellTriggerPrimitiveFilter", 
-    "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell",0,0, mixed_model_weight),
-  TableRow("BadPFMuonFilter", 
-    "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu",0,0, mixed_model_weight),
-  TableRow("eeBadScFilter", 
-    "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc",0,0, mixed_model_weight),
-  TableRow("EcalNoiseJetFilter", 
-    "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc" && pass_ecalnoisejet,0,0, mixed_model_weight),
-  TableRow("MuonJetFilter", 
-    "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet" && pass_ecalnoisejet,0,0, mixed_model_weight),
-  TableRow("$p_{T}^{miss}/p_{Tcalo}^{miss}<2.0$", 
-    "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)" && pass_ecalnoisejet,0,0, mixed_model_weight),
-  TableRow("$p_{T}^{miss}/H_{T}^{miss}<2.0$", 
-    "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)" && pass_ecalnoisejet,0,0, mixed_model_weight),
-  TableRow("LowNeutralJetFilter (Usynced)", 
-    "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet" && pass_ecalnoisejet,0,0, mixed_model_weight),
-  TableRow("HTRatioDPhiTightFilter", 
-    "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet" && pass_ecalnoisejet && pass_htratio_dphi_tight_fixed ,0,0, mixed_model_weight),
-  TableRow("HEMDPhiVetoFilter", 
-    "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet&&pass_htratio_dphi_tight" && pass_ecalnoisejet && pass_htratio_dphi_tight_fixed && pass_boostedhemveto,0,0, mixed_model_weight),
-  TableRow("JetID", 
-    "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet&&pass_htratio_dphi_tight&&pass_jets" && pass_ecalnoisejet && pass_htratio_dphi_tight_fixed && pass_boostedhemveto,0,0, mixed_model_weight),
-
+  if (do_data_efficiency) {
+  ////no cut table for 1l region
+  //pm.Push<Table>("cutflow", vector<TableRow>{
+  //TableRow("MET>150", 
+  //  "1",0,0, mixed_model_weight),
+  //TableRow("Trigger HLT_Ele35_WPTight_Gsf", 
+  //  "HLT_Ele35_WPTight_Gsf",0,0, mixed_model_weight),
+  //TableRow("N_{l}=1", 
+  //  "HLT_Ele35_WPTight_Gsf&&nlep==1",0,0, mixed_model_weight),
+  //TableRow("High \\Delta \\phi", 
+  //  "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met",0,0, mixed_model_weight),
   //TableRow("$N_{pv good}>0$", 
-  //  "npv_good>0",0,0, mixed_model_weight),
+  //  "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0",0,0, mixed_model_weight),
   //TableRow("globalSuperTightHalo2016Filter", 
-  //  "npv_good>0&&pass_cschalo_tight",0,0, mixed_model_weight),
+  //  "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight",0,0, mixed_model_weight),
   //TableRow("HBHENoiseFilter", 
-  //  "npv_good>0&&pass_cschalo_tight&&pass_hbhe",0,0, mixed_model_weight),
+  //  "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight&&pass_hbhe",0,0, mixed_model_weight),
   //TableRow("HBHENoiseIsoFilter", 
-  //  "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso",0,0, mixed_model_weight),
+  //  "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso",0,0, mixed_model_weight),
   //TableRow("EcalDeadCellTriggerPrimitiveFilter", 
-  //  "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell",0,0, mixed_model_weight),
+  //  "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell",0,0, mixed_model_weight),
   //TableRow("BadPFMuonFilter", 
-  //  "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu",0,0, mixed_model_weight),
+  //  "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu",0,0, mixed_model_weight),
   //TableRow("eeBadScFilter", 
-  //  "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc",0,0, mixed_model_weight),
-  //TableRow("EcalNoiseJetFilter (NanoAODv5)", 
-  //  "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc" && pass_ecalnoisejet,0,0, mixed_model_weight),
+  //  "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc",0,0, mixed_model_weight),
+  //TableRow("EcalNoiseJetFilter", 
+  //  "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc" && pass_ecalnoisejet,0,0, mixed_model_weight),
   //TableRow("MuonJetFilter", 
-  //  "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet" && pass_ecalnoisejet,0,0, mixed_model_weight),
+  //  "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet" && pass_ecalnoisejet,0,0, mixed_model_weight),
   //TableRow("$p_{T}^{miss}/p_{Tcalo}^{miss}<2.0$", 
-  //  "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)" && pass_ecalnoisejet,0,0, mixed_model_weight),
+  //  "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)" && pass_ecalnoisejet,0,0, mixed_model_weight),
   //TableRow("$p_{T}^{miss}/H_{T}^{miss}<2.0$", 
-  //  "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)" && pass_ecalnoisejet,0,0, mixed_model_weight),
-  //TableRow("LowNeutralJetFilter (unsynced)", 
-  //  "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet" && pass_ecalnoisejet,0,0, mixed_model_weight),
+  //  "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)" && pass_ecalnoisejet,0,0, mixed_model_weight),
+  //TableRow("LowNeutralJetFilter (Usynced)", 
+  //  "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet" && pass_ecalnoisejet,0,0, mixed_model_weight),
   //TableRow("HTRatioDPhiTightFilter", 
-  //  "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet" && pass_ecalnoisejet && pass_htratio_dphi_tight_fixed ,0,0, mixed_model_weight),
+  //  "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet" && pass_ecalnoisejet && pass_htratio_dphi_tight_fixed ,0,0, mixed_model_weight),
   //TableRow("HEMDPhiVetoFilter", 
-  //  "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet&&pass_htratio_dphi_tight" && pass_ecalnoisejet && pass_htratio_dphi_tight_fixed && pass_boostedhemveto,0,0, mixed_model_weight),
+  //  "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet&&pass_htratio_dphi_tight" && pass_ecalnoisejet && pass_htratio_dphi_tight_fixed && pass_boostedhemveto,0,0, mixed_model_weight),
   //TableRow("JetID", 
-  //  "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet&&pass_htratio_dphi_tight&&pass_jets" && pass_ecalnoisejet && pass_htratio_dphi_tight_fixed && pass_boostedhemveto,0,0, mixed_model_weight),
+  //  "HLT_Ele35_WPTight_Gsf&&nlep==1&&!low_dphi_met&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet&&pass_htratio_dphi_tight&&pass_jets" && pass_ecalnoisejet && pass_htratio_dphi_tight_fixed && pass_boostedhemveto,0,0, mixed_model_weight),
+  }
+  
+  if (do_mc_efficiency) {
+    //MET datasets for sync with boosted
+    pm.Push<Table>("cutflow", vector<TableRow>{
+    TableRow("Baseline", 
+      baseline,0,0, mixed_model_weight),
+    TableRow("$N_{pv good}>0$", 
+      baseline && "npv_good>0",0,0, mixed_model_weight),
+    TableRow("globalSuperTightHalo2016Filter", 
+      baseline && "npv_good>0&&pass_cschalo_tight",0,0, mixed_model_weight),
+    TableRow("HBHENoiseFilter", 
+      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe",0,0, mixed_model_weight),
+    TableRow("HBHENoiseIsoFilter", 
+      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso",0,0, mixed_model_weight),
+    TableRow("EcalDeadCellTriggerPrimitiveFilter", 
+      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell",0,0, mixed_model_weight),
+    TableRow("BadPFMuonFilter", 
+      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu",0,0, mixed_model_weight),
+    TableRow("eeBadScFilter", 
+      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc",0,0, mixed_model_weight),
+    TableRow("EcalNoiseJetFilter", 
+      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc" && pass_ecalnoisejet,0,0, mixed_model_weight),
+    TableRow("MuonJetFilter", 
+      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet" && pass_ecalnoisejet,0,0, mixed_model_weight),
+    TableRow("$p_{T}^{miss}/p_{Tcalo}^{miss}<2.0$", 
+      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)" && pass_ecalnoisejet,0,0, mixed_model_weight),
+    TableRow("$p_{T}^{miss}/H_{T}^{miss}<2.0$", 
+      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)" && pass_ecalnoisejet,0,0, mixed_model_weight),
+    TableRow("LowNeutralJetFilter", 
+      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet" && pass_ecalnoisejet,0,0, mixed_model_weight),
+    TableRow("HTRatioDPhiTightFilter", 
+      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet" && pass_ecalnoisejet && pass_htratio_dphi_tight_fixed ,0,0, mixed_model_weight),
+    TableRow("HEMDPhiVetoFilter", 
+      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet" && pass_ecalnoisejet && pass_htratio_dphi_tight_fixed && pass_boostedhemveto,0,0, mixed_model_weight),
+    TableRow("JetID", 
+      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet&&pass_jets" && pass_ecalnoisejet && pass_htratio_dphi_tight_fixed && pass_boostedhemveto,0,0, mixed_model_weight),
+    },mc_procs,false,true,false,false,true,false);
+  }
 
-  //TableRow("Trigger HLT\\_PFMET120\\_PFMHT120\\_IDTight", 
-  //  "HLT_PFMET120_PFMHT120_IDTight",0,0, "1"),
-  //TableRow("$N_{pv good}>0$", 
-  //  "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0",0,0, "1"),
-  //TableRow("globalSuperTightHalo2016Filter", 
-  //  "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight",0,0, "1"),
-  //TableRow("HBHENoiseFilter", 
-  //  "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight&&pass_hbhe",0,0, "1"),
-  //TableRow("HBHENoiseIsoFilter", 
-  //  "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso",0,0, "1"),
-  //TableRow("EcalDeadCellTriggerPrimitiveFilter", 
-  //  "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell",0,0, "1"),
-  //TableRow("BadPFMuonFilter", 
-  //  "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu",0,0, "1"),
-  //TableRow("eeBadScFilter", 
-  //  "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc",0,0, "1"),
-  //TableRow("EcalNoiseJetFilter (RA2b)", 
-  //  "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc" && pass_ecalnoisejet,0,0, "1"),
-  //TableRow("MuonJetFilter", 
-  //  "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet" && pass_ecalnoisejet,0,0, "1"),
-  //TableRow("$p_{T}^{miss}/p_{Tcalo}^{miss}<2.0$", 
-  //  "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)" && pass_ecalnoisejet,0,0, "1"),
-  //TableRow("$p_{T}^{miss}/H_{T}^{miss}<2.0$", 
-  //  "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)" && pass_ecalnoisejet,0,0, "1"),
-  //TableRow("LowNeutralJetFilter (RA2b)", 
-  //  "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet" && pass_ecalnoisejet,0,0, "1"),
-  //TableRow("HTRatioDPhiTightFilter (RA2b)", 
-  //  "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet" && pass_ecalnoisejet && pass_htratio_dphi_tight_fixed ,0,0, "1"),
-  //TableRow("HEMDPhiVetoFilter (RA2b)", 
-  //  "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet&&pass_htratio_dphi_tight" && pass_ecalnoisejet && pass_htratio_dphi_tight_fixed && pass_boostedhemveto,0,0, "1"),
-  },procs_all,false,true,false,false,true,false);
+  if (do_metsync) {
+    //MET datasets for sync with boosted
+    pm.Push<Table>("cutflow", vector<TableRow>{
+    TableRow("Trigger HLT\\_PFMET120\\_PFMHT120\\_IDTight", 
+      "HLT_PFMET120_PFMHT120_IDTight",0,0, "1"),
+    TableRow("$N_{pv good}>0$", 
+      "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0",0,0, "1"),
+    TableRow("globalSuperTightHalo2016Filter", 
+      "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight",0,0, "1"),
+    TableRow("HBHENoiseFilter", 
+      "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight&&pass_hbhe",0,0, "1"),
+    TableRow("HBHENoiseIsoFilter", 
+      "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso",0,0, "1"),
+    TableRow("EcalDeadCellTriggerPrimitiveFilter", 
+      "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell",0,0, "1"),
+    TableRow("BadPFMuonFilter", 
+      "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu",0,0, "1"),
+    TableRow("eeBadScFilter", 
+      "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc",0,0, "1"),
+    TableRow("EcalNoiseJetFilter", 
+      "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc" && pass_ecalnoisejet,0,0, "1"),
+    TableRow("MuonJetFilter", 
+      "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet" && pass_ecalnoisejet,0,0, "1"),
+    TableRow("$p_{T}^{miss}/p_{Tcalo}^{miss}<2.0$", 
+      "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)" && pass_ecalnoisejet,0,0, "1"),
+    TableRow("$p_{T}^{miss}/H_{T}^{miss}<2.0$", 
+      "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)" && pass_ecalnoisejet,0,0, "1"),
+    TableRow("LowNeutralJetFilter", 
+      "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)" && old_pass_low_neutral_jet && pass_ecalnoisejet,0,0, "1"),
+    TableRow("HTRatioDPhiTightFilter", 
+      "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)" && old_pass_low_neutral_jet && pass_ecalnoisejet && pass_htratio_dphi_tight_fixed ,0,0, "1"),
+    TableRow("HEMDPhiVetoFilter", 
+      "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)" && old_pass_low_neutral_jet && pass_ecalnoisejet && pass_htratio_dphi_tight_fixed && pass_boostedhemveto,0,0, "1"),
+    TableRow("JetID", 
+      "HLT_PFMET120_PFMHT120_IDTight&&npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_jets" && old_pass_low_neutral_jet && pass_ecalnoisejet && pass_htratio_dphi_tight_fixed && pass_boostedhemveto,0,0, "1"),
+    },procs_metsync,false,true,false,false,true,false);
+  }
 
   pm.min_print_ = true;
   pm.MakePlots(lumi);
@@ -317,6 +364,9 @@ void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
       {"single_thread", no_argument, 0, 's'},
+      {"do_metsync", no_argument, 0, 0},
+      {"do_mceff", no_argument, 0, 0},
+      {"do_dataeff", no_argument, 0, 0},
       {0, 0, 0, 0}
     };
 
@@ -333,7 +383,12 @@ void GetOptions(int argc, char *argv[]){
       break;
     case 0:
       optname = long_options[option_index].name;
-      if(false){
+      if(optname == "do_metsync"){
+        do_metsync = true;
+      } else if(optname == "do_mceff"){
+        do_mc_efficiency = true;
+      } else if(optname == "do_dateff"){
+        do_data_efficiency = true;
       }else{
         printf("Bad option! Found option name %s\n", optname.c_str());
       }

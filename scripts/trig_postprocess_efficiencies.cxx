@@ -33,10 +33,10 @@ int trig_postprocess_efficiencies() {
     //2017 rdfat_qcd2017.root and trig_eff_old_eff_2017.root
     //2017 rdfat_qcd2018.root and trig_eff_old_eff_2018.root
     //TFile* f = TFile::Open("ntuples/trig_eff_old_eff_2016_looseidjets.root");
-    TFile* f = TFile::Open("ntuples/higcandamstudies_effs_2018ambb200toInf.root");
+    TFile* f = TFile::Open("ntuples/trig_eff_old_eff_2018_inyo.root");
     //TFile* f = TFile::Open("ntuples/trig_eff_old_eff_2016_reminimet.root");
     TFile* f_qcd = TFile::Open("ntuples/rdfat_qcd2016_htrange.root");
-    std::string year = "2018";
+    std::string year = "2017";
     std::string lumi_string = "35.9 fb^{-1} (13 TeV)";
     if (year == "2017") {
     	lumi_string = "41.5 fb^{-1} (13 TeV)";
@@ -51,8 +51,8 @@ int trig_postprocess_efficiencies() {
     std::vector<double> true_met_bins{150,155,160,165,170,175,180,185,190,195,200,210,220,230,240,250,275,300,350};
     std::vector<double> sys_met_bins{150,160,180,200,225,250,300,350};
     std::vector<double> fake_met_bins{150,155,160,165,170,175,180,185,190,195,200,210,220,230,240,250,275,300,350,400,450,500,550};
-    std::vector<double> ht_bins{0,200,250,300,350,400,600,800,1000,1200};
-    //std::vector<double> ht_bins{0,200,600,800,1000,1200};
+    //std::vector<double> ht_bins{0,200,250,300,350,400,600,800,1000,1200};
+    std::vector<double> ht_bins{0,200,600,800,1000,1200};
     std::vector<double> twodim_met_bins{0,110,120,130,140,150,160,170,180,190,200,210,250};
     std::vector<double> el_pt_bins{20,25,30,110,120,150};
     std::vector<double> mu_pt_bins{20,25,30,50,100};
