@@ -839,7 +839,7 @@ bool smaller_dm(tuple<double, double, vector<unsigned> > higgs_1, tuple<double, 
   return get<0>(higgs_1) < get<0>(higgs_2);
 }
 
-vector<unsigned> get_higgs_bbjet_indices(vector<float> const & jet_m, vector<float> const & jet_deepcsv, vector<float> const & jet_pt, vector<float> const & jet_eta, vector<float> const & jet_phi, vector<bool> const & jet_islep) {
+vector<unsigned> get_higgs_bbjet_indices(vector<float> const & jet_m, vector<float> const & jet_deepcsv, vector<float> const & jet_pt, vector<float> const & jet_eta, vector<float> const & jet_phi, vector<bool> const & jet_isgood) {
   //cout<<"event start"<<endl;
   // Reconstruct resolved
   // Sort by btag
@@ -848,7 +848,7 @@ vector<unsigned> get_higgs_bbjet_indices(vector<float> const & jet_m, vector<flo
     // Filter jets
     if (jet_pt[ijet]<=30) continue;
     if (fabs(jet_eta[ijet])>2.4) continue;
-    if (jet_islep[ijet]) continue;
+    if (!jet_isgood[ijet]) continue;
     //cout<<"ijet ["<<ijet<<"] btag: "<<jet_deepcsv[ijet]<<" pt:"<<jet_pt[ijet]<<endl;
     bjet.push_back({jet_deepcsv[ijet],ijet});
   }
@@ -905,41 +905,41 @@ vector<unsigned> get_higgs_bbjet_indices(vector<float> const & jet_m, vector<flo
 }
 
 const NamedFunc h1b1_pt("h1b1_pt",[](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
   return (*b.jet_pt())[bbjet_indices.at(0)];
 });
 
 const NamedFunc h1b2_pt("h1b2_pt",[](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
   return (*b.jet_pt())[bbjet_indices.at(1)];
 });
 
 const NamedFunc h2b1_pt("h2b1_pt",[](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
   return (*b.jet_pt())[bbjet_indices.at(2)];
 });
 
 const NamedFunc h2b2_pt("h2b2_pt",[](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
   return (*b.jet_pt())[bbjet_indices.at(3)];
 });
 
 const NamedFunc h1_dr("h1_dr",[](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
   ROOT::Math::PtEtaPhiMVector h1b1 ((*b.jet_pt())[bbjet_indices.at(0)], (*b.jet_eta())[bbjet_indices.at(0)], (*b.jet_phi())[bbjet_indices.at(0)], (*b.jet_m())[bbjet_indices.at(0)]);
   ROOT::Math::PtEtaPhiMVector h1b2 ((*b.jet_pt())[bbjet_indices.at(1)], (*b.jet_eta())[bbjet_indices.at(1)], (*b.jet_phi())[bbjet_indices.at(1)], (*b.jet_m())[bbjet_indices.at(1)]);
   return DeltaR(h1b1, h1b2);
 });
 
 const NamedFunc h2_dr("h2_dr",[](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
   ROOT::Math::PtEtaPhiMVector h2b1 ((*b.jet_pt())[bbjet_indices.at(2)], (*b.jet_eta())[bbjet_indices.at(2)], (*b.jet_phi())[bbjet_indices.at(2)], (*b.jet_m())[bbjet_indices.at(2)]);
   ROOT::Math::PtEtaPhiMVector h2b2 ((*b.jet_pt())[bbjet_indices.at(3)], (*b.jet_eta())[bbjet_indices.at(3)], (*b.jet_phi())[bbjet_indices.at(3)], (*b.jet_m())[bbjet_indices.at(3)]);
   return DeltaR(h2b1, h2b2);
 });
 
 const NamedFunc h1_mass("h1_mass",[](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
   ROOT::Math::PtEtaPhiMVector h1b1 ((*b.jet_pt())[bbjet_indices.at(0)], (*b.jet_eta())[bbjet_indices.at(0)], (*b.jet_phi())[bbjet_indices.at(0)], (*b.jet_m())[bbjet_indices.at(0)]);
   ROOT::Math::PtEtaPhiMVector h1b2 ((*b.jet_pt())[bbjet_indices.at(1)], (*b.jet_eta())[bbjet_indices.at(1)], (*b.jet_phi())[bbjet_indices.at(1)], (*b.jet_m())[bbjet_indices.at(1)]);
   ROOT::Math::PtEtaPhiMVector higgs1 = h1b1 + h1b2;
@@ -947,7 +947,7 @@ const NamedFunc h1_mass("h1_mass",[](const Baby &b) -> NamedFunc::ScalarType{
 });
 
 const NamedFunc h2_mass("h2_mass",[](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
   ROOT::Math::PtEtaPhiMVector h2b1 ((*b.jet_pt())[bbjet_indices.at(2)], (*b.jet_eta())[bbjet_indices.at(2)], (*b.jet_phi())[bbjet_indices.at(2)], (*b.jet_m())[bbjet_indices.at(2)]);
   ROOT::Math::PtEtaPhiMVector h2b2 ((*b.jet_pt())[bbjet_indices.at(3)], (*b.jet_eta())[bbjet_indices.at(3)], (*b.jet_phi())[bbjet_indices.at(3)], (*b.jet_m())[bbjet_indices.at(3)]);
   ROOT::Math::PtEtaPhiMVector higgs2 = h2b1 + h2b2;
@@ -1038,6 +1038,224 @@ const NamedFunc pass_ecalnoisejet("pass_ecalnoisejet", [](const Baby &b) -> Name
   }
   r_pass_ecalnoisejet = goodjet[0] && goodjet[1];
   return r_pass_ecalnoisejet;
+});
+
+const NamedFunc pass_hemveto("pass_hemveto", [](const Baby &b) -> NamedFunc::ScalarType{
+    //only apply for 2018 era C+D and MC
+    if (b.type()/1000 == 0 && b.run() < 319077) return true;
+    bool pass_hem = true;
+    for (unsigned int el_idx = 0; el_idx < b.el_pt()->size(); el_idx++) {
+      if (b.el_miniso()->at(el_idx) < 0.1 && -3.0 < b.el_eta()->at(el_idx) && b.el_eta()->at(el_idx) < -1.4 && -1.57 < b.el_phi()->at(el_idx) && b.el_phi()->at(el_idx) < -0.87) {
+        pass_hem = false;
+      }
+    }
+    for (unsigned int jet_idx = 0; jet_idx < b.jet_pt()->size(); jet_idx++) {
+      if (b.jet_pt()->at(jet_idx) > 30. && -3.2 < b.jet_eta()->at(jet_idx) && b.jet_eta()->at(jet_idx) < -1.2 && -1.77 < b.jet_phi()->at(jet_idx) && b.jet_phi()->at(jet_idx) < -0.67) {
+        double dphi = fabs(TVector2::Phi_mpi_pi(b.jet_phi()->at(jet_idx)-b.met_phi()));
+	if (dphi < 0.5) {
+	  pass_hem = false;
+	}
+      }
+    }
+    return pass_hem;
+});
+
+const NamedFunc hem_weight("hem_weight", [](const Baby & b) -> NamedFunc::ScalarType{
+  if ( b.SampleType() != 2018) return 1.0;
+  if ( pass_hemveto.GetScalar(b) ) return 1.0;
+  return 0.645; //fraction of lumi after hem failure
+});
+
+const NamedFunc pass_filters("pass_filters", [](const Baby &b) -> NamedFunc::ScalarType{
+  if (!b.pass_goodv() || !b.pass_cschalo_tight() || !b.pass_hbhe() || !b.pass_hbheiso() || !b.pass_ecaldeadcell() || !b.pass_badpfmu() || !b.pass_muon_jet()) return false;
+  if (b.type()/1000 == 0 && !b.pass_eebadsc()) return false; //only apply eebadsc fiter for data
+  if (!b.pass_low_neutral_jet()) return false;
+  if (!b.pass_htratio_dphi_tight()) return false;
+  if ((b.type()/1000 == 106)  && !b.pass_jets()) return false; //only for fastsim
+  if ((b.SampleType()==2017 || b.SampleType()==2018) && !Higfuncs::pass_ecalnoisejet.GetScalar(b)) return false; 
+  if ((b.SampleType()==2018 && b.type()/1000 == 0) && !Higfuncs::pass_hemveto.GetScalar(b)) return false;
+  return true;
+});
+
+const NamedFunc jet_trigger = "HLT_PFJet500";
+
+const NamedFunc met_trigger("met_trigger", [](const Baby &b) -> NamedFunc::ScalarType{
+  //can't used string-based named func because name being too long causes histograms to crash
+  bool r_met_trigger = b.HLT_PFMET90_PFMHT90_IDTight()||b.HLT_PFMETNoMu90_PFMHTNoMu90_IDTight()||b.HLT_PFMET100_PFMHT100_IDTight()||b.HLT_PFMETNoMu100_PFMHTNoMu100_IDTight()||b.HLT_PFMET110_PFMHT110_IDTight()||b.HLT_PFMETNoMu110_PFMHTNoMu110_IDTight()||b.HLT_PFMET120_PFMHT120_IDTight()||b.HLT_PFMETNoMu120_PFMHTNoMu120_IDTight()||b.HLT_PFMET130_PFMHT130_IDTight()||b.HLT_PFMETNoMu130_PFMHTNoMu130_IDTight()||b.HLT_PFMET140_PFMHT140_IDTight()||b.HLT_PFMETNoMu140_PFMHTNoMu140_IDTight()||b.HLT_PFMET100_PFMHT100_IDTight_PFHT60()||b.HLT_PFMETNoMu100_PFMHTNoMu100_IDTight_PFHT60()||b.HLT_PFMET110_PFMHT110_IDTight_PFHT60()||b.HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_PFHT60()||b.HLT_PFMET120_PFMHT120_IDTight_PFHT60()||b.HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60()||b.HLT_PFMET130_PFMHT130_IDTight_PFHT60()||b.HLT_PFMETNoMu130_PFMHTNoMu130_IDTight_PFHT60()||b.HLT_PFMET140_PFMHT140_IDTight_PFHT60()||b.HLT_PFMETNoMu140_PFMHTNoMu140_IDTight_PFHT60()||b.HLT_PFMET120_PFMHT120_IDTight_HFCleaned()||b.HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_HFCleaned()||b.HLT_PFMET120_PFMHT120_IDTight_PFHT60_HFCleaned();
+  return r_met_trigger;
+});
+
+const NamedFunc el_trigger("el_trigger", [](const Baby &b) -> NamedFunc::ScalarType{
+  //can't used string-based named func because name being too long causes histograms to crash
+  bool r_el_trigger = b.HLT_Ele25_WPTight_Gsf()||b.HLT_Ele27_WPTight_Gsf()||b.HLT_Ele28_WPTight_Gsf()||b.HLT_Ele32_WPTight_Gsf_L1DoubleEG()||b.HLT_Ele32_WPTight_Gsf()||b.HLT_Ele35_WPTight_Gsf()||b.HLT_Ele45_WPLoose_Gsf()||b.HLT_Ele105_CaloIdVT_GsfTrkIdT()||b.HLT_Ele115_CaloIdVT_GsfTrkIdT()||b.HLT_Ele135_CaloIdVT_GsfTrkIdT()||b.HLT_Ele145_CaloIdVT_GsfTrkIdT()||b.HLT_Ele25_eta2p1_WPTight_Gsf()||b.HLT_Ele27_eta2p1_WPTight_Gsf()||b.HLT_Ele27_eta2p1_WPLoose_Gsf()||b.HLT_Ele20_WPLoose_Gsf()||b.HLT_Ele20_eta2p1_WPLoose_Gsf()||b.HLT_Ele25_eta2p1_WPLoose_Gsf()||b.HLT_Ele15_IsoVVVL_PFHT350()||b.HLT_Ele15_IsoVVVL_PFHT400()||b.HLT_Ele15_IsoVVVL_PFHT450()||b.HLT_Ele15_IsoVVVL_PFHT600()||b.HLT_Ele50_IsoVVVL_PFHT450();
+  return r_el_trigger;
+});
+
+const NamedFunc mu_trigger("mu_trigger", [](const Baby &b) -> NamedFunc::ScalarType{
+  //can't used string-based named func because name being too long causes histograms to crash
+  bool r_mu_trigger = b.HLT_IsoMu20()||b.HLT_IsoMu22()||b.HLT_IsoMu24()||b.HLT_IsoMu27()||b.HLT_IsoTkMu20()||b.HLT_IsoTkMu22()||b.HLT_IsoTkMu24()||b.HLT_Mu50()||b.HLT_Mu55()||b.HLT_TkMu50()||b.HLT_IsoMu22_eta2p1()||b.HLT_IsoMu24_eta2p1()||b.HLT_Mu45_eta2p1()||b.HLT_Mu15_IsoVVVL_PFHT350()||b.HLT_Mu15_IsoVVVL_PFHT400()||b.HLT_Mu15_IsoVVVL_PFHT450()||b.HLT_Mu15_IsoVVVL_PFHT600()||b.HLT_Mu50_IsoVVVL_PFHT400()||b.HLT_Mu50_IsoVVVL_PFHT450();
+  return r_mu_trigger;
+});
+
+const NamedFunc ht_trigger("ht_trigger", [](const Baby &b) -> NamedFunc::ScalarType{
+  //can't used string-based named func because name being too long causes histograms to crash
+  bool r_ht_trigger = b.HLT_PFHT125()||b.HLT_PFHT200()||b.HLT_PFHT300()||b.HLT_PFHT400()||b.HLT_PFHT475()||b.HLT_PFHT600()||b.HLT_PFHT650()||b.HLT_PFHT800()||b.HLT_PFHT900()||b.HLT_PFHT180()||b.HLT_PFHT370()||b.HLT_PFHT430()||b.HLT_PFHT510()||b.HLT_PFHT590()||b.HLT_PFHT680()||b.HLT_PFHT780()||b.HLT_PFHT890()||b.HLT_PFHT1050()||b.HLT_PFHT250()||b.HLT_PFHT350();
+  return r_ht_trigger;
+});
+
+const NamedFunc jetht_trigger = "HLT_PFJet500" || ht_trigger;
+
+const NamedFunc jetid_njet("jetid_njet", [](const Baby &b) -> NamedFunc::ScalarType{
+  unsigned int njet = 0;
+  if (b.pass_jets()) return b.njet();
+  for (unsigned int jet_idx = 0; jet_idx < b.jet_pt()->size(); jet_idx++) {
+    if (!b.jet_isgood()->at(jet_idx)) continue;
+    if (b.jet_id()->at(jet_idx) == false) continue;
+    njet += 1;
+  }
+  return njet;
+});
+
+const NamedFunc jetid_nb("jetid_nb", [](const Baby &b) -> NamedFunc::ScalarType{
+  unsigned int nbt = 0, nbm = 0, nbl = 0;
+  if (b.pass_jets()) {
+    if (b.nbt() < 2) return b.nbt();
+    if (b.nbm() < 3) return 2;
+    if (b.nbl()==3) return 3;
+    return 4;
+  }
+  for (unsigned int jet_idx = 0; jet_idx < b.jet_pt()->size(); jet_idx++) {
+    if (!b.jet_isgood()->at(jet_idx)) continue;
+    if (b.jet_id()->at(jet_idx) == false) continue;
+    if (b.jet_deepcsv()->at(jet_idx) > 0.8953 && b.SampleType() == 2016) nbt += 1;
+    if (b.jet_deepcsv()->at(jet_idx) > 0.8001 && b.SampleType() == 2017) nbt += 1;
+    if (b.jet_deepcsv()->at(jet_idx) > 0.7527 && b.SampleType() == 2018) nbt += 1;
+    if (b.jet_deepcsv()->at(jet_idx) > 0.6321 && b.SampleType() == 2016) nbm += 1;
+    if (b.jet_deepcsv()->at(jet_idx) > 0.4941 && b.SampleType() == 2017) nbm += 1;
+    if (b.jet_deepcsv()->at(jet_idx) > 0.4184 && b.SampleType() == 2018) nbm += 1;
+    if (b.jet_deepcsv()->at(jet_idx) > 0.2217 && b.SampleType() == 2016) nbl += 1;
+    if (b.jet_deepcsv()->at(jet_idx) > 0.1522 && b.SampleType() == 2017) nbl += 1;
+    if (b.jet_deepcsv()->at(jet_idx) > 0.0494 && b.SampleType() == 2018) nbl += 1;
+  }
+  if (nbt < 2) return nbt;
+  if (nbm < 3) return 2;
+  if (nbl==3) return 3;
+  return 4;
+});
+
+const NamedFunc jetid_low_dphi_met("jetid_low_dphi_met", [](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.pass_jets()) return b.low_dphi_met();
+  std::vector<std::pair<float, float>> jet_pt_and_dphi;
+  unsigned int njet = 0;
+  for (unsigned int jet_idx = 0; jet_idx < b.jet_pt()->size(); jet_idx++) {
+    if (!b.jet_isgood()->at(jet_idx)) continue;
+    if (b.jet_id()->at(jet_idx) == false) continue;
+    njet += 1;
+    jet_pt_and_dphi.push_back(std::make_pair(b.jet_pt()->at(jet_idx), b.jet_met_dphi()->at(jet_idx)));
+  }
+  if (njet > 0) {
+    if (jet_pt_and_dphi[0].second < 0.5) return true;
+  }
+  if (njet > 1) {
+    if (jet_pt_and_dphi[1].second < 0.5) return true;
+  }
+  if (njet > 2) {
+    if (jet_pt_and_dphi[2].second < 0.3) return true;
+  }
+  if (njet > 3) {
+    if (jet_pt_and_dphi[3].second < 0.3) return true;
+  }
+  return false;
+});
+
+const NamedFunc jetid_hig_cand_dm("jetid_hig_cand_dm",[](const Baby &b) -> NamedFunc::ScalarType{
+  //if no bad jets or if bad jet not in higgs candidate, just return normal value
+  if (b.pass_jets()) {
+    if (b.njet() < 4) return 999.;
+    return b.hig_cand_dm()->at(0);
+  }
+  std::vector<bool> jet_isgood;
+  bool recalculate_higgs = false;
+  unsigned int njet = 0;
+  for (unsigned int jet_idx = 0; jet_idx < b.jet_pt()->size(); jet_idx++) {
+    jet_isgood.push_back(b.jet_isgood()->at(jet_idx) && b.jet_id()->at(jet_idx));
+    if (b.jet_id()->at(jet_idx) == false) {
+      if (b.jet_h1d()->at(jet_idx) || b.jet_h2d()->at(jet_idx)) recalculate_higgs = true;
+      continue;
+    }
+    if (!b.jet_isgood()->at(jet_idx)) continue;
+    njet += 1;
+  }
+  if (njet < 4) return 999.;
+  if (!recalculate_higgs) return b.hig_cand_dm()->at(0);
+  //recalculate higgs
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), jet_isgood);
+  ROOT::Math::PtEtaPhiMVector h1b1 ((*b.jet_pt())[bbjet_indices.at(0)], (*b.jet_eta())[bbjet_indices.at(0)], (*b.jet_phi())[bbjet_indices.at(0)], (*b.jet_m())[bbjet_indices.at(0)]);
+  ROOT::Math::PtEtaPhiMVector h1b2 ((*b.jet_pt())[bbjet_indices.at(1)], (*b.jet_eta())[bbjet_indices.at(1)], (*b.jet_phi())[bbjet_indices.at(1)], (*b.jet_m())[bbjet_indices.at(1)]);
+  ROOT::Math::PtEtaPhiMVector h2b1 ((*b.jet_pt())[bbjet_indices.at(2)], (*b.jet_eta())[bbjet_indices.at(2)], (*b.jet_phi())[bbjet_indices.at(2)], (*b.jet_m())[bbjet_indices.at(2)]);
+  ROOT::Math::PtEtaPhiMVector h2b2 ((*b.jet_pt())[bbjet_indices.at(3)], (*b.jet_eta())[bbjet_indices.at(3)], (*b.jet_phi())[bbjet_indices.at(3)], (*b.jet_m())[bbjet_indices.at(3)]);
+  return TMath::Abs((h1b1+h1b2).M()-(h2b1+h2b2).M());
+});
+
+const NamedFunc jetid_hig_cand_am("jetid_hig_cand_am",[](const Baby &b) -> NamedFunc::ScalarType{
+  //if no bad jets or if bad jet not in higgs candidate, just return normal value
+  if (b.pass_jets()) {
+    if (b.njet() < 4) return 999.;
+    return b.hig_cand_am()->at(0);
+  }
+  std::vector<bool> jet_isgood;
+  bool recalculate_higgs = false;
+  unsigned int njet = 0;
+  for (unsigned int jet_idx = 0; jet_idx < b.jet_pt()->size(); jet_idx++) {
+    jet_isgood.push_back(b.jet_isgood()->at(jet_idx) && b.jet_id()->at(jet_idx));
+    if (b.jet_id()->at(jet_idx) == false) {
+      if (b.jet_h1d()->at(jet_idx) || b.jet_h2d()->at(jet_idx)) recalculate_higgs = true;
+      continue;
+    }
+    if (!b.jet_isgood()->at(jet_idx)) continue;
+    njet += 1;
+  }
+  if (njet < 4) return 999.;
+  if (!recalculate_higgs) return b.hig_cand_am()->at(0);
+  //recalculate higgs
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), jet_isgood);
+  ROOT::Math::PtEtaPhiMVector h1b1 ((*b.jet_pt())[bbjet_indices.at(0)], (*b.jet_eta())[bbjet_indices.at(0)], (*b.jet_phi())[bbjet_indices.at(0)], (*b.jet_m())[bbjet_indices.at(0)]);
+  ROOT::Math::PtEtaPhiMVector h1b2 ((*b.jet_pt())[bbjet_indices.at(1)], (*b.jet_eta())[bbjet_indices.at(1)], (*b.jet_phi())[bbjet_indices.at(1)], (*b.jet_m())[bbjet_indices.at(1)]);
+  ROOT::Math::PtEtaPhiMVector h2b1 ((*b.jet_pt())[bbjet_indices.at(2)], (*b.jet_eta())[bbjet_indices.at(2)], (*b.jet_phi())[bbjet_indices.at(2)], (*b.jet_m())[bbjet_indices.at(2)]);
+  ROOT::Math::PtEtaPhiMVector h2b2 ((*b.jet_pt())[bbjet_indices.at(3)], (*b.jet_eta())[bbjet_indices.at(3)], (*b.jet_phi())[bbjet_indices.at(3)], (*b.jet_m())[bbjet_indices.at(3)]);
+  return ((h1b1+h1b2).M()+(h2b1+h2b2).M())/2.0;
+});
+
+const NamedFunc jetid_hig_cand_drmax("jetid_hig_cand_drmax",[](const Baby &b) -> NamedFunc::ScalarType{
+  //if no bad jets or if bad jet not in higgs candidate, just return normal value
+  if (b.pass_jets()) {
+    if (b.njet() < 4) return 999.;
+    return b.hig_cand_drmax()->at(0);
+  }
+  std::vector<bool> jet_isgood;
+  bool recalculate_higgs = false;
+  unsigned int njet = 0;
+  for (unsigned int jet_idx = 0; jet_idx < b.jet_pt()->size(); jet_idx++) {
+    jet_isgood.push_back(b.jet_isgood()->at(jet_idx) && b.jet_id()->at(jet_idx));
+    if (b.jet_id()->at(jet_idx) == false) {
+      if (b.jet_h1d()->at(jet_idx) || b.jet_h2d()->at(jet_idx)) recalculate_higgs = true;
+      continue;
+    }
+    if (!b.jet_isgood()->at(jet_idx)) continue;
+    njet += 1;
+  }
+  if (njet < 4) return 999.;
+  if (!recalculate_higgs) return b.hig_cand_drmax()->at(0);
+  //recalculate higgs
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), jet_isgood);
+  ROOT::Math::PtEtaPhiMVector h1b1 ((*b.jet_pt())[bbjet_indices.at(0)], (*b.jet_eta())[bbjet_indices.at(0)], (*b.jet_phi())[bbjet_indices.at(0)], (*b.jet_m())[bbjet_indices.at(0)]);
+  ROOT::Math::PtEtaPhiMVector h1b2 ((*b.jet_pt())[bbjet_indices.at(1)], (*b.jet_eta())[bbjet_indices.at(1)], (*b.jet_phi())[bbjet_indices.at(1)], (*b.jet_m())[bbjet_indices.at(1)]);
+  ROOT::Math::PtEtaPhiMVector h2b1 ((*b.jet_pt())[bbjet_indices.at(2)], (*b.jet_eta())[bbjet_indices.at(2)], (*b.jet_phi())[bbjet_indices.at(2)], (*b.jet_m())[bbjet_indices.at(2)]);
+  ROOT::Math::PtEtaPhiMVector h2b2 ((*b.jet_pt())[bbjet_indices.at(3)], (*b.jet_eta())[bbjet_indices.at(3)], (*b.jet_phi())[bbjet_indices.at(3)], (*b.jet_m())[bbjet_indices.at(3)]);
+  float dr1 = DeltaR(h1b1, h1b2);
+  float dr2 = DeltaR(h2b1, h2b2);
+  if (dr1>dr2) return dr1;
+  return dr2;
 });
 
 }
