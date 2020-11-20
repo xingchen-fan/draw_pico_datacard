@@ -18,6 +18,7 @@
 #include "core/hist1d.hpp"
 #include "core/plot_opt.hpp"
 #include "core/functions.hpp"
+#include "higgsino/hig_functions.hpp"
 #include "higgsino/hig_utilities.hpp"
 
 using namespace std;
@@ -91,7 +92,8 @@ int main(){
   string hig = "hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200 && hig_cand_dm[0] <= 40 && (hig_cand_am[0]>100 && hig_cand_am[0]<=140)";
   string sbd = "hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200 && hig_cand_dm[0] <= 40 && !(hig_cand_am[0]>100 && hig_cand_am[0]<=140)";
 
-  NamedFunc wgt = "w_lumi*w_isr";//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
+  //NamedFunc wgt = "w_lumi*w_isr";//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
+  NamedFunc wgt = "weight"* Higfuncs::eff_higtrig;
 
   string baseline = "nvlep==0 && njet>=4 && njet<=5"; //pass_muon_jet && met/met_calo<5
   string sigonly = "type>100e3";
@@ -100,15 +102,15 @@ int main(){
   PlotMaker pm;
   pm.Push<Table>("cutflow", vector<TableRow>{
   TableRow("1", 
-    "1",0,0, wgt),
-  TableRow("$0\\ell$, $\\text{4-5 jets}$", 
-    baseline,0,0, wgt),
-  TableRow("nbt>=2", 
-    baseline+"&&"+c_2bt,0,0, wgt),
+    "1",0,0, "weight"),
   TableRow("MET>150", 
-    baseline+"&&"+c_2bt+"&&met>150",0,0, wgt),
-  TableRow("$0\\ell$, $\\text{4-5 jets}$, $N_{\\text{b,T}}\\geq 2$, $p_{\\rm T}^{\\rm miss}>150$ GeV", 
-    baseline+"&& met>150 &&" + c_2bt,0,0, wgt),
+    "met>150",0,0, wgt),
+  TableRow("$0\\ell$", 
+    "nvlep==0&&met>150",0,0, wgt),
+  TableRow("$\\text{4-5 jets}$", 
+    baseline+"&&met>150",0,0, wgt),
+  TableRow("nbt>=2", 
+    baseline+"&&met>150&&"+c_2bt,0,0, wgt),
   TableRow("Track veto", 
     baseline + " && ntk==0 && met>150 &&" + c_2bt,0,0, wgt),
   TableRow("$\\Delta\\phi_{1,2}>0.5,\\Delta\\phi_{3,4}>0.3$",        
