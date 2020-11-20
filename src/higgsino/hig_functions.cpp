@@ -202,8 +202,13 @@ const NamedFunc wgt_syst_ttx("wgt_syst_ttx",[](const Baby &b) -> NamedFunc::Scal
     b.type()==10000  ||                      // ttgamma
     b.type()==11000) {                       // tttt
     if ((*b.hig_cand_am())[0]<=100 || ((*b.hig_cand_am())[0]>140 && (*b.hig_cand_am())[0]<=200)) {
-      if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3) return 0.03;
-      else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) return 0.06;
+      if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3)  {// 3b
+        if ((*b.hig_cand_drmax())[0]<=1.1) return 0.1; // low dr
+        else return 0.05; // high dr
+      } else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) {// 4b
+        if ((*b.hig_cand_drmax())[0]<=1.1) return 0.18; // low dr 
+        else return 0.15; // high dr
+      }
     }
   }
   return 0;
@@ -212,9 +217,12 @@ const NamedFunc wgt_syst_ttx("wgt_syst_ttx",[](const Baby &b) -> NamedFunc::Scal
 const NamedFunc wgt_syst_vjets("wgt_syst_vjets",[](const Baby &b) -> NamedFunc::ScalarType{
   if ( (b.type()>=8000 && b.type()<9000) || // zjets
     (b.type()>=2000 && b.type()<3000) ||    // wjets
-    (b.type()>=6000 && b.type()<7000)) {   
+    (b.type()>=6000 && b.type()<7000)) {   // dyjets
     if ((*b.hig_cand_am())[0]<=100 || ((*b.hig_cand_am())[0]>140 && (*b.hig_cand_am())[0]<=200))
-      if (b.nbt()>=2 && b.nbm()>=3) return 0.19;
+      if (b.nbt()>=2 && b.nbm()>=3) { // high b
+        if ((*b.hig_cand_drmax())[0]<=1.1) return 0.22; // low dr
+        else return 0.04; // high dr
+      }
   }
   return 0;
 });
@@ -222,7 +230,7 @@ const NamedFunc wgt_syst_vjets("wgt_syst_vjets",[](const Baby &b) -> NamedFunc::
 const NamedFunc wgt_syst_qcd("wgt_syst_qcd",[](const Baby &b) -> NamedFunc::ScalarType{
   if ( (b.type()>=7000 && b.type()<8000)) { // qcd
     if ((*b.hig_cand_am())[0]<=100 || ((*b.hig_cand_am())[0]>140 && (*b.hig_cand_am())[0]<=200))
-      if (b.nbt()>=2 && b.nbm()>=3) return 0.13;
+      if (b.nbt()>=2 && b.nbm()>=3) return 0.13; // high b
   }
   return 0;
 });
