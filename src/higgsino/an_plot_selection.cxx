@@ -53,7 +53,7 @@ const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
 
 namespace{
   bool single_thread = false;
-  string year_string = "2017";
+  string year_string = "2018";
   bool unblind = false;
 }
 
@@ -80,6 +80,7 @@ int main(int argc, char *argv[]){
   PlotOpt lin_shapes_info = lin_shapes().Title(TitleType::info).Bottom(BottomType::off);
   PlotOpt log_shapes = lin_norm().YAxis(YAxisType::log).Stack(StackType::shapes).Bottom(BottomType::ratio);
   PlotOpt log_shapes_info = lin_shapes().YAxis(YAxisType::log).Title(TitleType::info).Bottom(BottomType::off);
+  PlotOpt lin_lumi_shapes = lin_norm().Stack(StackType::lumi_shapes).Title(TitleType::info).Bottom(BottomType::off);
 
   vector<PlotOpt> plt_norm_info = {lin_norm_info, log_norm_info};
   vector<PlotOpt> plt_lin = {lin_norm};
@@ -89,6 +90,7 @@ int main(int argc, char *argv[]){
   vector<PlotOpt> plt_log_shapes = {log_shapes};
   vector<PlotOpt> plt_shapes_info = {lin_shapes_info};
   vector<PlotOpt> plt_log_shapes_info = {log_shapes_info};
+  vector<PlotOpt> plt_lin_lumi_shapes = {lin_lumi_shapes};
   if (unblind) plt_lin = {lin_norm_data};
   if (unblind) plt_log = {log_norm_data};
 
@@ -115,7 +117,9 @@ int main(int argc, char *argv[]){
   set<int> years;
   HigUtilities::parseYears(year_string, years);
   //years = {2016, 2017, 2018};
-  years = {2017};
+  years = {2016};
+  if (year_string=="2017") years = {2017};
+  if (year_string=="2018") years = {2018};
   float total_luminosity = 0;
   for (auto const & year : years) {
     if (year == 2016) total_luminosity += 35.9;
@@ -136,7 +140,7 @@ int main(int argc, char *argv[]){
   // Set MC 
   map<string, set<string>> mctags; 
   // Set base tags
-  mctags["tt"]     = set<string>({"*TTJets_*Lept*",
+  mctags["tt"]     = set<string>({"*TTJets_SingleLept*","TTJets_DiLept*",
                                   "*_TTZ*.root", "*_TTW*.root",
                                  "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root"});
   mctags["single_t"] = set<string>({"*_ST_*.root"});
@@ -268,6 +272,20 @@ int main(int argc, char *argv[]){
     return r_analysis_nb;
   });
 
+  const NamedFunc ttll_nb("ttll_nb",[](const Baby &b) -> NamedFunc::ScalarType{
+    unsigned int r_ttll_nb =  0;
+    if (b.nbt() < 2) {
+      r_ttll_nb =  b.nbt();
+    }
+    else if (b.nbl() <= 4) {
+      r_ttll_nb = b.nbl();
+    }
+    else {
+      r_ttll_nb = 4;
+    }
+    return r_ttll_nb;
+  });
+
   // resolved cuts
   NamedFunc search_resolved = 
                          "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
@@ -294,6 +312,41 @@ int main(int argc, char *argv[]){
   //pm.Push<Hist1D>(Axis(14, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}),
   //  base_filters&&search_resolved,
   //  search_procs, plt_log).Weight(weight).Tag("FixName:selection__search_met").LuminosityTag(total_luminosity_string);
+  //
+
+  if (true) {
+    //kinematic variables nb type and shape plots
+    pm.Push<Hist1D>(Axis(5, 0.5, 5.5, analysis_nb, "b-tag Category (TTML)", {}),
+      HigUtilities::pass_2016 &&
+      "nvlep==0 && 4 <= njet && njet <= 5 && nbt >= 2 && nbl <= 4 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+      search_procs, plt_log).Weight(mixed_model_weight).Tag("FixName:kinematicvars__signalbackground_nb_ttml_log_"+year_string).LuminosityTag(total_luminosity_string);
+    pm.Push<Hist1D>(Axis(5, 0.5, 5.5, "nbm", "b-tag Category (MMMM)", {}),
+      HigUtilities::pass_2016 &&
+      "nvlep==0 && 4 <= njet && njet <= 5 && nbm >= 2 && nbm <= 4 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+      search_procs, plt_log).Weight(mixed_model_weight).Tag("FixName:kinematicvars__signalbackground_nb_mmmm_log_"+year_string).LuminosityTag(total_luminosity_string);
+    pm.Push<Hist1D>(Axis(5, 0.5, 5.5, ttll_nb, "b-tag Category (TTLL)", {}),
+      HigUtilities::pass_2016 &&
+      "nvlep==0 && 4 <= njet && njet <= 5 && nbt >= 2 && nbl <= 4 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+      search_procs, plt_log).Weight(mixed_model_weight).Tag("FixName:kinematicvars__signalbackground_nb_ttll_log_"+year_string).LuminosityTag(total_luminosity_string);
+    pm.Push<Hist1D>(Axis(25, 0, 250, "hig_cand_am[0]", "#LT m_{bb} #GT", {100,140}),
+      HigUtilities::pass_2016 &&
+      "4 <= njet && nbt >= 2 && nbm >= 3 && nbl >= 4",
+      search_signal_procs, plt_shapes_info).Weight(mixed_model_weight).Tag("FixName:kinematicvars__signal_am_shapes_"+year_string).LuminosityTag(total_luminosity_string);
+    pm.Push<Hist1D>(Axis(30, 0, 150, "hig_cand_dm[0]", "#Delta m_{HH}", {40}),
+      HigUtilities::pass_2016 &&
+      "4 <= njet && nbt >= 2 && nbm >= 3 && nbl >= 4",
+      search_signal_procs, plt_shapes_info).Weight(mixed_model_weight).Tag("FixName:kinematicvars__signal_dm_shapes_"+year_string).LuminosityTag(total_luminosity_string);
+    pm.Push<Hist1D>(Axis(40, 0, 4, "hig_cand_drmax[0]", "#Delta R_{max}", {2.2}),
+      HigUtilities::pass_2016 &&
+      "4 <= njet",
+      search_signal_procs, plt_shapes_info).Weight(mixed_model_weight).Tag("FixName:kinematicvars__signal_drmax_shapes_"+year_string).LuminosityTag(total_luminosity_string);
+    pm.Push<Hist1D>(Axis(20, 0, 4, "hig_cand_drmax[0]", "#Delta R_{max}", {2.2}),
+      HigUtilities::pass_2016 &&
+      "nvlep==0 && ntk==0 && !low_dphi_met && 4 <= njet && njet<= 5 && met > 200 && nbt >= 2 && nbm >= 3 && nbl >= 4 && 100 <= hig_cand_am[0] && hig_cand_am[0] < 140",
+      search_procs, plt_lin).Weight(mixed_model_weight).Tag("FixName:kinematicvars__signalbackground_drmax_lin_"+year_string).LuminosityTag(total_luminosity_string);
+  }
+
+  //selection section plots
   for (int plot_type_idx = 0; plot_type_idx < 3; plot_type_idx++) {
     vector<PlotOpt> plt_type = plt_log;
     vector<PlotOpt> plt_type_signal = plt_log;
@@ -309,17 +362,20 @@ int main(int argc, char *argv[]){
       plt_type_string = "lin";
     }
 
-    //signal only plots
-    pm.Push<Hist1D>(Axis(40, 150, 800, "met", "MET [GeV]", {200, 300, 450}),
-      HigUtilities::pass_2016 &&
-      "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
-      //not applying additional nb, <m>, MET, or Delta R cuts associated with ABCD plain and bins
-      search_signal_procs, plt_type_signal).Weight(mixed_model_weight).Tag("FixName:selection__signalcomp_met_"+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
-    pm.Push<Hist1D>(Axis(25, 0, 2.2, "hig_cand_drmax[0]", "#Delta R_{max}", {1.1}),
-      HigUtilities::pass_2016 &&
-      "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_am[0]<=200",
-      //not applying additional nb, <m>, MET, or Delta R cuts associated with ABCD plain and bins
-      search_signal_procs, plt_type_signal).Weight(mixed_model_weight).Tag("FixName:selection__signalcomp_higcanddrmax_"+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+    if (plot_type_idx == 1) {
+      //only make shape plots right now
+      //signal only plots
+      pm.Push<Hist1D>(Axis(40, 150, 800, "met", "MET [GeV]", {200, 300, 450}),
+        HigUtilities::pass_2016 &&
+        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+        //not applying additional nb, <m>, MET, or Delta R cuts associated with ABCD plain and bins
+        search_signal_procs, plt_type_signal).Weight(mixed_model_weight).Tag("FixName:selection__signalcomp_met_"+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+      pm.Push<Hist1D>(Axis(20, 0, 2.2, "hig_cand_drmax[0]", "#Delta R_{max}", {1.1}),
+        HigUtilities::pass_2016 &&
+        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_am[0]<=200",
+        //not applying additional nb, <m>, MET, or Delta R cuts associated with ABCD plain and bins
+        search_signal_procs, plt_type_signal).Weight(mixed_model_weight).Tag("FixName:selection__signalcomp_higcanddrmax_"+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+    }
 
     for (int require_nb4 = 0; require_nb4 < 2; require_nb4++) {
       NamedFunc nb_cut = "1";
@@ -334,87 +390,89 @@ int main(int argc, char *argv[]){
       }
       
       // n-1 plots
-      //  "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
-      pm.Push<Hist1D>(Axis(40, 150, 800, "met", "MET [GeV]", {200, 300, 450}),
-        HigUtilities::pass_2016 && nb_cut &&
-        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
-        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_met_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
-      pm.Push<Hist1D>(Axis(8, 3.5, 11.5, "njet", "N_{jets}", {3.5, 5.5}),
-        HigUtilities::pass_2016 && nb_cut &&
-        "nvlep==0 && 4 <= njet && nbt >= 2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
-        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_njet_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
-      pm.Push<Hist1D>(Axis(4, -0.5, 3.5, "nvlep", "N_{vlep}", {0.5}),
-        HigUtilities::pass_2016 && nb_cut &&
-        "4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
-        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_nvlep_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
-      if (require_nb4==0) {
-	//don't plot nb if we are requiring nb=4
+      if (require_nb4==0 && plot_type_idx == 0) {
+	//don't plot nb if we are requiring nb=4, right now only make log plot
         pm.Push<Hist1D>(Axis(5, -0.5, 4.5, analysis_nb, "N_{b}", {1.5}),
           HigUtilities::pass_2016 &&
           "nvlep==0 && 4 <= njet && njet <= 5 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
           search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_nb_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
       }
-      pm.Push<Hist1D>(Axis(4, -0.5, 3.5, "ntk", "N_{isoTk}", {0.5}),
-        HigUtilities::pass_2016 && nb_cut &&
-        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
-        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_nisotk_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
-      pm.Push<Hist1D>(Axis(40, 0, 3.2, "jet_met_dphi[0]", "#Delta#Phi_{1}", {0.5}),
-        HigUtilities::pass_2016 && nb_cut &&
-        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
-        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminusphi_dphi1_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
-      pm.Push<Hist1D>(Axis(40, 0, 3.2, "jet_met_dphi[1]", "#Delta#Phi_{2}", {0.5}),
-        HigUtilities::pass_2016 && nb_cut &&
-        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
-        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminusphi_dphi2_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
-      pm.Push<Hist1D>(Axis(40, 0, 3.2, "jet_met_dphi[2]", "#Delta#Phi_{3}", {0.3}),
-        HigUtilities::pass_2016 && nb_cut &&
-        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
-        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminusphi_dphi3_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
-      pm.Push<Hist1D>(Axis(40, 0, 3.2, "jet_met_dphi[3]", "#Delta#Phi_{4}", {0.3}),
-        HigUtilities::pass_2016 && nb_cut &&
-        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
-        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminusphi_dphi4_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
-      pm.Push<Hist1D>(Axis(40, 0, 3.2, "jet_met_dphi[0]", "#Delta#Phi_{1}", {0.5}),
-        HigUtilities::pass_2016 && nb_cut &&
-        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && jet_met_dphi[1]>0.5 && jet_met_dphi[2]>0.3 && jet_met_dphi[3]>0.3 && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
-        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_dphi1_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
-      pm.Push<Hist1D>(Axis(40, 0, 3.2, "jet_met_dphi[1]", "#Delta#Phi_{2}", {0.5}),
-        HigUtilities::pass_2016 && nb_cut &&
-        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && jet_met_dphi[0]>0.5 && jet_met_dphi[2]>0.3 && jet_met_dphi[3]>0.3 && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
-        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_dphi2_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
-      pm.Push<Hist1D>(Axis(40, 0, 3.2, "jet_met_dphi[2]", "#Delta#Phi_{3}", {0.3}),
-        HigUtilities::pass_2016 && nb_cut &&
-        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && jet_met_dphi[0]>0.5 && jet_met_dphi[1]>0.5 && jet_met_dphi[3]>0.3 && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
-        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_dphi3_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
-      pm.Push<Hist1D>(Axis(40, 0, 3.2, "jet_met_dphi[3]", "#Delta#Phi_{4}", {0.3}),
-        HigUtilities::pass_2016 && nb_cut &&
-        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && jet_met_dphi[0]>0.5 && jet_met_dphi[1]>0.5 && jet_met_dphi[2]>0.3 && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
-        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_dphi4_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
-      pm.Push<Hist1D>(Axis(40, 0, 8, "(met/mht)", "p^{miss}_{T}/H^{miss}_{T}", {2}),
-        HigUtilities::pass_2016 && nb_cut &&
-        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
-        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_metmht_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
-      pm.Push<Hist1D>(Axis(40, 0, 8, "(met/met_calo)", "p^{miss}_{T}/p^{miss}_{Tcalo}", {2}),
-        HigUtilities::pass_2016 && nb_cut &&
-        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
-        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_metmetcalo_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
-      pm.Push<Hist1D>(Axis(40, 0, 120, "hig_cand_dm[0]", "#Delta m_{HH} [GeV]", {40}),
-        HigUtilities::pass_2016 && nb_cut &&
-        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
-        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_higcanddm_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
-      pm.Push<Hist1D>(Axis(40, 0, 4.0, "hig_cand_drmax[0]", "#Delta R_{max}", {2.2}),
-        HigUtilities::pass_2016 && nb_cut &&
-        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_am[0]<=200",
-        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_higcanddrmax_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
-      pm.Push<Hist1D>(Axis(40, 0, 200, "hig_cand_am[0]", "#LT m_{bb} #GT [GeV]", {100,140}),
-        HigUtilities::pass_2016 && nb_cut &&
-        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
-        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_higcandam_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
-      //non N-1 variables
-      pm.Push<Hist1D>(Axis(40, 0, 1200, "ht", "HT [GeV]", {}),
-        HigUtilities::pass_2016 && nb_cut &&
-        "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
-        search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__baseline_ht_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+      if (plot_type_idx == 2 && require_nb4==1) {
+	//right now only make linear nb=4 plots
+        pm.Push<Hist1D>(Axis(40, 150, 800, "met", "MET [GeV]", {200, 300, 450}),
+          HigUtilities::pass_2016 && nb_cut &&
+          "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+          search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_met_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+        pm.Push<Hist1D>(Axis(8, 3.5, 11.5, "njet", "N_{jets}", {3.5, 5.5}),
+          HigUtilities::pass_2016 && nb_cut &&
+          "nvlep==0 && 4 <= njet && nbt >= 2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+          search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_njet_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+        pm.Push<Hist1D>(Axis(4, -0.5, 3.5, "nvlep", "N_{vlep}", {0.5}),
+          HigUtilities::pass_2016 && nb_cut &&
+          "4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+          search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_nvlep_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+        pm.Push<Hist1D>(Axis(4, -0.5, 3.5, "ntk", "N_{isoTk}", {0.5}),
+          HigUtilities::pass_2016 && nb_cut &&
+          "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+          search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_nisotk_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+        //pm.Push<Hist1D>(Axis(40, 0, 3.2, "jet_met_dphi[0]", "#Delta#Phi_{1}", {0.5}),
+        //  HigUtilities::pass_2016 && nb_cut &&
+        //  "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+        //  search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminusphi_dphi1_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+        //pm.Push<Hist1D>(Axis(40, 0, 3.2, "jet_met_dphi[1]", "#Delta#Phi_{2}", {0.5}),
+        //  HigUtilities::pass_2016 && nb_cut &&
+        //  "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+        //  search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminusphi_dphi2_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+        //pm.Push<Hist1D>(Axis(40, 0, 3.2, "jet_met_dphi[2]", "#Delta#Phi_{3}", {0.3}),
+        //  HigUtilities::pass_2016 && nb_cut &&
+        //  "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+        //  search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminusphi_dphi3_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+        //pm.Push<Hist1D>(Axis(40, 0, 3.2, "jet_met_dphi[3]", "#Delta#Phi_{4}", {0.3}),
+        //  HigUtilities::pass_2016 && nb_cut &&
+        //  "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+        //  search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminusphi_dphi4_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+        pm.Push<Hist1D>(Axis(40, 0, 3.2, "jet_met_dphi[0]", "#Delta#Phi_{1}", {0.5}),
+          HigUtilities::pass_2016 && nb_cut &&
+          "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && jet_met_dphi[1]>0.5 && jet_met_dphi[2]>0.3 && jet_met_dphi[3]>0.3 && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+          search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_dphi1_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+        pm.Push<Hist1D>(Axis(40, 0, 3.2, "jet_met_dphi[1]", "#Delta#Phi_{2}", {0.5}),
+          HigUtilities::pass_2016 && nb_cut &&
+          "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && jet_met_dphi[0]>0.5 && jet_met_dphi[2]>0.3 && jet_met_dphi[3]>0.3 && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+          search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_dphi2_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+        pm.Push<Hist1D>(Axis(40, 0, 3.2, "jet_met_dphi[2]", "#Delta#Phi_{3}", {0.3}),
+          HigUtilities::pass_2016 && nb_cut &&
+          "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && jet_met_dphi[0]>0.5 && jet_met_dphi[1]>0.5 && jet_met_dphi[3]>0.3 && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+          search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_dphi3_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+        pm.Push<Hist1D>(Axis(40, 0, 3.2, "jet_met_dphi[3]", "#Delta#Phi_{4}", {0.3}),
+          HigUtilities::pass_2016 && nb_cut &&
+          "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && jet_met_dphi[0]>0.5 && jet_met_dphi[1]>0.5 && jet_met_dphi[2]>0.3 && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+          search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_dphi4_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+        pm.Push<Hist1D>(Axis(40, 0, 8, "(met/mht)", "p^{miss}_{T}/H^{miss}_{T}", {2}),
+          HigUtilities::pass_2016 && nb_cut &&
+          "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+          search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_metmht_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+        pm.Push<Hist1D>(Axis(40, 0, 8, "(met/met_calo)", "p^{miss}_{T}/p^{miss}_{Tcalo}", {2}),
+          HigUtilities::pass_2016 && nb_cut &&
+          "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+          search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_metmetcalo_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+        pm.Push<Hist1D>(Axis(40, 0, 120, "hig_cand_dm[0]", "#Delta m_{HH} [GeV]", {40}),
+          HigUtilities::pass_2016 && nb_cut &&
+          "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+          search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_higcanddm_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+        pm.Push<Hist1D>(Axis(40, 0, 4.0, "hig_cand_drmax[0]", "#Delta R_{max}", {2.2}),
+          HigUtilities::pass_2016 && nb_cut &&
+          "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_am[0]<=200",
+          search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_higcanddrmax_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+        pm.Push<Hist1D>(Axis(40, 0, 200, "hig_cand_am[0]", "#LT m_{bb} #GT [GeV]", {100,140}),
+          HigUtilities::pass_2016 && nb_cut &&
+          "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+          search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_higcandam_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+        //non N-1 variables
+        pm.Push<Hist1D>(Axis(40, 0, 1200, "ht", "HT [GeV]", {}),
+          HigUtilities::pass_2016 && nb_cut &&
+          "nvlep==0 && 4 <= njet && njet <= 5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200",
+          search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__baseline_ht_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
+      }
     }
   }
 
@@ -439,35 +497,35 @@ int main(int argc, char *argv[]){
 
 
   //// 2b (met: 150, 200, 300, 400) low drmax
-  pm.Push<Table>("FixName:selection__search_pies__2b_met150_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>150 &&met<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
-  pm.Push<Table>("FixName:selection__search_pies__2b_met200_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>200 &&met<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
-  pm.Push<Table>("FixName:selection__search_pies__2b_met300_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>300 &&met<=400 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
-  pm.Push<Table>("FixName:selection__search_pies__2b_met400_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>400            &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+  pm.Push<Table>("FixName:selection__search_pies__2b_met150_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>150 &&met<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+  pm.Push<Table>("FixName:selection__search_pies__2b_met200_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>200 &&met<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+  pm.Push<Table>("FixName:selection__search_pies__2b_met300_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>300 &&met<=400 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+  pm.Push<Table>("FixName:selection__search_pies__2b_met400_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>400            &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
   // 3b (met: 150, 200, 300, 400) low drmax
-  pm.Push<Table>("FixName:selection__search_pies__3b_met150_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>150 &&met<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
-  pm.Push<Table>("FixName:selection__search_pies__3b_met200_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>200 &&met<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
-  pm.Push<Table>("FixName:selection__search_pies__3b_met300_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>300 &&met<=400 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
-  pm.Push<Table>("FixName:selection__search_pies__3b_met400_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>400            &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+  pm.Push<Table>("FixName:selection__search_pies__3b_met150_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>150 &&met<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+  pm.Push<Table>("FixName:selection__search_pies__3b_met200_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>200 &&met<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+  pm.Push<Table>("FixName:selection__search_pies__3b_met300_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>300 &&met<=400 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+  pm.Push<Table>("FixName:selection__search_pies__3b_met400_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>400            &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
   // 4b (met: 150, 200, 300, 400) low drmax
-  pm.Push<Table>("FixName:selection__search_pies__4b_met150_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>150 &&met<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
-  pm.Push<Table>("FixName:selection__search_pies__4b_met200_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>200 &&met<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
-  pm.Push<Table>("FixName:selection__search_pies__4b_met300_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>300 &&met<=400 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
-  pm.Push<Table>("FixName:selection__search_pies__4b_met400_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>400            &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+  pm.Push<Table>("FixName:selection__search_pies__4b_met150_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>150 &&met<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+  pm.Push<Table>("FixName:selection__search_pies__4b_met200_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>200 &&met<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+  pm.Push<Table>("FixName:selection__search_pies__4b_met300_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>300 &&met<=400 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+  pm.Push<Table>("FixName:selection__search_pies__4b_met400_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>400            &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
   // 2b (met: 150, 200, 300, 400) high drmax
-  pm.Push<Table>("FixName:selection__search_pies__2b_met150_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>150 &&met<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
-  pm.Push<Table>("FixName:selection__search_pies__2b_met200_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>200 &&met<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
-  pm.Push<Table>("FixName:selection__search_pies__2b_met300_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>300 &&met<=400 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
-  pm.Push<Table>("FixName:selection__search_pies__2b_met400_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>400            &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+  pm.Push<Table>("FixName:selection__search_pies__2b_met150_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>150 &&met<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+  pm.Push<Table>("FixName:selection__search_pies__2b_met200_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>200 &&met<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+  pm.Push<Table>("FixName:selection__search_pies__2b_met300_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>300 &&met<=400 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+  pm.Push<Table>("FixName:selection__search_pies__2b_met400_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>400            &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
   // 3b (met: 150, 200, 300, 400) high drmax
-  pm.Push<Table>("FixName:selection__search_pies__3b_met150_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>150 &&met<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
-  pm.Push<Table>("FixName:selection__search_pies__3b_met200_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>200 &&met<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
-  pm.Push<Table>("FixName:selection__search_pies__3b_met300_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>300 &&met<=400 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
-  pm.Push<Table>("FixName:selection__search_pies__3b_met400_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>400            &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+  pm.Push<Table>("FixName:selection__search_pies__3b_met150_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>150 &&met<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+  pm.Push<Table>("FixName:selection__search_pies__3b_met200_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>200 &&met<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+  pm.Push<Table>("FixName:selection__search_pies__3b_met300_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>300 &&met<=400 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+  pm.Push<Table>("FixName:selection__search_pies__3b_met400_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>400            &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
   // 4b (met: 150, 200, 300, 400) high drmax
-  pm.Push<Table>("FixName:selection__search_pies__4b_met150_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>150 &&met<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
-  pm.Push<Table>("FixName:selection__search_pies__4b_met200_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>200 &&met<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
-  pm.Push<Table>("FixName:selection__search_pies__4b_met300_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>300 &&met<=400 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
-  pm.Push<Table>("FixName:selection__search_pies__4b_met400_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>400            &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+  pm.Push<Table>("FixName:selection__search_pies__4b_met150_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>150 &&met<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+  pm.Push<Table>("FixName:selection__search_pies__4b_met200_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>200 &&met<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+  pm.Push<Table>("FixName:selection__search_pies__4b_met300_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>300 &&met<=400 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+  pm.Push<Table>("FixName:selection__search_pies__4b_met400_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>400            &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
 
   pm.multithreaded_ = !single_thread;
   pm.min_print_ = true;

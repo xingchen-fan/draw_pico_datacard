@@ -5,6 +5,7 @@
 #include <string>
 #include <sstream>
 #include <ctime>
+#include <cstdlib>
 #include <algorithm>
 #include <unistd.h> // getopt in Macs
 #include <getopt.h>
@@ -74,8 +75,8 @@ int main(int argc, char *argv[])
   //samplePaths["mc_2016"] = baseFolder + "/cms29r0/pico/NanoAODv5/higgsino_eldorado/2016/mc/merged_higmc_preselect/";
   //samplePaths["signal_2016"] = baseFolder + "/cms29r0/pico/NanoAODv5/higgsino_eldorado/2016/SMS-TChiHH_2D/merged_higmc_preselect/";
   //// samplePaths["data_2016"] = baseFolder + "/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higloose/";
-  samplePaths["mc_2016"] = "/net/cms25/cms25r5/jbkim/pico/NanoAODv5/higgsino_humboldt/2016/mc/merged_higmc_preselect/";
-  samplePaths["signal_2016"] = "/net/cms25/cms25r5/jbkim/pico/NanoAODv5/higgsino_humboldt/2016/SMS-TChiHH_2D/merged_higmc_preselect/";
+  samplePaths["mc_2016"] = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/2016/mc/merged_higmc_preselect/";
+  samplePaths["signal_2016"] = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/2016/SMS-TChiHH_2D/merged_higmc_preselect/";
 
   vector<pair<string, string> > massPoints;
   if (mass_points_string == "") HigUtilities::findMassPoints(samplePaths["signal_2016"], massPoints);
@@ -91,7 +92,7 @@ int main(int argc, char *argv[])
   //HigUtilities::setDataProcesses(years, samplePaths, filters&&Higfuncs::trig_hig>0., sampleProcesses);
   HigUtilities::setDataProcesses(years, samplePaths, filters, sampleProcesses);
   HigUtilities::setSignalProcesses(massPoints, years, samplePaths, filters, sampleProcesses);
-  
+
   NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig;
   if (higgsino_model=="N1N2") weight *= HigUtilities::w_CNToN1N2;
   string baseline = "!low_dphi_met && nvlep==0 && ntk==0";

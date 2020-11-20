@@ -47,11 +47,11 @@ int main(){
   vector<string> mchi_sigm2d = {"250","350","450"}; 
   vector<string> mlsp_sigm2d = {"50","200","100"}; 
 
-  string mc_production = "higgsino_humboldt"; // higgsino_eldorado
-  string year = "2018"; // 2016, 2017, 2018
+  string mc_production = "higgsino_inyo"; //"higgsino_humboldt"; // higgsino_eldorado
+  string year = "2016"; // 2016, 2017, 2018
 
-  string foldermc(bfolder+"/cms25r5/pico/NanoAODv5/"+mc_production+"/"+year+"/mc/skim_met150/");
-  string foldersig(bfolder+"/cms25r5/pico/NanoAODv5/"+mc_production+"/"+year+"/SMS-TChiHH_2D/unskimmed/");
+  string foldermc(bfolder+"/cms25r5/pico/NanoAODv7/"+mc_production+"/"+year+"/mc/skim_met150/");
+  string foldersig(bfolder+"/cms25r5/pico/NanoAODv7/"+mc_production+"/"+year+"/SMS-TChiHH_2D/unskimmed/");
   if (year == "2017") {
 	  lumi = 41.5;
   }
@@ -134,12 +134,12 @@ int main(){
   pm.Push<Table>("cutflow", vector<TableRow>{
   TableRow("No selection", 
     "met>0",0,0, mixed_model_weight),
-  TableRow("$N_\\text{vl}=0$, $4\\leq N_\\text{j}\\leq 5$", 
-    "nvlep==0 && njet>=4 && njet<=5",0,0,mixed_model_weight),
-  TableRow("$N_\\text{b}\\geq 2$", 
-    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2",0,0,mixed_model_weight),
   TableRow("$p_\\text{t}^\\text{miss}>150 \\text{ GeV}$", 
-    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150",0,0,mixed_model_weight),
+    "met>150",0,0,mixed_model_weight),
+  TableRow("$N_\\text{vl}=0$, $4\\leq N_\\text{j}\\leq 5$", 
+    "met>150 && nvlep==0 && njet>=4 && njet<=5",0,0,mixed_model_weight),
+  TableRow("$N_\\text{b}\\geq 2$", 
+    "met>150 && nvlep==0 && njet>=4 && njet<=5 && nbt>=2",0,0,mixed_model_weight),
   TableRow("$N_\\text{tk}=0$", 
     "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0",0,0,mixed_model_weight),
   TableRow("Fake MET Cuts",        
@@ -158,8 +158,8 @@ int main(){
     "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>200 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,mixed_model_weight),
   TableRow("$p_\\text{T}^\\text{miss}>300 \\text{ GeV}$",        
     "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>300 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,mixed_model_weight),
-  TableRow("$p_\\text{T}^\\text{miss}>450 \\text{ GeV}$",        
-    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>450 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,mixed_model_weight),
+  TableRow("$p_\\text{T}^\\text{miss}>400 \\text{ GeV}$",        
+    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>400 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,mixed_model_weight),
   //TableRow("$\\Delta R_\\text{max}>1.1$",        
   //  "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>450 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]>=1.1 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,mixed_model_weight),
   },procs,false,true,false,true,false,true);

@@ -26,6 +26,12 @@
 #include "core/hist2d.hpp"
 #include "core/utilities.hpp"
 #include "core/functions.hpp"
+#include "core/cross_sections.hpp"
+#include "higgsino/apply_trigeffs2016.hpp"
+#include "higgsino/apply_trigeffs2017.hpp"
+#include "higgsino/apply_trigeffs2018.hpp"
+#include "higgsino/hig_functions.hpp"
+#include "higgsino/hig_utilities.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;
@@ -42,7 +48,7 @@ int main(int argc, char *argv[]){
   time(&begtime);
 
   //flags for which things to plot
-  int year = 2016;
+  int year = 2018;
 
   //don't change this, automatically set below
   double lumi = 35.9;
@@ -202,6 +208,20 @@ int main(int argc, char *argv[]){
 		  return r_nhig_cand;
   });
 
+  const NamedFunc trigger_efficiency("trigger_efficiency",[](const Baby &b) -> NamedFunc::ScalarType{
+    float trig_eff = 1;
+    if (b.SampleType()==2016) {
+      trig_eff = Higfuncs::get_0l_trigeff2016.GetScalar(b);
+    }
+    else if (b.SampleType()==2017) {
+      trig_eff = Higfuncs::get_0l_trigeff2017.GetScalar(b);
+    }
+    else if (b.SampleType()==2018) {
+      trig_eff = Higfuncs::get_0l_trigeff2018.GetScalar(b);
+    }
+    return trig_eff;
+  });
+
   PlotMaker pm;
   std::vector<double> true_met_bins{150,155,160,165,170,175,180,185,190,195,200,210,220,230,240,250,275,300,350};
   std::vector<double> sys_met_bins{150,160,180,200,225,250,300,350};
@@ -218,21 +238,72 @@ int main(int argc, char *argv[]){
   NamedFunc baseline_signalregion = "stitch&&pass&&nlep==0&&njet>=4&&njet<=5&&!low_dphi_met&&nel==1&&nmu==0";
 
   pm.Push<Hist2D>(Axis(50, 0., 300., "met", "MET [GeV]", {}),
-  	               Axis(20, 0., 250., "hig_cand_am[0]", "<m> [GeV]", {}),
-  	               "stitch&&pass&&nlep==0&&njet>=3" && nhig_cand>0., procs_mc_all, twodim_plotopts);
+  	               Axis(20, 0., 300., "hig_cand_am[0]", "<m> [GeV]", {}),
+  	               "stitch&&pass&&nlep==0&&njet>=4", procs_mc_all, twodim_plotopts).Weight("weight").Tag("FixName:higcandambbstudies_met_ambb").LuminosityTag("60 fb^{-1}");
   pm.Push<Hist2D>(Axis(50, 0., 300., "met", "MET [GeV]", {}),
-  	               Axis(20, 0., 250., "hig_cand_am[0]", "<m> [GeV]", {}),
-  	               baseline_triggerregion && nhig_cand>0., procs_mc_all, twodim_plotopts);
+  	               Axis(20, 0., 300., "hig_cand_am[0]", "<m> [GeV]", {}),
+  	               baseline_triggerregion && "njet>=4", procs_mc_all, twodim_plotopts).Weight("weight").Tag("FixName:higcandambbstudies_met_ambb_baseline").LuminosityTag("60 fb^{-1}");
   pm.Push<Hist2D>(Axis(50, 0., 800., "ht", "HT [GeV]", {}),
-  	               Axis(20, 0., 250., "hig_cand_am[0]", "<m> [GeV]", {}),
-  	               "stitch&&pass&&nlep==0&&njet>=3" && nhig_cand>0., procs_mc_all, twodim_plotopts);
+  	               Axis(20, 0., 300., "hig_cand_am[0]", "<m> [GeV]", {}),
+  	               "stitch&&pass&&nlep==0&&njet>=4", procs_mc_all, twodim_plotopts).Weight("weight").Tag("FixName:higcandambbstudies_ht_ambb").LuminosityTag("60 fb^{-1}");
   pm.Push<Hist2D>(Axis(50, 0., 800., "ht", "HT [GeV]", {}),
-  	               Axis(20, 0., 250., "hig_cand_am[0]", "<m> [GeV]", {}),
-  	               baseline_triggerregion && nhig_cand>0., procs_mc_all, twodim_plotopts);
+  	               Axis(20, 0., 300., "hig_cand_am[0]", "<m> [GeV]", {}),
+  	               baseline_triggerregion && "njet>=4", procs_mc_all, twodim_plotopts).Weight("weight").Tag("FixName:higcandambbstudies_ht_ambb_baseline").LuminosityTag("60 fb^{-1}");
+  pm.Push<Hist2D>(Axis(50, 0., 300., "met", "MET [GeV]", {}),
+  	               Axis(20, 0., 300., "hig_cand_am[0]", "<m> [GeV]", {}),
+  	               "stitch&&pass&&300<=ht&&ht<400&&nlep==0&&njet>=4", procs_mc_all, twodim_plotopts).Weight("weight").Tag("FixName:higcandambbstudies_met_ambb_ht300400").LuminosityTag("60 fb^{-1}");
+  pm.Push<Hist2D>(Axis(50, 0., 300., "met", "MET [GeV]", {}),
+  	               Axis(20, 0., 300., "hig_cand_am[0]", "<m> [GeV]", {}),
+  	               baseline_triggerregion && "njet>=4&&300<=ht&&ht<400", procs_mc_all, twodim_plotopts).Weight("weight").Tag("FixName:higcandambbstudies_met_ambb_baseline_ht300400").LuminosityTag("60 fb^{-1}");
+  pm.Push<Hist2D>(Axis(50, 0., 800., "ht", "HT [GeV]", {}),
+  	               Axis(20, 0., 300., "hig_cand_am[0]", "<m> [GeV]", {}),
+  	               "stitch&&pass&&300<=ht&&ht<400&&nlep==0&&njet>=4", procs_mc_all, twodim_plotopts).Weight("weight").Tag("FixName:higcandambbstudies_ht_ambb_ht300400").LuminosityTag("60 fb^{-1}");
+  pm.Push<Hist2D>(Axis(50, 0., 800., "ht", "HT [GeV]", {}),
+  	               Axis(20, 0., 300., "hig_cand_am[0]", "<m> [GeV]", {}),
+  	               baseline_triggerregion && "njet>=4&&300<=ht&&ht<400", procs_mc_all, twodim_plotopts).Weight("weight").Tag("FixName:higcandambbstudies_ht_ambb_baseline_ht300400").LuminosityTag("60 fb^{-1}");
+  pm.Push<Hist2D>(Axis(50, 0., 1., trigger_efficiency, "Trigger Efficiency", {}),
+  	               Axis(20, 0., 300., "hig_cand_am[0]", "<m> [GeV]", {}),
+  	               baseline_triggerregion && "met>150&&njet>=4&&300<=ht&&ht<400", procs_mc_all, twodim_plotopts).Weight("weight").Tag("FixName:higcandambbstudies_trigeff_ambb_baseline_ht300400").LuminosityTag("60 fb^{-1}");
+  pm.Push<Hist2D>(Axis(50, 0., 1., trigger_efficiency, "Trigger Efficiency", {}),
+  	               Axis(20, 0., 300., "hig_cand_am[0]", "<m> [GeV]", {}),
+  	               baseline_triggerregion && "met>200&&njet>=4", procs_mc_all, twodim_plotopts).Weight("weight").Tag("FixName:higcandambbstudies_trigeff_ambb_baseline").LuminosityTag("60 fb^{-1}");
 
   if(single_thread) pm.multithreaded_ = false;
   pm.min_print_ = true;
   pm.MakePlots(lumi);
+
+  TFile* out_file = TFile::Open("ntuples/higcandamstudies.root","RECREATE");
+  TH2D hist_met_ambb  = static_cast<Hist2D*>(pm.Figures()[0].get())->GetBkgHist(true);
+  hist_met_ambb.SetName("hist_met_ambb");
+  hist_met_ambb.Write();
+  TH2D hist_met_ambb_baseline  = static_cast<Hist2D*>(pm.Figures()[1].get())->GetBkgHist(true);
+  hist_met_ambb_baseline.SetName("hist_met_ambb_baseline");
+  hist_met_ambb_baseline.Write();
+  TH2D hist_ht_ambb  = static_cast<Hist2D*>(pm.Figures()[2].get())->GetBkgHist(true);
+  hist_ht_ambb.SetName("hist_ht_ambb");
+  hist_ht_ambb.Write();
+  TH2D hist_ht_ambb_baseline  = static_cast<Hist2D*>(pm.Figures()[3].get())->GetBkgHist(true);
+  hist_ht_ambb_baseline.SetName("hist_ht_ambb_baseline");
+  hist_ht_ambb_baseline.Write();
+  TH2D hist_met_ambb_ht300400  = static_cast<Hist2D*>(pm.Figures()[4].get())->GetBkgHist(true);
+  hist_met_ambb_ht300400.SetName("hist_met_ambb_ht300400");
+  hist_met_ambb_ht300400.Write();
+  TH2D hist_met_ambb_baseline_ht300400  = static_cast<Hist2D*>(pm.Figures()[5].get())->GetBkgHist(true);
+  hist_met_ambb_baseline_ht300400.SetName("hist_met_ambb_baseline_ht300400");
+  hist_met_ambb_baseline_ht300400.Write();
+  TH2D hist_ht_ambb_ht300400  = static_cast<Hist2D*>(pm.Figures()[6].get())->GetBkgHist(true);
+  hist_ht_ambb_ht300400.SetName("hist_ht_ambb_ht300400");
+  hist_ht_ambb_ht300400.Write();
+  TH2D hist_ht_ambb_baseline_ht300400  = static_cast<Hist2D*>(pm.Figures()[7].get())->GetBkgHist(true);
+  hist_ht_ambb_baseline_ht300400.SetName("hist_ht_ambb_baseline_ht300400");
+  hist_ht_ambb_baseline_ht300400.Write();
+  TH2D hist_trigeff_ambb_baseline_ht300400  = static_cast<Hist2D*>(pm.Figures()[8].get())->GetBkgHist(true);
+  hist_trigeff_ambb_baseline_ht300400.SetName("hist_trigeff_ambb_baseline_ht300400");
+  hist_trigeff_ambb_baseline_ht300400.Write();
+  TH2D hist_trigeff_ambb_baseline  = static_cast<Hist2D*>(pm.Figures()[9].get())->GetBkgHist(true);
+  hist_trigeff_ambb_baseline.SetName("hist_trigeff_ambb_baseline");
+  hist_trigeff_ambb_baseline.Write();
+  out_file->Close();
 
   time(&endtime);
   cout<<endl<<"Processing took "<<difftime(endtime, begtime)<<" seconds"<<endl<<endl;

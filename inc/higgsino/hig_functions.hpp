@@ -43,7 +43,6 @@ namespace Higfuncs{
   extern const NamedFunc wgt_syst_vjets;
   extern const NamedFunc wgt_syst_qcd;
 
-
   // analysis trigger and its efficiency
   //NamedFunc::ScalarType trig_hig_decision(const Baby &b);
   //extern const NamedFunc trig_hig;
@@ -69,6 +68,27 @@ namespace Higfuncs{
   extern const NamedFunc lead_signal_lepton_pt;
   extern const NamedFunc lead_signal_muon_pt;
   extern const NamedFunc lead_signal_electron_pt;
+
+  //filters
+  extern const NamedFunc pass_ecalnoisejet;
+  extern const NamedFunc pass_hemveto;
+  extern const NamedFunc hem_weight;
+  extern const NamedFunc pass_filters;
+
+  //triggers
+  extern const NamedFunc jet_trigger;
+  extern const NamedFunc el_trigger;
+  extern const NamedFunc mu_trigger;
+  extern const NamedFunc ht_trigger;
+  extern const NamedFunc jetht_trigger;
+
+  //jetid modified variables
+  extern const NamedFunc jetid_njet;
+  extern const NamedFunc jetid_nb;
+  extern const NamedFunc jetid_low_dphi_met;
+  extern const NamedFunc jetid_hig_cand_dm;
+  extern const NamedFunc jetid_hig_cand_am;
+  extern const NamedFunc jetid_hig_cand_drmax;
 }
 
 #endif

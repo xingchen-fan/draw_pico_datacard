@@ -32,7 +32,8 @@ namespace{
   string tag = "";
 
   PlotOpt opts("txt/plot_styles.txt", "Std1D");
-  const double hh4b_bf = 1;//0.5824*0.5824;
+  //const double hh4b_bf = 1;
+  const double hh4b_bf = 0.5824*0.5824;
 }
 
 void GetOptions(int argc, char *argv[]);
