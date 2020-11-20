@@ -80,5 +80,8 @@ namespace HigUtilities {
   std::string to_pico_names(std::string in_cuts);
 
   float signal_lepton_pt(std::vector<float>* const lep_pt, std::vector<bool>* const lep_sig);
+
+  std::string getLuminosityString(std::string const & year_string);
+
 }
 #endif

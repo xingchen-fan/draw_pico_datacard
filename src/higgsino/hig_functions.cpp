@@ -1079,11 +1079,29 @@ const NamedFunc pass_filters("pass_filters", [](const Baby &b) -> NamedFunc::Sca
   if (b.type()/1000 == 0 && !b.pass_eebadsc()) return false; //only apply eebadsc fiter for data
   if (!b.pass_low_neutral_jet()) return false;
   if (!b.pass_htratio_dphi_tight()) return false;
-  if ((b.type()/1000 == 106)  && !b.pass_jets()) return false; //only for fastsim
+  if (!b.pass_jets()) return false; // was modified
+  if ((b.type()/1000 != 106)  && !b.pass_cschalo_tight()) return false; //only for fullsim and data
   if ((b.SampleType()==2017 || b.SampleType()==2018) && !Higfuncs::pass_ecalnoisejet.GetScalar(b)) return false; 
   if ((b.SampleType()==2018 && b.type()/1000 == 0) && !Higfuncs::pass_hemveto.GetScalar(b)) return false;
   return true;
 });
+
+const NamedFunc final_pass_filters = pass_filters&&pass_hemveto && "met/mht<2 && met/met_calo<2 && weight < 10";
+
+const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.SampleType()<0) return 1.;
+
+  double weight = 1;
+  if (b.SampleType()==2016){
+    return weight*35.9;
+  } else if (b.SampleType()==2017){
+    return weight*41.5;
+  } else {
+    return weight*59.6;
+  }
+});
+
+const NamedFunc final_weight = "weight"*eff_higtrig_run2*w_years;
 
 const NamedFunc jet_trigger = "HLT_PFJet500";
 
