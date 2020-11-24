@@ -19,10 +19,15 @@ if __name__ == '__main__':
   t0 = time()
 
   cmsName = sys.argv[1]
-  commands = subprocess.check_output(cmsName).decode('utf8').rstrip().split('\n')
+  #commands = subprocess.check_output(cmsName).decode('utf8').rstrip().split('\n')
+  process = subprocess.Popen(cmsName, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+  out, err = process.communicate()
+  commands = (out.decode("utf-8").rstrip()).split('\n')
+  print(commands)
+
   commands_info = [(index, commands[index]) for index in range(len(commands))]
 
-  #pool = multiprocessing.Pool(processes=8)
+  ##pool = multiprocessing.Pool(processes=8)
   pool = multiprocessing.Pool()
   pool.map(runCommand, commands_info)
 

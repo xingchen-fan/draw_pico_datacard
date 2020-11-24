@@ -268,6 +268,22 @@ int main(int argc, char *argv[]){
     scenarios = vector<string>();
     scenarios.push_back("syst_bctag");
     weights.emplace("syst_bctag", nom_wgt*"sys_bctag[0]");
+  } else if(alt_scen == "syst_ttx_up"){
+    scenarios = vector<string>();
+    scenarios.push_back("syst_ttx_up");
+    weights.emplace("syst_ttx_up", nom_wgt*(1+Higfuncs::wgt_syst_ttx));
+  } else if(alt_scen == "syst_ttx_down"){
+    scenarios = vector<string>();
+    scenarios.push_back("syst_ttx_down");
+    weights.emplace("syst_ttx_down", nom_wgt*(1-Higfuncs::wgt_syst_ttx));
+  } else if(alt_scen == "syst_vjets_up"){
+    scenarios = vector<string>();
+    scenarios.push_back("syst_vjets_up");
+    weights.emplace("syst_vjets_up", nom_wgt*(1+Higfuncs::wgt_syst_vjets));
+  } else if(alt_scen == "syst_vjets_down"){
+    scenarios = vector<string>();
+    scenarios.push_back("syst_vjets_down");
+    weights.emplace("syst_vjets_down", nom_wgt*(1-Higfuncs::wgt_syst_vjets));
   } else if(alt_scen == "mc_as_data"){
     scenarios = vector<string>{"mc_as_data"}; 
     weights.emplace("mc_as_data", nom_wgt);
@@ -433,7 +449,7 @@ int main(int argc, char *argv[]){
     //// Printing names of ouput files
     cout<<endl<<"===== Tables that can be compiled"<<endl;
     for(size_t ind=0; ind<tablenames.size(); ind++)
-      cout<<" pdflatex "<<tablenames[ind]<<"  > /dev/null"<<endl;
+      cout<<" pdflatex "<<tablenames[ind]<<" &> /dev/null"<<endl;
     cout<<endl;
   }
 
@@ -457,8 +473,6 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
   //// Table general parameters
   yieldsPlane.clear();
   TString ump = " & ";
-
-
 
   //// Setting output file name
   TString lumi_s = RoundNumber(lumi, 0);

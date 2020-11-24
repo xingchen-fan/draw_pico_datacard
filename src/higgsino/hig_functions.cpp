@@ -202,8 +202,13 @@ const NamedFunc wgt_syst_ttx("wgt_syst_ttx",[](const Baby &b) -> NamedFunc::Scal
     b.type()==10000  ||                      // ttgamma
     b.type()==11000) {                       // tttt
     if ((*b.hig_cand_am())[0]<=100 || ((*b.hig_cand_am())[0]>140 && (*b.hig_cand_am())[0]<=200)) {
-      if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3) return 0.03;
-      else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) return 0.06;
+      if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3)  {// 3b
+        if ((*b.hig_cand_drmax())[0]<=1.1) return 0.1; // low dr
+        else return 0.05; // high dr
+      } else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) {// 4b
+        if ((*b.hig_cand_drmax())[0]<=1.1) return 0.18; // low dr 
+        else return 0.15; // high dr
+      }
     }
   }
   return 0;
@@ -212,9 +217,12 @@ const NamedFunc wgt_syst_ttx("wgt_syst_ttx",[](const Baby &b) -> NamedFunc::Scal
 const NamedFunc wgt_syst_vjets("wgt_syst_vjets",[](const Baby &b) -> NamedFunc::ScalarType{
   if ( (b.type()>=8000 && b.type()<9000) || // zjets
     (b.type()>=2000 && b.type()<3000) ||    // wjets
-    (b.type()>=6000 && b.type()<7000)) {   
+    (b.type()>=6000 && b.type()<7000)) {   // dyjets
     if ((*b.hig_cand_am())[0]<=100 || ((*b.hig_cand_am())[0]>140 && (*b.hig_cand_am())[0]<=200))
-      if (b.nbt()>=2 && b.nbm()>=3) return 0.19;
+      if (b.nbt()>=2 && b.nbm()>=3) { // high b
+        if ((*b.hig_cand_drmax())[0]<=1.1) return 0.22; // low dr
+        else return 0.04; // high dr
+      }
   }
   return 0;
 });
@@ -222,7 +230,7 @@ const NamedFunc wgt_syst_vjets("wgt_syst_vjets",[](const Baby &b) -> NamedFunc::
 const NamedFunc wgt_syst_qcd("wgt_syst_qcd",[](const Baby &b) -> NamedFunc::ScalarType{
   if ( (b.type()>=7000 && b.type()<8000)) { // qcd
     if ((*b.hig_cand_am())[0]<=100 || ((*b.hig_cand_am())[0]>140 && (*b.hig_cand_am())[0]<=200))
-      if (b.nbt()>=2 && b.nbm()>=3) return 0.13;
+      if (b.nbt()>=2 && b.nbm()>=3) return 0.13; // high b
   }
   return 0;
 });
@@ -1074,11 +1082,28 @@ const NamedFunc pass_filters("pass_filters", [](const Baby &b) -> NamedFunc::Sca
   if (!b.pass_low_neutral_jet()) return false;
   if (!b.pass_htratio_dphi_tight()) return false;
   //if ((b.type()/1000 == 106)  && !b.pass_jets()) return false; //only for fastsim
-  if (!b.pass_jets()) return false; //only for fastsim
+  if (!b.pass_jets()) return false; //was modified
   if ((abs(b.SampleType())==2017 || abs(b.SampleType()==2018)) && !Higfuncs::pass_ecalnoisejet.GetScalar(b)) return false; 
   if ((abs(b.SampleType())==2018 && b.type()/1000 == 0) && !Higfuncs::pass_hemveto.GetScalar(b)) return false;
   return true;
 });
+
+const NamedFunc final_pass_filters = pass_filters&&pass_hemveto && "met/mht<2 && met/met_calo<2 && weight < 10";
+
+const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.SampleType()<0) return 1.;
+
+  double weight = 1;
+  if (b.SampleType()==2016){
+    return weight*35.9;
+  } else if (b.SampleType()==2017){
+    return weight*41.5;
+  } else {
+    return weight*59.6;
+  }
+});
+
+const NamedFunc final_weight = "weight"*eff_higtrig_run2*w_years;
 
 const NamedFunc jet_trigger = "HLT_PFJet500";
 
@@ -1130,15 +1155,15 @@ const NamedFunc jetid_nb("jetid_nb", [](const Baby &b) -> NamedFunc::ScalarType{
   for (unsigned int jet_idx = 0; jet_idx < b.jet_pt()->size(); jet_idx++) {
     if (!b.jet_isgood()->at(jet_idx)) continue;
     if (b.jet_id()->at(jet_idx) == false) continue;
-    if (b.jet_deepcsv()->at(jet_idx) > 0.8953 && b.SampleType() == 2016) nbt += 1;
-    if (b.jet_deepcsv()->at(jet_idx) > 0.8001 && b.SampleType() == 2017) nbt += 1;
-    if (b.jet_deepcsv()->at(jet_idx) > 0.7527 && b.SampleType() == 2018) nbt += 1;
-    if (b.jet_deepcsv()->at(jet_idx) > 0.6321 && b.SampleType() == 2016) nbm += 1;
-    if (b.jet_deepcsv()->at(jet_idx) > 0.4941 && b.SampleType() == 2017) nbm += 1;
-    if (b.jet_deepcsv()->at(jet_idx) > 0.4184 && b.SampleType() == 2018) nbm += 1;
-    if (b.jet_deepcsv()->at(jet_idx) > 0.2217 && b.SampleType() == 2016) nbl += 1;
-    if (b.jet_deepcsv()->at(jet_idx) > 0.1522 && b.SampleType() == 2017) nbl += 1;
-    if (b.jet_deepcsv()->at(jet_idx) > 0.0494 && b.SampleType() == 2018) nbl += 1;
+    if (b.jet_deepcsv()->at(jet_idx) > 0.8953 && abs(b.SampleType()) == 2016) nbt += 1;
+    if (b.jet_deepcsv()->at(jet_idx) > 0.8001 && abs(b.SampleType()) == 2017) nbt += 1;
+    if (b.jet_deepcsv()->at(jet_idx) > 0.7527 && abs(b.SampleType()) == 2018) nbt += 1;
+    if (b.jet_deepcsv()->at(jet_idx) > 0.6321 && abs(b.SampleType()) == 2016) nbm += 1;
+    if (b.jet_deepcsv()->at(jet_idx) > 0.4941 && abs(b.SampleType()) == 2017) nbm += 1;
+    if (b.jet_deepcsv()->at(jet_idx) > 0.4184 && abs(b.SampleType()) == 2018) nbm += 1;
+    if (b.jet_deepcsv()->at(jet_idx) > 0.2217 && abs(b.SampleType()) == 2016) nbl += 1;
+    if (b.jet_deepcsv()->at(jet_idx) > 0.1522 && abs(b.SampleType()) == 2017) nbl += 1;
+    if (b.jet_deepcsv()->at(jet_idx) > 0.0494 && abs(b.SampleType()) == 2018) nbl += 1;
   }
   if (nbt < 2) return nbt;
   if (nbm < 3) return 2;

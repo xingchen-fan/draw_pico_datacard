@@ -74,6 +74,11 @@ namespace Higfuncs{
   extern const NamedFunc pass_hemveto;
   extern const NamedFunc hem_weight;
   extern const NamedFunc pass_filters;
+  extern const NamedFunc final_pass_filters;
+
+  // weights
+  extern const NamedFunc w_year;
+  extern const NamedFunc final_weight;
 
   //triggers
   extern const NamedFunc jet_trigger;
@@ -82,6 +87,7 @@ namespace Higfuncs{
   extern const NamedFunc mu_trigger;
   extern const NamedFunc ht_trigger;
   extern const NamedFunc jetht_trigger;
+  extern const NamedFunc met_trigger;
 
   //jetid modified variables
   extern const NamedFunc jetid_njet;

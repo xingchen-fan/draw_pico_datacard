@@ -572,6 +572,129 @@ const NamedFunc jetType_h2b2("jetType_h2b2", [](const Baby &b) -> NamedFunc::Sca
 //  return quarks;
 //});
 
+const NamedFunc nhhjets_true("nhhjets_true", [](const Baby &b) -> NamedFunc::ScalarType{
+  // Find mc b quarks
+  vector<int> bIndices;
+  for (unsigned iMc=0; iMc<b.mc_pt()->size(); iMc++){
+    if (abs(b.mc_mom()->at(iMc))==25&&abs(b.mc_id()->at(iMc))==5) bIndices.push_back(iMc);
+  }
+  // Count jets near b quarks
+  int nJetsCloseTob = 0;
+  for (unsigned iJet = 0; iJet < b.jet_pt()->size(); iJet++) {
+    bool mcCloseToJet = false;
+    // Jet cut
+    if ((*b.jet_pt())[iJet]<=30) continue;
+    if (fabs((*b.jet_eta())[iJet])>2.4) continue;
+    // Find number of jets close to b quarks
+    ROOT::Math::PtEtaPhiMVector jet ((*b.jet_pt())[iJet], (*b.jet_eta())[iJet], (*b.jet_phi())[iJet], (*b.jet_m())[iJet]);
+    for (unsigned bIndex = 0; bIndex < bIndices.size(); ++bIndex) {
+      int iMc = bIndices[bIndex];
+      ROOT::Math::PtEtaPhiMVector bQuark ((*b.mc_pt())[iMc], (*b.mc_eta())[iMc], (*b.mc_phi())[iMc], 4);
+      if (DeltaR(jet, bQuark)<0.4) mcCloseToJet = true;
+    }
+    if (mcCloseToJet) nJetsCloseTob++;
+  }
+  return nJetsCloseTob;
+});
+
+const NamedFunc nbbclose_true("nbbclose_true", [](const Baby &b) -> NamedFunc::ScalarType{
+  // Find mc b quarks
+  vector<int> bIndices;
+  for (unsigned iMc=0; iMc<b.mc_pt()->size(); iMc++){
+    if (abs(b.mc_mom()->at(iMc))==25&&abs(b.mc_id()->at(iMc))==5) bIndices.push_back(iMc);
+  }
+  int nMcCloseMc = 0;
+  // Count b quarks near b quarks
+  for (unsigned bIndex = 0; bIndex < bIndices.size(); ++bIndex) {
+    bool mcCloseToMc = false;
+    int iMc = bIndices[bIndex];
+    ROOT::Math::PtEtaPhiMVector bQuark ((*b.mc_pt())[iMc], (*b.mc_eta())[iMc], (*b.mc_phi())[iMc], 4);
+    // Find number of bquarks close to b quarks
+    for (unsigned b2Index = 0; b2Index < bIndices.size(); ++b2Index) {
+      if (b2Index == bIndex) continue;
+      int iMc2 = bIndices[b2Index];
+      ROOT::Math::PtEtaPhiMVector b2Quark ((*b.mc_pt())[iMc2], (*b.mc_eta())[iMc2], (*b.mc_phi())[iMc2], 4);
+      if (DeltaR(b2Quark, bQuark)<0.8) mcCloseToMc = true;
+    }
+    if (mcCloseToMc) nMcCloseMc++;
+  }
+  return nMcCloseMc;
+});
+
+const NamedFunc nbout_true("nbout_true", [](const Baby &b) -> NamedFunc::ScalarType{
+  // Find mc b quarks
+  vector<int> bIndices;
+  for (unsigned iMc=0; iMc<b.mc_pt()->size(); iMc++){
+    if (abs(b.mc_mom()->at(iMc))==25&&abs(b.mc_id()->at(iMc))==5) bIndices.push_back(iMc);
+  }
+  int nbout = 0;
+  for (unsigned bIndex = 0; bIndex < bIndices.size(); ++bIndex) {
+    int iMc = bIndices[bIndex];
+    ROOT::Math::PtEtaPhiMVector bQuark ((*b.mc_pt())[iMc], (*b.mc_eta())[iMc], (*b.mc_phi())[iMc], 4);
+    if (bQuark.Pt()<=30 || fabs(bQuark.Eta())>2.4) nbout++;
+  }
+  return nbout;
+});
+
+const NamedFunc nb_ptout_true("nb_ptout_true", [](const Baby &b) -> NamedFunc::ScalarType{
+  // Find mc b quarks
+  vector<int> bIndices;
+  for (unsigned iMc=0; iMc<b.mc_pt()->size(); iMc++){
+    if (abs(b.mc_mom()->at(iMc))==25&&abs(b.mc_id()->at(iMc))==5) bIndices.push_back(iMc);
+  }
+  int nbout = 0;
+  for (unsigned bIndex = 0; bIndex < bIndices.size(); ++bIndex) {
+    int iMc = bIndices[bIndex];
+    ROOT::Math::PtEtaPhiMVector bQuark ((*b.mc_pt())[iMc], (*b.mc_eta())[iMc], (*b.mc_phi())[iMc], 4);
+    if (bQuark.Pt()<=30) nbout++;
+  }
+  return nbout;
+});
+
+const NamedFunc nb_etaout_true("nb_etaout_true", [](const Baby &b) -> NamedFunc::ScalarType{
+  // Find mc b quarks
+  vector<int> bIndices;
+  for (unsigned iMc=0; iMc<b.mc_pt()->size(); iMc++){
+    if (abs(b.mc_mom()->at(iMc))==25&&abs(b.mc_id()->at(iMc))==5) bIndices.push_back(iMc);
+  }
+  int nbout = 0;
+  for (unsigned bIndex = 0; bIndex < bIndices.size(); ++bIndex) {
+    int iMc = bIndices[bIndex];
+    ROOT::Math::PtEtaPhiMVector bQuark ((*b.mc_pt())[iMc], (*b.mc_eta())[iMc], (*b.mc_phi())[iMc], 4);
+    if (fabs(bQuark.Eta())>2.4) nbout++;
+  }
+  return nbout;
+});
+
+const NamedFunc b_pt("b_pt", [](const Baby &b) -> NamedFunc::VectorType{
+  // Find mc b quarks
+  vector<int> bIndices;
+  for (unsigned iMc=0; iMc<b.mc_pt()->size(); iMc++){
+    if (abs(b.mc_mom()->at(iMc))==25&&abs(b.mc_id()->at(iMc))==5) bIndices.push_back(iMc);
+  }
+  vector<double> pts;
+  for (unsigned bIndex = 0; bIndex < bIndices.size(); ++bIndex) {
+    int iMc = bIndices[bIndex];
+    ROOT::Math::PtEtaPhiMVector bQuark ((*b.mc_pt())[iMc], (*b.mc_eta())[iMc], (*b.mc_phi())[iMc], 4);
+    pts.push_back(bQuark.Pt());
+  }
+  return pts;
+});
+
+const NamedFunc b_eta("b_eta", [](const Baby &b) -> NamedFunc::VectorType{
+  // Find mc b quarks
+  vector<int> bIndices;
+  for (unsigned iMc=0; iMc<b.mc_pt()->size(); iMc++){
+    if (abs(b.mc_mom()->at(iMc))==25&&abs(b.mc_id()->at(iMc))==5) bIndices.push_back(iMc);
+  }
+  vector<double> pts;
+  for (unsigned bIndex = 0; bIndex < bIndices.size(); ++bIndex) {
+    int iMc = bIndices[bIndex];
+    ROOT::Math::PtEtaPhiMVector bQuark ((*b.mc_pt())[iMc], (*b.mc_eta())[iMc], (*b.mc_phi())[iMc], 4);
+    pts.push_back(bQuark.Eta());
+  }
+  return pts;
+});
   
 namespace{
   bool single_thread = true;
@@ -685,10 +808,11 @@ int main(int argc, char *argv[]){
   bool plot_btag_comparison = false;
   bool plot_btag_relation = false;
   bool plot_btag_category = false;
-  bool plot_ABCD = true;
+  bool plot_ABCD = false;
   bool plot_dphi = false;
 
-  vector<string> sigm = {"200", "600", "950"}; 
+  //vector<string> sigm = {"200", "600", "950"}; 
+  vector<string> sigm = {"225", "400", "700"}; 
   //vector<string> sigm = {"950"}; 
   vector<int> sig_colors = {kGreen+1, kRed, kBlue, kOrange}; // need sigm.size() >= sig_colors.size()
   if (plot_dphi||plot_ABCD) {
@@ -783,6 +907,30 @@ int main(int argc, char *argv[]){
   //NamedFunc extra_cut = "hig_cand_am[0]<80";
 
   PlotMaker pm;
+  bool plot_jet_study = true;
+  if (plot_jet_study) {
+    vector<shared_ptr<Process> > procs_signal;
+    for (unsigned isig(0); isig<sigm.size(); isig++){
+      procs_signal.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigm[isig]+",1)", Process::Type::signal, 
+        sig_colors[isig], attach_folder(sig_base_folder, years, "SMS-TChiHH_2D/unskimmed/", {"*TChiHH_mChi-"+sigm[isig]+"_mLSP-0*.root"}), "1"));
+    }
+    pm.Push<Hist1D>(Axis(10, -0.5, 9.5, "njet", "njets", {}),
+      "1", procs_signal, plt_lin).Weight("weight*35.9");
+    pm.Push<Hist1D>(Axis(10, -0.5, 9.5, nhhjets_true, "true hh jets", {}),
+      "met>150", procs_signal, plt_lin).Weight("weight*35.9");
+    pm.Push<Hist1D>(Axis(10, -0.5, 9.5, nbbclose_true, "Number of close b quarks", {}),
+      "met>150", procs_signal, plt_lin).Weight("weight*35.9"*Higfuncs::eff_higtrig);
+    pm.Push<Hist1D>(Axis(10, -0.5, 9.5, nbout_true, "Number b quarks out of acceptance", {}),
+      "met>150", procs_signal, plt_lin).Weight("weight*35.9"*Higfuncs::eff_higtrig);
+    pm.Push<Hist1D>(Axis(10, -0.5, 9.5, nb_ptout_true, "Number b quarks out of pt acceptance", {}),
+      "met>150", procs_signal, plt_lin).Weight("weight*35.9"*Higfuncs::eff_higtrig);
+    pm.Push<Hist1D>(Axis(10, -0.5, 9.5, nb_etaout_true, "Number b quarks out of eta acceptance", {}),
+      "met>150", procs_signal, plt_lin).Weight("weight*35.9"*Higfuncs::eff_higtrig);
+    pm.Push<Hist1D>(Axis(50, 0, 500, b_pt, "b quarks pt", {}),
+      "met>150", procs_signal, plt_shapes_info).Weight("weight*35.9"*Higfuncs::eff_higtrig);
+    pm.Push<Hist1D>(Axis(30, -3, 3, b_eta, "b quarks eta", {}),
+      "met>150", procs_signal, plt_shapes_info).Weight("weight*35.9"*Higfuncs::eff_higtrig);
+  }
 
   if (plot_btag_comparison) {
     // 2b, 3b, 4b comparison

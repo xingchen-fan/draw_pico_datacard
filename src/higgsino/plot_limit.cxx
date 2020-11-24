@@ -226,6 +226,7 @@ int main(int argc, char *argv[]){
   basename += ".pdf";
   TString pname = basename;
   can.SaveAs(pname);
+  cout<<"open "+pname<<endl;
 
   // // Saving root file
   // pname = "CMS"; if(!do_paper) pname += "-PAS";
@@ -325,6 +326,7 @@ int main(int argc, char *argv[]){
   pname = basename;
   pname.ReplaceAll("lumi", "fb_lumi");
   can.SaveAs(pname);
+  cout<<"open "+pname<<endl;
 
   // Saving root file
   if (saveRoot)
@@ -409,6 +411,7 @@ int main(int argc, char *argv[]){
   pname = basename;
   pname.ReplaceAll("lumi", "obs_significance");
   can.SaveAs(pname);
+  cout<<"open "+pname<<endl;
 
   // Saving root file
   if (saveRoot)
@@ -459,6 +462,7 @@ int main(int argc, char *argv[]){
   pname = basename;
   pname.ReplaceAll("lumi", "significance");
   can.SaveAs(pname);
+  cout<<"open "+pname<<endl;
 
   // // Saving root file
   // pname = "CMS"; if(!do_paper) pname += "-PAS";

@@ -596,4 +596,17 @@ namespace HigUtilities {
     return r_signal_lepton_pt;
   }
 
+  string getLuminosityString(string const & year_string) {
+    set<int> years;
+    HigUtilities::parseYears(year_string, years);
+    float total_luminosity = 0;
+    for (auto const & year : years) {
+      if (year == 2016) total_luminosity += 35.9;
+      if (year == 2017) total_luminosity += 41.5;
+      if (year == 2018) total_luminosity += 60;
+    }
+    string total_luminosity_string = RoundNumber(total_luminosity, 1, 1).Data();
+    return total_luminosity_string;
+  }
+
 }
