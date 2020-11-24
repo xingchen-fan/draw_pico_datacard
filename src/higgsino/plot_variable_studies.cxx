@@ -193,15 +193,15 @@ int main(int argc, char *argv[]){
     double trig_eff = 1.0;
     double lumi_scale = 1.0;
     if (b.SampleType()==2016) {
-      trig_eff = Higfuncs::get_0l_trigeff2016.GetScalar(b);
+      trig_eff = Higfuncs::get_0l_trigeff2016.GetVector(b)[0];
       lumi_scale = 35.9;
     }
     else if (b.SampleType()==2017) {
-      trig_eff = Higfuncs::get_0l_trigeff2017.GetScalar(b);
+      trig_eff = Higfuncs::get_0l_trigeff2017.GetVector(b)[0];
       lumi_scale = 41.5;
     }
     else if (b.SampleType()==2018) {
-      trig_eff = Higfuncs::get_0l_trigeff2018.GetScalar(b);
+      trig_eff = Higfuncs::get_0l_trigeff2018.GetVector(b)[0];
       lumi_scale = 60.0;
     }
     if (b.mprod() == -999) {

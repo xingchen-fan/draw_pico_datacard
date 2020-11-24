@@ -54,8 +54,12 @@ namespace{
   const std::vector<double> ht_bins{0,250,350,450,600,800,1000,1200};
   const std::vector<double> sys_met_bins{150,160,180,200,225,250,300,350};
   //const std::vector<double> ht_bins{0,200,600,800,1000,1200};
-  const std::vector<double> fake_met_bins{150,155,160,165,170,175,180,185,190,195,200,210,220,230,240,250,275,300,350,400,450,500,550};
-  const std::vector<double> ht_fake_met_bins{0,600,800,1000,1200};
+  const std::vector<double> fake_met_bins{150,155,160,165,170,175,180,185,190,195,200,210,220,230,240,250,275,300,350,400,450,500,600};
+  const std::vector<double> fake_met_bins_ht0to350{150,160,170,180,190,200,225,250,600};
+  const std::vector<double> fake_met_bins_ht350to450{150,155,160,165,170,175,180,185,190,195,200,210,220,230,240,250,300,600};
+  const std::vector<double> fake_met_bins_ht450to550{150,155,160,165,170,175,180,185,190,195,200,210,220,230,240,250,300,400,600};
+  const std::vector<double> fake_met_bins_ht550to650{150,155,160,165,170,175,180,185,190,195,200,210,220,230,240,250,275,300,400,600};
+  const std::vector<double> ht_fake_met_bins{0,350,450,550,650,800,1000,1200};
   //const std::vector<double> twodim_met_bins{0,110,120,130,140,150,160,170,180,190,200,210,250};
   //const std::vector<double> el_pt_bins{20,25,30,110,120,150};
   //const std::vector<double> mu_pt_bins{20,25,30,50,100};
@@ -83,9 +87,10 @@ std::string make_systematic_table_row(std::vector<double> values, bool total=fal
 std::vector<double> add_variations_quadrature(std::vector<std::vector<double>> values);
 
 //efficiency helper function declarations
-void trig_postprocess_efficiencies(PlotMaker* pm, int first_index, shared_ptr<Process> lep_proc, std::string year, std::string img_file_extension, std::vector<double> systematics);
+void trig_postprocess_efficiencies(PlotMaker* pm, int first_index, shared_ptr<Process> met_proc, shared_ptr<Process> lep_proc, std::string year, std::string img_file_extension, std::vector<double> systematics);
 void draw_3d_efficiency_graphs(PlotMaker* pm, std::vector<int> den_idx, std::vector<int> num_idx, std::vector<double> z_bins, std::vector<double> y_bins, std::vector<double> x_bins, std::string z_var_name, std::string z_title_name, std::string z_expression, std::string y_var_name, std::string y_title_name, std::string y_expression, std::string x_var_name, std::string x_title_name, std::string x_expression, std::string cuts_string, std::string lumi_string, std::string new_trigger_string, std::string plot_name, ofstream &out_file, std::string func_name, std::string year, std::string img_file_extension);
 void draw_2d_efficiency_graphs(PlotMaker* pm, int den_idx, int num_idx, std::vector<double> y_bins, std::vector<double> x_bins, std::string y_var_name, std::string y_title_name, std::string y_expression, std::string x_var_name, std::string x_title_name, std::string x_expression, std::string cuts_string, std::string lumi_string, std::string new_trigger_string, std::string plot_name, ofstream &out_file, std::string func_name, std::string year, std::string img_file_extension, std::vector<double> systematics);
+void draw_2d_efficiency_graphs_variable_binning(PlotMaker* pm, std::vector<int> den_idx, std::vector<int> num_idx, shared_ptr<Process> proc, std::vector<double> y_bins, std::string y_var_name, std::string y_title_name, std::string y_expression, std::string x_var_name, std::string x_title_name, std::string x_expression, std::string cuts_string, std::string lumi_string, std::string new_trigger_string, std::string plot_name, ofstream &out_file, std::string func_name, std::string year, std::string img_file_extension);
 void draw_1d_efficiency_graphs(PlotMaker* pm, int den_idx, int num_idx, shared_ptr<Process> proc, std::vector<double> x_bins, std::string x_var_name, std::string x_title_name, std::string x_expression, std::string cuts_string, std::string lumi_string, std::string new_trigger_string, std::string plot_name, ofstream &out_file, std::string func_name, std::string year, std::string img_file_extension);
 
 int main(int argc, char *argv[]){
@@ -459,6 +464,79 @@ int main(int argc, char *argv[]){
   	                "(pass&&stitch&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&nmu==0&&nel==1)", procs_met150_mc, all_plot_types).Weight("weight").Tag("FixName:trig_raw_mc_plot_den");
   	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
   	                "(pass&&stitch&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&nmu==0&&nel==1&&(HLT_PFMET120_PFMHT120_IDTight))", procs_met150_mc, all_plot_types).Weight("weight").Tag("FixName:trig_raw_mc_plot_num");
+	//-------------HT binned plots to determine trigger binning for 0l-------------
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&ht<=200" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht1_plot_den");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&ht<=200" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht1_plot_num");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&200<=ht&&ht<=350" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht2_plot_den");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&200<=ht&&ht<=350" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht2_plot_num");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&350<=ht&&ht<=450" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht3_plot_den");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&350<=ht&&ht<=450" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht3_plot_num");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&450<=ht&&ht<=550" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht4_plot_den");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&450<=ht&&ht<=550" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht4_plot_num");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&550<=ht&&ht<=650" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht5_plot_den");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&550<=ht&&ht<=650" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht5_plot_num");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&650<=ht&&ht<=800" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht6_plot_den");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&650<=ht&&ht<=800" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht6_plot_num");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&800<=ht&&ht<=900" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht7_plot_den");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&800<=ht&&ht<=900" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht7_plot_num");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&900<=ht&&ht<=1000" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht8_plot_den");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&900<=ht&&ht<=1000" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht8_plot_num");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&1000<=ht" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht9_plot_den");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&1000<=ht" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht9_plot_num");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&ht<=200" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht1_plot_den");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&ht<=200" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht1_plot_num");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&200<=ht&&ht<=350" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht2_plot_den");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&200<=ht&&ht<=350" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht2_plot_num");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&350<=ht&&ht<=450" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht3_plot_den");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&350<=ht&&ht<=450" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht3_plot_num");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&450<=ht&&ht<=550" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht4_plot_den");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&450<=ht&&ht<=550" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht4_plot_num");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&550<=ht&&ht<=650" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht5_plot_den");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&550<=ht&&ht<=650" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht5_plot_num");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&650<=ht&&ht<=800" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht6_plot_den");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&650<=ht&&ht<=800" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht6_plot_num");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&800<=ht&&ht<=900" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht7_plot_den");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&800<=ht&&ht<=900" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht7_plot_num");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&900<=ht&&ht<=1000" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht8_plot_den");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&900<=ht&&ht<=1000" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht8_plot_num");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&1000<=ht" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht9_plot_den");
+  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&1000<=ht" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht9_plot_num");
   }
   //0l systematics plots
   if (do_systematics) {
@@ -531,12 +609,41 @@ int main(int argc, char *argv[]){
   	pm.Push<Hist2D>(Axis(true_met_bins, "met", "MET", {}),
   	                Axis(ht_bins, "ht", "HT", {}),
   	                pass_filters && "!low_dphi_met&&njet>=4&&nel==1" && el_trigger && met_trigger, procs_met150, twodim_plotopts).Tag("FixName:trig_raw_0l_eff_num");
-  	pm.Push<Hist2D>(Axis(fake_met_bins, "met", "MET", {}),
-  	                Axis(ht_fake_met_bins, "ht", "HT", {}),
-  	                pass_filters && "low_dphi_met&&nvlep==0" && ht_trigger, procs_met150, twodim_plotopts).Tag("FixName:trig_raw_qcd_eff_den");
-  	pm.Push<Hist2D>(Axis(fake_met_bins, "met", "MET", {}),
-  	                Axis(ht_fake_met_bins, "ht", "HT", {}),
-  	                pass_filters && "low_dphi_met&&nvlep==0" && ht_trigger && met_trigger, procs_met150, twodim_plotopts).Tag("FixName:trig_raw_qcd_eff_num");
+	//QCD HT bins
+  	pm.Push<Hist1D>(Axis(fake_met_bins_ht0to350, "met", "MET [GeV]", {}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&ht<350" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht0to350_den");
+  	pm.Push<Hist1D>(Axis(fake_met_bins_ht0to350, "met", "MET [GeV]", {}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&ht<350" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht0to350_num");
+  	pm.Push<Hist1D>(Axis(fake_met_bins_ht350to450, "met", "MET [GeV]", {}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&350<=ht&&ht<450" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht350to450_den");
+  	pm.Push<Hist1D>(Axis(fake_met_bins_ht350to450, "met", "MET [GeV]", {}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&350<=ht&&ht<450" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht350to450_num");
+  	pm.Push<Hist1D>(Axis(fake_met_bins_ht450to550, "met", "MET [GeV]", {}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&450<=ht&&ht<550" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht450to550_den");
+  	pm.Push<Hist1D>(Axis(fake_met_bins_ht450to550, "met", "MET [GeV]", {}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&450<=ht&&ht<550" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht450to550_num");
+  	pm.Push<Hist1D>(Axis(fake_met_bins_ht550to650, "met", "MET [GeV]", {}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&550<=ht&&ht<650" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht550to650_den");
+  	pm.Push<Hist1D>(Axis(fake_met_bins_ht550to650, "met", "MET [GeV]", {}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&550<=ht&&ht<650" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht550to650_num");
+  	pm.Push<Hist1D>(Axis(fake_met_bins, "met", "MET [GeV]", {}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&650<=ht&&ht<800" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht650to800_den");
+  	pm.Push<Hist1D>(Axis(fake_met_bins, "met", "MET [GeV]", {}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&650<=ht&&ht<800" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht650to800_num");
+  	pm.Push<Hist1D>(Axis(fake_met_bins, "met", "MET [GeV]", {}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&800<=ht&&ht<1000" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht800to1000_den");
+  	pm.Push<Hist1D>(Axis(fake_met_bins, "met", "MET [GeV]", {}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&800<=ht&&ht<1000" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht800to1000_num");
+  	pm.Push<Hist1D>(Axis(fake_met_bins, "met", "MET [GeV]", {}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&1000<=ht" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht1000toInf_den");
+  	pm.Push<Hist1D>(Axis(fake_met_bins, "met", "MET [GeV]", {}),
+  	                pass_filters && "low_dphi_met&&nvlep==0&&1000<=ht" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht1000toInf_num");
+  	//pm.Push<Hist2D>(Axis(fake_met_bins, "met", "MET", {}),
+  	//                Axis(ht_fake_met_bins, "ht", "HT", {}),
+  	//                pass_filters && "low_dphi_met&&nvlep==0" && ht_trigger, procs_met150, twodim_plotopts).Tag("FixName:trig_raw_qcd_eff_den");
+  	//pm.Push<Hist2D>(Axis(fake_met_bins, "met", "MET", {}),
+  	//                Axis(ht_fake_met_bins, "ht", "HT", {}),
+  	//                pass_filters && "low_dphi_met&&nvlep==0" && ht_trigger && met_trigger, procs_met150, twodim_plotopts).Tag("FixName:trig_raw_qcd_eff_num");
 	if (do_controlregions) {
 		//1e
   		pm.Push<Hist2D>(Axis(twodim_met_bins, "met", "MET", {}),
@@ -772,6 +879,79 @@ int main(int argc, char *argv[]){
 	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150_mc,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1","Offline p_{T}^{miss}","Efficiency MET[NoMu]120","GeV","mcmet120_"+year_string+".pdf",false,true);
 	pm_idx += 2;
 
+	//-------------HT binned plots to determine trigger binning for 0l-------------
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, H_{T}<200 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht0to200");
+	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, H_{T}<200 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht0to200_"+year_string+".pdf");
+	pm_idx += 2;
+
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, 200<H_{T}<350 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht200to350");
+	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, 200 #leq H_{T}<350 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht200to350_"+year_string+".pdf");
+	pm_idx += 2;
+
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, 350<H_{T}<450 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht350to450");
+	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, 350 #leq H_{T}<450 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht350to450_"+year_string+".pdf");
+	pm_idx += 2;
+
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, 450<H_{T}<550 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht450to550");
+	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, 450 #leq H_{T}<550 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht450to550_"+year_string+".pdf");
+	pm_idx += 2;
+
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, 550<H_{T}<650 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht550to650");
+	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, 550 #leq H_{T}<650 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht550to650_"+year_string+".pdf");
+	pm_idx += 2;
+
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, 650<H_{T}<800 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht650to800");
+	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, 650 #leq H_{T}<800 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht650to800_"+year_string+".pdf");
+	pm_idx += 2;
+
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, 800<H_{T}<900 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht800to900");
+	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, 800 #leq H_{T}<900 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht800to900_"+year_string+".pdf");
+	pm_idx += 2;
+
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, 900<H_{T}<1000 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht900to1000");
+	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, 900 #leq H_{T}<1000 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht900to1000_"+year_string+".pdf");
+	pm_idx += 2;
+
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, H_{T}>1000 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht1000toInf");
+	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, H_{T} #geq 1000 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht1000toInf_"+year_string+".pdf");
+	pm_idx += 2;
+
+	//QCD
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, H_{T}<200 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht0to200");
+	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, H_{T}<200 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht0to200_"+year_string+".pdf");
+	pm_idx += 2;
+
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, 200<H_{T}<350 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht200to350");
+	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, 200 #leq H_{T}<350 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht200to350_"+year_string+".pdf");
+	pm_idx += 2;
+
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, 350<H_{T}<450 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht350to450");
+	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, 350 #leq H_{T}<450 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht350to450_"+year_string+".pdf");
+	pm_idx += 2;
+
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, 450<H_{T}<550 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht450to550");
+	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, 450 #leq H_{T}<550 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht450to550_"+year_string+".pdf");
+	pm_idx += 2;
+
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, 550<H_{T}<650 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht550to650");
+	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, 550 #leq H_{T}<650 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht550to650_"+year_string+".pdf");
+	pm_idx += 2;
+
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, 650<H_{T}<800 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht650to800");
+	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, 650 #leq H_{T}<800 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht650to800_"+year_string+".pdf");
+	pm_idx += 2;
+
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, 800<H_{T}<900 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht800to900");
+	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, 800 #leq H_{T}<900 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht800to900_"+year_string+".pdf");
+	pm_idx += 2;
+
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, 900<H_{T}<1000 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht900to1000");
+	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, 900 #leq H_{T}<1000 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht900to1000_"+year_string+".pdf");
+	pm_idx += 2;
+
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, H_{T}>1000 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht1000toInf");
+	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, H_{T} #geq 1000 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht1000toInf_"+year_string+".pdf");
+	pm_idx += 2;
   }
   std::vector<double> systematics;
   if (do_systematics) {
@@ -802,11 +982,26 @@ int main(int argc, char *argv[]){
 	pm_idx += 2;
   }
   if (do_efficiency) {
-	trig_postprocess_efficiencies(&pm, pm_idx, pro_1l2j, year_string, "pdf", systematics);
+	trig_postprocess_efficiencies(&pm, pm_idx, pro_met150, pro_1l2j, year_string, "pdf", systematics);
   	generate_2d_efficiencies(&pm, pm_idx, pm_idx+1, "[MET[NoMu](110|120||120_HT60)] Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, 35.9 fb^{-1} (13 TeV); MET [GeV], HT [GeV]", "hist_realmetht");
 	pm_idx += 2;
-  	generate_2d_efficiencies(&pm, pm_idx, pm_idx+1, "[MET[NoMu](110|120||120_HT60)] Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=1, 35.9 fb^{-1} (13 TeV); MET [GeV], HT [GeV]", "hist_fakemetht");
+
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "[MET[NoMu](110|120||120_HT60)] Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=1, 0<H_{T}<350 GeV, 35.9 fb^{-1} (13 TeV); MET [GeV], HT [GeV]", "hist_fakemet_eff_ht0to350");
 	pm_idx += 2;
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "[MET[NoMu](110|120||120_HT60)] Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=1, 350<H_{T}<450 GeV, 35.9 fb^{-1} (13 TeV); MET [GeV], HT [GeV]", "hist_fakemet_eff_ht350to450");
+	pm_idx += 2;
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "[MET[NoMu](110|120||120_HT60)] Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=1, 450<H_{T}<550 GeV, 35.9 fb^{-1} (13 TeV); MET [GeV], HT [GeV]", "hist_fakemet_eff_ht450to550");
+	pm_idx += 2;
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "[MET[NoMu](110|120||120_HT60)] Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=1, 550<H_{T}<650 GeV, 35.9 fb^{-1} (13 TeV); MET [GeV], HT [GeV]", "hist_fakemet_eff_ht550to650");
+	pm_idx += 2;
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "[MET[NoMu](110|120||120_HT60)] Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=1, 650<H_{T}<800 GeV, 35.9 fb^{-1} (13 TeV); MET [GeV], HT [GeV]", "hist_fakemet_eff_ht650to800");
+	pm_idx += 2;
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "[MET[NoMu](110|120||120_HT60)] Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=1, 800<H_{T}<1000 GeV, 35.9 fb^{-1} (13 TeV); MET [GeV], HT [GeV]", "hist_fakemet_eff_ht800to1000");
+	pm_idx += 2;
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "[MET[NoMu](110|120||120_HT60)] Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=1, H_{T}>1000 GeV, 35.9 fb^{-1} (13 TeV); MET [GeV], HT [GeV]", "hist_fakemet_eff_ht1000toInf");
+	pm_idx += 2;
+  	//generate_2d_efficiencies(&pm, pm_idx, pm_idx+1, "[MET[NoMu](110|120||120_HT60)] Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=1, 35.9 fb^{-1} (13 TeV); MET [GeV], HT [GeV]", "hist_fakemetht");
+	//pm_idx += 2;
 	if (do_controlregions) {
   		generate_2d_efficiencies(&pm, pm_idx, pm_idx+1, "[MET[NoMu](110|120||120_HT60)||Ele(27_WPTight||35_WPTight||115)] Trigger Efficiency, baseline: HLT_PFJet500 N_{j}#geq 2 N_{e}=1, 0#leq HT < 400 GeV, 35.9 fb^{-1} (13 TeV); MET [GeV], Electron pt [GeV]", "hist_metelptht0to400");
 		pm_idx += 2;
@@ -1329,7 +1524,7 @@ std::vector<double> add_variations_quadrature(std::vector<std::vector<double>> v
 //---------------------------------------------------------------
 // efficiency functions
 //---------------------------------------------------------------
-void trig_postprocess_efficiencies(PlotMaker* pm, int first_index, shared_ptr<Process> lep_proc, std::string year, std::string img_file_extension, std::vector<double> systematics) {
+void trig_postprocess_efficiencies(PlotMaker* pm, int first_index, shared_ptr<Process> met_proc, shared_ptr<Process> lep_proc, std::string year, std::string img_file_extension, std::vector<double> systematics) {
   std::string lumi_string = "35.9 fb^{-1} (13 TeV)";
   if (year == "2017") {
   	lumi_string = "41.5 fb^{-1} (13 TeV)";
@@ -1354,13 +1549,13 @@ void trig_postprocess_efficiencies(PlotMaker* pm, int first_index, shared_ptr<Pr
   //true met histograms
   draw_2d_efficiency_graphs(pm, first_index, first_index+1, ht_bins, true_met_bins, "ht", "H_{T}", "b.ht()", "met", "p_{T}^{miss}", "b.met()", "Denom: #it{SingleElectron}, N_{j}#geq 3, high #Delta #phi, N_{e}=1", lumi_string, met_trigger_string, "truemet_effhtbin", apply_effs_file, "get_0l_trigeff", year, img_file_extension, systematics);
   //fake met histograms
-  draw_2d_efficiency_graphs(pm, first_index+2, first_index+3, ht_fake_met_bins, fake_met_bins, "ht", "H_{T}", "b.ht()", "met", "p_{T}^{miss}", "b.met()", "Denom: #it{JetHT}, low #Delta #phi, N_{l veto}=0", lumi_string, met_trigger_string, "fakemet_effhtbin", apply_effs_file, "get_0l_fakemet_trigeff", year, img_file_extension, {});
+  draw_2d_efficiency_graphs_variable_binning(pm, {first_index+2,first_index+4,first_index+6,first_index+8,first_index+10,first_index+12,first_index+14}, {first_index+3,first_index+5,first_index+7,first_index+9,first_index+11,first_index+13,first_index+15}, met_proc, ht_fake_met_bins, "ht", "H_{T}", "b.ht()", "met", "p_{T}^{miss}", "b.met()", "Denom: #it{JetHT}, low #Delta #phi, N_{l veto}=0", lumi_string, met_trigger_string, "fakemet_effhtbin", apply_effs_file, "get_0l_fakemet_trigeff", year, img_file_extension);
   if (do_controlregions) {
     //1/2l CR graphs
-    draw_3d_efficiency_graphs(pm, {first_index+4, first_index+6, first_index+8}, {first_index+5, first_index+7, first_index+9}, singlelep_ht_bins, el_pt_bins, twodim_met_bins, "ht", "H_{T}", "b.ht()", "el_pt", "p_{Te}", "HigUtilities::signal_lepton_pt(b.el_pt(),b.el_sig())", "met", "p_{T}^{miss}", "b.met()", "Denom: #it{JetHT}, N_{j}#geq 2, N_{e}=1", lumi_string, met_trigger_string+"|"+el_trigger_string, "elmet_effelptbin", apply_effs_file, "get_1el_trigeff", year, img_file_extension);
-    draw_3d_efficiency_graphs(pm, {first_index+10, first_index+12, first_index+14}, {first_index+11, first_index+13, first_index+15}, singlelep_ht_bins, mu_pt_bins, twodim_met_bins, "ht", "H_{T}", "b.ht()", "mu_pt", "p_{T#mu}", "HigUtilities::signal_lepton_pt(b.mu_pt(),b.mu_sig())", "met", "p_{T}^{miss}", "b.met()", "Denom: #it{JetHT}, N_{j}#geq 2, N_{#mu}=1", lumi_string, met_trigger_string+"|"+mu_trigger_string, "mumet_effmuptbin", apply_effs_file, "get_1mu_trigeff", year, img_file_extension);
-    draw_1d_efficiency_graphs(pm, first_index+16, first_index+17, lep_proc, twoel_pt_bins, "el_pt", "Max p_{Te}", "HigUtilities::signal_lepton_pt(b.el_pt(),b.el_sig())","Denom: #it{MET|JetHT}, N_{j}#geq 2, N_{e}=2",lumi_string,el_trigger_string,"elel_eff",apply_effs_file,"get_2el_trigeff",year,img_file_extension);
-    draw_1d_efficiency_graphs(pm, first_index+18, first_index+19, lep_proc, twomu_pt_bins, "mu_pt", "Max p_{T#mu}", "HigUtilities::signal_lepton_pt(b.mu_pt(),b.mu_sig())","Denom: #it{MET|JetHT}, N_{j}#geq 2, N_{#mu}=2",lumi_string,mu_trigger_string,"mumu_eff",apply_effs_file,"get_2mu_trigeff",year,img_file_extension);
+    draw_3d_efficiency_graphs(pm, {first_index+16, first_index+18, first_index+20}, {first_index+17, first_index+19, first_index+21}, singlelep_ht_bins, el_pt_bins, twodim_met_bins, "ht", "H_{T}", "b.ht()", "el_pt", "p_{Te}", "HigUtilities::signal_lepton_pt(b.el_pt(),b.el_sig())", "met", "p_{T}^{miss}", "b.met()", "Denom: #it{JetHT}, N_{j}#geq 2, N_{e}=1", lumi_string, met_trigger_string+"|"+el_trigger_string, "elmet_effelptbin", apply_effs_file, "get_1el_trigeff", year, img_file_extension);
+    draw_3d_efficiency_graphs(pm, {first_index+22, first_index+24, first_index+26}, {first_index+23, first_index+25, first_index+27}, singlelep_ht_bins, mu_pt_bins, twodim_met_bins, "ht", "H_{T}", "b.ht()", "mu_pt", "p_{T#mu}", "HigUtilities::signal_lepton_pt(b.mu_pt(),b.mu_sig())", "met", "p_{T}^{miss}", "b.met()", "Denom: #it{JetHT}, N_{j}#geq 2, N_{#mu}=1", lumi_string, met_trigger_string+"|"+mu_trigger_string, "mumet_effmuptbin", apply_effs_file, "get_1mu_trigeff", year, img_file_extension);
+    draw_1d_efficiency_graphs(pm, first_index+28, first_index+29, lep_proc, twoel_pt_bins, "el_pt", "Max p_{Te}", "HigUtilities::signal_lepton_pt(b.el_pt(),b.el_sig())","Denom: #it{MET|JetHT}, N_{j}#geq 2, N_{e}=2",lumi_string,el_trigger_string,"elel_eff",apply_effs_file,"get_2el_trigeff",year,img_file_extension);
+    draw_1d_efficiency_graphs(pm, first_index+30, first_index+31, lep_proc, twomu_pt_bins, "mu_pt", "Max p_{T#mu}", "HigUtilities::signal_lepton_pt(b.mu_pt(),b.mu_sig())","Denom: #it{MET|JetHT}, N_{j}#geq 2, N_{#mu}=2",lumi_string,mu_trigger_string,"mumu_eff",apply_effs_file,"get_2mu_trigeff",year,img_file_extension);
   }
   apply_effs_file << "}\n";
   apply_effs_file.close();
@@ -1407,7 +1602,7 @@ void draw_3d_efficiency_graphs(PlotMaker* pm, std::vector<int> den_idx, std::vec
         out_file << " && " << y_var_name << "> " << y_bins[y_bin] << " && " << y_var_name << "<= " << y_upper;
         out_file << " && " << x_var_name << "> " << x_bins[x_bin] << " && " << x_var_name << "<= " << x_upper;
         float errup = new_eff_plots[z_bin][y_bin]->GetErrorYhigh(x_bin);
-        float errdown = new_eff_plots[z_bin][y_bin]->GetErrorYlow(y_bin);
+        float errdown = new_eff_plots[z_bin][y_bin]->GetErrorYlow(x_bin);
         out_file << ") {eff = " << eff_pts[x_bin] << "; errup = " << errup << "; errdown = " << errdown << ";}\n";
       }
     }
@@ -1450,21 +1645,69 @@ void draw_2d_efficiency_graphs(PlotMaker* pm, int den_idx, int num_idx, std::vec
       out_file << y_bins[y_bin] << " && " << y_var_name << "<= " << y_upper;
       out_file << " && " << x_var_name << "> " << x_bins[x_bin] << " && " << x_var_name << "<= " << x_upper;
       float errup = new_eff_plots[y_bin]->GetErrorYhigh(x_bin);
-      float errdown = new_eff_plots[y_bin]->GetErrorYlow(y_bin);
+      float errdown = new_eff_plots[y_bin]->GetErrorYlow(x_bin);
       //figure out systematics bin and add errors in quadrature, making sure not to exceed 1 or 0
       if (systematics.size()>0) {
         for (unsigned int sys_bin = 0; sys_bin < (sys_met_bins.size()-1); sys_bin++) {
           if (sys_met_bins[sys_bin] <= x_bins[x_bin] && x_bins[x_bin] < sys_met_bins[sys_bin+1]) {
       	    errup = TMath::Sqrt(errup*errup+eff_pts[x_bin]*eff_pts[x_bin]*systematics[sys_bin]*systematics[sys_bin]);
       	    errdown = TMath::Sqrt(errdown*errdown+eff_pts[x_bin]*eff_pts[x_bin]*systematics[sys_bin]*systematics[sys_bin]);
-      	    if (errdown < new_eff_plots[y_bin]->GetErrorYlow(y_bin)) {
-      	      std::cout << "stats: " << new_eff_plots[y_bin]->GetErrorYlow(y_bin) << ", value: " << eff_pts[x_bin] << ", sys: " << systematics[sys_bin] << std::endl;
+      	    if (errdown < new_eff_plots[y_bin]->GetErrorYlow(x_bin)) {
+      	      std::cout << "stats: " << new_eff_plots[y_bin]->GetErrorYlow(x_bin) << ", value: " << eff_pts[x_bin] << ", sys: " << systematics[sys_bin] << std::endl;
       	    }
       	  }
         }
         if (errup > (1.0-eff_pts[x_bin])) errup = 1.0-eff_pts[x_bin];
         if (errdown > eff_pts[x_bin]) errdown = eff_pts[x_bin];
       }
+      out_file << ") {eff = " << eff_pts[x_bin] << "; errup = " << errup << "; errdown = " << errdown << ";}\n";
+    }
+  }
+  out_file << "  std::vector<double> ret = {eff, errup, errdown};\n";
+  out_file << "  return ret;\n";
+  out_file << "});\n\n";
+}
+
+void draw_2d_efficiency_graphs_variable_binning(PlotMaker* pm, std::vector<int> den_idx, std::vector<int> num_idx, shared_ptr<Process> proc, std::vector<double> y_bins, std::string y_var_name, std::string y_title_name, std::string y_expression, std::string x_var_name, std::string x_title_name, std::string x_expression, std::string cuts_string, std::string lumi_string, std::string new_trigger_string, std::string plot_name, ofstream &out_file, std::string func_name, std::string year, std::string img_file_extension) {
+  //loop over ht - each ht bin is a new TGraphAsymmErrors
+  std::vector<TGraphAsymmErrors*> new_eff_plots;
+  std::vector<std::vector<double>> x_bins;
+  for (unsigned int y_bin = 0; y_bin < y_bins.size()-1; y_bin++) {
+    Hist1D * den_h1d = static_cast<Hist1D*>(pm->Figures()[den_idx[y_bin]].get());
+    Hist1D::SingleHist1D* den_sh = static_cast<Hist1D::SingleHist1D*>(den_h1d->GetComponent(proc.get()));
+    TH1D denominator_1d_hist = den_sh->scaled_hist_;
+    Hist1D * num_h1d = static_cast<Hist1D*>(pm->Figures()[num_idx[y_bin]].get());
+    Hist1D::SingleHist1D* num_sh = static_cast<Hist1D::SingleHist1D*>(num_h1d->GetComponent(proc.get()));
+    TH1D numerator_1d_hist = num_sh->scaled_hist_;
+    new_eff_plots.push_back(new TGraphAsymmErrors(&numerator_1d_hist,&denominator_1d_hist,"cp"));
+    std::vector<double> x_bins_1d;
+    for (unsigned int x_bin = 1; x_bin <= static_cast<unsigned int>(numerator_1d_hist.GetNbinsX()); x_bin++) {
+      x_bins_1d.push_back(numerator_1d_hist.GetBinLowEdge(x_bin));
+    }
+    x_bins_1d.push_back(numerator_1d_hist.GetBinLowEdge(numerator_1d_hist.GetNbinsX())+numerator_1d_hist.GetBinWidth(numerator_1d_hist.GetNbinsX()));
+    x_bins.push_back(x_bins_1d);
+    make_efficiency_plot(&numerator_1d_hist,&denominator_1d_hist,new_eff_plots[y_bin],lumi_string,cuts_string+", "+y_title_name+"#in ["+std::to_string(y_bins[y_bin])+", "+std::to_string(y_bins[y_bin+1])+"]",x_title_name,"Efficiency "+new_trigger_string,"GeV",plot_name+"_"+std::to_string(y_bin)+"_"+year+"."+img_file_extension,true,false);
+  }
+  //write out function to file
+  out_file << "const NamedFunc " << func_name << year << "(\"" << func_name << year << "\", [](const Baby &b) -> NamedFunc::VectorType{\n";
+  out_file << "  float errup=0., errdown=0.; // Not used, but for reference\n";
+  out_file << "  float eff = 1., " << x_var_name << " = " << x_expression << ", " << y_var_name << " = " << y_expression << ";\n";
+  out_file << "  errup+=errdown; //suppress unused warning\n";
+  bool first = true;
+  for (unsigned int y_bin = 0; y_bin < y_bins.size()-1; y_bin++) {
+    double y_upper = y_bin==(y_bins.size()-2) ? 9999 : y_bins[y_bin+1];
+    double* eff_pts = new_eff_plots[y_bin]->GetY();
+    for (unsigned int x_bin = 0; x_bin < x_bins[y_bin].size()-1; x_bin++) {
+      double x_upper = x_bin==(x_bins[y_bin].size()-2) ? 9999 : x_bins[y_bin][x_bin+1];
+      if (first) {
+        out_file << "  if (" << y_var_name << "> ";
+        first = false;
+      }
+      else out_file << "  else if (" << y_var_name << "> ";
+      out_file << y_bins[y_bin] << " && " << y_var_name << "<= " << y_upper;
+      out_file << " && " << x_var_name << "> " << x_bins[y_bin][x_bin] << " && " << x_var_name << "<= " << x_upper;
+      float errup = new_eff_plots[y_bin]->GetErrorYhigh(x_bin);
+      float errdown = new_eff_plots[y_bin]->GetErrorYlow(x_bin);
       out_file << ") {eff = " << eff_pts[x_bin] << "; errup = " << errup << "; errdown = " << errdown << ";}\n";
     }
   }

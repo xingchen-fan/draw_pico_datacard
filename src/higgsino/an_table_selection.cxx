@@ -96,9 +96,9 @@ int main(){
   const NamedFunc mixed_model_weight("mixed_model_weight",[](const Baby &b) -> NamedFunc::ScalarType{
     set<int> mchi_sigm_int = {175, 500, 900}; 
     double trig_eff = 1.0;
-    if (b.SampleType()==2016)     	trig_eff = Higfuncs::get_0l_trigeff2016.GetScalar(b);
-    else if (b.SampleType()==2017) 	trig_eff = Higfuncs::get_0l_trigeff2017.GetScalar(b);
-    else if (b.SampleType()==2018) 	trig_eff = Higfuncs::get_0l_trigeff2018.GetScalar(b);
+    if (b.SampleType()==2016)     	trig_eff = Higfuncs::get_0l_trigeff2016.GetVector(b)[0];
+    else if (b.SampleType()==2017) 	trig_eff = Higfuncs::get_0l_trigeff2017.GetVector(b)[0];
+    else if (b.SampleType()==2018) 	trig_eff = Higfuncs::get_0l_trigeff2018.GetVector(b)[0];
     if (b.mprod() == -999) {
       //not signal
       return b.weight()*trig_eff;

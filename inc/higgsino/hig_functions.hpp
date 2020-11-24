@@ -77,6 +77,7 @@ namespace Higfuncs{
 
   //triggers
   extern const NamedFunc jet_trigger;
+  extern const NamedFunc met_trigger;
   extern const NamedFunc el_trigger;
   extern const NamedFunc mu_trigger;
   extern const NamedFunc ht_trigger;

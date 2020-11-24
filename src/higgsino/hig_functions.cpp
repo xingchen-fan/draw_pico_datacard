@@ -371,30 +371,30 @@ const NamedFunc eff_higtrig_run2("eff_higtrig_run2", [](const Baby &b) -> NamedF
 
   else if(b.nvlep()==0){ // search MC sample and qcd MC control sample
     if(b.type()>=7000 && b.type()<8000) { // FAKE MET (QCD)
-      if (b.SampleType()==2016) eff = get_0l_fakemet_trigeff2016.GetScalar(b);
-      else if (b.SampleType()==2017) eff = get_0l_fakemet_trigeff2017.GetScalar(b);
-      else if (b.SampleType()==2018) eff = get_0l_fakemet_trigeff2018.GetScalar(b);
+      if (b.SampleType()==2016) eff = get_0l_fakemet_trigeff2016.GetVector(b)[0];
+      else if (b.SampleType()==2017) eff = get_0l_fakemet_trigeff2017.GetVector(b)[0];
+      else if (b.SampleType()==2018) eff = get_0l_fakemet_trigeff2018.GetVector(b)[0];
     } else { // TRUE MET
-      if (b.SampleType()==2016) eff = get_0l_trigeff2016.GetScalar(b);
-      else if (b.SampleType()==2017) eff = get_0l_trigeff2017.GetScalar(b);
-      else if (b.SampleType()==2018) eff = get_0l_trigeff2018.GetScalar(b);
+      if (b.SampleType()==2016) eff = get_0l_trigeff2016.GetVector(b)[0];
+      else if (b.SampleType()==2017) eff = get_0l_trigeff2017.GetVector(b)[0];
+      else if (b.SampleType()==2018) eff = get_0l_trigeff2018.GetVector(b)[0];
     }
   } else if (b.nel()==1 && b.nmu()==0) { // 1 lepton MC control sample
-    if (b.SampleType()==2016) eff = get_1el_trigeff2016.GetScalar(b);
-    else if (b.SampleType()==2017) eff = get_1el_trigeff2017.GetScalar(b);
-    else if (b.SampleType()==2018) eff = get_1el_trigeff2018.GetScalar(b);
+    if (b.SampleType()==2016) eff = get_1el_trigeff2016.GetVector(b)[0];
+    else if (b.SampleType()==2017) eff = get_1el_trigeff2017.GetVector(b)[0];
+    else if (b.SampleType()==2018) eff = get_1el_trigeff2018.GetVector(b)[0];
   } else if (b.nel()==0 && b.nmu()==1) { // 1 lepton MC control sample
-    if (b.SampleType()==2016) eff = get_1mu_trigeff2016.GetScalar(b);
-    else if (b.SampleType()==2017) eff = get_1mu_trigeff2017.GetScalar(b);
-    else if (b.SampleType()==2018) eff = get_1mu_trigeff2018.GetScalar(b);
+    if (b.SampleType()==2016) eff = get_1mu_trigeff2016.GetVector(b)[0];
+    else if (b.SampleType()==2017) eff = get_1mu_trigeff2017.GetVector(b)[0];
+    else if (b.SampleType()==2018) eff = get_1mu_trigeff2018.GetVector(b)[0];
   } else if (b.nel()==2 && b.nmu()==0) { // 2 lepton MC control sample
-    if (b.SampleType()==2016) eff = get_2el_trigeff2016.GetScalar(b);
-    else if (b.SampleType()==2017) eff = get_2el_trigeff2017.GetScalar(b);
-    else if (b.SampleType()==2018) eff = get_2el_trigeff2018.GetScalar(b);
+    if (b.SampleType()==2016) eff = get_2el_trigeff2016.GetVector(b)[0];
+    else if (b.SampleType()==2017) eff = get_2el_trigeff2017.GetVector(b)[0];
+    else if (b.SampleType()==2018) eff = get_2el_trigeff2018.GetVector(b)[0];
   } else if (b.nel()==0 && b.nmu()==2) { // 2 lepton MC control sample
-    if (b.SampleType()==2016) eff = get_2mu_trigeff2016.GetScalar(b);
-    else if (b.SampleType()==2017) eff = get_2mu_trigeff2017.GetScalar(b);
-    else if (b.SampleType()==2018) eff = get_2mu_trigeff2018.GetScalar(b);
+    if (b.SampleType()==2016) eff = get_2mu_trigeff2016.GetVector(b)[0];
+    else if (b.SampleType()==2017) eff = get_2mu_trigeff2017.GetVector(b)[0];
+    else if (b.SampleType()==2018) eff = get_2mu_trigeff2018.GetVector(b)[0];
   }
   return eff;
 });
@@ -1061,19 +1061,22 @@ const NamedFunc pass_hemveto("pass_hemveto", [](const Baby &b) -> NamedFunc::Sca
 });
 
 const NamedFunc hem_weight("hem_weight", [](const Baby & b) -> NamedFunc::ScalarType{
-  if ( b.SampleType() != 2018) return 1.0;
+  if ( b.type()/1000 == 0) return 1.0; //data
+  if ( abs(b.SampleType()) != 2018) return 1.0;
   if ( pass_hemveto.GetScalar(b) ) return 1.0;
-  return 0.645; //fraction of lumi after hem failure
+  return 0.339113; //fraction of lumi before hem failure
 });
 
 const NamedFunc pass_filters("pass_filters", [](const Baby &b) -> NamedFunc::ScalarType{
-  if (!b.pass_goodv() || !b.pass_cschalo_tight() || !b.pass_hbhe() || !b.pass_hbheiso() || !b.pass_ecaldeadcell() || !b.pass_badpfmu() || !b.pass_muon_jet()) return false;
+  if (!b.pass_goodv() || !b.pass_hbhe() || !b.pass_hbheiso() || !b.pass_ecaldeadcell() || !b.pass_badpfmu() || !b.pass_muon_jet()) return false;
   if (b.type()/1000 == 0 && !b.pass_eebadsc()) return false; //only apply eebadsc fiter for data
+  if ((b.type()/1000 != 106)  && !b.pass_cschalo_tight()) return false; //not for fastsim
   if (!b.pass_low_neutral_jet()) return false;
   if (!b.pass_htratio_dphi_tight()) return false;
-  if ((b.type()/1000 == 106)  && !b.pass_jets()) return false; //only for fastsim
-  if ((b.SampleType()==2017 || b.SampleType()==2018) && !Higfuncs::pass_ecalnoisejet.GetScalar(b)) return false; 
-  if ((b.SampleType()==2018 && b.type()/1000 == 0) && !Higfuncs::pass_hemveto.GetScalar(b)) return false;
+  //if ((b.type()/1000 == 106)  && !b.pass_jets()) return false; //only for fastsim
+  if (!b.pass_jets()) return false; //only for fastsim
+  if ((abs(b.SampleType())==2017 || abs(b.SampleType()==2018)) && !Higfuncs::pass_ecalnoisejet.GetScalar(b)) return false; 
+  if ((abs(b.SampleType())==2018 && b.type()/1000 == 0) && !Higfuncs::pass_hemveto.GetScalar(b)) return false;
   return true;
 });
 
