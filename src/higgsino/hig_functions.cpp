@@ -406,6 +406,43 @@ const NamedFunc eff_higtrig_run2("eff_higtrig_run2", [](const Baby &b) -> NamedF
   }
   return eff;
 });
+
+const NamedFunc eff_higtrig_run2_v0("eff_higtrig_run2_v0", [](const Baby &b) -> NamedFunc::ScalarType{
+  float errup, errdown; // Not used, but for reference
+  float eff = 1.;
+  errup=0;errdown=0;
+  errup+=errdown;
+  if(b.type()>0 && b.type()<1000) eff = 1; // data
+
+  else if(b.nvlep()==0){ // search MC sample and qcd MC control sample
+    if(b.type()>=7000 && b.type()<8000) { // FAKE MET (QCD)
+      if (b.SampleType()==2016) eff = get_0l_fakemet_trigeff2016_v0.GetScalar(b);
+      else if (b.SampleType()==2017) eff = get_0l_fakemet_trigeff2017_v0.GetScalar(b);
+      else if (b.SampleType()==2018) eff = get_0l_fakemet_trigeff2018_v0.GetScalar(b);
+    } else { // TRUE MET
+      if (b.SampleType()==2016) eff = get_0l_trigeff2016_v0.GetScalar(b);
+      else if (b.SampleType()==2017) eff = get_0l_trigeff2017_v0.GetScalar(b);
+      else if (b.SampleType()==2018) eff = get_0l_trigeff2018_v0.GetScalar(b);
+    }
+  } else if (b.nel()==1 && b.nmu()==0) { // 1 lepton MC control sample
+    if (b.SampleType()==2016) eff = get_1el_trigeff2016_v0.GetScalar(b);
+    else if (b.SampleType()==2017) eff = get_1el_trigeff2017_v0.GetScalar(b);
+    else if (b.SampleType()==2018) eff = get_1el_trigeff2018_v0.GetScalar(b);
+  } else if (b.nel()==0 && b.nmu()==1) { // 1 lepton MC control sample
+    if (b.SampleType()==2016) eff = get_1mu_trigeff2016_v0.GetScalar(b);
+    else if (b.SampleType()==2017) eff = get_1mu_trigeff2017_v0.GetScalar(b);
+    else if (b.SampleType()==2018) eff = get_1mu_trigeff2018_v0.GetScalar(b);
+  } else if (b.nel()==2 && b.nmu()==0) { // 2 lepton MC control sample
+    if (b.SampleType()==2016) eff = get_2el_trigeff2016_v0.GetScalar(b);
+    else if (b.SampleType()==2017) eff = get_2el_trigeff2017_v0.GetScalar(b);
+    else if (b.SampleType()==2018) eff = get_2el_trigeff2018_v0.GetScalar(b);
+  } else if (b.nel()==0 && b.nmu()==2) { // 2 lepton MC control sample
+    if (b.SampleType()==2016) eff = get_2mu_trigeff2016_v0.GetScalar(b);
+    else if (b.SampleType()==2017) eff = get_2mu_trigeff2017_v0.GetScalar(b);
+    else if (b.SampleType()==2018) eff = get_2mu_trigeff2018_v0.GetScalar(b);
+  }
+  return eff;
+});
   
 ////// Efficiency of the MET[100||110||120] triggers in all 36.2 ifb
 const NamedFunc eff_higtrig("eff_higtrig", [](const Baby &b) -> NamedFunc::ScalarType{
@@ -1050,7 +1087,10 @@ const NamedFunc pass_ecalnoisejet("pass_ecalnoisejet", [](const Baby &b) -> Name
 
 const NamedFunc pass_hemveto("pass_hemveto", [](const Baby &b) -> NamedFunc::ScalarType{
     //only apply for 2018 era C+D and MC
-    if (b.type()/1000 == 0 && b.run() < 319077) return true;
+    if (abs(b.SampleType())!=2018) return true; // accept 2016 and 2017 data and mc
+    if (b.SampleType()==-2018 && b.run() < 319077) return true; // accept part of 2018 data
+    if (b.SampleType()==2018 && (b.event()%1961) >= 1296) return true; //accept part of 2018 mc
+
     bool pass_hem = true;
     for (unsigned int el_idx = 0; el_idx < b.el_pt()->size(); el_idx++) {
       if (b.el_miniso()->at(el_idx) < 0.1 && -3.0 < b.el_eta()->at(el_idx) && b.el_eta()->at(el_idx) < -1.4 && -1.57 < b.el_phi()->at(el_idx) && b.el_phi()->at(el_idx) < -0.87) {
@@ -1083,12 +1123,16 @@ const NamedFunc pass_filters("pass_filters", [](const Baby &b) -> NamedFunc::Sca
   if (!b.pass_htratio_dphi_tight()) return false;
   //if ((b.type()/1000 == 106)  && !b.pass_jets()) return false; //only for fastsim
   if (!b.pass_jets()) return false; //was modified
-  if ((abs(b.SampleType())==2017 || abs(b.SampleType()==2018)) && !Higfuncs::pass_ecalnoisejet.GetScalar(b)) return false; 
-  if ((abs(b.SampleType())==2018 && b.type()/1000 == 0) && !Higfuncs::pass_hemveto.GetScalar(b)) return false;
+  if ((abs(b.SampleType())==2017 || abs(b.SampleType())==2018) && !Higfuncs::pass_ecalnoisejet.GetScalar(b)) return false; 
+  //if ((abs(b.SampleType())==2018 && b.type()/1000 == 0) && !Higfuncs::pass_hemveto.GetScalar(b)) return false;
+  if (!Higfuncs::pass_hemveto.GetScalar(b)) return false;
   return true;
 });
 
-const NamedFunc final_pass_filters = pass_filters&&pass_hemveto && "met/mht<2 && met/met_calo<2 && weight < 10";
+const NamedFunc final_pass_filters = pass_filters&& "met/mht<2 && met/met_calo<2";
+const NamedFunc final_ttbar_pass_filters = pass_filters&& "met/met_calo<5";
+const NamedFunc final_zll_pass_filters = pass_filters&& "met/met_calo<5";
+const NamedFunc final_qcd_pass_filters = pass_filters&& "met/mht<2 && met/met_calo<2";
 
 const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
   if (b.SampleType()<0) return 1.;
