@@ -18,3 +18,12 @@ export SCONSFLAGS="-j $(nproc --all)"
 
 source $(dirname $(readlink -e "$BASH_SOURCE"))/modules/jb_utils/set_env.sh
 source $(dirname $(readlink -e "$BASH_SOURCE"))/modules/queue_system/set_env.sh
+
+# Example: usernames=("jbkim ana")
+usernames=("jbkim")
+if [[ "${usernames[@]}" =~ "$USER" ]]; then
+  export LOCAL_PICO_DIR="/data/"
+  echo "LOCAL_PICO_DIR is set to $LOCAL_PICO_DIR. Set it so blank if you want to use net files."
+else
+  export LOCAL_PICO_DIR=""
+fi
