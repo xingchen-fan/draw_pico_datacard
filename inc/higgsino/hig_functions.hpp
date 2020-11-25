@@ -91,7 +91,10 @@ namespace Higfuncs{
   extern const NamedFunc mu_trigger;
   extern const NamedFunc ht_trigger;
   extern const NamedFunc jetht_trigger;
-  extern const NamedFunc met_trigger;
+
+  extern const NamedFunc met_trigger_v0;
+  extern const NamedFunc el_trigger_v0;
+  extern const NamedFunc mu_trigger_v0;
 
   //jetid modified variables
   extern const NamedFunc jetid_njet;
