@@ -2066,7 +2066,7 @@ int main(int argc, char *argv[]){
     if (!b.pass_htratio_dphi_tight()) return false;
     //if ((b.type()/1000 == 106)  && !b.pass_jets()) return false; //only for fastsim
     if (!b.pass_jets()) return false; //only for fastsim
-    if ((abs(b.SampleType())==2017 || abs(b.SampleType()==2018)) && !Higfuncs::pass_ecalnoisejet.GetScalar(b)) return false; 
+    if ((abs(b.SampleType())==2017 || abs(b.SampleType())==2018) && !Higfuncs::pass_ecalnoisejet.GetScalar(b)) return false; 
     if ((abs(b.SampleType())==2018 && b.type()/1000 == 0) && !Higfuncs::pass_hemveto.GetScalar(b)) return false;
     return true;
   });
@@ -2079,7 +2079,7 @@ int main(int argc, char *argv[]){
     if (!b.pass_htratio_dphi_tight()) return false;
     //if ((b.type()/1000 == 106)  && !b.pass_jets()) return false; //only for fastsim
     if (!b.pass_jets()) return false; //only for fastsim
-    //if ((abs(b.SampleType())==2017 || abs(b.SampleType()==2018)) && !Higfuncs::pass_ecalnoisejet.GetScalar(b)) return false; 
+    //if ((abs(b.SampleType())==2017 || abs(b.SampleType())==2018) && !Higfuncs::pass_ecalnoisejet.GetScalar(b)) return false; 
     if ((abs(b.SampleType())==2018 && b.type()/1000 == 0) && !Higfuncs::pass_hemveto.GetScalar(b)) return false;
     return true;
   });
