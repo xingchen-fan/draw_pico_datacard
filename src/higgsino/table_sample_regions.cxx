@@ -40,22 +40,6 @@ namespace{
   bool unblind = false;
 }
 
-const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
-  if (b.SampleType()<0) return 1.;
-
-  double weight = 1;
-  //if (b.type()==106000) {
-  //  return 35.9;
-  //}
-  if (b.SampleType()==2016){
-    return weight*35.9;
-  } else if (b.SampleType()==2017){
-    return weight*41.5;
-  } else {
-    return weight*59.6;
-  }
-});
-
 string getLuminosityString(string const & year_string) {
   set<int> years;
   HigUtilities::parseYears(year_string, years);
@@ -94,7 +78,7 @@ void addProcess(string const & processName, Process::Type type, int color, Named
   mctags["qcd"]     = set<string>({"*_QCD_HT200to300_*","*_QCD_HT300to500_*","*_QCD_HT500to700_*",
                                    "*_QCD_HT700to1000_*", "*_QCD_HT1000to1500_*","*_QCD_HT1500to2000_*",
                                    "*_QCD_HT2000toInf_*"});
-  mctags["other"]   = set<string>({"*_WH_HToBB*.root", "*_ZH_HToBB*.root",
+  mctags["other"]   = set<string>({"*_WH*.root", "*_ZH_HToBB*.root",
                                      "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"});
   // Combine all tags
   mctags["all"] = set<string>({"*TTJets_SingleLept*",
@@ -105,7 +89,7 @@ void addProcess(string const & processName, Process::Type type, int color, Named
                                "*_QCD_HT200to300_*","*_QCD_HT300to500_*","*_QCD_HT500to700_*",
                                "*_QCD_HT1000to1500_*","*_QCD_HT1500to2000_*",
                                "*_QCD_HT2000toInf_*",
-                               "*_WH_HToBB*.root", "*_ZH_HToBB*.root",
+                               "*_WH*.root", "*_ZH_HToBB*.root",
                                "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root", "*DYJetsToLL*.root"
   });
 
@@ -137,7 +121,7 @@ void addProcess(string const & processName, Process::Type type, int color, Named
   // higlep1T:
   //   (Sum$(fjet_pt>300 && fjet_msoftdrop>50)>1 || ((nbt>=2 || nbdft>=2) && njet>=4 && njet<=5)) &&
   //   nlep==1 && 
-  //   (Max$(el_pt*el_sig)>40 || Max$(mu_pt*mu_sig)>40) // pass_1l_trig40 (sig is signal lepton)
+  //   (Max$(el_pt*el_sig)>30 || Max$(mu_pt*mu_sig)>30) 
   folderDict.insert("ttbar_mc_skim_folder", "mc/merged_higmc_higlep1T/");
   // higlep2T:
   //   (Sum$(fjet_pt>300 && fjet_msoftdrop>50)>1 || (njet>=4 && njet<=5))
@@ -240,9 +224,12 @@ int main(int argc, char *argv[]){
   // sample: search/ttbar/zll/qcd
   // year_string: 2016/2017/2018/run2
   //string production_a = "higgsino_eldorado"; string nanoAodFolder_a = "/net/cms29/cms29r0/pico/NanoAODv5";
-  string higgsino_version = "v3";
+  //string higgsino_version = "v3";
+  string higgsino_version = "";
 
-  string production_a = "higgsino_humboldt"+higgsino_version; string nanoAodFolder_a = "/net/cms25/cms25r5/pico/NanoAODv5";
+  //string production_a = "higgsino_humboldt"+higgsino_version; string nanoAodFolder_a = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv5";
+  string production_a = "higgsino_inyo"; 
+  string nanoAodFolder_a = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7";
   string sample_a = sample_name;
   string year_string_a = year_string;
 
@@ -251,21 +238,27 @@ int main(int argc, char *argv[]){
   //    Define processes, including intersections
   //--------------------------------------------------
   //NamedFunc base_filters = HigUtilities::pass_2016 && "met/mht<2 && met/met_calo<2"; //since pass_fsjets is not quite usable...
-  NamedFunc base_filters = Functions::hem_veto && "pass && weight < 10";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
+  //NamedFunc base_filters =  Functions::hem_veto && HigUtilities::pass_2016;
+  //NamedFunc base_filters = Functions::hem_veto && "pass && weight < 10";
+  NamedFunc base_filters = "1";
+  if (sample_a == "search") base_filters = Higfuncs::final_pass_filters;
+  else if (sample_a == "ttbar") base_filters = Higfuncs::final_ttbar_pass_filters;
+  else if (sample_a == "zll") base_filters = Higfuncs::final_zll_pass_filters;
+  else if (sample_a == "qcd") base_filters = Higfuncs::final_qcd_pass_filters;
 
   NamedFunc search_resolved_cuts = 
-                         "met/mht<2 && met/met_calo<2&&"
+                         "met/mht<2 && met/met_calo<2&&weight<1.5&&"
                          "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
                          "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
                          "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))";
   NamedFunc ttbar_resolved_cuts = 
-                         "met/met_calo<5&&"
+                         "met/met_calo<5&&weight<1.5&&"
                          "nlep==1&&mt<=100&&njet>=4&&njet<=5&&"
                          "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
                          "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))"
                          && Higfuncs::lead_signal_lepton_pt>30;
   NamedFunc zll_resolved_cuts =
-                         "met/met_calo<5&&"
+                         "met/met_calo<5&&weight<1.5&&"
                          "nlep==2&&njet>=4&&njet<=5&&met<50&&"
                          "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
                          "(nbm==0||nbm==1||nbm==2||nbm>=3)";
@@ -297,11 +290,14 @@ int main(int argc, char *argv[]){
       procs);
   }
 
-  //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*w_years;
-  //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig_run2*w_years;
-  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig*w_years;
-  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years;
-  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years*Functions::w_pileup;
+  //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*Higfuncs::w_years;
+  //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*Higfuncs::w_years;
+  //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
+  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig*Higfuncs::w_years;
+  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
+  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Functions::w_pileup;
+  //NamedFunc weight = Higfuncs::final_weight;
+  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2_v0*Higfuncs::w_years;
 
 
   //    Useful binning definitions
