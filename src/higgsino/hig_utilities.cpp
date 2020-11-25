@@ -366,7 +366,7 @@ namespace HigUtilities {
     mcTags["QCD"]     = set<string>({"*_QCD_HT200to300_*","*_QCD_HT300to500_*","*_QCD_HT500to700_*",
                                    "*_QCD_HT700to1000_*", "*_QCD_HT1000to1500_*","*_QCD_HT1500to2000_*",
                                    "*_QCD_HT2000toInf_*"});
-    mcTags["Other"]   = set<string>({"*_WH_HToBB*.root", "*_ZH_HToBB*.root", "*_ST_*.root",
+    mcTags["Other"]   = set<string>({"*_WH*.root", "*_ZH_HToBB*.root", "*_ST_*.root",
                                        "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"});
   
     map<string, int> mcColors;
