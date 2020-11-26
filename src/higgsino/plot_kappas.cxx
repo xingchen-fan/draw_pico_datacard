@@ -100,22 +100,6 @@ vector<vector<float> > findPreds(abcd_def &abcd, vector<vector<GammaParams> > &a
 
 void GetOptions(int argc, char *argv[]);
 
-const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
-  if (b.SampleType()<0) return 1.;
-
-  double weight = 1;
-  //if (b.type()==106000) {
-  //  return 35.9;
-  //}
-  if (b.SampleType()==2016){
-    return weight*35.9;
-  } else if (b.SampleType()==2017){
-    return weight*41.5;
-  } else {
-    return weight*59.6;
-  }
-});
-
 int main(int argc, char *argv[]){
   gErrorIgnoreLevel=6000; // Turns off ROOT errors due to missing branches
   GetOptions(argc, argv);
@@ -146,13 +130,15 @@ int main(int argc, char *argv[]){
   string higgsino_version = "";
 
   //string base_dir(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_eldorado/");
-  string base_dir("/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/");
+  //string base_dir("/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/");
+  //string base_dir(string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/");
+  string base_dir(string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/");
   //string base_dir("/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado");
   string mc_skim_dir("mc/merged_higmc_higloose/"), data_skim_dir("data/merged_higdata_higloose/"), sig_skim_dir("SMS-TChiHH_2D/merged_higmc_higloose/");
-  //if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "data/merged_higdata_higlep1T/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higlep1T/";} 
-  if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "data/skim_higlep1T/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higlep1T/";} 
-  //else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "data/merged_higdata_higlep2T/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higlep2T/";} 
-  else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "data/skim_higlep2T/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higlep2T/";} 
+  if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "data/merged_higdata_higlep1T/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higlep1T/";} 
+  //if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "data/skim_higlep1T/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higlep1T/";} 
+  else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "data/merged_higdata_higlep2T/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higlep2T/";} 
+  //else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "data/skim_higlep2T/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higlep2T/";} 
   else if (sample=="qcd") {mc_skim_dir = "mc/merged_higmc_higqcd/";  data_skim_dir = "data/merged_higdata_higqcd/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higqcd/";} 
 
   map<string, set<string>> mctags; 
@@ -174,7 +160,7 @@ int main(int argc, char *argv[]){
                                    "*QCD_HT1500to2000_Tune*", 
                                    "*QCD_HT2000toInf_Tune*",
                                    "*_ST_*.root",
-                                   "*_WH_HToBB*.root", "*_ZH_HToBB*.root",
+                                   "*_WH*.root", "*_ZH_HToBB*.root",
                                    "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"
                                  });
 
@@ -189,12 +175,13 @@ int main(int argc, char *argv[]){
   else if (sample=="qcd") baseline_s += " && nvlep==0 && ntk==0 && low_dphi_met &&"+c_hig_trim;
 
   //NamedFunc baseline = baseline_s && "stitch && pass && met/mht<2 && met/met_calo<2";
-  NamedFunc baseline = baseline_s && "stitch && pass && weight<1.5";
-  baseline = baseline && Functions::hem_veto;
-
-  if (sample=="ttbar") baseline = baseline && "met/met_calo<5" && Higfuncs::lead_signal_lepton_pt>30;
-  else if (sample=="zll") baseline = baseline && "met/met_calo<5";
-  else baseline = baseline && "met/mht<2 && met/met_calo<2";
+  //NamedFunc baseline = baseline_s && "stitch && pass && weight<1.5";
+  //baseline = baseline && Functions::hem_veto;
+  NamedFunc baseline = baseline_s; 
+  if (sample=="search") baseline = baseline && Higfuncs::final_pass_filters;
+  else if (sample=="ttbar") baseline = baseline && Higfuncs::final_ttbar_pass_filters && Higfuncs::lead_signal_lepton_pt>30;
+  else if (sample=="zll") baseline = baseline && Higfuncs::final_zll_pass_filters;
+  else if (sample=="qcd") baseline = baseline && Higfuncs::final_qcd_pass_filters;
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Defining processes //////////////////////////////////////////  
@@ -207,11 +194,11 @@ int main(int argc, char *argv[]){
 
   // define background processes
   auto proc_ttx = Process::MakeShared<Baby_pico>("tt+X", Process::Type::background, colors("tt_1l"),
-    attach_folder(base_dir, years, mc_skim_dir, mctags["ttx"]), baseline);
+    attach_folder(base_dir, years, mc_skim_dir, mctags["ttx"]), baseline && "stitch");
   auto proc_vjets = Process::MakeShared<Baby_pico>("V+jets", Process::Type::background, kOrange+1,
-    attach_folder(base_dir, years, mc_skim_dir, mctags["vjets"]), baseline);
+    attach_folder(base_dir, years, mc_skim_dir, mctags["vjets"]), baseline && "stitch");
   auto proc_other = Process::MakeShared<Baby_pico>("Other", Process::Type::background, colors("other"),
-    attach_folder(base_dir, years, mc_skim_dir, mctags["other"]), baseline);
+    attach_folder(base_dir, years, mc_skim_dir, mctags["other"]), baseline && "stitch");
 
   // define data or pseudo-data process
   set<string> names_data(attach_folder(base_dir, years, data_skim_dir, {"*.root"}));
@@ -239,7 +226,7 @@ int main(int argc, char *argv[]){
   vector<shared_ptr<Process> > all_procs = vector<shared_ptr<Process> >{proc_ttx, proc_vjets, proc_other};
   if(quick_test) {
     auto proc_bkg = Process::MakeShared<Baby_pico>("All_bkg", Process::Type::background, colors("tt_1l"),
-                    {base_dir+"/2016/"+mc_skim_dir+"/*TTJets_SingleLeptFromT*"}, baseline);
+                    {base_dir+"/2016/"+mc_skim_dir+"/*TTJets_SingleLeptFromT*"}, baseline && "stitch");
     all_procs = vector<shared_ptr<Process> >{proc_bkg};
     split_bkg = false;
   }
@@ -251,11 +238,13 @@ int main(int argc, char *argv[]){
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Defining scenarios  //////////////////////////////////////////
-  // NamedFunc nom_wgt = "w_lumi*w_isr"*HigUtilities::w_CNToN1N2*HigUtilities::w_years*Higfuncs::eff_higtrig;//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
-  //NamedFunc nom_wgt = "w_lumi*w_isr"*HigUtilities::w_years*Higfuncs::eff_higtrig;//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
-  //NamedFunc nom_wgt = "weight"*w_years*Higfuncs::eff_higtrig_run2;//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
-  //NamedFunc nom_wgt = "weight"*Higfuncs::eff_higtrig_run2*w_years*Functions::w_pileup;
-  NamedFunc nom_wgt = "weight"*Higfuncs::eff_higtrig_run2*w_years;
+  // NamedFunc nom_wgt = "w_lumi*w_isr"*HigUtilities::w_CNToN1N2*Higfuncs::w_years*Higfuncs::eff_higtrig;//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
+  //NamedFunc nom_wgt = "w_lumi*w_isr"*Higfuncs::w_years*Higfuncs::eff_higtrig;//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
+  //NamedFunc nom_wgt = "weight"*Higfuncs::w_years*Higfuncs::eff_higtrig_run2;//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
+  //NamedFunc nom_wgt = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Functions::w_pileup;
+  //NamedFunc nom_wgt = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
+  //NamedFunc nom_wgt = Higfuncs::final_weight;
+  NamedFunc nom_wgt = "weight"*Higfuncs::eff_higtrig_run2_v0*Higfuncs::w_years;;
 
   vector<string> scenarios;
   map<string, NamedFunc> weights;
@@ -721,7 +710,8 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
       // Printing difference between kappa and kappa_mm
       float kap = k_ordered[iplane][ibin][0], kap_mm = k_ordered_mm[iplane][ibin][0];
       TString text = ""; 
-      if(alt_scen=="data") text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-1)*100,0,1)+"%";
+      //if(alt_scen=="data") text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-1)*100,0,1)+"%"; // with respect to kappa being 1
+      if(alt_scen=="data") text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-kap)*100,0,kap_mm)+"%";
       else if (alt_scen=="mc_as_data" || alt_scen=="mc") text = "#Delta_{#kappa}="+RoundNumber((kap-1)*100,0,1)+"%";
       else /*if fake mismeasure*/ text = "#Delta_{#kappa}="+RoundNumber((kap_mm-kap)*100,0,kap)+"%";
       klabel.SetTextSize(abcd.planecuts.size()>=10 ? 0.025 : 0.035);
@@ -731,7 +721,8 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
       float kap_mmUp = k_ordered_mm[iplane][ibin][1];
       float kap_mmDown = k_ordered_mm[iplane][ibin][2];
       if(alt_scen=="data" || alt_scen=="mc_as_data") {
-        TString unc_ = RoundNumber(kap_mmUp*100,0, 1)>RoundNumber(kap_mmDown*100,0, 1) ? RoundNumber(kap_mmUp*100,0, 1) : RoundNumber(kap_mmDown*100,0, 1);
+        //TString unc_ = RoundNumber(kap_mmUp*100,0, 1)>RoundNumber(kap_mmDown*100,0, 1) ? RoundNumber(kap_mmUp*100,0, 1) : RoundNumber(kap_mmDown*100,0, 1);
+        TString unc_ = RoundNumber(kap_mmUp*100,0, kap_mm)>RoundNumber(kap_mmDown*100,0, kap_mm) ? RoundNumber(kap_mmUp*100,0, kap_mm) : RoundNumber(kap_mmDown*100,0, kap_mm);
         // text = "#sigma_{stat}=^{+"+RoundNumber(kap_mmUp*100,0, 1)+"%}_{-"+RoundNumber(kap_mmDown*100,0, 1)+"%}";
         text = "#sigma_{st}="+unc_+"%";
       } else {
@@ -963,6 +954,13 @@ vector<vector<float> > findPreds(abcd_def &abcd, vector<vector<GammaParams> > &a
       val = calcKappa(kentries_mm, kweights_mm, pow_kappa, valdown, valup);
       if(valdown<0) valdown = 0;
       kappas_mm[iplane].push_back(vector<float>({val, valup, valdown}));
+      // Print values
+      bool debug = true;
+      if (debug) {
+        cout<<"iplane: "<<iplane<<endl;
+        cout<<"Data: "<<kentries_mm[0][0]<<" "<<kentries_mm[1][0]<<" "<<kentries_mm[2][0]<<" "<<kentries_mm[3][0]<<endl;
+        cout<<"kappa: "<<val<<" "<<valup<<" "<<valdown<<endl;
+      }
       // Throwing toys to find kappas and uncertainties
       val = calcKappa(kkentries, kkweights, pow_kappa, valdown, valup);
       if(valdown<0) valdown = 0;

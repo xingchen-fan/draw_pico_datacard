@@ -755,7 +755,8 @@ double calcKappa(vector<vector<float> > &entries, vector<vector<float> > &weight
     arrow.SetArrowSize(0.015); arrow.SetLineWidth(4);
     arrow.DrawArrow(stdval, 0, stdval, histo.GetBinContent(abin));
 
-    can.SaveAs(pName);
+    can.SaveAs("plots/"+pName);
+    cout<<" open "<<"plots/"<<pName<<endl;
   } // do_plot
 
 
