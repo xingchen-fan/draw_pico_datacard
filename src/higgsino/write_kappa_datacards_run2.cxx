@@ -44,22 +44,6 @@ namespace
   string higgsino_model = "N1N2";
 }
 
-const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
-  if (b.SampleType()<0) return 1.;
-
-  double weight = 1;
-  //if (b.type()==106000) {
-  //  return 35.9;
-  //}
-  if (b.SampleType()==2016){
-    return weight*35.9;
-  } else if (b.SampleType()==2017){
-    return weight*41.5;
-  } else {
-    return weight*59.6;
-  }
-});
-
 const NamedFunc min_jet_dphi("min_jet_dphi", [](const Baby &b) -> NamedFunc::ScalarType{
   float min_dphi = 4;
   for (size_t ijet = 0; ijet < (*b.jet_phi()).size(); ++ijet) {
@@ -120,7 +104,7 @@ int main(int argc, char *argv[])
   HigUtilities::setDataProcesses(years, samplePaths, filters, sampleProcesses);
   HigUtilities::setSignalProcesses(massPoints, years, samplePaths, filters, sampleProcesses);
   
-  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years;
+  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years*Functions::w_pileup;
   if (higgsino_model=="N1N2") weight *= HigUtilities::w_CNToN1N2;
   string baseline = "!low_dphi_met && nvlep==0 && ntk==0";

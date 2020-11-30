@@ -709,7 +709,11 @@ void WriteBaseSource(const set<Variable> &vars){
   file << "  if(filename.Contains(\"2016\"))     samp_type = 2016;\n";
   file << "  if(filename.Contains(\"2017\"))     samp_type = 2017;\n";
   file << "  if(filename.Contains(\"2018\") && !filename.Contains(\"2017\"))     samp_type = 2018;\n";
-  file << "  if(filename.Contains(\"data\"))     samp_type *= -1;\n";
+  file << "  // Ignore string left to pico\n";
+  file << "  TString t_filename = filename;\n";
+  file << "  //if(filename.Contains(\"data\"))     samp_type *= -1;\n";
+  file << "  if(t_filename.Remove(0,t_filename.Index(\"/pico\")).Contains(\"data\"))     samp_type *= -1;\n";
+//  file << "  if(filename.Contains(\"data\"))     samp_type *= -1;\n";
 //   file << "  if(filename.Contains(\"SMS\"))     samp_type = 10;\n";
 //   file << "  if(filename.Contains(\"_TTJets\")) samp_type = 20;\n";
 //   file << "  if(filename.Contains(\"_WJets\"))  samp_type = 30;\n";

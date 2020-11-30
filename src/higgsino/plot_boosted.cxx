@@ -35,22 +35,6 @@ namespace{
   bool single_thread = true;
 }
 
-const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
-  if (b.SampleType()<0) return 1.;
-
-  double wgt = 1;
-  if (b.type()==106000) {
-    return 137.;
-  }
-  if (b.SampleType()==2016){
-    return wgt*35.9;
-  } else if (b.SampleType()==2017){
-    return wgt*41.5;
-  } else {
-    return wgt*59.6;
-  }
-});
-
 const NamedFunc fjet1_dphi("fjet1_dphi", [](const Baby &b) -> NamedFunc::ScalarType{
   size_t ifjet = 0;
   if ((*b.fjet_phi()).size()<=ifjet) return 4;

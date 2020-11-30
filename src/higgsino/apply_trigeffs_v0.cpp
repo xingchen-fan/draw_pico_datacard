@@ -3,11 +3,11 @@
 #include "core/process.hpp"
 #include "core/named_func.hpp"
 #include "higgsino/hig_utilities.hpp"
-#include "higgsino/apply_trigeffs_old.hpp"
+#include "higgsino/apply_trigeffs_v0.hpp"
 
 namespace Higfuncs{
 
-const NamedFunc get_0l_trigeff2016_old("get_0l_trigeff2016_old", [](const Baby &b) -> NamedFunc::ScalarType{
+const NamedFunc get_0l_trigeff2016_v0("get_0l_trigeff2016_v0", [](const Baby &b) -> NamedFunc::ScalarType{
   float errup=0., errdown=0.; // Not used, but for reference
   float eff = 1., met = b.met(), ht = b.ht();
   errup+=errdown; //suppress unused warning
@@ -104,7 +104,7 @@ const NamedFunc get_0l_trigeff2016_old("get_0l_trigeff2016_old", [](const Baby &
   return eff;
 });
 
-const NamedFunc get_0l_fakemet_trigeff2016_old("get_0l_fakemet_trigeff2016_old", [](const Baby &b) -> NamedFunc::ScalarType{
+const NamedFunc get_0l_fakemet_trigeff2016_v0("get_0l_fakemet_trigeff2016_v0", [](const Baby &b) -> NamedFunc::ScalarType{
   float errup=0., errdown=0.; // Not used, but for reference
   float eff = 1., met = b.met(), ht = b.ht();
   errup+=errdown; //suppress unused warning
@@ -221,7 +221,7 @@ const NamedFunc get_0l_fakemet_trigeff2016_old("get_0l_fakemet_trigeff2016_old",
   return eff;
 });
 
-const NamedFunc get_1el_trigeff2016_old("get_1el_trigeff2016_old", [](const Baby &b) -> NamedFunc::ScalarType{
+const NamedFunc get_1el_trigeff2016_v0("get_1el_trigeff2016_v0", [](const Baby &b) -> NamedFunc::ScalarType{
   float errup=0., errdown=0.; // Not used, but for reference
   float eff = 1., met = b.met(), el_pt = HigUtilities::signal_lepton_pt(b.el_pt(),b.el_sig());
   errup+=errdown; //suppress unused warning
@@ -288,7 +288,7 @@ const NamedFunc get_1el_trigeff2016_old("get_1el_trigeff2016_old", [](const Baby
   return eff;
 });
 
-const NamedFunc get_1mu_trigeff2016_old("get_1mu_trigeff2016_old", [](const Baby &b) -> NamedFunc::ScalarType{
+const NamedFunc get_1mu_trigeff2016_v0("get_1mu_trigeff2016_v0", [](const Baby &b) -> NamedFunc::ScalarType{
   float errup=0., errdown=0.; // Not used, but for reference
   float eff = 1., met = b.met(), mu_pt = HigUtilities::signal_lepton_pt(b.mu_pt(),b.mu_sig());
   errup+=errdown; //suppress unused warning
@@ -343,7 +343,7 @@ const NamedFunc get_1mu_trigeff2016_old("get_1mu_trigeff2016_old", [](const Baby
   return eff;
 });
 
-const NamedFunc get_2el_trigeff2016_old("get_2el_trigeff2016_old", [](const Baby &b) -> NamedFunc::ScalarType{
+const NamedFunc get_2el_trigeff2016_v0("get_2el_trigeff2016_v0", [](const Baby &b) -> NamedFunc::ScalarType{
   float errup=0., errdown=0.; // Not used, but for reference
   float eff = 1., el_pt = HigUtilities::signal_lepton_pt(b.el_pt(),b.el_sig());
   errup+=errdown; //suppress unused warning
@@ -365,7 +365,7 @@ const NamedFunc get_2el_trigeff2016_old("get_2el_trigeff2016_old", [](const Baby
   return eff;
 });
 
-const NamedFunc get_2mu_trigeff2016_old("get_2mu_trigeff2016_old", [](const Baby &b) -> NamedFunc::ScalarType{
+const NamedFunc get_2mu_trigeff2016_v0("get_2mu_trigeff2016_v0", [](const Baby &b) -> NamedFunc::ScalarType{
   float errup=0., errdown=0.; // Not used, but for reference
   float eff = 1., mu_pt = HigUtilities::signal_lepton_pt(b.mu_pt(),b.mu_sig());
   errup+=errdown; //suppress unused warning
@@ -375,7 +375,7 @@ const NamedFunc get_2mu_trigeff2016_old("get_2mu_trigeff2016_old", [](const Baby
   return eff;
 });
 
-const NamedFunc get_0l_trigeff2017_old("get_0l_trigeff2017_old", [](const Baby &b) -> NamedFunc::ScalarType{
+const NamedFunc get_0l_trigeff2017_v0("get_0l_trigeff2017_v0", [](const Baby &b) -> NamedFunc::ScalarType{
   float errup=0., errdown=0.; // Not used, but for reference
   float eff = 1., met = b.met(), ht = b.ht();
   errup+=errdown; //suppress unused warning
@@ -472,7 +472,7 @@ const NamedFunc get_0l_trigeff2017_old("get_0l_trigeff2017_old", [](const Baby &
   return eff;
 });
 
-const NamedFunc get_0l_fakemet_trigeff2017_old("get_0l_fakemet_trigeff2017_old", [](const Baby &b) -> NamedFunc::ScalarType{
+const NamedFunc get_0l_fakemet_trigeff2017_v0("get_0l_fakemet_trigeff2017_v0", [](const Baby &b) -> NamedFunc::ScalarType{
   float errup=0., errdown=0.; // Not used, but for reference
   float eff = 1., met = b.met(), ht = b.ht();
   errup+=errdown; //suppress unused warning
@@ -589,7 +589,7 @@ const NamedFunc get_0l_fakemet_trigeff2017_old("get_0l_fakemet_trigeff2017_old",
   return eff;
 });
 
-const NamedFunc get_1el_trigeff2017_old("get_1el_trigeff2017_old", [](const Baby &b) -> NamedFunc::ScalarType{
+const NamedFunc get_1el_trigeff2017_v0("get_1el_trigeff2017_v0", [](const Baby &b) -> NamedFunc::ScalarType{
   float errup=0., errdown=0.; // Not used, but for reference
   float eff = 1., met = b.met(), el_pt = HigUtilities::signal_lepton_pt(b.el_pt(),b.el_sig());
   errup+=errdown; //suppress unused warning
@@ -656,7 +656,7 @@ const NamedFunc get_1el_trigeff2017_old("get_1el_trigeff2017_old", [](const Baby
   return eff;
 });
 
-const NamedFunc get_1mu_trigeff2017_old("get_1mu_trigeff2017_old", [](const Baby &b) -> NamedFunc::ScalarType{
+const NamedFunc get_1mu_trigeff2017_v0("get_1mu_trigeff2017_v0", [](const Baby &b) -> NamedFunc::ScalarType{
   float errup=0., errdown=0.; // Not used, but for reference
   float eff = 1., met = b.met(), mu_pt = HigUtilities::signal_lepton_pt(b.mu_pt(),b.mu_sig());
   errup+=errdown; //suppress unused warning
@@ -711,7 +711,7 @@ const NamedFunc get_1mu_trigeff2017_old("get_1mu_trigeff2017_old", [](const Baby
   return eff;
 });
 
-const NamedFunc get_2el_trigeff2017_old("get_2el_trigeff2017_old", [](const Baby &b) -> NamedFunc::ScalarType{
+const NamedFunc get_2el_trigeff2017_v0("get_2el_trigeff2017_v0", [](const Baby &b) -> NamedFunc::ScalarType{
   float errup=0., errdown=0.; // Not used, but for reference
   float eff = 1., el_pt = HigUtilities::signal_lepton_pt(b.el_pt(),b.el_sig());
   errup+=errdown; //suppress unused warning
@@ -733,7 +733,7 @@ const NamedFunc get_2el_trigeff2017_old("get_2el_trigeff2017_old", [](const Baby
   return eff;
 });
 
-const NamedFunc get_2mu_trigeff2017_old("get_2mu_trigeff2017_old", [](const Baby &b) -> NamedFunc::ScalarType{
+const NamedFunc get_2mu_trigeff2017_v0("get_2mu_trigeff2017_v0", [](const Baby &b) -> NamedFunc::ScalarType{
   float errup=0., errdown=0.; // Not used, but for reference
   float eff = 1., mu_pt = HigUtilities::signal_lepton_pt(b.mu_pt(),b.mu_sig());
   errup+=errdown; //suppress unused warning
@@ -743,7 +743,7 @@ const NamedFunc get_2mu_trigeff2017_old("get_2mu_trigeff2017_old", [](const Baby
   return eff;
 });
 
-const NamedFunc get_0l_trigeff2018_old("get_0l_trigeff2018_old", [](const Baby &b) -> NamedFunc::ScalarType{
+const NamedFunc get_0l_trigeff2018_v0("get_0l_trigeff2018_v0", [](const Baby &b) -> NamedFunc::ScalarType{
   float errup=0., errdown=0.; // Not used, but for reference
   float eff = 1., met = b.met(), ht = b.ht();
   errup+=errdown; //suppress unused warning
@@ -840,7 +840,7 @@ const NamedFunc get_0l_trigeff2018_old("get_0l_trigeff2018_old", [](const Baby &
   return eff;
 });
 
-const NamedFunc get_0l_fakemet_trigeff2018_old("get_0l_fakemet_trigeff2018_old", [](const Baby &b) -> NamedFunc::ScalarType{
+const NamedFunc get_0l_fakemet_trigeff2018_v0("get_0l_fakemet_trigeff2018_v0", [](const Baby &b) -> NamedFunc::ScalarType{
   float errup=0., errdown=0.; // Not used, but for reference
   float eff = 1., met = b.met(), ht = b.ht();
   errup+=errdown; //suppress unused warning
@@ -957,7 +957,7 @@ const NamedFunc get_0l_fakemet_trigeff2018_old("get_0l_fakemet_trigeff2018_old",
   return eff;
 });
 
-const NamedFunc get_1el_trigeff2018_old("get_1el_trigeff2018_old", [](const Baby &b) -> NamedFunc::ScalarType{
+const NamedFunc get_1el_trigeff2018_v0("get_1el_trigeff2018_v0", [](const Baby &b) -> NamedFunc::ScalarType{
   float errup=0., errdown=0.; // Not used, but for reference
   float eff = 1., met = b.met(), el_pt = HigUtilities::signal_lepton_pt(b.el_pt(),b.el_sig());
   errup+=errdown; //suppress unused warning
@@ -1024,7 +1024,7 @@ const NamedFunc get_1el_trigeff2018_old("get_1el_trigeff2018_old", [](const Baby
   return eff;
 });
 
-const NamedFunc get_1mu_trigeff2018_old("get_1mu_trigeff2018_old", [](const Baby &b) -> NamedFunc::ScalarType{
+const NamedFunc get_1mu_trigeff2018_v0("get_1mu_trigeff2018_v0", [](const Baby &b) -> NamedFunc::ScalarType{
   float errup=0., errdown=0.; // Not used, but for reference
   float eff = 1., met = b.met(), mu_pt = HigUtilities::signal_lepton_pt(b.mu_pt(),b.mu_sig());
   errup+=errdown; //suppress unused warning
@@ -1079,7 +1079,7 @@ const NamedFunc get_1mu_trigeff2018_old("get_1mu_trigeff2018_old", [](const Baby
   return eff;
 });
 
-const NamedFunc get_2el_trigeff2018_old("get_2el_trigeff2018_old", [](const Baby &b) -> NamedFunc::ScalarType{
+const NamedFunc get_2el_trigeff2018_v0("get_2el_trigeff2018_v0", [](const Baby &b) -> NamedFunc::ScalarType{
   float errup=0., errdown=0.; // Not used, but for reference
   float eff = 1., el_pt = HigUtilities::signal_lepton_pt(b.el_pt(),b.el_sig());
   errup+=errdown; //suppress unused warning
@@ -1101,7 +1101,7 @@ const NamedFunc get_2el_trigeff2018_old("get_2el_trigeff2018_old", [](const Baby
   return eff;
 });
 
-const NamedFunc get_2mu_trigeff2018_old("get_2mu_trigeff2018_old", [](const Baby &b) -> NamedFunc::ScalarType{
+const NamedFunc get_2mu_trigeff2018_v0("get_2mu_trigeff2018_v0", [](const Baby &b) -> NamedFunc::ScalarType{
   float errup=0., errdown=0.; // Not used, but for reference
   float eff = 1., mu_pt = HigUtilities::signal_lepton_pt(b.mu_pt(),b.mu_sig());
   errup+=errdown; //suppress unused warning

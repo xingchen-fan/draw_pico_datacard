@@ -143,22 +143,6 @@ void replaceValuesInTexTablename(string const & filename, string const & newFile
   cout<<"pdflatex "<<newFilename<<" &> /dev/null; #./python/texify.py tables"<<endl;
 }
 
-const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
-  if (b.SampleType()<0) return 1.;
-
-  double weight = 1;
-  //if (b.type()==106000) {
-  //  return 35.9;
-  //}
-  if (b.SampleType()==2016){
-    return weight*35.9;
-  } else if (b.SampleType()==2017){
-    return weight*41.5;
-  } else {
-    return weight*59.6;
-  }
-});
-
 const NamedFunc w_years_scaleup("w_years_scaleup", [](const Baby &b) -> NamedFunc::ScalarType{
   if (b.SampleType()<0) return 1.;
 
@@ -510,7 +494,7 @@ int main(int argc, char *argv[]){
 
   //NamedFunc weight_a = "w_lumi*w_isr"*Higfuncs::eff_higtrig*w_years_scaleup;
   //NamedFunc weight_a = "w_lumi*w_isr"*Higfuncs::eff_higtrig*w_years;
-  NamedFunc weight_a = "weight"*Higfuncs::eff_higtrig*w_years;
+  NamedFunc weight_a = "weight"*Higfuncs::eff_higtrig*Higfuncs::w_years;
   //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig_run2*w_years;
   //NamedFunc weight_a = "weight"*Higfuncs::eff_higtrig*w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years;
@@ -532,7 +516,7 @@ int main(int argc, char *argv[]){
 
   //NamedFunc weight_b = "w_lumi*w_isr"*Higfuncs::eff_higtrig*w_years;
   //NamedFunc weight_b = "w_lumi*w_isr"*Higfuncs::eff_higtrig_run2*w_years;
-  NamedFunc weight_b = "weight"*Higfuncs::eff_higtrig*w_years*Functions::w_pileup;
+  NamedFunc weight_b = "weight"*Higfuncs::eff_higtrig*Higfuncs::w_years*Functions::w_pileup;
   //NamedFunc weight_b = "weight"*Higfuncs::eff_higtrig_run2*w_years;
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////

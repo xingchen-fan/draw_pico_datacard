@@ -13,6 +13,6 @@ namespace Higfuncs{
   extern const NamedFunc get_1mu_trigeff2017;
   extern const NamedFunc get_2el_trigeff2017;
   extern const NamedFunc get_2mu_trigeff2017;
-    }
+}
 
 #endif

@@ -48,7 +48,7 @@ namespace Higfuncs{
   //extern const NamedFunc trig_hig;
   extern const NamedFunc eff_higtrig;
   extern const NamedFunc eff_higtrig_run2;
-  extern const NamedFunc eff_higtrig_run2_old;
+  extern const NamedFunc eff_higtrig_run2_v0;
   extern const NamedFunc err_higtrig;
   extern const NamedFunc weight_higd;
   extern const NamedFunc pico_weight_higd;
@@ -76,9 +76,12 @@ namespace Higfuncs{
   extern const NamedFunc hem_weight;
   extern const NamedFunc pass_filters;
   extern const NamedFunc final_pass_filters;
+  extern const NamedFunc final_ttbar_pass_filters;
+  extern const NamedFunc final_zll_pass_filters;
+  extern const NamedFunc final_qcd_pass_filters;
 
   // weights
-  extern const NamedFunc w_year;
+  extern const NamedFunc w_years;
   extern const NamedFunc final_weight;
 
   //triggers
@@ -88,7 +91,10 @@ namespace Higfuncs{
   extern const NamedFunc mu_trigger;
   extern const NamedFunc ht_trigger;
   extern const NamedFunc jetht_trigger;
-  extern const NamedFunc met_trigger;
+
+  extern const NamedFunc met_trigger_v0;
+  extern const NamedFunc el_trigger_v0;
+  extern const NamedFunc mu_trigger_v0;
 
   //jetid modified variables
   extern const NamedFunc jetid_njet;
