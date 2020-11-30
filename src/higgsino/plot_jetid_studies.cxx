@@ -86,8 +86,9 @@ int main(int argc, char *argv[]){
   string higgsino_version = "";
 
   // Set options
-  string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
+  //string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
   //string mc_base_folder = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado";
+  string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
   string mc_skim_folder = "mc/merged_higmc_higloose/";
   string ttbar_mc_skim_folder = "mc/merged_higmc_higlep1T/";
 
@@ -97,7 +98,7 @@ int main(int argc, char *argv[]){
   string ttbar_data_skim_folder = "data/skim_higlep1T/";
 
   //string sig_base_folder = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado/";
-  string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
+  string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo"+higgsino_version+"/";
   string ttbar_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higlep1T/";
 
   set<int> years;
@@ -116,7 +117,7 @@ int main(int argc, char *argv[]){
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig*w_years;
   //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig_run2*w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years*Functions::w_pileup;
-  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years;
+  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2_old*w_years;
   //if (years.size()==1 && *years.begin()==2016) weight *= "137.";
   //else weight *= w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years;
