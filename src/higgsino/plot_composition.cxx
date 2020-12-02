@@ -31,22 +31,6 @@ using namespace std;
 using namespace PlotOptTypes;
 using namespace Higfuncs;
 
-const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
-  if (b.SampleType()<0) return 1.;
-
-  double weight = 1;
-  if (b.type()==106000) {
-    return 35.9;
-  }
-  if (b.SampleType()==2016){
-    return weight*35.9;
-  } else if (b.SampleType()==2017){
-    return weight*41.5;
-  } else {
-    return weight*59.6;
-  }
-});
-
 namespace{
   bool single_thread = false;
 }

@@ -147,6 +147,30 @@ void replaceValuesInTexTablename(string const & filename, string const & newFile
   cout<<"pdflatex "<<newFilename<<" &> /dev/null; #./python/texify.py tables"<<endl;
 }
 
+const NamedFunc w_years_scaleup("w_years_scaleup", [](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.SampleType()<0) return 1.;
+
+  double weight = 1;
+  //if (b.type()==106000) {
+  //  return 35.9;
+  //}
+  return weight*137;
+});
+
+string getLuminosityString(string const & year_string) {
+  set<int> years;
+  if (year_string == "run2") years = {2016, 2017, 2018};
+  else HigUtilities::parseYears(year_string, years);
+  float total_luminosity = 0;
+  for (auto const & year : years) {
+    if (year == 2016) total_luminosity += 35.9;
+    if (year == 2017) total_luminosity += 41.5;
+    if (year == 2018) total_luminosity += 60;
+  }
+  string total_luminosity_string = RoundNumber(total_luminosity, 1, 1).Data();
+  return total_luminosity_string;
+}
+
 // nanoAodFolder: /net/cms29/cms29r0/pico/NanoAODv5/
 // production: higgsino_humboldt
 // dataType: mc/data/signal
@@ -713,7 +737,6 @@ int main(int argc, char *argv[]){
   //NamedFunc weight_b = Higfuncs::final_weight;
   NamedFunc weight_b = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
   if (trigger_version_b==0) weight_b = "weight"*Higfuncs::eff_higtrig_run2_v0*Higfuncs::w_years;
-
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Setup plotMaker    //////////////////////////////////////////
 

@@ -376,22 +376,6 @@ const NamedFunc basecut("basecut", [](const Baby &b) -> NamedFunc::ScalarType{
   return b.met()>150&&"ntk==0&&!low_dphi_met&&nvlep==0";
 });
 
-const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
-  if (b.SampleType()<0) return 1.;
-
-  double wgt = 1;
-  if (b.type()==106000) {
-    return 35.9;
-  }
-  if (b.SampleType()==2016){
-    return wgt*35.9;
-  } else if (b.SampleType()==2017){
-    return wgt*41.5;
-  } else {
-    return wgt*59.6;
-  }
-});
-
 // TODO debug
 vector<int> getJetTypes(vector<float> const & jet_deepcsv, vector<bool> const & jet_islep,
                          vector<float> const & jet_pt, vector<float> const & jet_eta, vector<float> const & jet_phi, vector<float> const & jet_m, 

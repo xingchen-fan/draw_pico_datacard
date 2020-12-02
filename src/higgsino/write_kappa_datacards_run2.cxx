@@ -114,7 +114,9 @@ int main(int argc, char *argv[])
   
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Functions::w_pileup;
-  NamedFunc weight = Higfuncs::final_weight;
+  //NamedFunc weight = Higfuncs::final_weight;
+  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
+
   if (higgsino_model=="N1N2") weight *= HigUtilities::w_CNToN1N2;
   string baseline = "!low_dphi_met && nvlep==0 && ntk==0";
   string higtrim = "hig_cand_drmax[0]<=2.2 && hig_cand_dm[0] <= 40 && hig_cand_am[0]<=200 && met/mht<2 && met/met_calo<2&& weight<1.5";

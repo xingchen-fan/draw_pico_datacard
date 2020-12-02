@@ -1711,20 +1711,6 @@ using namespace std;
 using namespace PlotOptTypes;
 using namespace Higfuncs;
 
-const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
-  if (b.SampleType()<0) return 1.;
-  if (b.type()/1000==0) return 1.; //data
-
-  double weight = 1;
-  if (b.SampleType()==2016){
-    return weight*35.9;
-  } else if (b.SampleType()==2017){
-    return weight*41.5;
-  } else {
-    return weight*59.6;
-  }
-});
-
 const NamedFunc old_lepton_trig("old_lepton_trig",  [](const Baby &b) -> NamedFunc::ScalarType{
   return b.HLT_Ele27_WPTight_Gsf() || b.HLT_Ele35_WPTight_Gsf() || b.HLT_Ele115_CaloIdVT_GsfTrkIdT() || b.HLT_IsoMu24() || b.HLT_IsoMu27() || b.HLT_Mu50();
 });
@@ -2066,7 +2052,7 @@ int main(int argc, char *argv[]){
     if (!b.pass_htratio_dphi_tight()) return false;
     //if ((b.type()/1000 == 106)  && !b.pass_jets()) return false; //only for fastsim
     if (!b.pass_jets()) return false; //only for fastsim
-    if ((abs(b.SampleType())==2017 || abs(b.SampleType()==2018)) && !Higfuncs::pass_ecalnoisejet.GetScalar(b)) return false; 
+    if ((abs(b.SampleType())==2017 || abs(b.SampleType())==2018) && !Higfuncs::pass_ecalnoisejet.GetScalar(b)) return false; 
     if ((abs(b.SampleType())==2018 && b.type()/1000 == 0) && !Higfuncs::pass_hemveto.GetScalar(b)) return false;
     return true;
   });
@@ -2079,7 +2065,7 @@ int main(int argc, char *argv[]){
     if (!b.pass_htratio_dphi_tight()) return false;
     //if ((b.type()/1000 == 106)  && !b.pass_jets()) return false; //only for fastsim
     if (!b.pass_jets()) return false; //only for fastsim
-    //if ((abs(b.SampleType())==2017 || abs(b.SampleType()==2018)) && !Higfuncs::pass_ecalnoisejet.GetScalar(b)) return false; 
+    //if ((abs(b.SampleType())==2017 || abs(b.SampleType())==2018) && !Higfuncs::pass_ecalnoisejet.GetScalar(b)) return false; 
     if ((abs(b.SampleType())==2018 && b.type()/1000 == 0) && !Higfuncs::pass_hemveto.GetScalar(b)) return false;
     return true;
   });

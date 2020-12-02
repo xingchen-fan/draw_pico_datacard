@@ -44,7 +44,6 @@ namespace{
   string lepton_type = "";
 }
 
-
 const NamedFunc goodJet_phi("goodJet_phi", [](const Baby &b) -> NamedFunc::VectorType{
   vector<double> jet_phi;
   jet_phi.reserve((*b.jet_isgood()).size());

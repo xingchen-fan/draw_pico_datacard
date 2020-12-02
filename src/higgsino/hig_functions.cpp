@@ -1,4 +1,5 @@
 #include "higgsino/hig_functions.hpp"
+#include "higgsino/apply_trigeffs_v0.hpp"
 #include "higgsino/apply_trigeffs2016.hpp"
 #include "higgsino/apply_trigeffs2017.hpp"
 #include "higgsino/apply_trigeffs2018.hpp"
@@ -1114,7 +1115,6 @@ const NamedFunc pass_hemveto("pass_hemveto", [](const Baby &b) -> NamedFunc::Sca
     if (abs(b.SampleType())!=2018) return true; // accept 2016 and 2017 data and mc
     if (b.SampleType()==-2018 && b.run() < 319077) return true; // accept part of 2018 data
     if (b.SampleType()==2018 && (b.event()%1961) >= 1296) return true; //accept part of 2018 mc
-
     bool pass_hem = true;
     for (unsigned int el_idx = 0; el_idx < b.el_pt()->size(); el_idx++) {
       if (b.el_miniso()->at(el_idx) < 0.1 && -3.0 < b.el_eta()->at(el_idx) && b.el_eta()->at(el_idx) < -1.4 && -1.57 < b.el_phi()->at(el_idx) && b.el_phi()->at(el_idx) < -0.87) {
@@ -1148,7 +1148,6 @@ const NamedFunc pass_filters("pass_filters", [](const Baby &b) -> NamedFunc::Sca
   //if ((b.type()/1000 == 106)  && !b.pass_jets()) return false; //only for fastsim
   if (!b.pass_jets()) return false; //was modified
   if ((abs(b.SampleType())==2017 || abs(b.SampleType())==2018) && !Higfuncs::pass_ecalnoisejet.GetScalar(b)) return false; 
-  //if ((abs(b.SampleType())==2018 && b.type()/1000 == 0) && !Higfuncs::pass_hemveto.GetScalar(b)) return false;
   if (!Higfuncs::pass_hemveto.GetScalar(b)) return false;
   return true;
 });
