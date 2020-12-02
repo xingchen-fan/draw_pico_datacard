@@ -203,11 +203,11 @@ const NamedFunc wgt_syst_ttx("wgt_syst_ttx",[](const Baby &b) -> NamedFunc::Scal
     b.type()==11000) {                       // tttt
     if ((*b.hig_cand_am())[0]<=100 || ((*b.hig_cand_am())[0]>140 && (*b.hig_cand_am())[0]<=200)) {
       if (b.nbt()>=2 && b.nbm()==3 && b.nbl()==3)  {// 3b
-        if ((*b.hig_cand_drmax())[0]<=1.1) return 0.1; // low dr
-        else return 0.05; // high dr
+        if ((*b.hig_cand_drmax())[0]<=1.1) return 0.13; // low dr
+        else return 0.02; // high dr
       } else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) {// 4b
-        if ((*b.hig_cand_drmax())[0]<=1.1) return 0.18; // low dr 
-        else return 0.15; // high dr
+        if ((*b.hig_cand_drmax())[0]<=1.1) return 0.16; // low dr 
+        else return 0.07; // high dr
       }
     }
   }
@@ -220,8 +220,8 @@ const NamedFunc wgt_syst_vjets("wgt_syst_vjets",[](const Baby &b) -> NamedFunc::
     (b.type()>=6000 && b.type()<7000)) {   // dyjets
     if ((*b.hig_cand_am())[0]<=100 || ((*b.hig_cand_am())[0]>140 && (*b.hig_cand_am())[0]<=200))
       if (b.nbt()>=2 && b.nbm()>=3) { // high b
-        if ((*b.hig_cand_drmax())[0]<=1.1) return 0.22; // low dr
-        else return 0.04; // high dr
+        if ((*b.hig_cand_drmax())[0]<=1.1) return 0.16; // low dr
+        else return 0.05; // high dr
       }
   }
   return 0;
@@ -230,7 +230,10 @@ const NamedFunc wgt_syst_vjets("wgt_syst_vjets",[](const Baby &b) -> NamedFunc::
 const NamedFunc wgt_syst_qcd("wgt_syst_qcd",[](const Baby &b) -> NamedFunc::ScalarType{
   if ( (b.type()>=7000 && b.type()<8000)) { // qcd
     if ((*b.hig_cand_am())[0]<=100 || ((*b.hig_cand_am())[0]>140 && (*b.hig_cand_am())[0]<=200))
-      if (b.nbt()>=2 && b.nbm()>=3) return 0.13; // high b
+      if (b.nbt()>=2 && b.nbm()>=3) { // high b
+        if ((*b.hig_cand_drmax())[0]<=1.1) return 0.11; // low dr
+        else return 0.09; // high dr
+      }
   }
   return 0;
 });
@@ -969,6 +972,27 @@ const NamedFunc h2b2_pt("h2b2_pt",[](const Baby &b) -> NamedFunc::ScalarType{
   return (*b.jet_pt())[bbjet_indices.at(3)];
 });
 
+const NamedFunc h1b1_eta("h1b1_eta",[](const Baby &b) -> NamedFunc::ScalarType{
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
+  return (*b.jet_eta())[bbjet_indices.at(0)];
+});
+
+const NamedFunc h1b2_eta("h1b2_eta",[](const Baby &b) -> NamedFunc::ScalarType{
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
+  return (*b.jet_eta())[bbjet_indices.at(1)];
+});
+
+const NamedFunc h2b1_eta("h2b1_eta",[](const Baby &b) -> NamedFunc::ScalarType{
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
+  return (*b.jet_eta())[bbjet_indices.at(2)];
+});
+
+const NamedFunc h2b2_eta("h2b2_eta",[](const Baby &b) -> NamedFunc::ScalarType{
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
+  return (*b.jet_eta())[bbjet_indices.at(3)];
+});
+
+
 const NamedFunc h1_dr("h1_dr",[](const Baby &b) -> NamedFunc::ScalarType{
   vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
   ROOT::Math::PtEtaPhiMVector h1b1 ((*b.jet_pt())[bbjet_indices.at(0)], (*b.jet_eta())[bbjet_indices.at(0)], (*b.jet_phi())[bbjet_indices.at(0)], (*b.jet_m())[bbjet_indices.at(0)]);
@@ -1129,9 +1153,9 @@ const NamedFunc pass_filters("pass_filters", [](const Baby &b) -> NamedFunc::Sca
   return true;
 });
 
-const NamedFunc final_pass_filters = pass_filters&& "met/mht<2 && met/met_calo<2";
-const NamedFunc final_ttbar_pass_filters = pass_filters&& "met/met_calo<5";
-const NamedFunc final_zll_pass_filters = pass_filters&& "met/met_calo<5";
+const NamedFunc final_pass_filters = pass_filters&& "met/mht<2 && met/met_calo<2&&weight<1.5";
+const NamedFunc final_ttbar_pass_filters = pass_filters&& "met/met_calo<5&&weight<1.5";
+const NamedFunc final_zll_pass_filters = pass_filters&& "met/met_calo<5&&weight<1.5";
 const NamedFunc final_qcd_pass_filters = pass_filters&& "met/mht<2 && met/met_calo<2";
 
 const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
@@ -1176,6 +1200,12 @@ const NamedFunc ht_trigger("ht_trigger", [](const Baby &b) -> NamedFunc::ScalarT
 });
 
 const NamedFunc jetht_trigger = "HLT_PFJet500" || ht_trigger;
+
+const NamedFunc met_trigger_v0 = "(HLT_PFMET110_PFMHT110_IDTight || HLT_PFMETNoMu110_PFMHTNoMu110_IDTight || HLT_PFMET120_PFMHT120_IDTight || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight || HLT_PFMET120_PFMHT120_IDTight_PFHT60 || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60)";
+
+const NamedFunc el_trigger_v0 = "(HLT_Ele27_WPTight_Gsf || HLT_Ele35_WPTight_Gsf || HLT_Ele115_CaloIdVT_GsfTrkIdT)";
+
+const NamedFunc mu_trigger_v0 = "(HLT_IsoMu24 || HLT_IsoMu27 || HLT_Mu50)";
 
 const NamedFunc jetid_njet("jetid_njet", [](const Baby &b) -> NamedFunc::ScalarType{
   unsigned int njet = 0;
