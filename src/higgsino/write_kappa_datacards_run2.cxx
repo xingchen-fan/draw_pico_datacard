@@ -44,22 +44,6 @@ namespace
   string higgsino_model = "N1N2";
 }
 
-const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
-  if (b.SampleType()<0) return 1.;
-
-  double weight = 1;
-  //if (b.type()==106000) {
-  //  return 35.9;
-  //}
-  if (b.SampleType()==2016){
-    return weight*35.9;
-  } else if (b.SampleType()==2017){
-    return weight*41.5;
-  } else {
-    return weight*59.6;
-  }
-});
-
 const NamedFunc min_jet_dphi("min_jet_dphi", [](const Baby &b) -> NamedFunc::ScalarType{
   float min_dphi = 4;
   for (size_t ijet = 0; ijet < (*b.jet_phi()).size(); ++ijet) {
@@ -94,15 +78,22 @@ int main(int argc, char *argv[])
   string total_luminosity_string = RoundNumber(total_luminosity, 1, 1).Data();
 
   map<string, string> samplePaths;
-  //samplePaths["mc_2016"] = baseFolder + "/cms29r0/pico/NanoAODv5/higgsino_eldorado/2016/mc/merged_higmc_preselect/";
-  //samplePaths["signal_2016"] = baseFolder + "/cms29r0/pico/NanoAODv5/higgsino_eldorado/2016/SMS-TChiHH_2D/merged_higmc_preselect/";
-  //samplePaths["data_2016"] = baseFolder + "/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higloose/";
-  samplePaths["mc_2016"] = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/2016/mc/merged_higmc_preselect/";
-  samplePaths["signal_2016"] = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/2016/SMS-TChiHH_2D/merged_higmc_preselect/";
-  samplePaths["mc_2017"] = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldtv3/2017/mc/merged_higmc_preselect/";
-  samplePaths["signal_2017"] = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldtv3/2017/SMS-TChiHH_2D/merged_higmc_preselect/";
-  samplePaths["mc_2018"] = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/2018/mc/merged_higmc_preselect/";
-  samplePaths["signal_2018"] = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/2018/SMS-TChiHH_2D/merged_higmc_preselect/";
+  ////samplePaths["mc_2016"] = baseFolder + "/cms29r0/pico/NanoAODv5/higgsino_eldorado/2016/mc/merged_higmc_preselect/";
+  ////samplePaths["signal_2016"] = baseFolder + "/cms29r0/pico/NanoAODv5/higgsino_eldorado/2016/SMS-TChiHH_2D/merged_higmc_preselect/";
+  ////samplePaths["data_2016"] = baseFolder + "/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higloose/";
+  //samplePaths["mc_2016"] = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/2016/mc/merged_higmc_preselect/";
+  //samplePaths["signal_2016"] = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/2016/SMS-TChiHH_2D/merged_higmc_preselect/";
+  //samplePaths["mc_2017"] = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldtv3/2017/mc/merged_higmc_preselect/";
+  //samplePaths["signal_2017"] = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldtv3/2017/SMS-TChiHH_2D/merged_higmc_preselect/";
+  //samplePaths["mc_2018"] = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/2018/mc/merged_higmc_preselect/";
+  //samplePaths["signal_2018"] = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/2018/SMS-TChiHH_2D/merged_higmc_preselect/";
+
+  samplePaths["mc_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/2016/mc/merged_higmc_preselect/";
+  samplePaths["signal_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/2016/SMS-TChiHH_2D/merged_higmc_preselect/";
+  samplePaths["mc_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/2017/mc/merged_higmc_preselect/";
+  samplePaths["signal_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/2017/SMS-TChiHH_2D/merged_higmc_preselect/";
+  samplePaths["mc_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/2018/mc/merged_higmc_preselect/";
+  samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/2018/SMS-TChiHH_2D/merged_higmc_preselect/";
 
   // massPoints = { {"1000","1"} }
   vector<pair<string, string> > massPoints;
@@ -110,7 +101,8 @@ int main(int argc, char *argv[])
   else HigUtilities::parseMassPoints(mass_points_string, massPoints);
 
   //NamedFunc filters = HigUtilities::pass_2016;
-  NamedFunc filters = Functions::hem_veto && "pass && met/mht<2 && met/met_calo<2";
+  //NamedFunc filters = Functions::hem_veto && "pass && met/mht<2 && met/met_calo<2";
+  NamedFunc filters = Higfuncs::final_pass_filters;
 
   // sampleProcesses[mc, data, signal]
   map<string, vector<shared_ptr<Process> > > sampleProcesses;
@@ -120,11 +112,12 @@ int main(int argc, char *argv[])
   HigUtilities::setDataProcesses(years, samplePaths, filters, sampleProcesses);
   HigUtilities::setSignalProcesses(massPoints, years, samplePaths, filters, sampleProcesses);
   
-  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years;
-  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years*Functions::w_pileup;
+  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
+  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Functions::w_pileup;
+  NamedFunc weight = Higfuncs::final_weight;
   if (higgsino_model=="N1N2") weight *= HigUtilities::w_CNToN1N2;
   string baseline = "!low_dphi_met && nvlep==0 && ntk==0";
-  string higtrim = "hig_cand_drmax[0]<=2.2 && hig_cand_dm[0] <= 40 && hig_cand_am[0]<=200";
+  string higtrim = "hig_cand_drmax[0]<=2.2 && hig_cand_dm[0] <= 40 && hig_cand_am[0]<=200 && met/mht<2 && met/met_calo<2&& weight<1.5";
   if (tag=="resolved") baseline += "&& njet>=4 && njet<=5 && nbt>=2 && "+higtrim;
   else if (tag=="boosted") {
     baseline += " && ht>600 && nfjet>1 && fjet_pt[0]>300 && fjet_pt[1]>300";
@@ -158,21 +151,21 @@ int main(int argc, char *argv[])
   map<string, vector<pair<string, string> > > dimensionBins;
   if (dimensionFilePath==""){
     if (tag=="resolved") {
-      //// Original
-      //dimensionBins["met"].push_back({"met0", "met>150 && met<=200"});
-      //dimensionBins["met"].push_back({"met1", "met>200 && met<=300"});
-      //dimensionBins["met"].push_back({"met2", "met>300 && met<=400"});
-      //dimensionBins["met"].push_back({"met3", "met>400"});
-      //dimensionBins["drmax"].push_back({"drmax0", "hig_cand_drmax[0]<=1.1"});
-      //dimensionBins["drmax"].push_back({"drmax1", "hig_cand_drmax[0]>1.1"});
-
-      // Slightly lower met binning
+      // Original
       dimensionBins["met"].push_back({"met0", "met>150 && met<=200"});
-      dimensionBins["met"].push_back({"met1", "met>200 && met<=250"});
-      dimensionBins["met"].push_back({"met2", "met>250 && met<=325"});
-      dimensionBins["met"].push_back({"met3", "met>325"});
+      dimensionBins["met"].push_back({"met1", "met>200 && met<=300"});
+      dimensionBins["met"].push_back({"met2", "met>300 && met<=400"});
+      dimensionBins["met"].push_back({"met3", "met>400"});
       dimensionBins["drmax"].push_back({"drmax0", "hig_cand_drmax[0]<=1.1"});
       dimensionBins["drmax"].push_back({"drmax1", "hig_cand_drmax[0]>1.1"});
+
+      //// Slightly lower met binning
+      //dimensionBins["met"].push_back({"met0", "met>150 && met<=200"});
+      //dimensionBins["met"].push_back({"met1", "met>200 && met<=250"});
+      //dimensionBins["met"].push_back({"met2", "met>250 && met<=325"});
+      //dimensionBins["met"].push_back({"met3", "met>325"});
+      //dimensionBins["drmax"].push_back({"drmax0", "hig_cand_drmax[0]<=1.1"});
+      //dimensionBins["drmax"].push_back({"drmax1", "hig_cand_drmax[0]>1.1"});
 
       //// 3 met bin
       //dimensionBins["met"].push_back({"met0", "met>150 && met<=200"});
@@ -273,7 +266,7 @@ int main(int argc, char *argv[])
       HigWriteDataCards::setDataCardSignalBackground(process->name_, "signal", mYields, sampleBins, tableValues);
       HigWriteDataCards::setDataCardSignalStatistics(process->name_, "signal", mYields, sampleBins, tableValues);      
     }
-    //HigWriteDataCards::setDataCardControlSystematics(controlSystematics, sampleBins, tableValues);
+    HigWriteDataCards::setDataCardControlSystematics(controlSystematics, sampleBins, tableValues);
     HigWriteDataCards::writeTableValues(tableValues,cardFile);
     tableValues.clear();
     HigWriteDataCards::setDataCardBackground(mYields, sampleBins, "mc", tableValues);
@@ -317,64 +310,59 @@ namespace HigWriteDataCards{
         kappa_uncertainties[kappaName] = kappa_uncertainty;
       }
     }
-
-    //for (unsigned iMet = 0; iMet < dimensionBins["met"].size(); iMet++) {
-    //  for (unsigned iDrmax = 0 ; iDrmax < dimensionBins["drmax"].size(); iDrmax++) {
-    //    for (unsigned iXbin = 0; iXbin < 2; iXbin++) {
-    //      GammaParams xsig_ysig = mYields.at("mc_xsig"+to_string(iXbin)+"_ysig_met"+to_string(iMet)+"_drmax"+to_string(iDrmax)).first;
-    //      GammaParams xsig_ybkg = mYields.at("mc_xsig"+to_string(iXbin)+"_ybkg_met"+to_string(iMet)+"_drmax"+to_string(iDrmax)).first;
-    //      GammaParams xbkg_ysig = mYields.at("mc_xbkg_ysig_met"+to_string(iMet)+"_drmax"+to_string(iDrmax)).first;
-    //      GammaParams xbkg_ybkg = mYields.at("mc_xbkg_ybkg_met"+to_string(iMet)+"_drmax"+to_string(iDrmax)).first;
-    //      vector<vector<float> > entries = {{static_cast<float>(xbkg_ybkg.NEffective())}, {static_cast<float>(xsig_ybkg.NEffective())}, {static_cast<float>(xbkg_ysig.NEffective())}, {static_cast<float>(xsig_ysig.NEffective())}};
-    //      vector<vector<float> > entry_weights = {{static_cast<float>(xbkg_ybkg.Weight())}, {static_cast<float>(xsig_ybkg.Weight())}, {static_cast<float>(xbkg_ysig.Weight())}, {static_cast<float>(xsig_ysig.Weight())}};
-    //      vector<float> powers = {1, -1, -1, 1};
-    //      float kappa_up = 0, kappa_down = 0;
-    //      double kappa = calcKappa(entries, entry_weights, powers, kappa_down, kappa_up);
-    //      double kappa_uncertainty = kappa_up>kappa_down ? kappa_up:kappa_down;
-    //      //cout<<xsig_ysig.Yield()<<" "<<xsig_ybkg.Yield()<<" "<<xbkg_ysig.Yield()<<" "<<xbkg_ybkg.Yield()<<endl;
-    //      //cout<<"  kappa: "<<kappa<<" stat. uncertainty: "<<kappa_uncertainty<<endl;
-    //      string kappaName = "xsig"+to_string(iXbin)+"_ysig_met"+to_string(iMet)+"_drmax"+to_string(iDrmax);
-    //      kappas[kappaName] = kappa;
-    //      kappa_uncertainties[kappaName] = kappa_uncertainty;
-    //    }
-    //  }
-    //}
   }
 
   void setControlSystematics(map<string, map<string, float> > & controlSystematics) {
-    controlSystematics["xsig0_ybkg_met0_drmax0"]["ttbar"] = 1.09; 
-    controlSystematics["xsig1_ybkg_met0_drmax0"]["ttbar"] = 1.19;
-    controlSystematics["xsig0_ybkg_met0_drmax1"]["ttbar"] = 1.05;
-    controlSystematics["xsig1_ybkg_met0_drmax1"]["ttbar"] = 1.15;
-    controlSystematics["xsig0_ybkg_met1_drmax0"]["ttbar"] = 1.08;
-    controlSystematics["xsig1_ybkg_met1_drmax0"]["ttbar"] = 1.20;
-    controlSystematics["xsig0_ybkg_met1_drmax1"]["ttbar"] = 1.04;
-    controlSystematics["xsig1_ybkg_met1_drmax1"]["ttbar"] = 1.15;
-    controlSystematics["xsig0_ybkg_met2_drmax0"]["ttbar"] = 1.05;
-    controlSystematics["xsig1_ybkg_met2_drmax0"]["ttbar"] = 1.06;
-    controlSystematics["xsig0_ybkg_met2_drmax1"]["ttbar"] = 1.04;
-    controlSystematics["xsig1_ybkg_met2_drmax1"]["ttbar"] = 1.12;
+    controlSystematics["xsig0_ybkg_met0_drmax0"]["ttbar"] = 1.12; 
+    controlSystematics["xsig1_ybkg_met0_drmax0"]["ttbar"] = 1.15;
+    controlSystematics["xsig0_ybkg_met0_drmax1"]["ttbar"] = 1.02;
+    controlSystematics["xsig1_ybkg_met0_drmax1"]["ttbar"] = 1.06;
+    controlSystematics["xsig0_ybkg_met1_drmax0"]["ttbar"] = 1.10;
+    controlSystematics["xsig1_ybkg_met1_drmax0"]["ttbar"] = 1.14;
+    controlSystematics["xsig0_ybkg_met1_drmax1"]["ttbar"] = 1.02;
+    controlSystematics["xsig1_ybkg_met1_drmax1"]["ttbar"] = 1.06;
+    controlSystematics["xsig0_ybkg_met2_drmax0"]["ttbar"] = 1.06;
+    controlSystematics["xsig1_ybkg_met2_drmax0"]["ttbar"] = 1.11;
+    controlSystematics["xsig0_ybkg_met2_drmax1"]["ttbar"] = 1.01;
+    controlSystematics["xsig1_ybkg_met2_drmax1"]["ttbar"] = 1.05;
     controlSystematics["xsig0_ybkg_met3_drmax0"]["ttbar"] = 1.06;
-    controlSystematics["xsig1_ybkg_met3_drmax0"]["ttbar"] = 1.10;
-    controlSystematics["xsig0_ybkg_met3_drmax1"]["ttbar"] = 1.03;
-    controlSystematics["xsig1_ybkg_met3_drmax1"]["ttbar"] = 1.09;
+    controlSystematics["xsig1_ybkg_met3_drmax0"]["ttbar"] = 1.09;
+    controlSystematics["xsig0_ybkg_met3_drmax1"]["ttbar"] = 1.01;
+    controlSystematics["xsig1_ybkg_met3_drmax1"]["ttbar"] = 1.05;
 
     controlSystematics["xsig0_ybkg_met0_drmax0"]["vjets"] = 1.02; 
     controlSystematics["xsig1_ybkg_met0_drmax0"]["vjets"] = 1.01;
     controlSystematics["xsig0_ybkg_met0_drmax1"]["vjets"] = 1.00;
     controlSystematics["xsig1_ybkg_met0_drmax1"]["vjets"] = 1.00;
-    controlSystematics["xsig0_ybkg_met1_drmax0"]["vjets"] = 1.05;
-    controlSystematics["xsig1_ybkg_met1_drmax0"]["vjets"] = 1.04;
-    controlSystematics["xsig0_ybkg_met1_drmax1"]["vjets"] = 1.00;
+    controlSystematics["xsig0_ybkg_met1_drmax0"]["vjets"] = 1.04;
+    controlSystematics["xsig1_ybkg_met1_drmax0"]["vjets"] = 1.05;
+    controlSystematics["xsig0_ybkg_met1_drmax1"]["vjets"] = 1.01;
     controlSystematics["xsig1_ybkg_met1_drmax1"]["vjets"] = 1.00;
-    controlSystematics["xsig0_ybkg_met2_drmax0"]["vjets"] = 1.14;
-    controlSystematics["xsig1_ybkg_met2_drmax0"]["vjets"] = 1.09;
+    controlSystematics["xsig0_ybkg_met2_drmax0"]["vjets"] = 1.09;
+    controlSystematics["xsig1_ybkg_met2_drmax0"]["vjets"] = 1.06;
     controlSystematics["xsig0_ybkg_met2_drmax1"]["vjets"] = 1.01;
     controlSystematics["xsig1_ybkg_met2_drmax1"]["vjets"] = 1.01;
-    controlSystematics["xsig0_ybkg_met3_drmax0"]["vjets"] = 1.10;
-    controlSystematics["xsig1_ybkg_met3_drmax0"]["vjets"] = 1.12;
-    controlSystematics["xsig0_ybkg_met3_drmax1"]["vjets"] = 1.01;
-    controlSystematics["xsig1_ybkg_met3_drmax1"]["vjets"] = 1.01;
+    controlSystematics["xsig0_ybkg_met3_drmax0"]["vjets"] = 1.07;
+    controlSystematics["xsig1_ybkg_met3_drmax0"]["vjets"] = 1.08;
+    controlSystematics["xsig0_ybkg_met3_drmax1"]["vjets"] = 1.02;
+    controlSystematics["xsig1_ybkg_met3_drmax1"]["vjets"] = 1.00;
+
+    controlSystematics["xsig0_ybkg_met0_drmax0"]["qcd"] = 1.00; 
+    controlSystematics["xsig1_ybkg_met0_drmax0"]["qcd"] = 1.00;
+    controlSystematics["xsig0_ybkg_met0_drmax1"]["qcd"] = 1.00;
+    controlSystematics["xsig1_ybkg_met0_drmax1"]["qcd"] = 1.00;
+    controlSystematics["xsig0_ybkg_met1_drmax0"]["qcd"] = 1.00;
+    controlSystematics["xsig1_ybkg_met1_drmax0"]["qcd"] = 1.02;
+    controlSystematics["xsig0_ybkg_met1_drmax1"]["qcd"] = 1.00;
+    controlSystematics["xsig1_ybkg_met1_drmax1"]["qcd"] = 1.00;
+    controlSystematics["xsig0_ybkg_met2_drmax0"]["qcd"] = 1.00;
+    controlSystematics["xsig1_ybkg_met2_drmax0"]["qcd"] = 1.00;
+    controlSystematics["xsig0_ybkg_met2_drmax1"]["qcd"] = 1.00;
+    controlSystematics["xsig1_ybkg_met2_drmax1"]["qcd"] = 1.00;
+    controlSystematics["xsig0_ybkg_met3_drmax0"]["qcd"] = 1.00;
+    controlSystematics["xsig1_ybkg_met3_drmax0"]["qcd"] = 1.00;
+    controlSystematics["xsig0_ybkg_met3_drmax1"]["qcd"] = 1.00;
+    controlSystematics["xsig1_ybkg_met3_drmax1"]["qcd"] = 1.01;
   }
 
   void readDimensionFile(std::string const & dimensionFilePath, std::map<std::string, std::vector<std::pair<std::string, std::string> > > & dimensionBins){

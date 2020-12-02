@@ -128,6 +128,8 @@ int main(int argc, char *argv[]){
   string total_luminosity_string = RoundNumber(total_luminosity, 1, 1).Data();
 
   string higgsino_version = "";
+  // trigger_version: 0: old, 1: new
+  int trigger_version = 1;
 
   //string base_dir(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_eldorado/");
   //string base_dir("/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/");
@@ -213,13 +215,19 @@ int main(int argc, char *argv[]){
     }
   }
   NamedFunc base_data = baseline; 
-  NamedFunc lepton_triggers = "(HLT_IsoMu24 || HLT_IsoMu27 || HLT_Mu50 || HLT_Ele27_WPTight_Gsf || HLT_Ele35_WPTight_Gsf || HLT_Ele115_CaloIdVT_GsfTrkIdT)";
-  NamedFunc met_triggers = "(HLT_PFMET110_PFMHT110_IDTight || HLT_PFMETNoMu110_PFMHTNoMu110_IDTight || HLT_PFMET120_PFMHT120_IDTight || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight || HLT_PFMET120_PFMHT120_IDTight_PFHT60 || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60)";
+  //NamedFunc lepton_triggers = "(HLT_IsoMu24 || HLT_IsoMu27 || HLT_Mu50 || HLT_Ele27_WPTight_Gsf || HLT_Ele35_WPTight_Gsf || HLT_Ele115_CaloIdVT_GsfTrkIdT)";
+  //NamedFunc met_triggers = "(HLT_PFMET110_PFMHT110_IDTight || HLT_PFMETNoMu110_PFMHTNoMu110_IDTight || HLT_PFMET120_PFMHT120_IDTight || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight || HLT_PFMET120_PFMHT120_IDTight_PFHT60 || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60)";
+  NamedFunc lepton_triggers = Higfuncs::el_trigger || Higfuncs::mu_trigger;
+  NamedFunc met_triggers = Higfuncs::met_trigger;
+  if (trigger_version == 0) {
+    lepton_triggers = Higfuncs::el_trigger_v0 || Higfuncs::mu_trigger_v0;
+    met_triggers = Higfuncs::met_trigger_v0;
+  }
   if (sample=="zll") base_data = base_data && lepton_triggers;
   else if (sample == "ttbar") base_data = base_data && (lepton_triggers || met_triggers);
   else if (sample == "qcd") base_data = base_data && met_triggers;
   else  base_data = base_data && met_triggers; // search
-  if (alt_scen != "data") base_data = baseline;
+  if (alt_scen != "data") base_data = baseline && "stitch";
   auto proc_data = Process::MakeShared<Baby_pico>("Data", Process::Type::data, kBlack, names_data,base_data);
 
   // define combination of processes to use
@@ -244,7 +252,8 @@ int main(int argc, char *argv[]){
   //NamedFunc nom_wgt = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Functions::w_pileup;
   //NamedFunc nom_wgt = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
   //NamedFunc nom_wgt = Higfuncs::final_weight;
-  NamedFunc nom_wgt = "weight"*Higfuncs::eff_higtrig_run2_v0*Higfuncs::w_years;;
+  NamedFunc nom_wgt = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;;
+  if (trigger_version == 0) nom_wgt = "weight"*Higfuncs::eff_higtrig_run2_v0*Higfuncs::w_years;;
 
   vector<string> scenarios;
   map<string, NamedFunc> weights;
@@ -260,19 +269,27 @@ int main(int argc, char *argv[]){
   } else if(alt_scen == "syst_ttx_up"){
     scenarios = vector<string>();
     scenarios.push_back("syst_ttx_up");
-    weights.emplace("syst_ttx_up", nom_wgt*(1+Higfuncs::wgt_syst_ttx));
+    weights.emplace("syst_ttx_up", nom_wgt/(1+Higfuncs::wgt_syst_ttx));
   } else if(alt_scen == "syst_ttx_down"){
     scenarios = vector<string>();
     scenarios.push_back("syst_ttx_down");
-    weights.emplace("syst_ttx_down", nom_wgt*(1-Higfuncs::wgt_syst_ttx));
+    weights.emplace("syst_ttx_down", nom_wgt/(1-Higfuncs::wgt_syst_ttx));
   } else if(alt_scen == "syst_vjets_up"){
     scenarios = vector<string>();
     scenarios.push_back("syst_vjets_up");
-    weights.emplace("syst_vjets_up", nom_wgt*(1+Higfuncs::wgt_syst_vjets));
+    weights.emplace("syst_vjets_up", nom_wgt/(1+Higfuncs::wgt_syst_vjets));
   } else if(alt_scen == "syst_vjets_down"){
     scenarios = vector<string>();
     scenarios.push_back("syst_vjets_down");
-    weights.emplace("syst_vjets_down", nom_wgt*(1-Higfuncs::wgt_syst_vjets));
+    weights.emplace("syst_vjets_down", nom_wgt/(1-Higfuncs::wgt_syst_vjets));
+  } else if(alt_scen == "syst_qcd_down"){
+    scenarios = vector<string>();
+    scenarios.push_back("syst_qcd_down");
+    weights.emplace("syst_qcd_down", nom_wgt/(1-Higfuncs::wgt_syst_qcd));
+  } else if(alt_scen == "syst_qcd_up"){
+    scenarios = vector<string>();
+    scenarios.push_back("syst_qcd_up");
+    weights.emplace("syst_qcd_up", nom_wgt/(1+Higfuncs::wgt_syst_qcd));
   } else if(alt_scen == "mc_as_data"){
     scenarios = vector<string>{"mc_as_data"}; 
     weights.emplace("mc_as_data", nom_wgt);
@@ -366,8 +383,10 @@ int main(int argc, char *argv[]){
       } // Loop over bin cuts
     } // Loop over plane cuts
     TString tname = "preds"; tname += iscen;
+    // all_procs is a list of processes
     pm.Push<Table>(tname.Data(),  table_cuts, all_procs, true, false);
     tname += iscen;
+    //pm.Push<Table>(tname.Data(),  table_cuts_mm, all_procs, true, false);
     pm.Push<Table>(tname.Data(),  table_cuts_mm, all_procs, true, false);
   } // Loop over ABCD scenarios
 
@@ -380,11 +399,14 @@ int main(int argc, char *argv[]){
   for(size_t iscen=0; iscen<abcds.size(); iscen++) {
     // allyields: [0] data, [1] bkg, [2] T1tttt(NC), [3] T1tttt(C)
     // if split_bkg [2/4] Other, [3/5] ttx, [4/6] vjets
+    // allyields[dataType][bin] = GammaParams
     vector<vector<GammaParams> > allyields;
     Table * yield_table;
     if(alt_scen != "data"){
       yield_table = static_cast<Table*>(pm.Figures()[iscen*2].get());
       Table * yield_table_mm = static_cast<Table*>(pm.Figures()[iscen*2+1].get());
+      // Yield is used to get info from specific process. 
+      // DataYield can't be used because weight is assumed to be 1.
       allyields.push_back(yield_table_mm->Yield(proc_data.get(), lumi));
     } else {
       yield_table = static_cast<Table*>(pm.Figures()[iscen].get());
@@ -711,24 +733,40 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
       float kap = k_ordered[iplane][ibin][0], kap_mm = k_ordered_mm[iplane][ibin][0];
       TString text = ""; 
       //if(alt_scen=="data") text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-1)*100,0,1)+"%"; // with respect to kappa being 1
-      if(alt_scen=="data") text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-kap)*100,0,kap_mm)+"%";
+      if(alt_scen=="data") text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-kap)*100,0,kap)+"%"; // with respect to kap because mc is value that will be used.
       else if (alt_scen=="mc_as_data" || alt_scen=="mc") text = "#Delta_{#kappa}="+RoundNumber((kap-1)*100,0,1)+"%";
-      else /*if fake mismeasure*/ text = "#Delta_{#kappa}="+RoundNumber((kap_mm-kap)*100,0,kap)+"%";
+      else {
+        /*if fake mismeasure*/ text = "#Delta_{#kappa}="+RoundNumber((kap_mm-kap)*100,0,kap)+"%";
+        cout<<"bin["<<ibin<<"] plane["<<iplane<<"] Delta kappa: "<<RoundNumber((kap_mm-kap)*100,0,kap)+"%"<<endl;
+      }
       klabel.SetTextSize(abcd.planecuts.size()>=10 ? 0.025 : 0.035);
       klabel.DrawLatex(bin, 0.85*maxy, text);
       //// Printing stat uncertainty of kappa_mm/kappa
       float kapUp = k_ordered[iplane][ibin][1], kapDown = k_ordered[iplane][ibin][2];
       float kap_mmUp = k_ordered_mm[iplane][ibin][1];
       float kap_mmDown = k_ordered_mm[iplane][ibin][2];
-      if(alt_scen=="data" || alt_scen=="mc_as_data") {
+      if(alt_scen=="data") {
         //TString unc_ = RoundNumber(kap_mmUp*100,0, 1)>RoundNumber(kap_mmDown*100,0, 1) ? RoundNumber(kap_mmUp*100,0, 1) : RoundNumber(kap_mmDown*100,0, 1);
-        TString unc_ = RoundNumber(kap_mmUp*100,0, kap_mm)>RoundNumber(kap_mmDown*100,0, kap_mm) ? RoundNumber(kap_mmUp*100,0, kap_mm) : RoundNumber(kap_mmDown*100,0, kap_mm);
+        //TString unc_ = RoundNumber(kap_mmUp*100,0, kap_mm)>RoundNumber(kap_mmDown*100,0, kap_mm) ? RoundNumber(kap_mmUp*100,0, kap_mm) : RoundNumber(kap_mmDown*100,0, kap_mm);
+        float kapUp_sum = sqrt(pow(kapUp,2)+pow(kap_mmUp,2));
+        float kapDown_sum = sqrt(pow(kapDown,2)+pow(kap_mmDown,2));
+        TString unc_ = RoundNumber(kapUp_sum*100,0, kap_mm)>RoundNumber(kapDown_sum*100,0, kap_mm) ? RoundNumber(kapUp_sum*100,0, kap_mm) : RoundNumber(kapDown_sum*100,0, kap_mm);
         // text = "#sigma_{stat}=^{+"+RoundNumber(kap_mmUp*100,0, 1)+"%}_{-"+RoundNumber(kap_mmDown*100,0, 1)+"%}";
-        text = "#sigma_{st}="+unc_+"%";
+        text = "#sigma_{st}^{#Delta}="+unc_+"%";
+      } else if (alt_scen == "mc_as_data") {
+        // For Delta uncertainty
+        //float kapUp_sum = sqrt(pow(kapUp,2)+pow(kap_mmUp,2));
+        //float kapDown_sum = sqrt(pow(kapDown,2)+pow(kap_mmDown,2));
+        //TString unc_ = RoundNumber(kapUp_sum*100,0, kap_mm)>RoundNumber(kapDown_sum*100,0, kap_mm) ? RoundNumber(kapUp_sum*100,0, kap_mm) : RoundNumber(kapDown_sum*100,0, kap_mm);
+        // For MC uncertainty
+        //TString unc_ = RoundNumber(kapUp*100,0, kap)>RoundNumber(kapDown*100,0, kap) ? RoundNumber(kapUp*100,0, kap) : RoundNumber(kapDown*100,0, kap);
+        // For data uncertainty
+        TString unc_ = RoundNumber(kap_mmUp*100,0, kap_mm)>RoundNumber(kap_mmDown*100,0, kap_mm) ? RoundNumber(kap_mmUp*100,0, kap_mm) : RoundNumber(kap_mmDown*100,0, kap_mm);
+        text = "#sigma_{st}^{dat}="+unc_+"%";
       } else {
-        TString unc_ = RoundNumber(kapUp*100,0, 1)>RoundNumber(kapDown*100,0, 1) ? RoundNumber(kapUp*100,0, 1) : RoundNumber(kapDown*100,0, 1);
+        TString unc_ = RoundNumber(kapUp*100,0, kap)>RoundNumber(kapDown*100,0, kap) ? RoundNumber(kapUp*100,0, kap) : RoundNumber(kapDown*100,0, kap);
         // text = "#sigma_{stat}=^{+"+RoundNumber(kapUp*100,0, 1)+"%}_{-"+RoundNumber(kapDown*100,0, 1)+"%}";
-        text = "#sigma_{st}="+unc_+"%";
+        text = "#sigma_{st}^{mc}="+unc_+"%";
       }
       klabel.DrawLatex(bin, 0.78*maxy, text);
       // adding label to indicate the ABCD corresponding to each kappa value
@@ -941,7 +979,8 @@ vector<vector<float> > findPreds(abcd_def &abcd, vector<vector<GammaParams> > &a
         kkweights.back().push_back(1.);
 
       } // Loop over ABCD cuts
-
+      bool debug = true;
+      if (debug) cout<<"iplane: "<<iplane<<endl;
       // Throwing toys to find predictions and uncertainties
       val = calcKappa(entries, weights, pow_totpred, valdown, valup);
       if(valdown<0) valdown = 0;
@@ -950,16 +989,19 @@ vector<vector<float> > findPreds(abcd_def &abcd, vector<vector<GammaParams> > &a
       val = calcKappa(kentries, kweights, pow_kappa, valdown, valup);
       if(valdown<0) valdown = 0;
       kappas[iplane].push_back(vector<float>({val, valup, valdown}));
+      if (debug) {
+        cout<<"MC        : "<<kentries[0][0]<<" "<<kentries[1][0]<<" "<<kentries[2][0]<<" "<<kentries[3][0]<<endl;
+        cout<<"MC weight : "<<kweights[0][0]<<" "<<kweights[1][0]<<" "<<kweights[2][0]<<" "<<kweights[3][0]<<endl;
+        cout<<"MC kappa  : "<<val<<" "<<valup<<" "<<valdown<<endl;
+      }
       // Throwing toys to find kappas and uncertainties
       val = calcKappa(kentries_mm, kweights_mm, pow_kappa, valdown, valup);
       if(valdown<0) valdown = 0;
       kappas_mm[iplane].push_back(vector<float>({val, valup, valdown}));
-      // Print values
-      bool debug = true;
       if (debug) {
-        cout<<"iplane: "<<iplane<<endl;
-        cout<<"Data: "<<kentries_mm[0][0]<<" "<<kentries_mm[1][0]<<" "<<kentries_mm[2][0]<<" "<<kentries_mm[3][0]<<endl;
-        cout<<"kappa: "<<val<<" "<<valup<<" "<<valdown<<endl;
+        cout<<"Data        : "<<kentries_mm[0][0]<<" "<<kentries_mm[1][0]<<" "<<kentries_mm[2][0]<<" "<<kentries_mm[3][0]<<endl;
+        cout<<"Data weight : "<<kweights_mm[0][0]<<" "<<kweights_mm[1][0]<<" "<<kweights_mm[2][0]<<" "<<kweights_mm[3][0]<<endl;
+        cout<<"Data kappa  : "<<val<<" "<<valup<<" "<<valdown<<endl;
       }
       // Throwing toys to find kappas and uncertainties
       val = calcKappa(kkentries, kkweights, pow_kappa, valdown, valup);
@@ -977,8 +1019,8 @@ void GetOptions(int argc, char *argv[]){
       {"sample", required_argument, 0, 's'},
       {"debug", no_argument, 0, 'd'},         // Debug: prints yields and cuts used
       {"quick", no_argument, 0, 'q'},         // Used inclusive ttbar for quick testing
-      {"unblind", no_argument, 0, 'u'},         // Used inclusive ttbar for quick testing
-      {"scen", required_argument, 0, 0},       
+      {"unblind", no_argument, 0, 'u'},         // Opens data or pseudodata
+      {"scen", required_argument, 0, 0},       // mc, data, mc_as_data, ...
       {"midnb", no_argument, 0, 0},           // Check zll and qcd CRs for 2b
       {"highnb", no_argument, 0, 0},          // Check QCD CR at 3b and 4b
       {"year", required_argument, 0, 0},
