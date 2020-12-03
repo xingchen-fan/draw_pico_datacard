@@ -240,7 +240,7 @@ const NamedFunc wgt_syst_qcd("wgt_syst_qcd",[](const Baby &b) -> NamedFunc::Scal
 });
 
 //return weight from composition systematic
-//note this returns the full weight, not the variation
+//note this returns the weight scaling, not the variation
 const NamedFunc wgt_syst_comp("wgt_syst_comp",[](const Baby &b) -> NamedFunc::ScalarType{
   double weight = 1.0;
   int sample = b.type()/1000;

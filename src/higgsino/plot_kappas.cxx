@@ -293,7 +293,7 @@ int main(int argc, char *argv[]){
   } else if(alt_scen == "syst_comp"){
     scenarios = vector<string>();
     scenarios.push_back("syst_comp");
-    weights.emplace("syst_comp", Higfuncs::wgt_syst_comp);
+    weights.emplace("syst_comp", nom_wgt*Higfuncs::wgt_syst_comp);
   } else if(alt_scen == "mc_as_data"){
     scenarios = vector<string>{"mc_as_data"}; 
     weights.emplace("mc_as_data", nom_wgt);
