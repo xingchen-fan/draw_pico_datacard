@@ -428,6 +428,14 @@ int main(int argc, char *argv[]){
   // Add additional variables
   if (sample_name == "qcd") target_variables.insert("ht_wide");
   else target_variables.insert("ht");
+  target_variables.insert("npv");
+  if (sample_name=="zll") {
+    target_variables.insert("ll_pt");
+    //target_variables.insert("ll_m");
+  }
+  if (sample_name=="ttbar") {
+    target_variables.insert("met");
+  }
   if (plot_additional_variables) {
     //target_variables.insert("npu_tru_mean");
     target_variables.insert("jet_pt[0]");
@@ -444,14 +452,6 @@ int main(int argc, char *argv[]){
     target_variables.insert("h1_mass");
     target_variables.insert("h2_mass");
     target_variables.insert("mht_filter");
-    target_variables.insert("npv");
-  }
-  if (sample_name=="zll") {
-    target_variables.insert("ll_pt");
-    //target_variables.insert("ll_m");
-  }
-  if (sample_name=="ttbar") {
-    target_variables.insert("met");
   }
 
 

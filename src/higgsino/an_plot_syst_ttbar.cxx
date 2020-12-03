@@ -29,7 +29,6 @@
 
 using namespace std;
 using namespace PlotOptTypes;
-using namespace Higfuncs;
 
 namespace{
   bool single_thread = false;
@@ -69,53 +68,54 @@ int main(int argc, char *argv[]){
   string higgsino_version = "";
 
   // Set options
-  string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
+  string mc_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
+  //string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
   //string mc_base_folder = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado";
   string mc_skim_folder = "mc/merged_higmc_higloose/";
   string ttbar_mc_skim_folder = "mc/merged_higmc_higlep1T/";
 
-  string data_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
+  string data_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
+  //string data_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
   string data_skim_folder = "data/merged_higdata_higloose/";
-  //string ttbar_data_skim_folder = "data/merged_higdata_higlep1T/";
-  string ttbar_data_skim_folder = "data/skim_higlep1T/";
+  string ttbar_data_skim_folder = "data/merged_higdata_higlep1T/";
+  //string ttbar_data_skim_folder = "data/skim_higlep1T/";
 
+  string sig_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
+  //string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
   //string sig_base_folder = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado/";
-  string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
   string ttbar_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higlep1T/";
 
-  set<int> years;
-  HigUtilities::parseYears(year_string, years);
   //years = {2016, 2017, 2018};
   //years = {2016};
-  float total_luminosity = 0;
-  for (auto const & year : years) {
-    if (year == 2016) total_luminosity += 35.9;
-    if (year == 2017) total_luminosity += 41.5;
-    if (year == 2018) total_luminosity += 60;
-  }
-  string total_luminosity_string = RoundNumber(total_luminosity, 1, 1).Data();
+  set<int> years;
+  HigUtilities::parseYears(year_string, years);
+  string total_luminosity_string = HigUtilities::getLuminosityString(year_string);
 
-  //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*w_years;
-  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig*w_years;
-  //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig_run2*w_years;
-  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years*Functions::w_pileup;
-  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years;
+  //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*Higfuncs::w_years;
+  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig*Higfuncs::w_years;
+  //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
+  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Functions::w_pileup;
+  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
   //if (years.size()==1 && *years.begin()==2016) weight *= "137.";
   //else weight *= w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years;
-  NamedFunc triggers_data = "1";
-  NamedFunc lepton_triggers = "(HLT_IsoMu24 || HLT_IsoMu27 || HLT_Mu50 || HLT_Ele27_WPTight_Gsf || HLT_Ele35_WPTight_Gsf || HLT_Ele115_CaloIdVT_GsfTrkIdT)";
-  NamedFunc met_triggers = "(HLT_PFMET110_PFMHT110_IDTight || HLT_PFMETNoMu110_PFMHTNoMu110_IDTight || HLT_PFMET120_PFMHT120_IDTight || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight || HLT_PFMET120_PFMHT120_IDTight_PFHT60 || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60)";
-  triggers_data = lepton_triggers || met_triggers;
 
+  NamedFunc lepton_triggers = Higfuncs::el_trigger || Higfuncs::mu_trigger;
+  NamedFunc met_triggers = Higfuncs::met_trigger;;
+  //NamedFunc lepton_triggers = "(HLT_IsoMu24 || HLT_IsoMu27 || HLT_Mu50 || HLT_Ele27_WPTight_Gsf || HLT_Ele35_WPTight_Gsf || HLT_Ele115_CaloIdVT_GsfTrkIdT)";
+  //NamedFunc met_triggers = "(HLT_PFMET110_PFMHT110_IDTight || HLT_PFMETNoMu110_PFMHTNoMu110_IDTight || HLT_PFMET120_PFMHT120_IDTight || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight || HLT_PFMET120_PFMHT120_IDTight_PFHT60 || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60)";
+  NamedFunc triggers_data = lepton_triggers || met_triggers;
+
+  NamedFunc base_filters = Higfuncs::final_ttbar_pass_filters;
+  //NamedFunc base_filters = Functions::hem_veto && "pass && met/met_calo<5 && weight<1.5";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
   //NamedFunc base_filters = HigUtilities::pass_2016 && "met/met_calo<5 && weight<10"; //since pass_fsjets is not quite usable...
-  NamedFunc base_filters = Functions::hem_veto && "pass && met/met_calo<5 && weight<1.5";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
 
   // resolved cuts
   //NamedFunc search_resolved = "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
   //                       "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
   //                       "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))";
   NamedFunc ttbar_resolved = 
+                         "met/met_calo<5&&weight<1.5&&"
                          "nlep==1&&mt<=100&&njet>=4&&njet<=5&&"
                          "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
                          "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))"
@@ -135,7 +135,7 @@ int main(int argc, char *argv[]){
   mctags["qcd"]     = set<string>({"*_QCD_HT200to300_*","*_QCD_HT300to500_*","*_QCD_HT500to700_*",
                                    "*_QCD_HT700to1000_*", "*_QCD_HT1000to1500_*","*_QCD_HT1500to2000_*",
                                    "*_QCD_HT2000toInf_*"});
-  mctags["other"]   = set<string>({"*_WH_HToBB*.root", "*_ZH_HToBB*.root",
+  mctags["other"]   = set<string>({"*_WH*.root", "*_ZH_HToBB*.root",
                                      "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"});
   // Combine all tags
   mctags["all"] = set<string>({"*TTJets_SingleLept*",
@@ -146,7 +146,7 @@ int main(int argc, char *argv[]){
                                "*_QCD_HT200to300_*","*_QCD_HT300to500_*","*_QCD_HT500to700_*",
                                "*_QCD_HT1000to1500_*","*_QCD_HT1500to2000_*",
                                "*_QCD_HT2000toInf_*",
-                               "*_WH_HToBB*.root", "*_ZH_HToBB*.root",
+                               "*_WH*.root", "*_ZH_HToBB*.root",
                                "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root", "*DYJetsToLL*.root"
   });
 
@@ -240,6 +240,14 @@ int main(int argc, char *argv[]){
                     attach_folder(mc_base_folder, years, ttbar_mc_skim_folder, mctags["all"]),"stitch&&(nbt>=2&&nbm>=3&&nbl>=4)"));
   }
 
+  vector<shared_ptr<Process> > ttbar_mc_procs_btag;
+  ttbar_mc_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. MC (2b)", Process::Type::background,colors("2b"),
+                  attach_folder(mc_base_folder, years, ttbar_mc_skim_folder, mctags["all"]),"stitch&&(nbt==2&&nbm==2)"));
+  ttbar_mc_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. MC (3b)", Process::Type::background,colors("3b"),
+                  attach_folder(mc_base_folder, years, ttbar_mc_skim_folder, mctags["all"]),"stitch&&(nbt>=2&&nbm==3&&nbl==3)"));
+  ttbar_mc_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. MC (4b)", Process::Type::background,colors("4b"),
+                  attach_folder(mc_base_folder, years, ttbar_mc_skim_folder, mctags["all"]),"stitch&&(nbt>=2&&nbm>=3&&nbl>=4)"));
+
   PlotMaker pm;
 
   //// 2b, (met 0, 75, 150, 200, 300), low drmax
@@ -285,10 +293,9 @@ int main(int argc, char *argv[]){
   //pm.Push<Table>("FixName:syst__ttbar_pies__4b_met300_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>300          &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
 
   // comparison of data with mc
-  // [drmax;no drmax] (2b, 3b+4b)
+  // [drmax;no drmax] (2b, 3b+4b, all)
   pm.Push<Hist1D>(Axis(20, 0, 4, "hig_cand_drmax[0]", "#DeltaR_{max}", {2.2}),
     base_filters&&
-    //"nlep==1&&lep_pt[0]>30&&mt<=100&&njet>=4&&njet<=5&&"
     "nlep==1&&mt<=100&&njet>=4&&njet<=5&&"
     "hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
     "(nbt==2&&nbm==2)"
@@ -296,17 +303,22 @@ int main(int argc, char *argv[]){
     ttbar_procs, plt_lin).Weight(weight).Tag("FixName:syst__ttbar_drmax_2b").LuminosityTag(total_luminosity_string);
   pm.Push<Hist1D>(Axis(20, 0, 4, "hig_cand_drmax[0]", "#DeltaR_{max}", {2.2}),
     base_filters&&
-    //"nlep==1&&lep_pt[0]>30&&mt<=100&&njet>=4&&njet<=5&&"
     "nlep==1&&mt<=100&&njet>=4&&njet<=5&&"
     "hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
     "((nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))" 
     &&Higfuncs::lead_signal_lepton_pt>30,
     ttbar_procs, plt_lin).Weight(weight).Tag("FixName:syst__ttbar_drmax_3b4b").LuminosityTag(total_luminosity_string);
+  pm.Push<Hist1D>(Axis(20, 0, 4, "hig_cand_drmax[0]", "#DeltaR_{max}", {2.2}),
+    base_filters&&
+    "nlep==1&&mt<=100&&njet>=4&&njet<=5&&"
+    "hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
+    "(nbt>=2)" 
+    &&Higfuncs::lead_signal_lepton_pt>30,
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:syst__ttbar_drmax_2b3b4b").LuminosityTag(total_luminosity_string);
 
   // [<m>;no <m>, low_drmax] (2b, 3b+4b)
   pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     base_filters&&
-    //"nlep==1&&lep_pt[0]>30&&mt<=100&&njet>=4&&njet<=5&&"
     "nlep==1&&mt<=100&&njet>=4&&njet<=5&&"
     "hig_cand_drmax[0]<2.2&&hig_cand_dm[0]<40&&"
     "hig_cand_drmax[0]<1.1&&"
@@ -315,7 +327,6 @@ int main(int argc, char *argv[]){
     ttbar_procs, plt_lin).Weight(weight).Tag("FixName:syst__ttbar_amjj_2b_lowdrmax").LuminosityTag(total_luminosity_string);
   pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     base_filters&&
-    //"nlep==1&&lep_pt[0]>30&&mt<=100&&njet>=4&&njet<=5&&"
     "nlep==1&&mt<=100&&njet>=4&&njet<=5&&"
     "hig_cand_drmax[0]<2.2&&hig_cand_dm[0]<40&&"
     "hig_cand_drmax[0]<1.1&&"
@@ -325,7 +336,6 @@ int main(int argc, char *argv[]){
   // [<m>;no <m>, high_drmax] (2b, 3b+4b)
   pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     base_filters&&
-    //"nlep==1&&lep_pt[0]>30&&mt<=100&&njet>=4&&njet<=5&&"
     "nlep==1&&mt<=100&&njet>=4&&njet<=5&&"
     "hig_cand_drmax[0]<2.2&&hig_cand_dm[0]<40&&"
     "hig_cand_drmax[0]>=1.1&&"
@@ -334,7 +344,6 @@ int main(int argc, char *argv[]){
     ttbar_procs, plt_lin).Weight(weight).Tag("FixName:syst__ttbar_amjj_2b_highdrmax").LuminosityTag(total_luminosity_string);
   pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     base_filters&&
-    //"nlep==1&&lep_pt[0]>30&&mt<=100&&njet>=4&&njet<=5&&"
     "nlep==1&&mt<=100&&njet>=4&&njet<=5&&"
     "hig_cand_drmax[0]<2.2&&hig_cand_dm[0]<40&&"
     "hig_cand_drmax[0]>=1.1&&"
@@ -345,7 +354,6 @@ int main(int argc, char *argv[]){
   // Extra plots [<m>;no <m>] (2b, 3b+4b)
   pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     base_filters&&
-    //"nlep==1&&lep_pt[0]>30&&mt<=100&&njet>=4&&njet<=5&&"
     "nlep==1&&mt<=100&&njet>=4&&njet<=5&&"
     "hig_cand_drmax[0]<2.2&&hig_cand_dm[0]<40&&"
     "(nbt==2&&nbm==2)" 
@@ -353,13 +361,24 @@ int main(int argc, char *argv[]){
     ttbar_procs, plt_lin).Weight(weight).Tag("FixName:syst__ttbar_amjj_2b").LuminosityTag(total_luminosity_string);
   pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     base_filters&&
-    //"nlep==1&&lep_pt[0]>30&&mt<=100&&njet>=4&&njet<=5&&"
     "nlep==1&&mt<=100&&njet>=4&&njet<=5&&"
     "hig_cand_drmax[0]<2.2&&hig_cand_dm[0]<40&&"
     "((nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))" 
     &&Higfuncs::lead_signal_lepton_pt>30,
     ttbar_procs, plt_lin).Weight(weight).Tag("FixName:syst__ttbar_amjj_3b4b").LuminosityTag(total_luminosity_string);
+  
+  // [MET] (all)
+  pm.Push<Hist1D>(Axis(16, 0, 800, "met", "p_{T}^{miss} [GeV]", {}),
+    base_filters&&ttbar_resolved,
+    ttbar_procs, plt_log).Weight(weight).Tag("FixName:syst__ttbar_met").LuminosityTag(total_luminosity_string);
 
+  // [<m> (0b mc, 1b mc); (low, high) drmax]
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&ttbar_resolved&&"hig_cand_drmax[0]<1.1",
+    ttbar_mc_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__lowdrmax__mc").LuminosityTag(total_luminosity_string);
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&ttbar_resolved&&"hig_cand_drmax[0]>=1.1",
+    ttbar_mc_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__highdrmax__mc").LuminosityTag(total_luminosity_string);
 
   // [<m> (0b data, 1b data); (low, high) drmax]
   pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),

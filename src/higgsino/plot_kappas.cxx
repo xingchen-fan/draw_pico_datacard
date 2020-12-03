@@ -169,7 +169,7 @@ int main(int argc, char *argv[]){
   
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Defining baseline cuts ///////////////////////////////////////
-  TString c_hig_trim = "hig_cand_drmax[0]<=2.2  && hig_cand_dm[0]<=40 && hig_cand_am[0]<200";
+  TString c_hig_trim = "hig_cand_drmax[0]<2.2  && hig_cand_dm[0]<40 && hig_cand_am[0]<200";
   string baseline_s = "njet>=4 && njet<=5";
   if (sample=="search") baseline_s += " && nvlep==0 && ntk==0 && !low_dphi_met &&"+c_hig_trim;
   else if (sample=="ttbar") baseline_s += " && nlep==1 && mt<100 &&"+c_hig_trim;

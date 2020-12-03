@@ -659,7 +659,7 @@ int main(int argc, char *argv[]){
   //NamedFunc study_cut = Higfuncs::lead_signal_lepton_pt>20 && Higfuncs::lead_signal_lepton_pt<25;
   NamedFunc study_cut = "1";
   // table_mode = regions, cutflow
-  string table_mode = "cutflow";
+  string table_mode = "regions";
   // Only for regions table_mode
   bool bin_met = true;
   bool bin_drmax = true;
@@ -674,7 +674,7 @@ int main(int argc, char *argv[]){
   string production_a = "higgsino_inyo"; string nanoAodFolder_a = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7";
   //string production_a = "higgsino_inyo"; string nanoAodFolder_a = "/cms29r0/pico/NanoAODv7";
   string sample_a = "search";
-  string year_string_a = "2016";
+  string year_string_a = "run2";
   TString tablename_a = "FixName:table_resolved_"+production_a+"_"+sample_a+"_"+CopyReplaceAll(year_string_a, ",","_")+"_a";
   // trigger_version: 0 or 1
   int trigger_version_a = 0;
@@ -710,7 +710,7 @@ int main(int argc, char *argv[]){
   //string production_b = "higgsino_inyo"; string nanoAodFolder_b = "/net/cms25/cms25r5/pico/NanoAODv7";
   string production_b = "higgsino_inyo"; string nanoAodFolder_b = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7";
   string sample_b = "search";
-  string year_string_b = "2016";
+  string year_string_b = "run2";
   TString tablename_b = "FixName:table_resolved_"+production_b+"_"+sample_b+"_"+CopyReplaceAll(year_string_b, ",","_")+"_b";
   // trigger_version: 0 or 1
   int trigger_version_b = 1;
