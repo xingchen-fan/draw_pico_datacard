@@ -97,7 +97,17 @@ int main(int argc, char *argv[])
 
   // massPoints = { {"1000","1"} }
   vector<pair<string, string> > massPoints;
-  if (mass_points_string == "") HigUtilities::findMassPoints(samplePaths["signal_2016"], massPoints);
+  if (higgsino_model == "N1N2") {
+    string signal_folder = samplePaths["signal_2016"];
+    set<string> signal_files = Glob(signal_folder+"/*.root");
+    string mLSP, mChi;
+    for (string signal_file : signal_files) {
+      HigUtilities::filenameToMassPoint(signal_file, mChi, mLSP);
+      if (stoi(mChi)>800) continue; // Ingore points above 800 GeV
+      massPoints.push_back({mChi, mLSP});
+    }
+  }
+  else if (mass_points_string == "") HigUtilities::findMassPoints(samplePaths["signal_2016"], massPoints);
   else HigUtilities::parseMassPoints(mass_points_string, massPoints);
 
   //NamedFunc filters = HigUtilities::pass_2016;

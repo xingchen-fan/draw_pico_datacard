@@ -67,45 +67,41 @@ int main(int argc, char *argv[]){
   if (unblind) plt_log = {log_norm_data};
 
   // Set options
+  string mc_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
   //string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/";
   //string mc_base_folder = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado";
-  string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/";
   string mc_skim_folder = "mc/merged_higmc_higloose/";
   string ttbar_mc_skim_folder = "mc/merged_higmc_higlep1T/";
   string zll_mc_skim_folder = "mc/merged_higmc_higlep2T/";
 
-  string data_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/";
+  string data_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
+  //string data_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/";
   string data_skim_folder = "data/merged_higdata_higloose/";
   string ttbar_data_skim_folder = "data/merged_higdata_higlep1T/";
-  //string zll_data_skim_folder = "data/merged_higdata_higlep2T/";
-  string zll_data_skim_folder = "data/skim_higlep2T/";
+  string zll_data_skim_folder = "data/merged_higdata_higlep2T/";
+  //string zll_data_skim_folder = "data/skim_higlep2T/";
 
+  string sig_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
+  //string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/";
   //string sig_base_folder = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado/";
-  string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/";
   string search_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higloose/";
   string ttbar_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higlep1T/";
   string zll_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higlep2T/";
   string qcd_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higqcd/";
 
-  set<int> years;
-  HigUtilities::parseYears(year_string, years);
   //years = {2016, 2017, 2018};
   //years = {2016};
-  float total_luminosity = 0;
-  for (auto const & year : years) {
-    if (year == 2016) total_luminosity += 35.9;
-    if (year == 2017) total_luminosity += 41.5;
-    if (year == 2018) total_luminosity += 60;
-  }
-  string total_luminosity_string = RoundNumber(total_luminosity, 1, 1).Data();
+  set<int> years;
+  HigUtilities::parseYears(year_string, years);
+  string total_luminosity_string = HigUtilities::getLuminosityString(year_string);
 
-  //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*w_years;
-  //if (years.size()==1 && *years.begin()==2016) weight *= "137.";
-  //else weight *= w_years;
+  //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*Higfuncs::w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years*Functions::w_pileup;
-  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years;
-  NamedFunc triggers_data = "(HLT_IsoMu24 || HLT_IsoMu27 || HLT_Mu50"
-                      "||HLT_Ele27_WPTight_Gsf || HLT_Ele35_WPTight_Gsf || HLT_Ele115_CaloIdVT_GsfTrkIdT)";
+  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
+  NamedFunc lepton_triggers = Higfuncs::el_trigger || Higfuncs::mu_trigger;
+  NamedFunc triggers_data = lepton_triggers;
+  //NamedFunc triggers_data = "(HLT_IsoMu24 || HLT_IsoMu27 || HLT_Mu50"
+  //                    "||HLT_Ele27_WPTight_Gsf || HLT_Ele35_WPTight_Gsf || HLT_Ele115_CaloIdVT_GsfTrkIdT)";
 
   // Set MC 
   map<string, set<string>> mctags; 
@@ -120,7 +116,7 @@ int main(int argc, char *argv[]){
   mctags["qcd"]     = set<string>({"*_QCD_HT200to300_*","*_QCD_HT300to500_*","*_QCD_HT500to700_*",
                                    "*_QCD_HT700to1000_*", "*_QCD_HT1000to1500_*","*_QCD_HT1500to2000_*",
                                    "*_QCD_HT2000toInf_*"});
-  mctags["other"]   = set<string>({"*_WH_HToBB*.root", "*_ZH_HToBB*.root",
+  mctags["other"]   = set<string>({"*_WH*.root", "*_ZH_HToBB*.root",
                                      "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"});
   // Combine all tags
   mctags["all"] = set<string>({"*TTJets_SingleLept*",
@@ -131,7 +127,7 @@ int main(int argc, char *argv[]){
                                "*_QCD_HT200to300_*","*_QCD_HT300to500_*","*_QCD_HT500to700_*",
                                "*_QCD_HT1000to1500_*","*_QCD_HT1500to2000_*",
                                "*_QCD_HT2000toInf_*",
-                               "*_WH_HToBB*.root", "*_ZH_HToBB*.root",
+                               "*_WH*.root", "*_ZH_HToBB*.root",
                                "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root", "*DYJetsToLL*.root"
   });
 
@@ -156,15 +152,15 @@ int main(int argc, char *argv[]){
   zll_procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGray+2,
                   attach_folder(mc_base_folder, years, zll_mc_skim_folder, mctags["other"]),"stitch"));
 
-  vector<string> sigm = {"175", "500", "950"};
-  //vector<string> sigm = {"400"};
-  //vector<int> sig_colors = {kGreen+1, kRed, kBlue, kOrange}; // need sigm.size() >= sig_colors.size()
-  vector<int> sig_colors = {kSpring, kPink, kAzure, kOrange}; // need sigm.size() >= sig_colors.size()
-  for (unsigned isig(0); isig<sigm.size(); isig++){
-    zll_procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigm[isig]+",1)", Process::Type::signal, 
-      sig_colors[isig], attach_folder(sig_base_folder, years, zll_sig_skim_folder, {"*TChiHH_mChi-"+sigm[isig]+"_mLSP-0*.root"}), 
-      "stitch"));
-  }
+  //vector<string> sigm = {"175", "500", "950"};
+  ////vector<string> sigm = {"400"};
+  ////vector<int> sig_colors = {kGreen+1, kRed, kBlue, kOrange}; // need sigm.size() >= sig_colors.size()
+  //vector<int> sig_colors = {kSpring, kPink, kAzure, kOrange}; // need sigm.size() >= sig_colors.size()
+  //for (unsigned isig(0); isig<sigm.size(); isig++){
+  //  zll_procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigm[isig]+",1)", Process::Type::signal, 
+  //    sig_colors[isig], attach_folder(sig_base_folder, years, zll_sig_skim_folder, {"*TChiHH_mChi-"+sigm[isig]+"_mLSP-0*.root"}), 
+  //    "stitch"));
+  //}
 
   if (unblind) {
     zll_procs.push_back(Process::MakeShared<Baby_pico>("Data", Process::Type::data, kBlack,
@@ -231,6 +227,7 @@ int main(int argc, char *argv[]){
     //                attach_folder(mc_base_folder, years, zll_mc_skim_folder, mctags["all"]),"stitch&&(nbm==2)"));
   }
 
+
   vector<shared_ptr<Process> > zll_procs_nisr;
   zll_procs_nisr.push_back(Process::MakeShared<Baby_pico>("N_{ISR} = 0", Process::Type::background,colors("nisr_0"),
                   attach_folder(mc_base_folder, years, zll_mc_skim_folder, mctags["all"]),"stitch&&nisr==0"));
@@ -239,8 +236,9 @@ int main(int argc, char *argv[]){
   zll_procs_nisr.push_back(Process::MakeShared<Baby_pico>("N_{ISR} = 2", Process::Type::background,colors("nisr_2"),
                   attach_folder(mc_base_folder, years, zll_mc_skim_folder, mctags["all"]),"stitch&&nisr==2"));
 
+  NamedFunc base_filters = Higfuncs::final_zll_pass_filters;
+  //NamedFunc base_filters = Functions::hem_veto && "pass && met/met_calo<5";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
   //NamedFunc base_filters = HigUtilities::pass_2016 && "met/mht<2 && met/met_calo<2"; //since pass_fsjets is not quite usable...
-  NamedFunc base_filters = Functions::hem_veto && "pass && met/met_calo<5";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
   // Could add additional generation cuts
 
   // resolved cuts
@@ -248,80 +246,94 @@ int main(int argc, char *argv[]){
   //                       "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
   //                       "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))";
   NamedFunc ttbar_resolved = 
+                         "met/met_calo<5&&weight<1.5&&"
                          "nlep==1&&lep_pt[0]>30&&mt<=100&&njet>=4&&njet<=5&&"
                          "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
-                         "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))";
+                         "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))"
+                         &&Higfuncs::lead_signal_lepton_pt>30;
   NamedFunc zll_resolved =
+                         "met/met_calo<5&&weight<1.5&&"
                          "nlep==2&&njet>=4&&njet<=5&&met<50&&"
                          "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
                          "(nbm==0||nbm==1||nbm==2||nbm>=3)";
 
   PlotMaker pm;
 
-  // According to true b
-  // (0b, 1b, 2b tag)  low drmax 
-  pm.Push<Table>("FixName:syst__zll_pies_trueb__0b_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs_trueB, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies_trueb__1b_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs_trueB, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies_trueb__2b_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs_trueB, true, true, true);
-  // (2b, 3b, 4b tag)  high drmax 
-  pm.Push<Table>("FixName:syst__zll_pies_trueb__0b_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs_trueB, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies_trueb__1b_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs_trueB, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies_trueb__2b_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs_trueB, true, true, true);
+  //// According to true b
+  //// (0b, 1b, 2b tag)  low drmax 
+  //pm.Push<Table>("FixName:syst__zll_pies_trueb__0b_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs_trueB, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies_trueb__1b_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs_trueB, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies_trueb__2b_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs_trueB, true, true, true);
+  //// (2b, 3b, 4b tag)  high drmax 
+  //pm.Push<Table>("FixName:syst__zll_pies_trueb__0b_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs_trueB, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies_trueb__1b_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs_trueB, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies_trueb__2b_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs_trueB, true, true, true);
 
-  // 0b (pll[0]: 75, 150, 200, 300) low drmax
-  pm.Push<Table>("FixName:syst__zll_pies__0b_met0_lowdrmax"    , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0               &&ll_pt[0]<=75  &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies__0b_met75_lowdrmax"   , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>75  &&ll_pt[0]<=150 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies__0b_met150_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>150 &&ll_pt[0]<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies__0b_met200_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>200 &&ll_pt[0]<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies__0b_met300_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>300                 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  // 1b (pll[0]: 75, 150, 200, 300) low drmax
-  pm.Push<Table>("FixName:syst__zll_pies__1b_met0_lowdrmax"    , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1               &&ll_pt[0]<=75  &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies__1b_met75_lowdrmax"   , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>75  &&ll_pt[0]<=150 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies__1b_met150_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>150 &&ll_pt[0]<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies__1b_met200_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>200 &&ll_pt[0]<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies__1b_met300_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>300                 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  // 2b (pll[0]: 75, 150, 200, 300) low drmax
-  pm.Push<Table>("FixName:syst__zll_pies__2b_met0_lowdrmax"    , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2               &&ll_pt[0]<=75  &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies__2b_met75_lowdrmax"   , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>75  &&ll_pt[0]<=150 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies__2b_met150_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>150 &&ll_pt[0]<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies__2b_met200_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>200 &&ll_pt[0]<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies__2b_met300_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>300                 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  // 0b (pll[0]: 75, 150, 200, 300) high drmax
-  pm.Push<Table>("FixName:syst__zll_pies__0b_met0_highdrmax"    , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0               &&ll_pt[0]<=75  &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies__0b_met75_highdrmax"   , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>75  &&ll_pt[0]<=150 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies__0b_met150_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>150 &&ll_pt[0]<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies__0b_met200_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>200 &&ll_pt[0]<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies__0b_met300_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>300                 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  // 1b (pll[0]: 75, 150, 200, 300) high drmax
-  pm.Push<Table>("FixName:syst__zll_pies__1b_met0_highdrmax"    , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1               &&ll_pt[0]<=75  &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies__1b_met75_highdrmax"   , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>75  &&ll_pt[0]<=150 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies__1b_met150_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>150 &&ll_pt[0]<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies__1b_met200_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>200 &&ll_pt[0]<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies__1b_met300_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>300                 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  // 2b (pll[0]: 75, 150, 200, 300) high drmax
-  pm.Push<Table>("FixName:syst__zll_pies__2b_met0_highdrmax"    , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2               &&ll_pt[0]<=75  &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies__2b_met75_highdrmax"   , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>75  &&ll_pt[0]<=150 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies__2b_met150_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>150 &&ll_pt[0]<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies__2b_met200_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>200 &&ll_pt[0]<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  pm.Push<Table>("FixName:syst__zll_pies__2b_met300_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>300                 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //// 0b (pll[0]: 75, 150, 200, 300) low drmax
+  //pm.Push<Table>("FixName:syst__zll_pies__0b_met0_lowdrmax"    , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0               &&ll_pt[0]<=75  &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies__0b_met75_lowdrmax"   , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>75  &&ll_pt[0]<=150 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies__0b_met150_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>150 &&ll_pt[0]<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies__0b_met200_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>200 &&ll_pt[0]<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies__0b_met300_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>300                 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //// 1b (pll[0]: 75, 150, 200, 300) low drmax
+  //pm.Push<Table>("FixName:syst__zll_pies__1b_met0_lowdrmax"    , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1               &&ll_pt[0]<=75  &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies__1b_met75_lowdrmax"   , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>75  &&ll_pt[0]<=150 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies__1b_met150_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>150 &&ll_pt[0]<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies__1b_met200_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>200 &&ll_pt[0]<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies__1b_met300_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>300                 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //// 2b (pll[0]: 75, 150, 200, 300) low drmax
+  //pm.Push<Table>("FixName:syst__zll_pies__2b_met0_lowdrmax"    , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2               &&ll_pt[0]<=75  &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies__2b_met75_lowdrmax"   , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>75  &&ll_pt[0]<=150 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies__2b_met150_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>150 &&ll_pt[0]<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies__2b_met200_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>200 &&ll_pt[0]<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies__2b_met300_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>300                 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //// 0b (pll[0]: 75, 150, 200, 300) high drmax
+  //pm.Push<Table>("FixName:syst__zll_pies__0b_met0_highdrmax"    , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0               &&ll_pt[0]<=75  &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies__0b_met75_highdrmax"   , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>75  &&ll_pt[0]<=150 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies__0b_met150_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>150 &&ll_pt[0]<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies__0b_met200_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>200 &&ll_pt[0]<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies__0b_met300_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>300                 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //// 1b (pll[0]: 75, 150, 200, 300) high drmax
+  //pm.Push<Table>("FixName:syst__zll_pies__1b_met0_highdrmax"    , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1               &&ll_pt[0]<=75  &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies__1b_met75_highdrmax"   , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>75  &&ll_pt[0]<=150 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies__1b_met150_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>150 &&ll_pt[0]<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies__1b_met200_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>200 &&ll_pt[0]<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies__1b_met300_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>300                 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //// 2b (pll[0]: 75, 150, 200, 300) high drmax
+  //pm.Push<Table>("FixName:syst__zll_pies__2b_met0_highdrmax"    , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2               &&ll_pt[0]<=75  &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies__2b_met75_highdrmax"   , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>75  &&ll_pt[0]<=150 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies__2b_met150_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>150 &&ll_pt[0]<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies__2b_met200_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>200 &&ll_pt[0]<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  //pm.Push<Table>("FixName:syst__zll_pies__2b_met300_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>300                 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
 
   // comparison of data with mc
-  // [drmax;no drmax] (0b, 1b)
+  // [drmax;no drmax] (0b, 1b, 0b+1b)
   pm.Push<Hist1D>(Axis(20, 0, 4, "hig_cand_drmax[0]", "#DeltaR_{max}", {2.2}),
     base_filters&&
+    "met/met_calo<5&&weight<1.5&&"
     "nlep==2&&njet>=4&&njet<=5&&met<50&&"
     "hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
     "(nbm==0)", 
     zll_procs, plt_lin).Weight(weight).Tag("FixName:syst__zll_drmax_0b").LuminosityTag(total_luminosity_string);
   pm.Push<Hist1D>(Axis(20, 0, 4, "hig_cand_drmax[0]", "#DeltaR_{max}", {2.2}),
     base_filters&&
+    "met/met_calo<5&&weight<1.5&&"
     "nlep==2&&njet>=4&&njet<=5&&met<50&&"
     "hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
     "(nbm==1)", 
     zll_procs, plt_lin).Weight(weight).Tag("FixName:syst__zll_drmax_1b").LuminosityTag(total_luminosity_string);
+  pm.Push<Hist1D>(Axis(20, 0, 4, "hig_cand_drmax[0]", "#DeltaR_{max}", {2.2}),
+    base_filters&&
+    "met/met_calo<5&&weight<1.5&&"
+    "nlep==2&&njet>=4&&njet<=5&&met<50&&"
+    "hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
+    "(nbm<=1)", 
+    zll_procs, plt_lin).Weight(weight).Tag("FixName:syst__zll_drmax_0b1b").LuminosityTag(total_luminosity_string);
+
   // [<m>;no <m>, low_drmax] (0b, 1b)
   pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     base_filters&&
+    "met/met_calo<5&&weight<1.5&&"
     "nlep==2&&njet>=4&&njet<=5&&met<50&&"
     "hig_cand_drmax[0]<2.2&&hig_cand_dm[0]<40&&"
     "hig_cand_drmax[0]<1.1&&"
@@ -329,6 +341,7 @@ int main(int argc, char *argv[]){
     zll_procs, plt_lin).Weight(weight).Tag("FixName:syst__zll_amjj_0b_lowdrmax").LuminosityTag(total_luminosity_string);
   pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     base_filters&&
+    "met/met_calo<5&&weight<1.5&&"
     "nlep==2&&njet>=4&&njet<=5&&met<50&&"
     "hig_cand_drmax[0]<2.2&&hig_cand_dm[0]<40&&"
     "hig_cand_drmax[0]<1.1&&"
@@ -337,6 +350,7 @@ int main(int argc, char *argv[]){
   // [<m>;no <m>, high_drmax] (0b, 1b)
   pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     base_filters&&
+    "met/met_calo<5&&weight<1.5&&"
     "nlep==2&&njet>=4&&njet<=5&&met<50&&"
     "hig_cand_drmax[0]<2.2&&hig_cand_dm[0]<40&&"
     "hig_cand_drmax[0]>=1.1&&"
@@ -344,6 +358,7 @@ int main(int argc, char *argv[]){
     zll_procs, plt_lin).Weight(weight).Tag("FixName:syst__zll_amjj_0b_highdrmax").LuminosityTag(total_luminosity_string);
   pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     base_filters&&
+    "met/met_calo<5&&weight<1.5&&"
     "nlep==2&&njet>=4&&njet<=5&&met<50&&"
     "hig_cand_drmax[0]<2.2&&hig_cand_dm[0]<40&&"
     "hig_cand_drmax[0]>=1.1&&"
@@ -354,6 +369,7 @@ int main(int argc, char *argv[]){
   // [<m>;no <m>] (0b): Extra plot to compare with AN-2016
   pm.Push<Hist1D>(Axis(25, 0, 250, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     base_filters&&
+    "met/met_calo<5&&weight<1.5&&"
     "nlep==2&&njet>=4&&njet<=5&&met<50&&"
     "hig_cand_drmax[0]<2.2&&hig_cand_dm[0]<40&&"
     "(nbm==0)", 
@@ -361,11 +377,16 @@ int main(int argc, char *argv[]){
   // [<m>;no <m>] (1b): Extra plot to compare with AN-2016
   pm.Push<Hist1D>(Axis(25, 0, 250, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     base_filters&&
+    "met/met_calo<5&&weight<1.5&&"
     "nlep==2&&njet>=4&&njet<=5&&met<50&&"
     "hig_cand_drmax[0]<2.2&&hig_cand_dm[0]<40&&"
     "(nbm==1)", 
     zll_procs, plt_lin).Weight(weight).Tag("FixName:syst__zll_amjj_1b").LuminosityTag(total_luminosity_string);
 
+  // [p_ll] (0b+1b)
+  pm.Push<Hist1D>(Axis(16, 0, 400, "ll_pt[0]", "p_{T}^{ll} [GeV]", {}),
+    base_filters&&zll_resolved&&"nbm<=1",
+    zll_procs, plt_lin).Weight(weight).Tag("FixName:syst__zll_pt_ll").LuminosityTag(total_luminosity_string);
 
   // [<m> shapes (true 0b, 1b, 2b);(low, high) drmax]
   pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
@@ -398,9 +419,9 @@ int main(int argc, char *argv[]){
     base_filters&&zll_resolved&&"hig_cand_drmax[0]>=1.1",
     zll_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__zll_amjj_btag__highdrmax__mc").LuminosityTag(total_luminosity_string);
 
-  // kappa plot
-  string unblind_string;
-  if (unblind) unblind_string == "--unblind";
+  //// kappa plot
+  //string unblind_string;
+  //if (unblind) unblind_string == "--unblind";
   //system(("./run/higgsino/plot_kappas.exe --sample zll --scen mc_as_data --year "+year_string+" "+unblind_string).c_str());
   // Data example: ./run/higgsino/plot_kappas.exe --year 2016 --unblind --sample zll --scen data
 

@@ -280,8 +280,10 @@ void MakeLimitPlot(vector<double> vmx,
   glim.SetMinimum(0.00001);
   glim.SetMaximum(2);
 
-  glim.SetNpx((2600.-800.)/12.5);
-  glim.SetNpy(1600/12.5);
+  //glim.SetNpx((2600.-800.)/12.5);
+  //glim.SetNpy(1600/12.5);
+  glim.SetNpx(800/12.5);
+  glim.SetNpy(700/12.5);
 
   glim.SetTitle(title.c_str());
 
@@ -309,15 +311,20 @@ void MakeLimitPlot(vector<double> vmx,
   c.SetLogz();
   glim.Draw("colz");
 
+  bool unblind = false;
+
   TGraph cup = DrawContours(gup, 2, 2, 5, num_smooth_);
   TGraph cdown = DrawContours(gdown, 2, 2, 5, num_smooth_);
   TGraph cexp = DrawContours(gexp, 2, 1, 5, num_smooth_, 1.);
-  TGraph cobsup = DrawContours(gobsup, 1, 2, 5, num_smooth_);
-  TGraph cobsdown = DrawContours(gobsdown, 1, 2, 5, num_smooth_);
-  TGraph cobs = DrawContours(gobs, 1, 1, 5, num_smooth_, 1.);
+  TGraph cobsup, cobsdown, cobs;
+  if (unblind) {
+    cobsup = DrawContours(gobsup, 1, 2, 5, num_smooth_);
+    cobsdown = DrawContours(gobsdown, 1, 2, 5, num_smooth_);
+    cobs = DrawContours(gobs, 1, 1, 5, num_smooth_, 1.);
+  }
 
   l.AddEntry(&cexp, "Expected", "l");
-  l.AddEntry(&cobs, "Observed", "l");
+  if (unblind) l.AddEntry(&cobs, "Observed", "l");
 
   l.Draw("same");
 
@@ -332,14 +339,17 @@ void MakeLimitPlot(vector<double> vmx,
 
   gPad->Update();
   glim.GetZaxis()->SetTitleOffset(1.3);
-  glim.GetXaxis()->SetRangeUser(0,1200);
+  glim.GetXaxis()->SetRangeUser(0,800);
+  glim.GetYaxis()->SetRangeUser(0,700);
   c.Print((filebase+"_"+tag+".pdf").c_str());
   
   TFile file((filebase+"_"+tag+".root").c_str(), "recreate");
   glim.GetHistogram()->Write((model_+"ObservedExcludedXsec").c_str());
-  cobs.Write((model_+"ObservedLimit").c_str());
-  cobsup.Write((model_+"ObservedLimitUp").c_str());
-  cobsdown.Write((model_+"ObservedLimitDown").c_str());
+  if (unblind) {
+    cobs.Write((model_+"ObservedLimit").c_str());
+    cobsup.Write((model_+"ObservedLimitUp").c_str());
+    cobsdown.Write((model_+"ObservedLimitDown").c_str());
+  }
   cexp.Write((model_+"ExpectedLimit").c_str());
   cup.Write((model_+"ExpectedLimitUp").c_str());
   cdown.Write((model_+"ExpectedLimitDown").c_str());
