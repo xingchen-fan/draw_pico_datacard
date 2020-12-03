@@ -65,6 +65,7 @@ public:
   std::set<const Process*> GetProcesses() const final;
 
   FigureComponent * GetComponent(const Process *process) final;
+  std::vector<TH1D> GetBottomPlots(double &the_min, double &the_max) const;
 
   std::string Name() const;
   std::string Title() const;
@@ -129,7 +130,6 @@ private:
   std::vector<std::shared_ptr<TLatex> > GetTitleTexts() const;
   TGraphAsymmErrors GetBackgroundError() const;
   std::vector<TLine> GetCutLines(double y_min, double y_max, bool adjust_bottom) const;
-  std::vector<TH1D> GetBottomPlots(double &the_min, double &the_max) const;
   TLine GetBottomHorizontal() const;
 
   void StripTopPlotLabels() const;

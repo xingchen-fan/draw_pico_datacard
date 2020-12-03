@@ -63,9 +63,9 @@ int main(int argc, char *argv[]){
   vector<PlotOpt> twodim_plotopts = {style2D().Title(TitleType::info).YAxis(YAxisType::log).Overflow(OverflowType::overflow)};
 
   // Set options
-  string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/";
+  string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
   string mc_skim_folder = "mc/skim_met150/";
-  string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/";
+  string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
   string sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_preselect/";
   string foldersig = mc_base_folder+year_string+"/SMS-TChiHH_2D/unskimmed/";
   if (year_string == "2016_all") foldersig = mc_base_folder+"/2016/SMS-TChiHH_2D/unskimmed/";
@@ -174,32 +174,14 @@ int main(int argc, char *argv[]){
   //also applies trigger efficiencies
   const NamedFunc mixed_model_weight("mixed_model_weight",[](const Baby &b) -> NamedFunc::ScalarType{
     set<int> mchi_sigm_int = {175, 500, 900}; 
-    double trig_eff = 1.0;
-    double lumi_scale = 1.0;
-    if (b.SampleType()==2016) {
-      trig_eff = Higfuncs::get_0l_trigeff2016.GetVector(b)[0];
-      lumi_scale = 35.9;
-    }
-    else if (b.SampleType()==2017) {
-      trig_eff = Higfuncs::get_0l_trigeff2017.GetVector(b)[0];
-      lumi_scale = 41.5;
-    }
-    else if (b.SampleType()==2018) {
-      trig_eff = Higfuncs::get_0l_trigeff2018.GetVector(b)[0];
-      lumi_scale = 60.0;
-    }
-    if (b.mprod() == -999) {
+    if (b.mprod() == -999 || mchi_sigm_int.count(b.mprod()) > 0) {
       //not signal
-      return b.weight()*trig_eff*lumi_scale;
-    }
-    if (mchi_sigm_int.count(b.mprod()) > 0) {
-      //1d signal
-      return b.weight()*trig_eff*lumi_scale;
+      return Higfuncs::final_weight.GetScalar(b);
     }
     double xsec1d, xsec2d, xsec1d_unc, xsec2d_unc;
     xsec::higgsinoCrossSection(b.mprod(),xsec1d,xsec1d_unc);
     xsec::higgsino2DCrossSection(b.mprod(),xsec2d,xsec2d_unc);
-    return b.weight()/xsec1d*xsec2d*trig_eff*lumi_scale;
+    return Higfuncs::final_weight.GetScalar(b)/xsec1d*xsec2d;
   });
 
   const NamedFunc nb77("nb77",[](const Baby &b) -> NamedFunc::ScalarType{
@@ -405,9 +387,17 @@ int main(int argc, char *argv[]){
     return b.hig_cand_am()->at(0)-(b.hig_cand_dm()->at(0))/2.0;
   });
 
+  const NamedFunc max_top_tag("max_top_tag",[](const Baby &b) -> NamedFunc::ScalarType{
+    float r_max_top_tag = 0;
+    for (unsigned int fat_jet_idx = 0; fat_jet_idx < b.fjet_deep_tvsqcd()->size(); fat_jet_idx++) {
+      r_max_top_tag = r_max_top_tag > b.fjet_deep_tvsqcd()->at(fat_jet_idx) ? r_max_top_tag : b.fjet_deep_tvsqcd()->at(fat_jet_idx);
+    }
+    return r_max_top_tag;
+  });
+
   std::vector<double> cms_met_bins{150,200,300,400,500};
 
-  NamedFunc cms_baseline = "stitch&&150<=met&&nvlep==0&&ntk==0&&4<=njet&&njet<=5&&2<=nbt&&!low_dphi_met&&(met/met_calo)<2&&(met/mht)<2&&hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200";
+  NamedFunc cms_baseline = Higfuncs::pass_filters&&"stitch&&150<=met&&nvlep==0&&ntk==0&&4<=njet&&njet<=5&&2<=nbt&&!low_dphi_met&&(met/met_calo)<2&&(met/mht)<2&&hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200";
   NamedFunc cms_baseline_nob = "stitch&&150<=met&&nvlep==0&&ntk==0&&4<=njet&&njet<=5&&!low_dphi_met&&(met/met_calo)<2&&(met/mht)<2&&hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200";
   NamedFunc atlas_hm_baseline_nob = "stitch&&200<=met&&nvlep==0&&ntk==0&&4<=njet&&jet_met_dphi[0]>=0.4&&jet_met_dphi[1]>=0.4&&jet_met_dphi[2]>=0.4&&jet_met_dphi[3]>=0.4&&(met/met_calo)<2&&(met/mht)<2&&hig_cand_drmax[0]<=2.4" && (110<=mh1) && (mh1<150) && (90<=mh2) && (mh2<140);
 
@@ -541,15 +531,15 @@ int main(int argc, char *argv[]){
 	break;
       case 1:
         met_bin_cuts = "200<=met&&met<300";
-	met_filename = "FixName:mt2_met200to300_";
+	met_filename = "FixName:met200to300_";
 	break;
       case 2:
         met_bin_cuts = "300<=met&&met<400";
-	met_filename = "FixName:mt2_met300to400_";
+	met_filename = "FixName:met300to400_";
 	break;
       default:
         met_bin_cuts = "400<=met";
-	met_filename = "FixName:mt2_met400toInf_";
+	met_filename = "FixName:met400toInf_";
     }
     for (int drmax_bin_idx = 0; drmax_bin_idx < 2; drmax_bin_idx++) {
       NamedFunc drmax_bin_cuts = "";
@@ -582,17 +572,30 @@ int main(int argc, char *argv[]){
 	    case 4:
               njet_bin_cuts = "njet==4";
 	      njet_filename = "_nj4";
+	      continue;
 	      break;
 	    default:
               njet_bin_cuts = "njet>=4";
 	  }
 	  //code here
           pm.Push<Hist1D>(Axis(20, 0, 1000, mt2, "M_{T2} [GeV]", {}),
-              cms_baseline && "100<=hig_cand_am[0]&&hig_cand_am[0]<140" && met_bin_cuts && drmax_bin_cuts && nb_bin_cuts && njet_bin_cuts,
-              search_procs, plt_lin).Weight(mixed_model_weight).Tag(("FixName:mt2_lin_"+met_filename+drmax_filename+nb_filename+njet_filename).c_str()).LuminosityTag(total_luminosity_string);
+              cms_baseline && "100<=hig_cand_am[0]&&hig_cand_am[0]<140&&njet==4" && met_bin_cuts && drmax_bin_cuts && nb_bin_cuts && njet_bin_cuts,
+              search_procs, plt_lin).Weight(mixed_model_weight).Tag(("FixName:varstudies_mt2_lin_"+met_filename+drmax_filename+nb_filename+njet_filename).c_str()).LuminosityTag(total_luminosity_string);
           pm.Push<Hist1D>(Axis(20, 0, 1000, mt2, "M_{T2} [GeV]", {}),
+              cms_baseline && "100<=hig_cand_am[0]&&hig_cand_am[0]<140&&njet==4" && met_bin_cuts && drmax_bin_cuts && nb_bin_cuts && njet_bin_cuts,
+              search_procs, plt_log).Weight(mixed_model_weight).Tag(("FixName:varstudies_mt2_log_"+met_filename+drmax_filename+nb_filename+njet_filename).c_str()).LuminosityTag(total_luminosity_string);
+          pm.Push<Hist1D>(Axis(20, 0, 500, mtmin, "m_{Tmin} [GeV]", {}),
               cms_baseline && "100<=hig_cand_am[0]&&hig_cand_am[0]<140" && met_bin_cuts && drmax_bin_cuts && nb_bin_cuts && njet_bin_cuts,
-              search_procs, plt_log).Weight(mixed_model_weight).Tag(("FixName:mt2_log_"+met_filename+drmax_filename+nb_filename+njet_filename).c_str()).LuminosityTag(total_luminosity_string);
+              search_procs, plt_lin).Weight(mixed_model_weight).Tag(("FixName:varstudies_mtmin_lin_"+met_filename+drmax_filename+nb_filename+njet_filename).c_str()).LuminosityTag(total_luminosity_string);
+          pm.Push<Hist1D>(Axis(20, 0, 500, mtmin, "m_{Tmin} [GeV]", {}),
+              cms_baseline && "100<=hig_cand_am[0]&&hig_cand_am[0]<140" && met_bin_cuts && drmax_bin_cuts && nb_bin_cuts && njet_bin_cuts,
+              search_procs, plt_log).Weight(mixed_model_weight).Tag(("FixName:varstudies_mtmin_log_"+met_filename+drmax_filename+nb_filename+njet_filename).c_str()).LuminosityTag(total_luminosity_string);
+          pm.Push<Hist1D>(Axis(20, 0., 1., max_top_tag, "max top tag score", {}),
+              cms_baseline && "100<=hig_cand_am[0]&&hig_cand_am[0]<140" && met_bin_cuts && drmax_bin_cuts && nb_bin_cuts && njet_bin_cuts,
+              search_procs, plt_lin).Weight(mixed_model_weight).Tag(("FixName:varstudies_maxtopscore_lin_"+met_filename+drmax_filename+nb_filename+njet_filename).c_str()).LuminosityTag(total_luminosity_string);
+          pm.Push<Hist1D>(Axis(20, 0., 1., max_top_tag, "max top tag score", {}),
+              cms_baseline && "100<=hig_cand_am[0]&&hig_cand_am[0]<140" && met_bin_cuts && drmax_bin_cuts && nb_bin_cuts && njet_bin_cuts,
+              search_procs, plt_log).Weight(mixed_model_weight).Tag(("FixName:varstudies_maxtopscore_log_"+met_filename+drmax_filename+nb_filename+njet_filename).c_str()).LuminosityTag(total_luminosity_string);
 	} // /jet loop
       } // /bjet loop
     } // /drmax loop
