@@ -101,7 +101,7 @@ int main(int argc, char *argv[]){
   map<string, set<string>> mctags; 
   string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/";
   string mc_skim_folder = "mc/skim_met150/";
-  std::set<int> years = {2016};
+  std::set<int> years = {2018};
   // Set base tags
   mctags["tt"]     = set<string>({"*TTJets_SingleLept*","TTJets_DiLept*",
                                   "*_TTZ*.root", "*_TTW*.root",
@@ -128,16 +128,16 @@ int main(int argc, char *argv[]){
                                "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root", "*DYJetsToLL*.root"
   });
   // Set mc processes
-  //mc_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X", Process::Type::background,colors("tt_1l"),
-  //                attach_folder(mc_base_folder, years, mc_skim_folder, mctags["tt"]),"stitch"));
-  //mc_procs.push_back(Process::MakeShared<Baby_pico>("V+jets", Process::Type::background, kOrange+1,
-  //                attach_folder(mc_base_folder, years, mc_skim_folder,mctags["vjets"]),"stitch"));
-  //mc_procs.push_back(Process::MakeShared<Baby_pico>("Single t", Process::Type::background,colors("single_t"),
-  //                attach_folder(mc_base_folder, years, mc_skim_folder, mctags["single_t"]),"stitch"));
-  //mc_procs.push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background, colors("other"),
-  //                attach_folder(mc_base_folder, years, mc_skim_folder, mctags["qcd"]),"stitch")); 
-  //mc_procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGray+2,
-  //                attach_folder(mc_base_folder, years, mc_skim_folder, mctags["other"]),"stitch"));
+  mc_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X", Process::Type::background,colors("tt_1l"),
+                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["tt"]),"stitch"));
+  mc_procs.push_back(Process::MakeShared<Baby_pico>("V+jets", Process::Type::background, kOrange+1,
+                  attach_folder(mc_base_folder, years, mc_skim_folder,mctags["vjets"]),"stitch"));
+  mc_procs.push_back(Process::MakeShared<Baby_pico>("Single t", Process::Type::background,colors("single_t"),
+                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["single_t"]),"stitch"));
+  mc_procs.push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background, colors("other"),
+                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["qcd"]),"stitch")); 
+  mc_procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGray+2,
+                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["other"]),"stitch"));
   //add signal pts
   vector<string> mchi_sigm = {"175","500","900"}; 
   vector<string> mlsp_sigm = {"0",  "0",  "0"}; 
@@ -146,7 +146,7 @@ int main(int argc, char *argv[]){
   vector<int> sig_colors = {kGreen+1, kRed, kBlue}; // need sigm.size() <= sig_colors.size()
   vector<int> sig_colors2d = {kOrange, kYellow, kCyan};
   string foldersig = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/"+year_string+"/SMS-TChiHH_2D/skim_met150/";
-  for (unsigned isig(0); isig<mchi_sigm.size(); isig++) {
+  for (unsigned isig(1); isig<mchi_sigm.size(); isig++) {
     mc_procs.push_back(Process::MakeShared<Baby_pico>("GMSB("+mchi_sigm[isig]+")", 
       Process::Type::signal, sig_colors[isig], {foldersig+"*TChiHH_mChi-"+mchi_sigm[isig]+"_mLSP-"+mlsp_sigm[isig]+"*.root"}, "stitch"));
     std::cout << foldersig+"*TChiHH_mChi-"+mchi_sigm[isig]+"_mLSP-"+mlsp_sigm[isig]+"*.root" << std::endl;
@@ -159,32 +159,14 @@ int main(int argc, char *argv[]){
 
   const NamedFunc mixed_model_weight("mixed_model_weight",[](const Baby &b) -> NamedFunc::ScalarType{
     set<int> mchi_sigm_int = {175, 500, 900}; 
-    double trig_eff = 1.0;
-    double lumi_scale = 1.0;
-    if (b.SampleType()==2016) {
-      trig_eff = Higfuncs::get_0l_trigeff2016.GetVector(b)[0];
-      lumi_scale = 35.9;
-    }
-    else if (b.SampleType()==2017) {
-      trig_eff = Higfuncs::get_0l_trigeff2017.GetVector(b)[0];
-      lumi_scale = 41.5;
-    }
-    else if (b.SampleType()==2018) {
-      trig_eff = Higfuncs::get_0l_trigeff2018.GetVector(b)[0];
-      lumi_scale = 60.0;
-    }
-    if (b.mprod() == -999) {
+    if (b.mprod() == -999 || mchi_sigm_int.count(b.mprod()) > 0) {
       //not signal
-      return b.weight()*trig_eff*lumi_scale;
-    }
-    if (mchi_sigm_int.count(b.mprod()) > 0) {
-      //1d signal
-      return b.weight()*trig_eff*lumi_scale;
+      return Higfuncs::final_weight.GetScalar(b);
     }
     double xsec1d, xsec2d, xsec1d_unc, xsec2d_unc;
     xsec::higgsinoCrossSection(b.mprod(),xsec1d,xsec1d_unc);
     xsec::higgsino2DCrossSection(b.mprod(),xsec2d,xsec2d_unc);
-    return b.weight()/xsec1d*xsec2d*trig_eff*lumi_scale;
+    return Higfuncs::final_weight.GetScalar(b)/xsec1d*xsec2d;
   });
   
   const NamedFunc boosted_mht_phi("boosted_mht_phi", [](const Baby &b) -> NamedFunc::ScalarType{
@@ -339,6 +321,7 @@ int main(int argc, char *argv[]){
   });
 
   NamedFunc baseline = "stitch&&150<=met&&nvlep==0&&ntk==0&&4<=njet&&njet<=5&&2<=nbt&&!low_dphi_met&&hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200";
+  NamedFunc baseline_metquality = "stitch&&150<=met&&nvlep==0&&ntk==0&&4<=njet&&njet<=5&&2<=nbt&&!low_dphi_met&&hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200&&(met/met_calo<2.0)&&(met/mht<2.0)";
   NamedFunc baseline_jetid = "stitch&&150<=met&&nvlep==0&&ntk==0" && jetid_modified_cuts;
   NamedFunc singleele_baseline = el_trigger && "stitch&&150<=met&&nlep==1&&nel==1&&4<=njet&&njet<=5&&2<=nbt&&!low_dphi_met&&hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200";
   NamedFunc singleele_baseline_jetid = el_trigger && "stitch&&150<=met&&nlep==1&&nel==1" && jetid_modified_cuts;
@@ -527,21 +510,21 @@ int main(int argc, char *argv[]){
     TableRow("eeBadScFilter", 
       baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc",0,0, mixed_model_weight),
     TableRow("EcalNoiseJetFilter", 
-      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc" && pass_ecalnoisejet,0,0, mixed_model_weight),
+      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc" && Higfuncs::pass_ecalnoisejet,0,0, mixed_model_weight),
     TableRow("MuonJetFilter", 
-      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet" && pass_ecalnoisejet,0,0, mixed_model_weight),
+      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet" && Higfuncs::pass_ecalnoisejet,0,0, mixed_model_weight),
     TableRow("$p_{T}^{miss}/p_{Tcalo}^{miss}<2.0$", 
-      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)" && pass_ecalnoisejet,0,0, mixed_model_weight),
+      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)" && Higfuncs::pass_ecalnoisejet,0,0, mixed_model_weight),
     TableRow("$p_{T}^{miss}/H_{T}^{miss}<2.0$", 
-      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)" && pass_ecalnoisejet,0,0, mixed_model_weight),
+      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)" && Higfuncs::pass_ecalnoisejet,0,0, mixed_model_weight),
     TableRow("LowNeutralJetFilter", 
-      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet" && pass_ecalnoisejet,0,0, mixed_model_weight),
+      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet" && Higfuncs::pass_ecalnoisejet,0,0, mixed_model_weight),
     TableRow("HTRatioDPhiTightFilter", 
-      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet&&pass_htratio_dphi_tight" && pass_ecalnoisejet,0,0, mixed_model_weight),
+      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet&&pass_htratio_dphi_tight" && Higfuncs::pass_ecalnoisejet,0,0, mixed_model_weight),
     TableRow("HEMDPhiVetoFilter", 
-      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet&&pass_htratio_dphi_tight" && pass_ecalnoisejet,0,0, mixed_model_weight*pass_boostedhemveto),
+      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet&&pass_htratio_dphi_tight" && Higfuncs::pass_ecalnoisejet && Higfuncs::pass_hemveto,0,0, mixed_model_weight),
     TableRow("JetID", 
-      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet&&pass_htratio_dphi_tight&&pass_jets" && pass_ecalnoisejet,0,0, mixed_model_weight*pass_boostedhemveto),
+      baseline && "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet&&pass_htratio_dphi_tight&&pass_jets" && Higfuncs::pass_ecalnoisejet && Higfuncs::pass_hemveto,0,0, mixed_model_weight),
     },mc_procs,false,true,false,false,true,false);
   }
 
