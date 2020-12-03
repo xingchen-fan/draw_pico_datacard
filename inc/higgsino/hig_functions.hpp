@@ -61,6 +61,10 @@ namespace Higfuncs{
   extern const NamedFunc h1b2_pt;
   extern const NamedFunc h2b1_pt;
   extern const NamedFunc h2b2_pt;
+  extern const NamedFunc h1b1_eta;
+  extern const NamedFunc h1b2_eta;
+  extern const NamedFunc h2b1_eta;
+  extern const NamedFunc h2b2_eta;
   extern const NamedFunc h1_dr;
   extern const NamedFunc h2_dr;
   extern const NamedFunc h1_mass;

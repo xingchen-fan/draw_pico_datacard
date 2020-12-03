@@ -35,8 +35,12 @@ void GetOptions(int argc, char *argv[]);
 
 namespace{
   float lumi = 1;
-  bool doSignal = true;
   string tag = "";
+}
+
+NamedFunc add_cut(NamedFunc & current_cut, NamedFunc additional_cut) {
+  current_cut = current_cut && additional_cut;
+  return current_cut;
 }
 
 float to_float(string const & inString) {
@@ -174,8 +178,9 @@ string getLuminosityString(string const & year_string) {
 // sample: search/ttbar/zll/qcd
 // year_string: 2016/2017/2018/run2
 void addProcess(string const & processName, Process::Type type, int color, NamedFunc const & additionalCut, 
-  string const & nanoAodFolder, string const & production, string const & dataType, string const & fileTag, string const & sample, string const & year_string, 
-  vector<shared_ptr<Process> > & procs, bool use_met150_skim) {
+  string const & nanoAodFolder, string const & production, string const & dataType, string const & fileTag, 
+  string const & sample, string const & year_string, 
+  vector<shared_ptr<Process> > & procs, bool use_unskimmed) {
   set<int> years;
   //years_a = {2016};
   if (year_string == "run2") years = {2016, 2017, 2018};
@@ -193,7 +198,7 @@ void addProcess(string const & processName, Process::Type type, int color, Named
   mctags["qcd"]     = set<string>({"*_QCD_HT200to300_*","*_QCD_HT300to500_*","*_QCD_HT500to700_*",
                                    "*_QCD_HT700to1000_*", "*_QCD_HT1000to1500_*","*_QCD_HT1500to2000_*",
                                    "*_QCD_HT2000toInf_*"});
-  mctags["other"]   = set<string>({"*_WH_HToBB*.root", "*_ZH_HToBB*.root",
+  mctags["other"]   = set<string>({"*_WH*.root", "*_ZH_HToBB*.root",
                                      "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"});
   // Combine all tags
   mctags["all"] = set<string>({"*TTJets_SingleLept*",
@@ -204,7 +209,7 @@ void addProcess(string const & processName, Process::Type type, int color, Named
                                "*_QCD_HT200to300_*","*_QCD_HT300to500_*","*_QCD_HT500to700_*",
                                "*_QCD_HT1000to1500_*","*_QCD_HT1500to2000_*",
                                "*_QCD_HT2000toInf_*",
-                               "*_WH_HToBB*.root", "*_ZH_HToBB*.root",
+                               "*_WH*.root", "*_ZH_HToBB*.root",
                                "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root", "*DYJetsToLL*.root"
   });
 
@@ -217,6 +222,7 @@ void addProcess(string const & processName, Process::Type type, int color, Named
     if (production == "higgsino_angeles" && massPoints[1] == "0") massPoints[1] = "1";
     fileNames = {"*TChiHH_mChi-"+massPoints[0]+"_mLSP-"+massPoints[1]+"_*.root"};
   }
+  else if (Contains(fileTag, "*")) fileNames = set<string>({fileTag});
   else fileNames = mctags[fileTag];
 
   // Set folders
@@ -232,46 +238,55 @@ void addProcess(string const & processName, Process::Type type, int color, Named
   // higloose: 
   //   (nbt>=2 || nbdft>=2 || Sum$(fjet_pt>300 && fjet_msoftdrop>50)>0)&&
   //   met>150 && nvlep==0
-  if (use_met150_skim) folderDict.insert("search_mc_skim_folder", "mc/merged_higmc_met150/");
+  if (use_unskimmed) folderDict.insert("search_mc_skim_folder", "mc/unskimmed//");
   else folderDict.insert("search_mc_skim_folder", "mc/merged_higmc_higloose/");
   // higlep1T:
   //   (Sum$(fjet_pt>300 && fjet_msoftdrop>50)>1 || ((nbt>=2 || nbdft>=2) && njet>=4 && njet<=5)) &&
   //   nlep==1 && 
   //   (Max$(el_pt*el_sig)>40 || Max$(mu_pt*mu_sig)>40) // pass_1l_trig40 (sig is signal lepton)
-  folderDict.insert("ttbar_mc_skim_folder", "mc/merged_higmc_higlep1T/");
+  if (use_unskimmed) folderDict.insert("ttbar_mc_skim_folder", "mc/unskimmed//");
+  else folderDict.insert("ttbar_mc_skim_folder", "mc/merged_higmc_higlep1T/");
   // higlep2T:
   //   (Sum$(fjet_pt>300 && fjet_msoftdrop>50)>1 || (njet>=4 && njet<=5))
   //   nlep==2 && 
   //   @ll_m.size()>=1 && Sum$(ll_m>80 && ll_m<100)>=1
   //   (Max$(el_pt*el_sig)>30 || Max$(mu_pt*mu_sig)>30) // pass_2l_trig30
-  folderDict.insert("zll_mc_skim_folder", "mc/merged_higmc_higlep2T/");
+  if (use_unskimmed) folderDict.insert("zll_mc_skim_folder", "mc/unskimmed//");
+  else folderDict.insert("zll_mc_skim_folder", "mc/merged_higmc_higlep2T/");
   // higqcd with met150:
   //   (Sum$(fjet_pt>300 && fjet_msoftdrop>50)>1 || (njet>=4 && njet<=5))
   //   nvlep==0 && ntk==0 && low_dphi_met &&
   //   met>150  // Since applied to met150 skim
-  folderDict.insert("qcd_mc_skim_folder", "mc/merged_higmc_higqcd/");
+  if (use_unskimmed) folderDict.insert("qcd_mc_skim_folder", "mc/unskimmed//");
+  else folderDict.insert("qcd_mc_skim_folder", "mc/merged_higmc_higqcd/");
 
   folderDict.insert("data_production_folder", dataProductionFolder);
-  if (use_met150_skim) folderDict.insert("search_data_skim_folder","data/merged_higmc_met150/");
-  else folderDict.insert("search_data_skim_folder","data/merged_higmc_higloose/");
-  folderDict.insert("ttbar_data_skim_folder","data/merged_higmc_higlep1T/");
-  folderDict.insert("zll_data_skim_folder","data/merged_higmc_higlep2T/");
-  folderDict.insert("qcd_data_skim_folder","data/merged_higmc_higqcd/");
+  if (use_unskimmed) folderDict.insert("search_data_skim_folder","data/raw_pico/");
+  else folderDict.insert("search_data_skim_folder","data/merged_higdata_higloose/");
+  if (use_unskimmed) folderDict.insert("ttbar_data_skim_folder","data/raw_pico/");
+  else folderDict.insert("ttbar_data_skim_folder","data/merged_higdata_higlep1T/");
+  //folderDict.insert("ttbar_data_skim_folder","data/skim_higlep1T/");
+  if (use_unskimmed) folderDict.insert("zll_data_skim_folder","data/raw_pico/");
+  else folderDict.insert("zll_data_skim_folder","data/merged_higdata_higlep2T/");
+  if (use_unskimmed) folderDict.insert("qcd_data_skim_folder","data/raw_pico/");
+  else folderDict.insert("qcd_data_skim_folder","data/merged_higdata_higqcd/");
 
   folderDict.insert("signal_production_folder", signalProductionFolder);
-  //folderDict.insert("signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higloose/");
-  //folderDict.insert("signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_preselect/");
-  if (use_met150_skim) folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_met150/");
+  if (use_unskimmed) folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_2D/unskimmed/");
   else folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higloose/");
-  folderDict.insert("ttbar_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higlep1T/");
-  folderDict.insert("zll_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higlep2T/");
-  folderDict.insert("qcd_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higqcd/");
+  if (use_unskimmed) folderDict.insert("ttbar_signal_skim_folder", "SMS-TChiHH_2D/unskimmed/");
+  else folderDict.insert("ttbar_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higlep1T/");
+  if (use_unskimmed) folderDict.insert("zll_signal_skim_folder", "SMS-TChiHH_2D/unskimmed/");
+  else folderDict.insert("zll_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higlep2T/");
+  if (use_unskimmed) folderDict.insert("qcd_signal_skim_folder", "SMS-TChiHH_2D/unskimmed/");
+  else folderDict.insert("qcd_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higqcd/");
 
   // Set paths
   set<string> pathNames;
   pathNames = attach_folder(folderDict[dataType+"_production_folder"], years, folderDict[sample+"_"+dataType+"_skim_folder"], fileNames);
 
-  procs.push_back(Process::MakeShared<Baby_pico>(processName, type, color, pathNames,"stitch"&&additionalCut));
+  if (dataType == "data") procs.push_back(Process::MakeShared<Baby_pico>(processName, type, color, pathNames,additionalCut));
+  else procs.push_back(Process::MakeShared<Baby_pico>(processName, type, color, pathNames,"stitch"&&additionalCut));
 }
 
 void addAllMcProcesses(string const & processName_postfix, NamedFunc const & additionalCut, 
@@ -301,16 +316,113 @@ void addAllMcProcesses(string const & processName_postfix, NamedFunc const & add
     procs, use_met150_skim);
 }
 
+void addAllMcDetailProcesses(string const & processName_postfix, NamedFunc const & additionalCut, 
+  string const & nanoAodFolder, string const & production, string const & sample, string const & year_string, 
+  vector<shared_ptr<Process> > & procs, bool use_met150_skim) {
+  Palette colors("txt/colors.txt", "default");
+
+  //addProcess("TTJets\\_SingleLeptFromT "+processName_postfix, Process::Type::background, kOrange+1, additionalCut,
+  //  nanoAodFolder, production, "mc", "*TTJets_SingleLeptFromT_Tune*", sample, year_string,
+  //  procs, use_met150_skim);
+  //addProcess("TTJets\\_SingleLeptFromTbar "+processName_postfix, Process::Type::background, kOrange+1, additionalCut,
+  //  nanoAodFolder, production, "mc", "*TTJets_SingleLeptFromTbar_Tune*", sample, year_string,
+  //  procs, use_met150_skim);
+  //addProcess("TTJets\\_SingleLeptFromT\\_genMET-150 "+processName_postfix, Process::Type::background, kOrange+1, additionalCut,
+  //  nanoAodFolder, production, "mc", "*TTJets_SingleLeptFromT_genMET-150_Tune*", sample, year_string,
+  //  procs, use_met150_skim);
+  //addProcess("TTJets\\_SingleLeptFromTbar\\_genMET-150 "+processName_postfix, Process::Type::background, kOrange+1, additionalCut,
+  //  nanoAodFolder, production, "mc", "*TTJets_SingleLeptFromTbar_genMET-150_Tune*", sample, year_string,
+  //  procs, use_met150_skim);
+  //addProcess("TTJets\\_DiLept "+processName_postfix, Process::Type::background, kOrange+1, additionalCut,
+  //  nanoAodFolder, production, "mc", "*TTJets_DiLept_Tune*", sample, year_string,
+  //  procs, use_met150_skim);
+  //addProcess("TTJets\\_DiLept\\_genMET-150 "+processName_postfix, Process::Type::background, kOrange+1, additionalCut,
+  //  nanoAodFolder, production, "mc", "*TTJets_DiLept_genMET-150_Tune*", sample, year_string,
+  //  procs, use_met150_skim);
+  addProcess("TTJets "+processName_postfix, Process::Type::background, kOrange+1, additionalCut,
+    nanoAodFolder, production, "mc", "*TTJets_*Lept*", sample, year_string,
+    procs, use_met150_skim);
+  addProcess("TTZ "+processName_postfix, Process::Type::background, kOrange+1, additionalCut,
+    nanoAodFolder, production, "mc", "*_TTZ*", sample, year_string,
+    procs, use_met150_skim);
+  addProcess("TTW "+processName_postfix, Process::Type::background, kOrange+1, additionalCut,
+    nanoAodFolder, production, "mc", "*_TTW*", sample, year_string,
+    procs, use_met150_skim);
+  addProcess("TTGJets "+processName_postfix, Process::Type::background, kOrange+1, additionalCut,
+    nanoAodFolder, production, "mc", "*_TTGJets*", sample, year_string,
+    procs, use_met150_skim);
+  addProcess("ttHTobb "+processName_postfix, Process::Type::background, kOrange+1, additionalCut,
+    nanoAodFolder, production, "mc", "*ttHTobb*", sample, year_string,
+    procs, use_met150_skim);
+  addProcess("TTTT "+processName_postfix, Process::Type::background, kOrange+1, additionalCut,
+    nanoAodFolder, production, "mc", "*_TTTT*", sample, year_string,
+    procs, use_met150_skim);
+  addProcess("ST "+processName_postfix, Process::Type::background, kOrange+1, additionalCut,
+    nanoAodFolder, production, "mc", "*_ST_*", sample, year_string,
+    procs, use_met150_skim);
+  addProcess("ZJet "+processName_postfix, Process::Type::background, kOrange+1, additionalCut,
+    nanoAodFolder, production, "mc", "*_ZJet*", sample, year_string,
+    procs, use_met150_skim);
+  addProcess("DYJetsToLL "+processName_postfix, Process::Type::background, kOrange+1, additionalCut,
+    nanoAodFolder, production, "mc", "*DYJetsToLL*", sample, year_string,
+    procs, use_met150_skim);
+  addProcess("WJetsToLNu "+processName_postfix, Process::Type::background, kOrange+1, additionalCut,
+    nanoAodFolder, production, "mc", "*_WJetsToLNu*", sample, year_string,
+    procs, use_met150_skim);
+  addProcess("QCD "+processName_postfix, Process::Type::background, kOrange+1, additionalCut,
+    nanoAodFolder, production, "mc", "qcd", sample, year_string,
+    procs, use_met150_skim);
+  addProcess("WH "+processName_postfix, Process::Type::background, kOrange+1, additionalCut,
+    nanoAodFolder, production, "mc", "*_WH*", sample, year_string,
+    procs, use_met150_skim);
+  addProcess("ZH\\_HToBB "+processName_postfix, Process::Type::background, kOrange+1, additionalCut,
+    nanoAodFolder, production, "mc", "*_ZH_HToBB*", sample, year_string,
+    procs, use_met150_skim);
+  addProcess("WW "+processName_postfix, Process::Type::background, kOrange+1, additionalCut,
+    nanoAodFolder, production, "mc", "*_WWTo*", sample, year_string,
+    procs, use_met150_skim);
+  addProcess("WZ "+processName_postfix, Process::Type::background, kOrange+1, additionalCut,
+    nanoAodFolder, production, "mc", "*_WZ*", sample, year_string,
+    procs, use_met150_skim);
+  addProcess("ZZ "+processName_postfix, Process::Type::background, kOrange+1, additionalCut,
+    nanoAodFolder, production, "mc", "*_ZZ_*", sample, year_string,
+    procs, use_met150_skim);
+}
+
 void addMultipleSignalProcesses(string const & processName_postfix, NamedFunc const & additionalCut, 
   string const & nanoAodFolder, string const & production, string const & sample, string const & year_string, 
-  vector<shared_ptr<Process> > & procs, bool use_met150_skim) 
+  vector<shared_ptr<Process> > & procs, bool use_unskimmed) 
 {
-  vector<string> sigm = {"175", "550", "950"};
+  vector<pair<string, string> > sigm = {{"175", "0"}, {"500", "0"}, {"900", "0"}, {"250", "50"}, {"350", "200"}, {"450", "100"}};
   for (unsigned isig(0); isig<sigm.size(); isig++){
-    addProcess("TChiHH("+sigm[isig]+",0) "+processName_postfix, Process::Type::signal, 1, additionalCut,
-      nanoAodFolder, production, "signal", sigm[isig]+"_0", sample, year_string,
-      procs, use_met150_skim);
+    addProcess("TChiHH("+sigm[isig].first+","+sigm[isig].second+") "+processName_postfix, Process::Type::signal, 1, additionalCut,
+      nanoAodFolder, production, "signal", sigm[isig].first+"_"+sigm[isig].second, sample, year_string,
+      procs, use_unskimmed);
   }
+}
+
+void addDataProcess(string const & processName_postfix, NamedFunc const & additionalCut, 
+  string const & nanoAodFolder, string const & production, 
+  string const & sample, string const & year_string, 
+  vector<shared_ptr<Process> > & procs, bool use_unskimmed, int trigger_version) 
+{
+    NamedFunc triggers_data = "1";
+    //NamedFunc lepton_triggers = "(HLT_IsoMu24 || HLT_IsoMu27 || HLT_Mu50 || HLT_Ele27_WPTight_Gsf || HLT_Ele35_WPTight_Gsf || HLT_Ele115_CaloIdVT_GsfTrkIdT)";
+    //NamedFunc met_triggers = "(HLT_PFMET110_PFMHT110_IDTight || HLT_PFMETNoMu110_PFMHTNoMu110_IDTight || HLT_PFMET120_PFMHT120_IDTight || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight || HLT_PFMET120_PFMHT120_IDTight_PFHT60 || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60)";
+
+    NamedFunc lepton_triggers = Higfuncs::el_trigger || Higfuncs::mu_trigger;
+    if (trigger_version == 0) lepton_triggers = Higfuncs::el_trigger_v0 || Higfuncs::mu_trigger_v0;
+    NamedFunc met_triggers = Higfuncs::met_trigger;;
+    if (trigger_version == 0) met_triggers = Higfuncs::met_trigger_v0;
+
+    if (sample == "zll") triggers_data = lepton_triggers;
+    else if (sample == "ttbar") triggers_data = lepton_triggers || met_triggers;
+    else if (sample == "qcd") triggers_data = met_triggers;
+    else  triggers_data = met_triggers;
+
+    addProcess("Data"+processName_postfix, Process::Type::data, kBlack, triggers_data && additionalCut,
+      nanoAodFolder, production, "data", "all", sample, year_string,
+      procs, use_unskimmed);
 }
 
 void constructRegionTable(vector<TableRow> & tablerows, 
@@ -399,40 +511,112 @@ void constructRegionTable(vector<TableRow> & tablerows,
 }
 
 void constructCutflowTable(vector<TableRow> & tablerows, 
-  NamedFunc weight) {
+  NamedFunc weight, string const & sample) {
 
-  tablerows = vector<TableRow>{
-  TableRow("No selection", 
-    "met>0",0,0, weight),
-  TableRow("$p_\\text{t}^\\text{miss}>150 \\text{ GeV}$", 
-    "met>150",0,0,weight),
-  TableRow("$N_\\text{vl}=0$, $4\\leq N_\\text{j}\\leq 5$", 
-    "met>150 && nvlep==0 && njet>=4 && njet<=5",0,0,weight),
-  TableRow("$N_\\text{b}\\geq 2$", 
-    "met>150 && nvlep==0 && njet>=4 && njet<=5 && nbt>=2",0,0,weight),
-  TableRow("$N_\\text{tk}=0$", 
-    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0",0,0,weight),
-  TableRow("Fake MET Cuts",        
-    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2",0,0,weight),
-  TableRow("$\\Delta m<40 \\text{ GeV}$",        
-    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40",0,0,weight),
-  TableRow("$\\Delta R_\\text{max}<2.2$",        
-    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2",0,0,weight),
-  TableRow("$100<\\langle m\\rangle <140 \\text{ GeV}$",        
-    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140",0,0,weight),
-  TableRow("$N_\\text{b}\\geq 3$",        
-    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3",0,0,weight),
-  TableRow("$N_\\text{b}=4$",        
-    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,weight),
-  TableRow("$p_\\text{T}^\\text{miss}>200 \\text{ GeV}$",        
-    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>200 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,weight),
-  TableRow("$p_\\text{T}^\\text{miss}>300 \\text{ GeV}$",        
-    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>300 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,weight),
-  TableRow("$p_\\text{T}^\\text{miss}>400 \\text{ GeV}$",        
-    "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>400 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,weight),
-  //TableRow("$\\Delta R_\\text{max}>1.1$",        
-  //  "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>450 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]>=1.1 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,weight),
-  };
+  if (sample=="search") {
+    //tablerows = vector<TableRow>{
+    //TableRow("No selection", 
+    //  "met>0",0,0, weight),
+    //TableRow("$p_\\text{t}^\\text{miss}>150 \\text{ GeV}$", 
+    //  "met>150",0,0,weight),
+    //TableRow("$N_\\text{vl}=0$, $4\\leq N_\\text{j}\\leq 5$", 
+    //  "met>150 && nvlep==0 && njet>=4 && njet<=5",0,0,weight),
+    //TableRow("$N_\\text{b}\\geq 2$", 
+    //  "met>150 && nvlep==0 && njet>=4 && njet<=5 && nbt>=2",0,0,weight),
+    //TableRow("$N_\\text{tk}=0$", 
+    //  "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0",0,0,weight),
+    //TableRow("met/met_calo,met/mht cuts",        
+    //  "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2",0,0,weight),
+    //TableRow("$\\Delta m<40 \\text{ GeV}$",        
+    //  "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40",0,0,weight),
+    //TableRow("$\\Delta R_\\text{max}<2.2$",        
+    //  "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2",0,0,weight),
+    //TableRow("$100<\\langle m\\rangle <140 \\text{ GeV}$",        
+    //  "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140",0,0,weight),
+    //TableRow("$N_\\text{b}\\geq 3$",        
+    //  "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3",0,0,weight),
+    //TableRow("$N_\\text{b}=4$",        
+    //  "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>150 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,weight),
+    //TableRow("$p_\\text{T}^\\text{miss}>200 \\text{ GeV}$",        
+    //  "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>200 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,weight),
+    //TableRow("$p_\\text{T}^\\text{miss}>300 \\text{ GeV}$",        
+    //  "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>300 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,weight),
+    //TableRow("$p_\\text{T}^\\text{miss}>400 \\text{ GeV}$",        
+    //  "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>400 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,weight),
+    ////TableRow("$\\Delta R_\\text{max}>1.1$",        
+    ////  "nvlep==0 && njet>=4 && njet<=5 && nbt>=2 && met>450 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]>=1.1 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,weight),
+    //};
+
+    NamedFunc current_cut = "1";
+    tablerows = vector<TableRow>{
+    TableRow("No selection", add_cut(current_cut,"met>0"),0,0, weight),
+    TableRow("$p_\\text{t}^\\text{miss}>150 \\text{ GeV}$", add_cut(current_cut,"met>150"),0,0,weight),
+    TableRow("$N_\\text{vl}=0$, $4\\leq N_\\text{j}\\leq 5$", add_cut(current_cut,"nvlep==0 && njet>=4 && njet<=5"),0,0,weight),
+    TableRow("$N_\\text{b}\\geq 2$", add_cut(current_cut,"nbt>=2"),0,0,weight),
+    TableRow("met/metCalo,met/mht,dphi cuts", add_cut(current_cut,"!low_dphi_met && (met/met_calo)<2 && (met/mht)<2"),0,0,weight),
+    TableRow("$N_\\text{tk}=0$", add_cut(current_cut,"ntk==0"),0,0,weight),
+    TableRow("$\\Delta m<40 \\text{ GeV}$", add_cut(current_cut,"hig_cand_dm[0]<=40"),0,0,weight),
+    TableRow("$\\Delta R_\\text{max}<2.2$", add_cut(current_cut,"hig_cand_drmax[0]<=2.2"),0,0,weight),
+
+    TableRow("$100<\\langle m\\rangle <140 \\text{ GeV}$", add_cut(current_cut,"hig_cand_am[0]>100 && hig_cand_am[0]<=140"),0,0,weight),
+    TableRow("$N_\\text{b}\\geq 3$", add_cut(current_cut,"nbm>=3"),0,0,weight),
+    TableRow("$N_\\text{b}=4$", add_cut(current_cut,"nbl>=4"),0,0,weight),
+    TableRow("$p_\\text{T}^\\text{miss}>200 \\text{ GeV}$", add_cut(current_cut,"met>200"),0,0,weight),
+    TableRow("$p_\\text{T}^\\text{miss}>300 \\text{ GeV}$", add_cut(current_cut,"met>300"),0,0,weight),
+    TableRow("$p_\\text{T}^\\text{miss}>400 \\text{ GeV}$", add_cut(current_cut,"met>400"),0,0,weight),
+    };
+  }
+  if (sample=="ttbar") {
+    //tablerows = vector<TableRow>{
+    //TableRow("No selection", 
+    //  "met>0",0,0, weight),
+    //TableRow("$N_\\text{l}=1$, $4\\leq N_\\text{j}\\leq 5, p_\\text{T}^\\text{l}\\geq 30, m_{T}\\leq 100$", 
+    //  "nlep==1 && njet>=4 && njet<=5 && mt<=100" &&Higfuncs::lead_signal_lepton_pt>30 ,0,0,weight),
+    //TableRow("$N_\\text{b}\\geq 2$", 
+    //  "nlep==1 && njet>=4 && njet<=5 && mt<=100"&&Higfuncs::lead_signal_lepton_pt>30&&"nbt>=2",0,0,weight),
+    //TableRow("Fake MET Cuts",        
+    //  "nlep==1 && njet>=4 && njet<=5 && mt<=100 "&&Higfuncs::lead_signal_lepton_pt>30&&" nbt>=2 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2",0,0,weight),
+    //TableRow("$\\Delta m<40 \\text{ GeV}$",        
+    //  "nlep==1 && njet>=4 && njet<=5 && mt<=100 "&&Higfuncs::lead_signal_lepton_pt>30&&" nbt>=2 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40",0,0,weight),
+    //TableRow("$\\Delta R_\\text{max}<2.2$",        
+    //  "nlep==1 && njet>=4 && njet<=5 && mt<=100 "&&Higfuncs::lead_signal_lepton_pt>30&&" nbt>=2 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2",0,0,weight),
+    //TableRow("$100<\\langle m\\rangle <140 \\text{ GeV}$",        
+    //  "nlep==1 && njet>=4 && njet<=5 && mt<=100 "&&Higfuncs::lead_signal_lepton_pt>30&&" nbt>=2 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140",0,0,weight),
+    //TableRow("$N_\\text{b}\\geq 3$",        
+    //  "nlep==1 && njet>=4 && njet<=5 && mt<=100 "&&Higfuncs::lead_signal_lepton_pt>30&&" nbt>=2 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3",0,0,weight),
+    //TableRow("$N_\\text{b}=4$",        
+    //  "nlep==1 && njet>=4 && njet<=5 && mt<=100 "&&Higfuncs::lead_signal_lepton_pt>30&&" nbt>=2 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,weight),
+    //TableRow("$p_\\text{T}^\\text{miss}>75 \\text{ GeV}$",        
+    //  "nlep==1 && njet>=4 && njet<=5 && mt<=100 "&&Higfuncs::lead_signal_lepton_pt>30&&" nbt>=2 && met>75 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,weight),
+    //TableRow("$p_\\text{T}^\\text{miss}>150 \\text{ GeV}$",        
+    //  "nlep==1 && njet>=4 && njet<=5 && mt<=100 "&&Higfuncs::lead_signal_lepton_pt>30&&" nbt>=2 && met>150 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,weight),
+    //TableRow("$p_\\text{T}^\\text{miss}>200 \\text{ GeV}$",        
+    //  "nlep==1 && njet>=4 && njet<=5 && mt<=100 "&&Higfuncs::lead_signal_lepton_pt>30&&" nbt>=2 && met>200 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,weight),
+    //TableRow("$p_\\text{T}^\\text{miss}>300 \\text{ GeV}$",        
+    //  "nlep==1 && njet>=4 && njet<=5 && mt<=100 "&&Higfuncs::lead_signal_lepton_pt>30&&" nbt>=2 && met>300 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,weight),
+    ////TableRow("$\\Delta R_\\text{max}>1.1$",        
+    ////  "nlep==1 && njet>=4 && njet<=5 && nbt>=2 && met>450 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]>=1.1 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,weight),
+    //};
+    NamedFunc current_cut = "1";
+    tablerows = vector<TableRow>{
+    TableRow("No selection", add_cut(current_cut,"met>0"),0,0, weight),
+    TableRow("$N_\\text{l}=1$, $4\\leq N_\\text{j}\\leq 5, p_\\text{T}^\\text{l}\\geq 30, m_{T}\\leq 100$", add_cut(current_cut, "nlep==1 && njet>=4 && njet<=5 && mt<=100" &&Higfuncs::lead_signal_lepton_pt>30),0,0,weight),
+    TableRow("$N_\\text{b}\\geq 2$", add_cut(current_cut,"nbt>=2"),0,0,weight),
+    TableRow("Fake MET Cuts", add_cut(current_cut,"(met/met_calo)<5"),0,0,weight),
+    TableRow("$\\Delta m<40 \\text{ GeV}$", add_cut(current_cut, "hig_cand_dm[0]<=40"),0,0,weight),
+    TableRow("$\\Delta R_\\text{max}<2.2$", add_cut(current_cut, "hig_cand_drmax[0]<=2.2"),0,0,weight),
+    TableRow("$\\langle m\\rangle \\leq 200 \\text{ GeV}$", add_cut(current_cut, "hig_cand_am[0]<=200"),0,0,weight),
+    TableRow("$100<\\langle m\\rangle \\leq 140 \\text{ GeV}$", add_cut(current_cut, "hig_cand_am[0]>100 && hig_cand_am[0]<=140"),0,0,weight),
+    TableRow("$N_\\text{b}\\geq 3$", add_cut(current_cut, "nbm>=3"),0,0,weight),
+    TableRow("$N_\\text{b}=4$", add_cut(current_cut, "nbl>=4"),0,0,weight),
+    TableRow("$p_\\text{T}^\\text{miss}>75 \\text{ GeV}$", add_cut(current_cut, "met>75"),0,0,weight),
+    TableRow("$p_\\text{T}^\\text{miss}>150 \\text{ GeV}$", add_cut(current_cut, "met>150"),0,0,weight),
+    TableRow("$p_\\text{T}^\\text{miss}>200 \\text{ GeV}$", add_cut(current_cut, "met>200"),0,0,weight),
+    TableRow("$p_\\text{T}^\\text{miss}>300 \\text{ GeV}$", add_cut(current_cut, "met>300"),0,0,weight),
+    //TableRow("$\\Delta R_\\text{max}>1.1$",        
+    //  "nlep==1 && njet>=4 && njet<=5 && nbt>=2 && met>450 && ntk==0 && !low_dphi_met && (met/met_calo)<2 && (met/mht)<2 && hig_cand_dm[0]<=40 && hig_cand_drmax[0]>=1.1 && hig_cand_drmax[0]<=2.2 && hig_cand_am[0]>100 && hig_cand_am[0]<=140 && nbm>=3 && nbl>=4",0,0,weight),
+    };
+  }
 
 }
 
@@ -443,18 +627,23 @@ int main(int argc, char *argv[]){
   time(&begtime);
 
   NamedFunc search_resolved_cuts = 
+                         "met/mht<2 && met/met_calo<2&&weight<1.5&&"
                          "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
                          "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
                          "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))";
   NamedFunc ttbar_resolved_cuts = 
-                         "nlep==1&&lep_pt[0]>30&&mt<=100&&njet>=4&&njet<=5&&"
+                         "met/met_calo<5&&weight<1.5&&"
+                         "nlep==1&&mt<=100&&njet>=4&&njet<=5&&"
                          "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
-                         "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))";
+                         "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))"
+                         &&Higfuncs::lead_signal_lepton_pt>30;
   NamedFunc zll_resolved_cuts =
+                         "met/met_calo<5&&weight<1.5&&"
                          "nlep==2&&njet>=4&&njet<=5&&met<50&&"
                          "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
                          "(nbm==0||nbm==1||nbm==2||nbm>=3)";
   NamedFunc qcd_resolved_cuts =
+                         "met/mht<2 && met/met_calo<2&&"
                          "low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
                          "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
                          "(nbm==0||nbm==1||nbm==2||nbm>=3)";
@@ -463,62 +652,91 @@ int main(int argc, char *argv[]){
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Defining processes //////////////////////////////////////////
 
+  bool doSignal = true;
+  bool doMc = true;
+  bool doMcDetail = false;
+  bool doData = false; // [TODO] for data didn't implement zll and qcd yet for table_mode==cutflow
   //NamedFunc study_cut = Higfuncs::lead_signal_lepton_pt>20 && Higfuncs::lead_signal_lepton_pt<25;
   NamedFunc study_cut = "1";
   // table_mode = regions, cutflow
   string table_mode = "cutflow";
   // Only for regions table_mode
-  bool bin_met = false;
-  bool bin_drmax = false;
-  // Should only be used when sample is search
-  bool use_met150_skim = true;
+  bool bin_met = true;
+  bool bin_drmax = true;
+  bool use_unskimmed = false;
 
   // dataType: mc/data/signal
   // fileTag: (tt, single_t, zjets, wjets, qcd, other, all), (all), (200_1, 600_1, 950_1, ...)
   // sample: search/ttbar/zll/qcd
   // year_string: 2016/2017/2018/run2
   //string production_a = "higgsino_eldorado"; string nanoAodFolder_a = "/net/cms29/cms29r0/pico/NanoAODv5";
-  string production_a = "higgsino_humboldt"; string nanoAodFolder_a = "/net/cms25/cms25r5/pico/NanoAODv5";
+  //string production_a = "higgsino_humboldt"; string nanoAodFolder_a = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv5";
+  string production_a = "higgsino_inyo"; string nanoAodFolder_a = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7";
+  //string production_a = "higgsino_inyo"; string nanoAodFolder_a = "/cms29r0/pico/NanoAODv7";
   string sample_a = "search";
-  string year_string_a = "2017";
+  string year_string_a = "2016";
   TString tablename_a = "FixName:table_resolved_"+production_a+"_"+sample_a+"_"+CopyReplaceAll(year_string_a, ",","_")+"_a";
+  // trigger_version: 0 or 1
+  int trigger_version_a = 0;
 
-  string total_luminosity_string_a = getLuminosityString(year_string_a);
+  string total_luminosity_string_a = HigUtilities::getLuminosityString(year_string_a);
 
   //    Define processes, including intersections
   //--------------------------------------------------
   //NamedFunc base_filters_a = HigUtilities::pass_2016 && "met/met_calo<5"; //since pass_fsjets is not quite usable...
   //NamedFunc base_filters_a = HigUtilities::pass_2016 && "met/met_calo<5"; //since pass_fsjets is not quite usable...
   //NamedFunc base_filters_a = HigUtilities::pass_2016 && "met/mht<2 && met/met_calo<2"; //since pass_fsjets is not quite usable...
-  NamedFunc base_filters_a = Functions::hem_veto && "pass && met/mht<2 && met/met_calo<2";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
+  //NamedFunc base_filters_a = Functions::hem_veto && "pass && met/mht<2 && met/met_calo<2";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
+  //NamedFunc base_filters_a = Functions::hem_veto && "pass";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
+  //NamedFunc base_filters_a = Higfuncs::pass_filters&&"met/met_calo<5";
+  //NamedFunc base_filters_a = "1";
+  //NamedFunc base_filters_a = Higfuncs::final_loose_pass_filters&&Functions::hem_veto;
+  NamedFunc base_filters_a = Higfuncs::final_ttbar_pass_filters;
 
-  //NamedFunc weight_a = "w_lumi*w_isr"*Higfuncs::eff_higtrig*w_years_scaleup;
-  //NamedFunc weight_a = "w_lumi*w_isr"*Higfuncs::eff_higtrig*w_years;
-  NamedFunc weight_a = "weight"*Higfuncs::eff_higtrig*Higfuncs::w_years;
-  //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig_run2*w_years;
-  //NamedFunc weight_a = "weight"*Higfuncs::eff_higtrig*w_years;
-  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years;
+  //NamedFunc weight_a = "w_lumi*w_isr"*Higfuncs::eff_higtrig*Higfuncs::w_years;
+  //NamedFunc weight_a = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Functions::w_pileup;
+  //NamedFunc weight_a = "weight"*Higfuncs::eff_higtrig_run2_v0*Higfuncs::w_years;
+  //NamedFunc weight_a = Higfuncs::final_weight;
+  //NamedFunc weight_a = "w_lumi"*Higfuncs::w_years;
+  //NamedFunc weight_a = "1";
+  //NamedFunc weight_a = "w_lumi*w_isr"*Higfuncs::eff_higtrig_run2_v0*Higfuncs::w_years;
+  //NamedFunc weight_a = "weight"*Higfuncs::eff_higtrig*Higfuncs::w_years;
+  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
+  NamedFunc weight_a = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;;
+  if (trigger_version_a==0) weight_a = "weight"*Higfuncs::eff_higtrig_run2_v0*Higfuncs::w_years;
 
 
-  string production_b = "higgsino_humboldt"; string nanoAodFolder_b = "/net/cms25/cms25r5/pico/NanoAODv5";
+  //string production_b = "higgsino_humboldt"; string nanoAodFolder_b = "/net/cms25/cms25r5/pico/NanoAODv5";
+  //string production_b = "higgsino_inyo"; string nanoAodFolder_b = "/net/cms25/cms25r5/pico/NanoAODv7";
+  string production_b = "higgsino_inyo"; string nanoAodFolder_b = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7";
   string sample_b = "search";
-  string year_string_b = "2017";
+  string year_string_b = "2016";
   TString tablename_b = "FixName:table_resolved_"+production_b+"_"+sample_b+"_"+CopyReplaceAll(year_string_b, ",","_")+"_b";
+  // trigger_version: 0 or 1
+  int trigger_version_b = 1;
 
-  string total_luminosity_string_b = getLuminosityString(year_string_b);
+  string total_luminosity_string_b = HigUtilities::getLuminosityString(year_string_b);
 
   //    Define processes, including intersections
   //--------------------------------------------------
   //NamedFunc base_filters_b = HigUtilities::pass_2016 && "met/met_calo<5"; //since pass_fsjets is not quite usable...
   //NamedFunc base_filters_b = HigUtilities::pass_2016 && "met/mht<2 && met/met_calo<2"; //since pass_fsjets is not quite usable...
   //NamedFunc base_filters_b = HigUtilities::pass_2016 && "met/mht<2 && met/met_calo<2"; //since pass_fsjets is not quite usable...
-  NamedFunc base_filters_b = Functions::hem_veto && "pass && met/mht<2 && met/met_calo<2";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
+  //NamedFunc base_filters_b = Functions::hem_veto && "pass && met/mht<2 && met/met_calo<2";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
+  //NamedFunc base_filters_b = Higfuncs::final_pass_filters;
+  //NamedFunc base_filters_b = Functions::hem_veto && "pass";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
+  //NamedFunc base_filters_b = Higfuncs::pass_filters&&"met/met_calo<5";
+  NamedFunc base_filters_b = Higfuncs::final_ttbar_pass_filters;
+  //NamedFunc base_filters_b = "1";
 
-  //NamedFunc weight_b = "w_lumi*w_isr"*Higfuncs::eff_higtrig*w_years;
-  //NamedFunc weight_b = "w_lumi*w_isr"*Higfuncs::eff_higtrig_run2*w_years;
-  NamedFunc weight_b = "weight"*Higfuncs::eff_higtrig*Higfuncs::w_years*Functions::w_pileup;
-  //NamedFunc weight_b = "weight"*Higfuncs::eff_higtrig_run2*w_years;
-
+  //NamedFunc weight_b = "w_lumi*w_isr"*Higfuncs::eff_higtrig*Higfuncs::w_years;
+  //NamedFunc weight_b = "w_lumi*w_isr"*Higfuncs::eff_higtrig_run2_v0*Higfuncs::w_years;
+  //NamedFunc weight_b = "weight"*Higfuncs::eff_higtrig*Higfuncs::w_years*Functions::w_pileup;
+  //NamedFunc weight_b = "weight"*Higfuncs::eff_higtrig_run2_v0*Higfuncs::w_years;
+  //NamedFunc weight_b = "1";
+  //NamedFunc weight_b = Higfuncs::final_weight;
+  NamedFunc weight_b = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
+  if (trigger_version_b==0) weight_b = "weight"*Higfuncs::eff_higtrig_run2_v0*Higfuncs::w_years;
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Setup plotMaker    //////////////////////////////////////////
 
@@ -541,37 +759,59 @@ int main(int argc, char *argv[]){
   if (table_mode == "cutflow") resolved_cuts_b = study_cut;
 
   vector<shared_ptr<Process> > procs_a;
-  addAllMcProcesses("", base_filters_a&&resolved_cuts_a,
+  if (doMc && !doMcDetail) addAllMcProcesses("", base_filters_a&&resolved_cuts_a,
     nanoAodFolder_a, production_a, 
     sample_a, year_string_a,
-    procs_a, use_met150_skim);
+    procs_a, use_unskimmed);
+  if (doMc && doMcDetail) addAllMcDetailProcesses("", base_filters_a&&resolved_cuts_a,
+    nanoAodFolder_a, production_a, 
+    sample_a, year_string_a,
+    procs_a, use_unskimmed);
   if (doSignal) {
     addMultipleSignalProcesses("", base_filters_a&&resolved_cuts_a,
       nanoAodFolder_a, production_a, 
       sample_a, year_string_a,
-      procs_a, use_met150_skim);
+      procs_a, use_unskimmed);
+  }
+  if (doData) {
+    addDataProcess("", base_filters_a&&resolved_cuts_a,
+    nanoAodFolder_a, production_a,
+    sample_a, year_string_a,
+    procs_a, use_unskimmed, trigger_version_a);
   }
 
   vector<shared_ptr<Process> > procs_b;
-  addAllMcProcesses("", base_filters_b&&resolved_cuts_b,
+  if (doMc && !doMcDetail) addAllMcProcesses("", base_filters_b&&resolved_cuts_b,
     nanoAodFolder_b, production_b, 
     sample_b, year_string_b,
-    procs_b, use_met150_skim);
+    procs_b, use_unskimmed);
+  if (doMc && doMcDetail) addAllMcDetailProcesses("", base_filters_b&&resolved_cuts_b,
+    nanoAodFolder_b, production_b, 
+    sample_b, year_string_b,
+    procs_b, use_unskimmed);
   if (doSignal) {
     addMultipleSignalProcesses("", base_filters_b&&resolved_cuts_b,
       nanoAodFolder_b, production_b, 
       sample_b, year_string_b,
-      procs_b, use_met150_skim);
+      procs_b, use_unskimmed);
+  }
+  if (doData) {
+    addDataProcess("", base_filters_b&&resolved_cuts_b,
+    nanoAodFolder_b, production_b,
+    sample_b, year_string_b,
+    procs_b, use_unskimmed, trigger_version_b);
   }
 
   vector<TableRow> tablerows_a;
   vector<TableRow> tablerows_b;
+  //tablerows_a.push_back(TableRow("test", "1", 0, 0, weight_a));
+  //tablerows_b.push_back(TableRow("test", "1", 0, 0, weight_b));
   if (table_mode == "regions") {
     constructRegionTable(tablerows_a, sample_a, weight_a,  bin_met, bin_drmax);
     constructRegionTable(tablerows_b, sample_b, weight_b,  bin_met, bin_drmax);
   } else if (table_mode == "cutflow") {
-    constructCutflowTable(tablerows_a, weight_a);
-    constructCutflowTable(tablerows_b, weight_b);
+    constructCutflowTable(tablerows_a, weight_a, sample_a);
+    constructCutflowTable(tablerows_b, weight_b, sample_b);
   }
 
   PlotMaker pm;
@@ -648,7 +888,6 @@ int main(int argc, char *argv[]){
 void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
-      {"no_signal", no_argument, 0, 'n'},    
       {"luminosity", required_argument, 0, 'l'},    
       {"tag", required_argument, 0, 't'},
       {"boo", no_argument, 0, 0},
@@ -657,14 +896,11 @@ void GetOptions(int argc, char *argv[]){
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "nl:t:", long_options, &option_index);
+    opt = getopt_long(argc, argv, "l:t:", long_options, &option_index);
     if(opt == -1) break;
 
     string optname;
     switch(opt){
-    case 'n':
-      doSignal = false;
-      break;
     case 'l':
       lumi = atof(optarg);
       break;

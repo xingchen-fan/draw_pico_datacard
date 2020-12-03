@@ -44,6 +44,41 @@ namespace{
   string lepton_type = "";
 }
 
+const NamedFunc goodJet_phi("goodJet_phi", [](const Baby &b) -> NamedFunc::VectorType{
+  vector<double> jet_phi;
+  jet_phi.reserve((*b.jet_isgood()).size());
+  for (unsigned iJet = 0; iJet < (*b.jet_isgood()).size(); ++iJet) {
+    bool jet_isgood = (*b.jet_isgood())[iJet];
+    if (jet_isgood) {
+      jet_phi.push_back((*b.jet_phi())[iJet]);
+    }
+  }
+  return jet_phi;
+});
+const NamedFunc goodJet_eta("goodJet_eta", [](const Baby &b) -> NamedFunc::VectorType{
+  vector<double> jet_eta;
+  jet_eta.reserve((*b.jet_isgood()).size());
+  for (unsigned iJet = 0; iJet < (*b.jet_isgood()).size(); ++iJet) {
+    bool jet_isgood = (*b.jet_isgood())[iJet];
+    if (jet_isgood) {
+      jet_eta.push_back((*b.jet_eta())[iJet]);
+    }
+  }
+  return jet_eta;
+});
+const NamedFunc goodJet0_eta("goodJet0_eta", [](const Baby &b) -> NamedFunc::VectorType{
+  vector<double> jet_eta;
+  jet_eta.reserve((*b.jet_isgood()).size());
+  for (unsigned iJet = 0; iJet < (*b.jet_isgood()).size(); ++iJet) {
+    bool jet_isgood = (*b.jet_isgood())[iJet];
+    if (jet_isgood) {
+      jet_eta.push_back((*b.jet_eta())[iJet]);
+      break;
+    }
+  }
+  return jet_eta;
+});
+
 int main(int argc, char *argv[]){
   // ./run/higgsino/plot_n_minus_1.exe --sample search --year 2016
   gErrorIgnoreLevel = 6000;
@@ -77,10 +112,11 @@ int main(int argc, char *argv[]){
   if (unblind) plt_log = {log_norm_data};
 
   string higgsino_version = "";
+  bool plot_additional_variables = false;
 
   // Set options
-  string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
-  //string mc_base_folder = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado";
+  //string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
+  string mc_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo";
   // preselect:
   //   ((nbt>=2 && njet>=4 && njet<=5)||(Sum$(fjet_pt>300 && fjet_msoftdrop>50)>1))
   //   nvlep==0 && ntk==0 && !low_dphi_met && met>150 && 
@@ -100,44 +136,37 @@ int main(int argc, char *argv[]){
   //   (Max$(el_pt*el_sig)>30 || Max$(mu_pt*mu_sig)>30) // pass_2l_trig30
   string zll_mc_skim_folder = "mc/merged_higmc_higlep2T/";
   // higqcd with met150:
-  //   (Sum$(fjet_pt>300 && fjet_msoftdrop>50)>1 || (njet>=4 && njet<=5))
-  //   nvlep==0 && ntk==0 && low_dphi_met &&
   //   met>150  // Since applied to met150 skim
   string qcd_mc_skim_folder = "mc/merged_higmc_higqcd/";
 
-  string data_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
+  //string data_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
+  string data_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
   string search_data_skim_folder = "data/merged_higdata_higloose/";
-  //string ttbar_data_skim_folder = "data/merged_higdata_higlep1T/";
-  string ttbar_data_skim_folder = "data/skim_higlep1T/";
-  //string zll_data_skim_folder = "data/merged_higdata_higlep2T/";
-  string zll_data_skim_folder = "data/skim_higlep2T/";
+  string ttbar_data_skim_folder = "data/merged_higdata_higlep1T/";
+  //string ttbar_data_skim_folder = "data/skim_higlep1T/";
+  string zll_data_skim_folder = "data/merged_higdata_higlep2T/";
+  //string zll_data_skim_folder = "data/skim_higlep2T/";
   string qcd_data_skim_folder = "data/merged_higdata_higqcd/";
 
-  //string sig_base_folder = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado/";
-  string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
-  //string sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_preselect/";
+  //string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
+  string sig_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
   string search_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higloose/";
   string ttbar_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higlep1T/";
   string zll_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higlep2T/";
   string qcd_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higqcd/";
 
+  //years = {2016, 2017, 2018};
   set<int> years;
   HigUtilities::parseYears(year_string, years);
-  //years = {2016, 2017, 2018};
-  float total_luminosity = 0;
-  for (auto const & year : years) {
-    if (year == 2016) total_luminosity += 35.9;
-    if (year == 2017) total_luminosity += 41.5;
-    if (year == 2018) total_luminosity += 60;
-  }
-  string total_luminosity_string = RoundNumber(total_luminosity, 1, 1).Data();
+  string total_luminosity_string = HigUtilities::getLuminosityString(year_string);
 
-  //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*w_years;
+  //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*Higfuncs::w_year;
   //if (years.size()==1 && *years.begin()==2016) weight *= "137.";
-  //else weight *= w_years;
-  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig*w_years;
-  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years*Functions::w_pileup;
-  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years;
+  //else weight *= Higfuncs::w_year;
+  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig*Higfuncs::w_year;
+  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_year*Functions::w_pileup;
+  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_year;
+  NamedFunc weight = Higfuncs::final_weight;
 
   // Set MC 
   map<string, set<string>> mctags; 
@@ -152,7 +181,7 @@ int main(int argc, char *argv[]){
   mctags["qcd"]     = set<string>({"*_QCD_HT200to300_*","*_QCD_HT300to500_*","*_QCD_HT500to700_*",
                                    "*_QCD_HT700to1000_*", "*_QCD_HT1000to1500_*","*_QCD_HT1500to2000_*",
                                    "*_QCD_HT2000toInf_*"});
-  mctags["other"]   = set<string>({"*_WH_HToBB*.root", "*_ZH_HToBB*.root",
+  mctags["other"]   = set<string>({"*_WH*.root", "*_ZH_HToBB*.root",
                                      "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"});
   // Combine all tags
   mctags["all"] = set<string>({"*TTJets_SingleLept*",
@@ -163,7 +192,7 @@ int main(int argc, char *argv[]){
                                "*_QCD_HT200to300_*","*_QCD_HT300to500_*","*_QCD_HT500to700_*",
                                "*_QCD_HT1000to1500_*","*_QCD_HT1500to2000_*",
                                "*_QCD_HT2000toInf_*",
-                               "*_WH_HToBB*.root", "*_ZH_HToBB*.root",
+                               "*_WH*.root", "*_ZH_HToBB*.root",
                                "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root", "*DYJetsToLL*.root"
   });
 
@@ -184,11 +213,21 @@ int main(int argc, char *argv[]){
   else sig_skim_folder = search_sig_skim_folder;
 
   NamedFunc triggers_data = "1";
-  NamedFunc lepton_triggers = "(HLT_IsoMu24 || HLT_IsoMu27 || HLT_Mu50 || HLT_Ele27_WPTight_Gsf || HLT_Ele35_WPTight_Gsf || HLT_Ele115_CaloIdVT_GsfTrkIdT)";
-  NamedFunc met_triggers = "(HLT_PFMET110_PFMHT110_IDTight || HLT_PFMETNoMu110_PFMHTNoMu110_IDTight || HLT_PFMET120_PFMHT120_IDTight || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight || HLT_PFMET120_PFMHT120_IDTight_PFHT60 || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60)";
+  //NamedFunc lepton_triggers = "(HLT_IsoMu24 || HLT_IsoMu27 || HLT_Mu50 || HLT_Ele27_WPTight_Gsf || HLT_Ele35_WPTight_Gsf || HLT_Ele115_CaloIdVT_GsfTrkIdT)";
+  //NamedFunc lepton_triggers = "(HLT_Ele27_WPTight_Gsf)";
+  //NamedFunc met_triggers = "(HLT_PFMET110_PFMHT110_IDTight || HLT_PFMETNoMu110_PFMHTNoMu110_IDTight || HLT_PFMET120_PFMHT120_IDTight || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight || HLT_PFMET120_PFMHT120_IDTight_PFHT60 || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60)";
+  NamedFunc lepton_triggers = Higfuncs::el_trigger || Higfuncs::mu_trigger;
+  NamedFunc met_triggers = Higfuncs::met_trigger;
+  //NamedFunc jet_triggers = "(HLT_PFHT125||HLT_PFHT200||HLT_PFHT300||HLT_PFHT400||HLT_PFHT475||HLT_PFHT600||HLT_PFHT650||HLT_PFHT800||HLT_PFHT900||HLT_PFHT180||HLT_PFHT370||HLT_PFHT430||HLT_PFHT510||HLT_PFHT590||HLT_PFHT680||HLT_PFHT780||HLT_PFHT890||HLT_PFHT1050||HLT_PFHT250||HLT_PFHT350)";
+  //NamedFunc jet_triggers = "(HLT_PFHT125||HLT_PFHT200||HLT_PFHT300||HLT_PFHT180||HLT_PFHT370||HLT_PFHT250||HLT_PFHT350)";
+  //NamedFunc jet_triggers = "(HLT_PFHT180)";
+  //NamedFunc jet_triggers = "(HLT_PFJet500)";
   if (sample_name == "zll") triggers_data = lepton_triggers;
   else if (sample_name == "ttbar") triggers_data = lepton_triggers || met_triggers;
+  //else if (sample_name == "ttbar") triggers_data = lepton_triggers;
+  //else if (sample_name == "ttbar") triggers_data = met_triggers;
   else if (sample_name == "qcd") triggers_data = met_triggers;
+  //else if (sample_name == "qcd") triggers_data = jet_triggers;
   else  triggers_data = met_triggers;
 
   //NamedFunc base_resolved = 
@@ -224,7 +263,7 @@ int main(int argc, char *argv[]){
   if (lepton_type == "electron") ttbar_resolved_cuts.insert("nel", "nel==1");
   else if (lepton_type == "muon") ttbar_resolved_cuts.insert("nmu", "nmu==1");
   else ttbar_resolved_cuts.insert("nlep", "nlep==1");
-  //ttbar_resolved_cuts.insert("lep_pt", "lep_pt[0]>30");
+  //ttbar_resolved_cuts.insert("low_dphi_met", "!low_dphi_met");
   ttbar_resolved_cuts.insert("lep_pt", Higfuncs::lead_signal_lepton_pt>30);
   ttbar_resolved_cuts.insert("mt", "mt<=100");
   ttbar_resolved_cuts.insert("njet", "njet>=4&&njet<=5");
@@ -259,7 +298,7 @@ int main(int argc, char *argv[]){
   qcd_resolved_cuts.insert("dbtags", "(nbm==0||nbm==1||nbm==2||nbm>=3)");
   qcd_resolved_cuts.insert("mht_filter", "met/mht<2");
   qcd_resolved_cuts.insert("met_calo_filter", "met/met_calo<2");
-  qcd_resolved_cuts.insert("weight", "weight<1.5");
+  //qcd_resolved_cuts.insert("weight", "weight<1.5");
 
   vector<shared_ptr<Process> > procs;
   // Set mc processes
@@ -294,16 +333,22 @@ int main(int argc, char *argv[]){
 
   vector<shared_ptr<Process> > procs_data;
   if (unblind) {
+    string dataFiles = "*.root";
     procs.push_back(Process::MakeShared<Baby_pico>("Data", Process::Type::data, kBlack,
-                    attach_folder(data_base_folder, years, data_skim_folder, {"*.root"}),triggers_data));
+                    attach_folder(data_base_folder, years, data_skim_folder, {dataFiles}),triggers_data));
 
     procs_data.push_back(Process::MakeShared<Baby_pico>("Data", Process::Type::background, kBlack,
-                    attach_folder(data_base_folder, years, data_skim_folder, {"*.root"}),triggers_data));
+                    attach_folder(data_base_folder, years, data_skim_folder, {dataFiles}),triggers_data));
   }
 
   //NamedFunc base_filters = HigUtilities::pass_2016 && "met/mht<2 && met/met_calo<2"; //since pass_fsjets is not quite usable...
   //NamedFunc base_filters = Functions::hem_veto && "pass && met/mht<2 && met/met_calo<2";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
-  NamedFunc base_filters = Functions::hem_veto && "pass";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
+  //NamedFunc base_filters = Functions::hem_veto && "pass";
+  NamedFunc base_filters = "1";
+  if (sample_name=="search") base_filters = Higfuncs::final_pass_filters;
+  else if (sample_name=="ttbar") base_filters = Higfuncs::final_ttbar_pass_filters;
+  else if (sample_name=="zll") base_filters = Higfuncs::final_zll_pass_filters;
+  else if (sample_name=="qcd") base_filters = Higfuncs::final_qcd_pass_filters;
 
   PlotMaker pm;
 
@@ -320,6 +365,15 @@ int main(int argc, char *argv[]){
   axis_dict.insert("met_detail",Axis(28, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}));
   axis_dict.insert("mht_detail",Axis(28, 150, 850., "mht", "MHT [GeV]", {}));
   axis_dict.insert("ht",Axis(20, 0, 1000., "ht", "HT [GeV]", {}));
+  axis_dict.insert("ht_wide",Axis(30, 0, 1500., "ht", "HT [GeV]", {}));
+  axis_dict.insert("mht",Axis(20, 0, 500., "mht", "MHT [GeV]", {}));
+  axis_dict.insert("mht_phi",Axis(31, -3.14, 3.14, "mht_phi", "MHT_Phi [rad]", {}));
+  axis_dict.insert("met_phi",Axis(31, -3.14, 3.14, "met_phi", "MET_Phi [rad]", {}));
+  axis_dict.insert("jet_met_dphi",Axis(63, 0, 3.14, "jet_met_dphi", "DeltaR(jet,MET)", {}));
+  axis_dict.insert("jet_met_dphi0",Axis(63, 0, 3.14, "jet_met_dphi[0]", "DeltaR(jet,MET)", {}));
+  axis_dict.insert("jet_met_dphi1",Axis(63, 0, 3.14, "jet_met_dphi[1]", "DeltaR(jet,MET)", {}));
+  axis_dict.insert("jet_met_dphi2",Axis(63, 0, 3.14, "jet_met_dphi[2]", "DeltaR(jet,MET)", {}));
+  axis_dict.insert("jet_met_dphi3",Axis(63, 0, 3.14, "jet_met_dphi[3]", "DeltaR(jet,MET)", {}));
   axis_dict.insert("h1b1_pt",Axis(16, 0, 480., h1b1_pt, "p_{T} lead higgs high-tag b jet [GeV]", {}));
   axis_dict.insert("h1b2_pt",Axis(16, 0, 480., h1b2_pt, "p_{T} lead higgs low-tag b jet [GeV]", {}));
   axis_dict.insert("h2b1_pt",Axis(16, 0, 480., h2b1_pt, "p_{T} sublead higgs high-tag b jet [GeV]", {}));
@@ -333,6 +387,11 @@ int main(int argc, char *argv[]){
   axis_dict.insert("jet_pt[2]",Axis(16, 0, 480., "jet_pt[2]", "p_{T} jet [2] [GeV]", {}));
   axis_dict.insert("jet_pt[3]",Axis(16, 0, 480., "jet_pt[3]", "p_{T} jet [3] [GeV]", {}));
   axis_dict.insert("jet_pt[4]",Axis(16, 0, 480., "jet_pt[4]", "p_{T} jet [4] [GeV]", {}));
+  axis_dict.insert("jet_phi",Axis(31, -3.14, 3.14, "jet_phi", "jet phi [rad]", {}));
+  axis_dict.insert("jet_eta",Axis(50, -5, 5, "jet_eta", "jet eta", {}));
+  axis_dict.insert("goodJet_phi",Axis(31, -3.14, 3.14, goodJet_phi, "jet phi [rad]", {}));
+  axis_dict.insert("goodJet_eta",Axis(50, -5, 5, goodJet_eta, "jet eta", {}));
+  axis_dict.insert("goodJet0_eta",Axis(50, -5, 5, goodJet0_eta, "jet_{0} eta", {}));
   axis_dict.insert("met_zll",Axis(20, 0, 150., "met", "p_{T}^{miss} [GeV]", {30}));
   axis_dict.insert("met_ttbar",Axis(16, 0, 800., "met", "p_{T}^{miss} [GeV]", {}));
   axis_dict.insert("njet",Axis(12, -0.5, 11.5, "njet", "N_{jets}", {3.5, 5.5}));
@@ -367,23 +426,26 @@ int main(int argc, char *argv[]){
     target_variables.insert(target_var.key());
   }
   // Add additional variables
-  target_variables.insert("ht");
-  //target_variables.insert("npu_tru_mean");
-  target_variables.insert("jet_pt[0]");
-  target_variables.insert("jet_pt[1]");
-  target_variables.insert("jet_pt[2]");
-  target_variables.insert("jet_pt[3]");
-  target_variables.insert("jet_pt[4]");
-  target_variables.insert("h1b1_pt");
-  target_variables.insert("h1b2_pt");
-  target_variables.insert("h2b1_pt");
-  target_variables.insert("h2b2_pt");
-  target_variables.insert("h1_dr");
-  target_variables.insert("h2_dr");
-  target_variables.insert("h1_mass");
-  target_variables.insert("h2_mass");
-  target_variables.insert("mht_filter");
-  target_variables.insert("npv");
+  if (sample_name == "qcd") target_variables.insert("ht_wide");
+  else target_variables.insert("ht");
+  if (plot_additional_variables) {
+    //target_variables.insert("npu_tru_mean");
+    target_variables.insert("jet_pt[0]");
+    target_variables.insert("jet_pt[1]");
+    target_variables.insert("jet_pt[2]");
+    target_variables.insert("jet_pt[3]");
+    target_variables.insert("jet_pt[4]");
+    target_variables.insert("h1b1_pt");
+    target_variables.insert("h1b2_pt");
+    target_variables.insert("h2b1_pt");
+    target_variables.insert("h2b2_pt");
+    target_variables.insert("h1_dr");
+    target_variables.insert("h2_dr");
+    target_variables.insert("h1_mass");
+    target_variables.insert("h2_mass");
+    target_variables.insert("mht_filter");
+    target_variables.insert("npv");
+  }
   if (sample_name=="zll") {
     target_variables.insert("ll_pt");
     //target_variables.insert("ll_m");
@@ -473,6 +535,57 @@ int main(int argc, char *argv[]){
   //  pm.Push<Hist2D>(axis_dict["ht"], axis_dict["met_detail"],
   //    base_filters&&resolved_cuts, procs_signal, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_sig"+sigm[isig]+"_ht_vs_met_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
   //}
+
+  // Draw 2D jet eta vs phi 
+  //pm.Push<Hist2D>(axis_dict["jet_phi"], axis_dict["jet_eta"],
+  //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_jetEta_vs_jetPhi__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+  //// ht vs eta
+  //pm.Push<Hist2D>(axis_dict["ht"], axis_dict["jet_eta"],
+  //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ht_vs_jetEta__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+  //// ht vs phi
+  //pm.Push<Hist2D>(axis_dict["ht"], axis_dict["jet_phi"],
+  //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ht_vs_jetPhi__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+  // Draw 2D jet eta vs phi 
+  pm.Push<Hist2D>(axis_dict["goodJet_phi"], axis_dict["goodJet_eta"],
+    base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_goodJetEta_vs_goodJetPhi__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+  // ht vs eta
+  pm.Push<Hist2D>(axis_dict["ht"], axis_dict["goodJet0_eta"],
+    base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ht_vs_goodJetEta__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+  //// ht vs phi
+  //pm.Push<Hist2D>(axis_dict["ht"], axis_dict["goodJet_phi"],
+  //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ht_vs_goodJetPhi__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+  //// ht vs njet
+  //pm.Push<Hist2D>(axis_dict["ht"], axis_dict["njet"],
+  //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ht_vs_njet__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+
+  //// met vs eta
+  //pm.Push<Hist2D>(axis_dict["met"], axis_dict["goodJet_eta"],
+  //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_met_vs_goodJetEta__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+
+  //// ht vs mht
+  //pm.Push<Hist2D>(axis_dict["ht"], axis_dict["mht"],
+  //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ht_vs_mht__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+  //// ht vs mht_phi
+  //pm.Push<Hist2D>(axis_dict["ht"], axis_dict["mht_phi"],
+  //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ht_vs_mht_phi__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+  //// ht vs met_phi
+  //pm.Push<Hist2D>(axis_dict["ht"], axis_dict["met_phi"],
+  //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ht_vs_met_phi__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+  ////// ht vs hig_cand_drmax
+  ////pm.Push<Hist2D>(axis_dict["ht"], axis_dict["hig_cand_drmax"],
+  ////  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ht_vs_hig_cand_drmax__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+  //// ht vs jet_met_dphi
+  //pm.Push<Hist2D>(axis_dict["ht"], axis_dict["jet_met_dphi"],
+  //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ht_vs_jet_met_dphi__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+  //// ht vs jet_met_dphi
+  //pm.Push<Hist2D>(axis_dict["ht"], axis_dict["jet_met_dphi0"],
+  //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ht_vs_jet_met_dphi0__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+  //pm.Push<Hist2D>(axis_dict["ht"], axis_dict["jet_met_dphi1"],
+  //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ht_vs_jet_met_dphi1__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+  //pm.Push<Hist2D>(axis_dict["ht"], axis_dict["jet_met_dphi2"],
+  //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ht_vs_jet_met_dphi2__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+  //pm.Push<Hist2D>(axis_dict["ht"], axis_dict["jet_met_dphi3"],
+  //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ht_vs_jet_met_dphi3__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
 
   //// Special case for zll. Draw but do not cut on ll_pt
   //if (sample_name=="zll") {
