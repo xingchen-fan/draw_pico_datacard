@@ -401,7 +401,7 @@ int main(int argc, char *argv[]){
   std::ofstream comp_output_file;
   comp_output_file.open(("src/higgsino/"+options.out_filename).c_str());
   comp_output_file << "//return a weight that can be multiplied with particular MC samples for varying composition;\n";
-  comp_output_file << "const NamedFunc composition_variation_weight(\"composition_variation_weight\",[ttbar_variations, zll_variations, qcd_variations](const Baby &b) -> NamedFunc::ScalarType{\n";
+  comp_output_file << "const NamedFunc composition_variation_weight(\"composition_variation_weight\",[](const Baby &b) -> NamedFunc::ScalarType{\n";
   comp_output_file << "  double weight = 1.0;\n";
   comp_output_file << "  int sample = b.type()/1000;\n";
   comp_output_file << "  switch (sample) {\n";
