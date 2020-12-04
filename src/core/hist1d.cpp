@@ -569,11 +569,6 @@ Hist1D & Hist1D::Tag(const string &tag){
   return *this;
 }
 
-Hist1D & Hist1D::LuminosityTag(const string &tag){
-  luminosity_tag_ = tag;
-  return *this;
-}
-
 Hist1D & Hist1D::LeftLabel(const vector<string> &label){
   left_label_ = label;
   return *this;
@@ -626,7 +621,8 @@ void Hist1D::InitializeHistos() const{
   }
   for(auto &hist: datas_){
     hist->scaled_hist_ = hist->raw_hist_;
-    hist->scaled_hist_.SetName(("dat_"+hist->process_->name_+"_"+counter()).c_str());
+    hist->scaled_hist_.SetName(("dat_"+hist->process_->name_).c_str());
+//     hist->scaled_hist_.SetName(("dat_"+hist->process_->name_+"_"+counter()).c_str());
   }
 }
 
@@ -896,7 +892,7 @@ void Hist1D::AdjustFillStyles() const{
     TH1D &h = bkg->scaled_hist_;
     h.SetFillStyle(0);
     h.SetLineColor(h.GetFillColor());
-    h.SetLineWidth(5);
+    h.SetLineWidth(3);
   }
 }
 
@@ -915,8 +911,7 @@ void Hist1D::AdjustFillStyles() const{
 void Hist1D::GetPads(unique_ptr<TCanvas> &c,
                      unique_ptr<TPad> &top,
                      unique_ptr<TPad> &bottom) const{
-  c.reset(new TCanvas(("canvas_"+counter()).c_str(), "canvas", this_opt_.CanvasWidth(),
-                      this_opt_.CanvasHeight()));
+  c.reset(new TCanvas("canvas", "canvas", this_opt_.CanvasWidth(), this_opt_.CanvasHeight()));
   c->cd();
   top.reset(new TPad(("top_pad_"+counter()).c_str(), "top_pad", 0., 0., 1., 1.));
   bottom.reset(new TPad(("bottom_pad_"+counter()).c_str(), "bottom_pad", 0., 0., 1., 1.));
@@ -1037,8 +1032,7 @@ vector<shared_ptr<TLatex> > Hist1D::GetTitleTexts() const{
 
     ostringstream oss;
     if(this_opt_.Stack() != StackType::shapes) {
-      if (luminosity_tag_ != "") oss << luminosity_tag_ << " fb^{-1} (13 TeV)" << flush;
-      else if (luminosity_<1.1) oss << "137 fb^{-1} (13 TeV)" << setprecision(1) << flush;
+      if (luminosity_<1.1) oss << "137 fb^{-1} (13 TeV)" << setprecision(1) << flush;
       else oss << setprecision(1) << luminosity_ << " fb^{-1} (13 TeV)" << flush;
     } else oss << "13 TeV" << flush;
     out.push_back(make_shared<TLatex>(right, bottom+0.2*(top-bottom),
@@ -1152,7 +1146,7 @@ std::vector<TH1D> Hist1D::GetBottomPlots(double &the_min, double &the_max) const
     out.push_back(h->scaled_hist_);
     out.back().SetName(("bot_plot_data_"+h->process_->name_+"_"+counter()).c_str());
   }
-  if(!stacked){
+  if(!stacked || this_opt_.Bottom() == BottomType::sorb){
     for(const auto &h: signals_){
       out.push_back(h->scaled_hist_);
       out.back().SetName(("bot_plot_sig_"+h->process_->name_+"_"+counter()).c_str());
@@ -1184,6 +1178,21 @@ std::vector<TH1D> Hist1D::GetBottomPlots(double &the_min, double &the_max) const
   case BottomType::diff:
     for(auto &h: out){
       h = h - denom;
+    }
+    break;
+  case BottomType::sorb:
+    for(auto &h: out){
+      double totb = denom.GetEntries();
+      for(int bin = 0; bin <= h.GetNbinsX()+1; ++bin) {
+        double sqrtb = sqrt(denom.Integral(bin,denom.GetNbinsX())/totb);
+        double herr(0); 
+        double tots = h.GetEntries();
+        for(int ebin = bin; ebin <= h.GetNbinsX()+1; ++ebin) 
+          herr += pow(h.GetBinError(ebin),2);
+        herr = sqrt(herr)/sqrtb;
+        h.SetBinContent(bin, h.Integral(bin,h.GetNbinsX())/tots/sqrtb);
+        h.SetBinError(bin, herr/tots);
+      }
     }
     break;
   case BottomType::off:
@@ -1232,6 +1241,17 @@ std::vector<TH1D> Hist1D::GetBottomPlots(double &the_min, double &the_max) const
       h.SetMaximum(the_max);
       h.GetYaxis()->CenterTitle();
     }
+  }else if(this_opt_.Bottom() == BottomType::sorb){
+    the_min = 0;
+    the_max = 1.2*the_max > 1 ? 1.2*the_max : 1;
+    for(auto &h: out){
+      if(signals_.size() != 0) h.GetYaxis()->SetTitle("#frac{#varepsilon_{S}}{#sqrt{#varepsilon_{B}}}");
+      h.GetYaxis()->CenterTitle();
+      h.SetTitleSize(h.GetTitleSize("y")/1.25,"y");
+      h.SetTitleOffset(h.GetTitleOffset("y"), "y");
+      h.SetMinimum(the_min);
+      h.SetMaximum(the_max);
+    }
   }
   return out;
 }
@@ -1249,6 +1269,7 @@ TLine Hist1D::GetBottomHorizontal() const{
   switch(this_opt_.Bottom()){
   case BottomType::ratio: y = 1.; break;
   case BottomType::diff: y = 0.; break;
+  case BottomType::sorb: y = -1000; break;
   case BottomType::off: y = 0.; break;
   default:
     y = 0.;
@@ -1380,8 +1401,7 @@ vector<shared_ptr<TLegend> > Hist1D::GetLegends(){
   if(this_opt_.DisplayLumiEntry()){
     auto &leg = legends.at(GetLegendIndex(entries_added, n_entries, legends.size()));
     ostringstream label;
-    if (luminosity_tag_ != "") label << fixed  << "L=" << setprecision(1) << luminosity_tag_ << " fb^{-1}";
-    else if(luminosity_ != 1.0) label << fixed  << "L=" << setprecision(1) << luminosity_ << " fb^{-1}";
+    if(luminosity_ != 1.0) label << fixed  << "L=" << setprecision(1) << luminosity_ << " fb^{-1}";
     else label << fixed << setprecision(1) << "L=137 fb^{-1}";
     //else label << fixed << setprecision(1) << "L=" << 36.8 << " fb^{-1}";
     if(this_opt_.Stack() == StackType::data_norm && datas_.size() > 0){
