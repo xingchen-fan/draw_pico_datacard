@@ -67,9 +67,14 @@ int main(int argc, char *argv[]){
   PlotOpt log_norm_info = lin_norm_info().YAxis(PlotOptTypes::YAxisType::log);
   PlotOpt log_norm = lin_norm_info().YAxis(PlotOptTypes::YAxisType::log)
     .Title(PlotOptTypes::TitleType::info).LogMinimum(.2);
+  PlotOpt log_data = lin_norm_info().YAxis(PlotOptTypes::YAxisType::log)
+    .Title(PlotOptTypes::TitleType::info)
+    .LogMinimum(.2)
+    .Bottom(PlotOptTypes::BottomType::ratio);
   PlotOpt log_norm_data = lin_norm_info().YAxis(PlotOptTypes::YAxisType::log)
     .Title(PlotOptTypes::TitleType::info)
     .LogMinimum(.2)
+    .Stack(PlotOptTypes::StackType::data_norm)
     .Bottom(PlotOptTypes::BottomType::ratio);
   PlotOpt lin_norm = lin_norm_info()
     .YAxis(PlotOptTypes::YAxisType::linear)
@@ -92,7 +97,8 @@ int main(int argc, char *argv[]){
   std::vector<PlotOpt> plt_norm_info = {lin_norm_info, log_norm_info};
   std::vector<PlotOpt> plt_lin = {lin_norm_data};
   std::vector<PlotOpt> plt_lin_nooverflow = {lin_norm_nooverflow_data};
-  std::vector<PlotOpt> plt_log = {log_norm_data};
+  std::vector<PlotOpt> plt_log = {log_data};
+  std::vector<PlotOpt> plt_log_norm = {log_norm_data};
   std::vector<PlotOpt> plt_shapes = {lin_shapes};
   std::vector<PlotOpt> plt_shapes_info = {lin_shapes_info};
   std::vector<PlotOpt> plt_lin_mc = {lin_norm};
@@ -359,28 +365,28 @@ int main(int argc, char *argv[]){
   //first, generate nb, drmax, and ambb plots from which to derive variations
   pm_variations.Push<Hist1D>(Axis(nb_bins, Higfuncs::jetid_nb, "N_{b}", {}),
     ttbar_baseline,
-    ttbar_procs, plt_log).Weight(Higfuncs::final_weight).Tag("FixName:syst_composition_ttbar_nb").LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_log_norm).Weight(Higfuncs::final_weight).Tag("FixName:syst_composition_ttbar_nb").LuminosityTag(total_luminosity_string);
   pm_variations.Push<Hist1D>(Axis(drmax_bins, Higfuncs::jetid_hig_cand_drmax, "#Delta R_{max}", {}),
     ttbar_baseline,
-    ttbar_procs, plt_log).Weight(Higfuncs::final_weight).Tag("FixName:syst_composition_ttbar_drmax").LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_log_norm).Weight(Higfuncs::final_weight).Tag("FixName:syst_composition_ttbar_drmax").LuminosityTag(total_luminosity_string);
   pm_variations.Push<Hist1D>(Axis(met_bins, "met", "p_{T}^{miss} [GeV]", {}),
     ttbar_baseline && "met>=150",
     ttbar_procs, plt_log).Weight(Higfuncs::final_weight).Tag("FixName:syst_composition_ttbar_met").LuminosityTag(total_luminosity_string);
   pm_variations.Push<Hist1D>(Axis(nb_bins, Higfuncs::jetid_nb, "N_{b}", {}),
     zll_baseline && Higfuncs::jetid_nb>=2,
-    zll_procs, plt_log).Weight(ttx_subtraction_weight_nb).Tag("FixName:syst_composition_zll_nb").LuminosityTag(total_luminosity_string);
+    zll_procs, plt_log_norm).Weight(ttx_subtraction_weight_nb).Tag("FixName:syst_composition_zll_nb").LuminosityTag(total_luminosity_string);
   pm_variations.Push<Hist1D>(Axis(drmax_bins, Higfuncs::jetid_hig_cand_drmax, "#Delta R_{max}", {}),
     zll_baseline,
-    zll_procs, plt_log).Weight(ttx_subtraction_weight_drmax).Tag("FixName:syst_composition_zll_drmax").LuminosityTag(total_luminosity_string);
+    zll_procs, plt_log_norm).Weight(ttx_subtraction_weight_drmax).Tag("FixName:syst_composition_zll_drmax").LuminosityTag(total_luminosity_string);
   pm_variations.Push<Hist1D>(Axis(met_bins, "ll_pt[0]", "p_{Tll} [GeV]", {}),
     zll_baseline && "ll_pt[0]>=150",
     zll_procs, plt_log).Weight(ttx_subtraction_weight_met).Tag("FixName:syst_composition_zll_met").LuminosityTag(total_luminosity_string);
   pm_variations.Push<Hist1D>(Axis(nb_bins, Higfuncs::jetid_nb, "N_{b}", {}),
     qcd_baseline && Higfuncs::jetid_nb>=2,
-    qcd_procs, plt_log).Weight(ttx_subtraction_weight_nb).Tag("FixName:syst_composition_qcd_nb").LuminosityTag(total_luminosity_string);
+    qcd_procs, plt_log_norm).Weight(ttx_subtraction_weight_nb).Tag("FixName:syst_composition_qcd_nb").LuminosityTag(total_luminosity_string);
   pm_variations.Push<Hist1D>(Axis(drmax_bins, Higfuncs::jetid_hig_cand_drmax, "#Delta R_{max}", {}),
     qcd_baseline,
-    qcd_procs, plt_log).Weight(ttx_subtraction_weight_drmax).Tag("FixName:syst_composition_qcd_drmax").LuminosityTag(total_luminosity_string);
+    qcd_procs, plt_log_norm).Weight(ttx_subtraction_weight_drmax).Tag("FixName:syst_composition_qcd_drmax").LuminosityTag(total_luminosity_string);
   pm_variations.Push<Hist1D>(Axis(met_bins, "met", "p_{T}^{miss} [GeV]", {}),
     qcd_baseline,
     qcd_procs, plt_log).Weight(ttx_subtraction_weight_met).Tag("FixName:syst_composition_qcd_met").LuminosityTag(total_luminosity_string);

@@ -241,7 +241,7 @@ const NamedFunc wgt_syst_qcd("wgt_syst_qcd",[](const Baby &b) -> NamedFunc::Scal
 
 //return weight from composition systematic
 //note this returns the weight scaling, not the variation
-const NamedFunc wgt_syst_comp("wgt_syst_comp",[](const Baby &b) -> NamedFunc::ScalarType{
+const NamedFunc wgt_syst_comp_unnormed("wgt_syst_comp_unnormed",[](const Baby &b) -> NamedFunc::ScalarType{
   double weight = 1.0;
   int sample = b.type()/1000;
   switch (sample) {
@@ -296,6 +296,77 @@ const NamedFunc wgt_syst_comp("wgt_syst_comp",[](const Baby &b) -> NamedFunc::Sc
         weight = weight*1.18912;
       else if (Higfuncs::jetid_hig_cand_drmax.GetScalar(b) > 1.1 && Higfuncs::jetid_hig_cand_drmax.GetScalar(b) < 2.2) 
         weight = weight*1.41141;
+      if (b.met() > 150 && b.met() < 200) 
+        weight = weight*1.34946;
+      else if (b.met() > 200 && b.met() < 300) 
+        weight = weight*1.25167;
+      else if (b.met() > 300 && b.met() < 400) 
+        weight = weight*1.07007;
+      else if (b.met() > 400 && b.met() < 9999) 
+        weight = weight*0.844552;
+    default:
+      break;
+  }
+  return weight;
+});
+
+//return weight from composition systematic
+//note this returns the weight scaling, not the variation
+const NamedFunc wgt_syst_comp("wgt_syst_comp",[](const Baby &b) -> NamedFunc::ScalarType{
+  double weight = 1.0;
+  int sample = b.type()/1000;
+  switch (sample) {
+    case 1:
+      if (Higfuncs::jetid_nb.GetScalar(b) > 1.5 && Higfuncs::jetid_nb.GetScalar(b) < 2.5) 
+        weight = weight*0.994324;
+      else if (Higfuncs::jetid_nb.GetScalar(b) > 2.5 && Higfuncs::jetid_nb.GetScalar(b) < 3.5) 
+        weight = weight*1.05784;
+      else if (Higfuncs::jetid_nb.GetScalar(b) > 3.5 && Higfuncs::jetid_nb.GetScalar(b) < 4.5) 
+        weight = weight*1.03016;
+      if (Higfuncs::jetid_hig_cand_drmax.GetScalar(b) > 0 && Higfuncs::jetid_hig_cand_drmax.GetScalar(b) < 1.1) 
+        weight = weight*0.97693;
+      else if (Higfuncs::jetid_hig_cand_drmax.GetScalar(b) > 1.1 && Higfuncs::jetid_hig_cand_drmax.GetScalar(b) < 2.2) 
+        weight = weight*1.00298;
+      if (b.met() > 150 && b.met() < 200) 
+        weight = weight*0.769807;
+      else if (b.met() > 200 && b.met() < 300) 
+        weight = weight*0.757657;
+      else if (b.met() > 300 && b.met() < 400) 
+        weight = weight*0.677293;
+      else if (b.met() > 400 && b.met() < 9999) 
+        weight = weight*0.668484;
+      break;
+    case 8:
+      if (Higfuncs::jetid_nb.GetScalar(b) > 1.5 && Higfuncs::jetid_nb.GetScalar(b) < 2.5) 
+        weight = weight*0.928212;
+      else if (Higfuncs::jetid_nb.GetScalar(b) > 2.5 && Higfuncs::jetid_nb.GetScalar(b) < 3.5) 
+        weight = weight*1.94533;
+      else if (Higfuncs::jetid_nb.GetScalar(b) > 3.5 && Higfuncs::jetid_nb.GetScalar(b) < 4.5) 
+        weight = weight*1.31595;
+      if (Higfuncs::jetid_hig_cand_drmax.GetScalar(b) > 0 && Higfuncs::jetid_hig_cand_drmax.GetScalar(b) < 1.1) 
+        weight = weight*0.974129;
+      else if (Higfuncs::jetid_hig_cand_drmax.GetScalar(b) > 1.1 && Higfuncs::jetid_hig_cand_drmax.GetScalar(b) < 2.2) 
+        weight = weight*1.00916;
+      if (b.met() > 150 && b.met() < 200) 
+        weight = weight*0.955291;
+      else if (b.met() > 200 && b.met() < 300) 
+        weight = weight*0.863349;
+      else if (b.met() > 300 && b.met() < 400) 
+        weight = weight*0.827839;
+      else if (b.met() > 400 && b.met() < 9999) 
+        weight = weight*0.659814;
+      break;
+    case 7:
+      if (Higfuncs::jetid_nb.GetScalar(b) > 1.5 && Higfuncs::jetid_nb.GetScalar(b) < 2.5) 
+        weight = weight*1.01916;
+      else if (Higfuncs::jetid_nb.GetScalar(b) > 2.5 && Higfuncs::jetid_nb.GetScalar(b) < 3.5) 
+        weight = weight*0.978398;
+      else if (Higfuncs::jetid_nb.GetScalar(b) > 3.5 && Higfuncs::jetid_nb.GetScalar(b) < 4.5) 
+        weight = weight*0.797707;
+      if (Higfuncs::jetid_hig_cand_drmax.GetScalar(b) > 0 && Higfuncs::jetid_hig_cand_drmax.GetScalar(b) < 1.1) 
+        weight = weight*0.906144;
+      else if (Higfuncs::jetid_hig_cand_drmax.GetScalar(b) > 1.1 && Higfuncs::jetid_hig_cand_drmax.GetScalar(b) < 2.2) 
+        weight = weight*1.07554;
       if (b.met() > 150 && b.met() < 200) 
         weight = weight*1.34946;
       else if (b.met() > 200 && b.met() < 300) 
