@@ -569,6 +569,11 @@ Hist1D & Hist1D::Tag(const string &tag){
   return *this;
 }
 
+Hist1D & Hist1D::LuminosityTag(const string &tag){
+  luminosity_tag_ = tag;
+  return *this;
+}
+
 Hist1D & Hist1D::LeftLabel(const vector<string> &label){
   left_label_ = label;
   return *this;
@@ -1146,7 +1151,7 @@ std::vector<TH1D> Hist1D::GetBottomPlots(double &the_min, double &the_max) const
     out.push_back(h->scaled_hist_);
     out.back().SetName(("bot_plot_data_"+h->process_->name_+"_"+counter()).c_str());
   }
-  if(!stacked || this_opt_.Bottom() == BottomType::sorb){
+  if(!stacked || this_opt_.Bottom() == BottomType::sorb || this_opt_.Bottom() == BottomType::sorb_cut_upper){
     for(const auto &h: signals_){
       out.push_back(h->scaled_hist_);
       out.back().SetName(("bot_plot_sig_"+h->process_->name_+"_"+counter()).c_str());
@@ -1182,16 +1187,49 @@ std::vector<TH1D> Hist1D::GetBottomPlots(double &the_min, double &the_max) const
     break;
   case BottomType::sorb:
     for(auto &h: out){
-      double totb = denom.GetEntries();
+      double totb = denom.Integral(0,denom.GetNbinsX()+1);
+      if (totb < 1.0e-10) totb = 1.0; //avoid divide-by-zeros
+      double tots = h.Integral(0,h.GetNbinsX()+1);
+      if (tots < 1.0e-10) tots = 1.0; //avoid divide-by-zeros
       for(int bin = 0; bin <= h.GetNbinsX()+1; ++bin) {
-        double sqrtb = sqrt(denom.Integral(bin,denom.GetNbinsX())/totb);
-        double herr(0); 
-        double tots = h.GetEntries();
-        for(int ebin = bin; ebin <= h.GetNbinsX()+1; ++ebin) 
-          herr += pow(h.GetBinError(ebin),2);
-        herr = sqrt(herr)/sqrtb;
-        h.SetBinContent(bin, h.Integral(bin,h.GetNbinsX())/tots/sqrtb);
-        h.SetBinError(bin, herr/tots);
+        double total_background_yield = denom.Integral(bin,denom.GetNbinsX()+1)/totb;
+        if (total_background_yield < 1.0e-10) { //avoid divide-by-zeros and negative yields
+          h.SetBinContent(bin, 0);
+          h.SetBinError(bin, 0);
+        }
+        else {
+          double sqrtb = sqrt(total_background_yield);
+          double herr(0); 
+          for(int ebin = bin; ebin <= h.GetNbinsX()+1; ++ebin) 
+            herr += pow(h.GetBinError(ebin),2);
+          herr = sqrt(herr)/sqrtb;
+          h.SetBinContent(bin, h.Integral(bin,h.GetNbinsX()+1)/tots/sqrtb);
+          h.SetBinError(bin, herr/tots);
+        }
+      }
+    }
+    break;
+  case BottomType::sorb_cut_upper:
+    for(auto &h: out){
+      double totb = denom.Integral(0,denom.GetNbinsX()+1);
+      if (totb < 1.0e-10) totb = 1.0; //avoid divide-by-zeros
+      double tots = h.Integral(0,h.GetNbinsX()+1);
+      if (tots < 1.0e-10) tots = 1.0; //avoid divide-by-zeros
+      for(int bin = h.GetNbinsX()+1; bin >= 0; --bin) {
+        double total_background_yield = denom.Integral(0,bin)/totb;
+        if (total_background_yield < 1.0e-10) { //avoid divide-by-zeros and negative yields
+          h.SetBinContent(bin, 0.0);
+          h.SetBinError(bin, 0.0);
+        }
+        else {
+          double sqrtb = sqrt(total_background_yield);
+          double herr(0); 
+          for(int ebin = bin; ebin >= 0; --ebin) 
+            herr += pow(h.GetBinError(ebin),2);
+          herr = sqrt(herr)/sqrtb;
+          h.SetBinContent(bin, h.Integral(0,bin)/tots/sqrtb);
+          h.SetBinError(bin, herr/tots);
+        }
       }
     }
     break;
@@ -1245,7 +1283,18 @@ std::vector<TH1D> Hist1D::GetBottomPlots(double &the_min, double &the_max) const
     the_min = 0;
     the_max = 1.2*the_max > 1 ? 1.2*the_max : 1;
     for(auto &h: out){
-      if(signals_.size() != 0) h.GetYaxis()->SetTitle("#frac{#varepsilon_{S}}{#sqrt{#varepsilon_{B}}}");
+      if(signals_.size() != 0) h.GetYaxis()->SetTitle("#frac{#varepsilon_{S}}{#sqrt{#varepsilon_{B}}} (lower cut)");
+      h.GetYaxis()->CenterTitle();
+      h.SetTitleSize(h.GetTitleSize("y")/1.25,"y");
+      h.SetTitleOffset(h.GetTitleOffset("y"), "y");
+      h.SetMinimum(the_min);
+      h.SetMaximum(the_max);
+    }
+  }else if(this_opt_.Bottom() == BottomType::sorb_cut_upper){
+    the_min = 0;
+    the_max = 1.2*the_max > 1 ? 1.2*the_max : 1;
+    for(auto &h: out){
+      if(signals_.size() != 0) h.GetYaxis()->SetTitle("#frac{#varepsilon_{S}}{#sqrt{#varepsilon_{B}}} (upper cut)");
       h.GetYaxis()->CenterTitle();
       h.SetTitleSize(h.GetTitleSize("y")/1.25,"y");
       h.SetTitleOffset(h.GetTitleOffset("y"), "y");
@@ -1270,6 +1319,7 @@ TLine Hist1D::GetBottomHorizontal() const{
   case BottomType::ratio: y = 1.; break;
   case BottomType::diff: y = 0.; break;
   case BottomType::sorb: y = -1000; break;
+  case BottomType::sorb_cut_upper: y = -1000; break;
   case BottomType::off: y = 0.; break;
   default:
     y = 0.;

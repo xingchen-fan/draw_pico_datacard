@@ -85,6 +85,7 @@ std::vector<double> get_systematic_table_values(TGraphAsymmErrors *gr);
 std::vector<double> get_systematic_table_variations(std::vector<std::vector<double>> sys_table);
 std::string make_systematic_table_row(std::vector<double> values, bool total=false);
 std::vector<double> add_variations_quadrature(std::vector<std::vector<double>> values);
+std::vector<double> max_variations(std::vector<std::vector<double>> values);
 
 //efficiency helper function declarations
 void trig_postprocess_efficiencies(PlotMaker* pm, int first_index, shared_ptr<Process> met_proc, shared_ptr<Process> lep_proc, std::string year, std::string img_file_extension, std::vector<double> systematics);
@@ -170,6 +171,12 @@ int main(int argc, char *argv[]){
     return r_met_trigger;
   });
 
+  const NamedFunc metnomu_trigger("metnomu_trigger", [](const Baby &b) -> NamedFunc::ScalarType{
+    //can't used string-based named func because name being too long causes histograms to crash
+    bool r_met_trigger = b.HLT_PFMET90_PFMHT90_IDTight()||b.HLT_PFMET100_PFMHT100_IDTight()||b.HLT_PFMET110_PFMHT110_IDTight()||b.HLT_PFMET120_PFMHT120_IDTight()||b.HLT_PFMET130_PFMHT130_IDTight()||b.HLT_PFMET140_PFMHT140_IDTight()||b.HLT_PFMET100_PFMHT100_IDTight_PFHT60()||b.HLT_PFMET110_PFMHT110_IDTight_PFHT60()||b.HLT_PFMET120_PFMHT120_IDTight_PFHT60()||b.HLT_PFMET130_PFMHT130_IDTight_PFHT60()||b.HLT_PFMET140_PFMHT140_IDTight_PFHT60()||b.HLT_PFMET120_PFMHT120_IDTight_HFCleaned()||b.HLT_PFMET120_PFMHT120_IDTight_PFHT60_HFCleaned();
+    return r_met_trigger;
+  });
+
   const NamedFunc el_trigger("el_trigger", [](const Baby &b) -> NamedFunc::ScalarType{
     //can't used string-based named func because name being too long causes histograms to crash
     bool r_el_trigger = b.HLT_Ele25_WPTight_Gsf()||b.HLT_Ele27_WPTight_Gsf()||b.HLT_Ele28_WPTight_Gsf()||b.HLT_Ele32_WPTight_Gsf_L1DoubleEG()||b.HLT_Ele32_WPTight_Gsf()||b.HLT_Ele35_WPTight_Gsf()||b.HLT_Ele45_WPLoose_Gsf()||b.HLT_Ele105_CaloIdVT_GsfTrkIdT()||b.HLT_Ele115_CaloIdVT_GsfTrkIdT()||b.HLT_Ele135_CaloIdVT_GsfTrkIdT()||b.HLT_Ele145_CaloIdVT_GsfTrkIdT()||b.HLT_Ele25_eta2p1_WPTight_Gsf()||b.HLT_Ele27_eta2p1_WPTight_Gsf()||b.HLT_Ele27_eta2p1_WPLoose_Gsf()||b.HLT_Ele20_WPLoose_Gsf()||b.HLT_Ele20_eta2p1_WPLoose_Gsf()||b.HLT_Ele25_eta2p1_WPLoose_Gsf()||b.HLT_Ele15_IsoVVVL_PFHT350()||b.HLT_Ele15_IsoVVVL_PFHT400()||b.HLT_Ele15_IsoVVVL_PFHT450()||b.HLT_Ele15_IsoVVVL_PFHT600()||b.HLT_Ele50_IsoVVVL_PFHT450();
@@ -211,6 +218,16 @@ int main(int argc, char *argv[]){
 		  return r_high_pt_jet;
   });
 
+  const NamedFunc nbb("nbb", [](const Baby &b) -> NamedFunc::ScalarType{
+      int r_nbb = 0;
+      for (unsigned int fjet_idx = 0; fjet_idx < static_cast<unsigned int>(b.nfjet()); fjet_idx++) {
+        if (fjet_idx >= 2)  break;
+        if (b.fjet_deep_md_hbb_btv()->at(fjet_idx)>0.7)
+          r_nbb++;
+      }
+		  return r_nbb;
+  });
+
   const NamedFunc nb_higgsino("nb_higgsino", [](const Baby &b) -> NamedFunc::ScalarType{
         	  int r_nb_higgsino;
         	  if (b.nbm() == 0) r_nb_higgsino = 0;
@@ -250,15 +267,14 @@ int main(int argc, char *argv[]){
   });
 
   const NamedFunc pass_filters("pass_filters", [](const Baby &b) -> NamedFunc::ScalarType{
-    if (!b.pass()) return false; //goodv, cschalo_tight, hbhe, hbheiso, ecaldeadcell, badpfmu, eebadsc, muonjet, jets, badcalib
-    ////if we are including events with jets failing jet ID:
-    //if (!b.pass_goodv() || !b.pass_cschalo_tight() || !b.pass_hbhe() || !b.pass_hbheiso() || !b.pass_ecaldeadcell() || !b.pass_badpfmu() || !b.pass_eebadsc() || !b.pass_muon_jet()) return false;
+    if (!b.pass_goodv() || !b.pass_hbhe() || !b.pass_hbheiso() || !b.pass_ecaldeadcell() || !b.pass_badpfmu() || !b.pass_muon_jet()) return false;
+    if (b.type()/1000 == 0 && !b.pass_eebadsc()) return false; //only apply eebadsc fiter for data
+    if ((b.type()/1000 != 106)  && !b.pass_cschalo_tight()) return false; //not for fastsim
     if (!b.pass_low_neutral_jet()) return false;
     if (!b.pass_htratio_dphi_tight()) return false;
-    if (!Higfuncs::pass_ecalnoisejet.GetScalar(b)) return false; //ecalnoisejet
-    if (year_string == "2018") {
-      if (!Higfuncs::pass_hemveto.GetScalar(b)) return false;
-    }
+    if (!b.pass_jets()) return false; //was modified
+    if ((abs(b.SampleType())==2017 || abs(b.SampleType())==2018) && !Higfuncs::pass_ecalnoisejet.GetScalar(b)) return false; 
+    if (!Higfuncs::pass_hemveto.GetScalar(b)) return false;
     return true;
   });
 
@@ -570,16 +586,6 @@ int main(int argc, char *argv[]){
   	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && el_trigger && nb_higgsino>=2., procs_met150, all_plot_types).Tag("FixName:trig_raw_nb2_sys_den");
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
   	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && el_trigger && nb_higgsino>=2. && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_nb2_sys_num");
-	//am<140, 300<=ht<400
-  	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&300<=ht&&ht<400&&!low_dphi_met&&nel==1&&hig_cand_am[0]<140" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_am0_sys_den");
-  	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&300<=ht&&ht<400&&!low_dphi_met&&nel==1&&hig_cand_am[0]<140" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_am0_sys_num");
-	//am>140, 300<=ht<400
-  	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&300<=ht&&ht<400&&!low_dphi_met&&nel==1&&hig_cand_am[0]>=140" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_am140_sys_den");
-  	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&300<=ht&&ht<400&&!low_dphi_met&&nel==1&&hig_cand_am[0]>=140" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_am140_sys_num");
 	//drmax < 2.2
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
   	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&hig_cand_drmax[0]<2.2" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_drmax0_sys_den");
@@ -590,6 +596,21 @@ int main(int argc, char *argv[]){
   	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&hig_cand_drmax[0]>=2.2" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_drmax22_sys_den");
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
   	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&hig_cand_drmax[0]>=2.2" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_drmax22_sys_num");
+	//300<=ht<400 (nominal)
+  	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "njet>=4&&300<=ht&&ht<400&&!low_dphi_met&&nel==1" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_ht300to400_sys_den");
+  	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "njet>=4&&300<=ht&&ht<400&&!low_dphi_met&&nel==1" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_ht300to400_sys_num");
+	//am<140, 300<=ht<400
+  	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "njet>=4&&300<=ht&&ht<400&&!low_dphi_met&&nel==1&&hig_cand_am[0]<140" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_am0_sys_den");
+  	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "njet>=4&&300<=ht&&ht<400&&!low_dphi_met&&nel==1&&hig_cand_am[0]<140" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_am0_sys_num");
+	//am>140, 300<=ht<400
+  	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "njet>=4&&300<=ht&&ht<400&&!low_dphi_met&&nel==1&&hig_cand_am[0]>=140" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_am140_sys_den");
+  	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "njet>=4&&300<=ht&&ht<400&&!low_dphi_met&&nel==1&&hig_cand_am[0]>=140" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_am140_sys_num");
 	//jet_pt>500 (nominal)
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
   	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && el_trigger && high_pt_jet, procs_met150, all_plot_types).Tag("FixName:trig_raw_refel_sys_den");
@@ -600,6 +621,16 @@ int main(int argc, char *argv[]){
   	                pass_filters && "HLT_PFJet500&&njet>=3&&!low_dphi_met&&nel==1" && high_pt_jet, procs_met150, all_plot_types).Tag("FixName:trig_raw_refjet_sys_den");
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
   	                pass_filters && "HLT_PFJet500&&njet>=3&&!low_dphi_met&&nel==1" && high_pt_jet && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_refjet_sys_num");
+	//jet_pt>500 nel=1, ref trigger jet500 (nominal)
+  	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "(met/mht<2)&&(met/met_calo<2)&&HLT_PFJet500&&njet>=3&&!low_dphi_met&&nel==1" && high_pt_jet, procs_met150, all_plot_types).Tag("FixName:trig_raw_1e_sys_den");
+  	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "(met/mht<2)&&(met/met_calo<2)&&HLT_PFJet500&&njet>=3&&!low_dphi_met&&nel==1" && high_pt_jet && metnomu_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_1e_sys_num");
+	//jet_pt>500 nmu=1, ref trigger jet500
+  	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "(met/mht<2)&&(met/met_calo<2)&&HLT_PFJet500&&njet>=3&&!low_dphi_met&&nmu==1" && high_pt_jet, procs_met150, all_plot_types).Tag("FixName:trig_raw_1mu_sys_den");
+  	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
+  	                pass_filters && "(met/mht<2)&&(met/met_calo<2)&&HLT_PFJet500&&njet>=3&&!low_dphi_met&&nmu==1" && high_pt_jet && metnomu_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_1mu_sys_num");
   }
   // trigger efficiency plots and application file
   if (do_efficiency) {
@@ -968,17 +999,23 @@ int main(int argc, char *argv[]){
 	pm_idx += 2;
   	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 N_{b}#geq 1 high #Delta#phi N_{e}=1, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_nb2");
 	pm_idx += 2;
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 #LT m#RT #leq 140 GeV high #Delta#phi N_{e}=1, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_amlow");
-	pm_idx += 2;
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 #LT m#RT > 140 GeV high #Delta#phi N_{e}=1, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_amhigh");
-	pm_idx += 2;
   	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 #Delta R_{max}#leq 2.2 high #Delta#phi N_{e}=1, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_drmaxlow");
 	pm_idx += 2;
   	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 #Delta R_{max}>2.2 high #Delta#phi N_{e}=1, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_drmaxhigh");
 	pm_idx += 2;
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 300 #leq HT < 400 GeV, high #Delta#phi N_{e}=1, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fixht");
+	pm_idx += 2;
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 300 #leq HT < 400 GeV, #LT m#RT #leq 140 GeV high #Delta#phi N_{e}=1, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_amlow");
+	pm_idx += 2;
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 300 #leq HT < 400 GeV, #LT m#RT > 140 GeV high #Delta#phi N_{e}=1, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_amhigh");
+	pm_idx += 2;
   	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 p_{Tjet}>500 GeV high #Delta#phi N_{e}=1, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_isoeljet500");
 	pm_idx += 2;
   	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 N_{j}#geq 3 p_{Tjet}>500 GeV high #Delta#phi N_{e}=1, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_jetjet500");
+	pm_idx += 2;
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 N_{j}#geq 3 p_{Tjet}>500 GeV, high #Delta#phi N_{e}=1, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_1e");
+	pm_idx += 2;
+  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 N_{j}#geq 3 p_{Tjet}>500 GeV, high #Delta#phi N_{#mu}=1, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_1mu");
 	pm_idx += 2;
   }
   if (do_efficiency) {
@@ -1324,67 +1361,96 @@ std::vector<double> trig_postprocess_systematics(int year, PlotMaker* pm, int fi
        Hist1D::SingleHist1D* num_sh_nb2 = static_cast<Hist1D::SingleHist1D*>(num_h_nb2->GetComponent(proc.get()));
        TH1D num_nb2 = num_sh_nb2->scaled_hist_;
        TGraphAsymmErrors* plot_ratio_nb2 = new TGraphAsymmErrors(&num_nb2,&den_nb2,"cp");
-       //ambb0
-       Hist1D * den_h_ambb0 = static_cast<Hist1D*>(pm->Figures()[first_index+12].get());
-       Hist1D::SingleHist1D* den_sh_ambb0 = static_cast<Hist1D::SingleHist1D*>(den_h_ambb0->GetComponent(proc.get()));
-       TH1D den_ambb0 = den_sh_ambb0->scaled_hist_;
-       Hist1D * num_h_ambb0 = static_cast<Hist1D*>(pm->Figures()[first_index+13].get());
-       Hist1D::SingleHist1D* num_sh_ambb0 = static_cast<Hist1D::SingleHist1D*>(num_h_ambb0->GetComponent(proc.get()));
-       TH1D num_ambb0 = num_sh_ambb0->scaled_hist_;
-       TGraphAsymmErrors* plot_ratio_ambb0 = new TGraphAsymmErrors(&num_ambb0,&den_ambb0,"cp");
-       //ambb140
-       Hist1D * den_h_ambb140 = static_cast<Hist1D*>(pm->Figures()[first_index+14].get());
-       Hist1D::SingleHist1D* den_sh_ambb140 = static_cast<Hist1D::SingleHist1D*>(den_h_ambb140->GetComponent(proc.get()));
-       TH1D den_ambb140 = den_sh_ambb140->scaled_hist_;
-       Hist1D * num_h_ambb140 = static_cast<Hist1D*>(pm->Figures()[first_index+15].get());
-       Hist1D::SingleHist1D* num_sh_ambb140 = static_cast<Hist1D::SingleHist1D*>(num_h_ambb140->GetComponent(proc.get()));
-       TH1D num_ambb140 = num_sh_ambb140->scaled_hist_;
-       TGraphAsymmErrors* plot_ratio_ambb140 = new TGraphAsymmErrors(&num_ambb140,&den_ambb140,"cp");
        //drmax0
-       Hist1D * den_h_drmax0 = static_cast<Hist1D*>(pm->Figures()[first_index+16].get());
+       Hist1D * den_h_drmax0 = static_cast<Hist1D*>(pm->Figures()[first_index+12].get());
        Hist1D::SingleHist1D* den_sh_drmax0 = static_cast<Hist1D::SingleHist1D*>(den_h_drmax0->GetComponent(proc.get()));
        TH1D den_drmax0 = den_sh_drmax0->scaled_hist_;
-       Hist1D * num_h_drmax0 = static_cast<Hist1D*>(pm->Figures()[first_index+17].get());
+       Hist1D * num_h_drmax0 = static_cast<Hist1D*>(pm->Figures()[first_index+13].get());
        Hist1D::SingleHist1D* num_sh_drmax0 = static_cast<Hist1D::SingleHist1D*>(num_h_drmax0->GetComponent(proc.get()));
        TH1D num_drmax0 = num_sh_drmax0->scaled_hist_;
        TGraphAsymmErrors* plot_ratio_drmax0 = new TGraphAsymmErrors(&num_drmax0,&den_drmax0,"cp");
        //drmax22
-       Hist1D * den_h_drmax22 = static_cast<Hist1D*>(pm->Figures()[first_index+18].get());
+       Hist1D * den_h_drmax22 = static_cast<Hist1D*>(pm->Figures()[first_index+14].get());
        Hist1D::SingleHist1D* den_sh_drmax22 = static_cast<Hist1D::SingleHist1D*>(den_h_drmax22->GetComponent(proc.get()));
        TH1D den_drmax22 = den_sh_drmax22->scaled_hist_;
-       Hist1D * num_h_drmax22 = static_cast<Hist1D*>(pm->Figures()[first_index+19].get());
+       Hist1D * num_h_drmax22 = static_cast<Hist1D*>(pm->Figures()[first_index+15].get());
        Hist1D::SingleHist1D* num_sh_drmax22 = static_cast<Hist1D::SingleHist1D*>(num_h_drmax22->GetComponent(proc.get()));
        TH1D num_drmax22 = num_sh_drmax22->scaled_hist_;
        TGraphAsymmErrors* plot_ratio_drmax22 = new TGraphAsymmErrors(&num_drmax22,&den_drmax22,"cp");
+       //fixht
+       Hist1D * den_h_fixht = static_cast<Hist1D*>(pm->Figures()[first_index+16].get());
+       Hist1D::SingleHist1D* den_sh_fixht = static_cast<Hist1D::SingleHist1D*>(den_h_fixht->GetComponent(proc.get()));
+       TH1D den_fixht = den_sh_fixht->scaled_hist_;
+       Hist1D * num_h_fixht = static_cast<Hist1D*>(pm->Figures()[first_index+17].get());
+       Hist1D::SingleHist1D* num_sh_fixht = static_cast<Hist1D::SingleHist1D*>(num_h_fixht->GetComponent(proc.get()));
+       TH1D num_fixht = num_sh_fixht->scaled_hist_;
+       TGraphAsymmErrors* plot_ratio_fixht = new TGraphAsymmErrors(&num_fixht,&den_fixht,"cp");
+       //ambb0
+       Hist1D * den_h_ambb0 = static_cast<Hist1D*>(pm->Figures()[first_index+18].get());
+       Hist1D::SingleHist1D* den_sh_ambb0 = static_cast<Hist1D::SingleHist1D*>(den_h_ambb0->GetComponent(proc.get()));
+       TH1D den_ambb0 = den_sh_ambb0->scaled_hist_;
+       Hist1D * num_h_ambb0 = static_cast<Hist1D*>(pm->Figures()[first_index+19].get());
+       Hist1D::SingleHist1D* num_sh_ambb0 = static_cast<Hist1D::SingleHist1D*>(num_h_ambb0->GetComponent(proc.get()));
+       TH1D num_ambb0 = num_sh_ambb0->scaled_hist_;
+       TGraphAsymmErrors* plot_ratio_ambb0 = new TGraphAsymmErrors(&num_ambb0,&den_ambb0,"cp");
+       //ambb140
+       Hist1D * den_h_ambb140 = static_cast<Hist1D*>(pm->Figures()[first_index+20].get());
+       Hist1D::SingleHist1D* den_sh_ambb140 = static_cast<Hist1D::SingleHist1D*>(den_h_ambb140->GetComponent(proc.get()));
+       TH1D den_ambb140 = den_sh_ambb140->scaled_hist_;
+       Hist1D * num_h_ambb140 = static_cast<Hist1D*>(pm->Figures()[first_index+21].get());
+       Hist1D::SingleHist1D* num_sh_ambb140 = static_cast<Hist1D::SingleHist1D*>(num_h_ambb140->GetComponent(proc.get()));
+       TH1D num_ambb140 = num_sh_ambb140->scaled_hist_;
+       TGraphAsymmErrors* plot_ratio_ambb140 = new TGraphAsymmErrors(&num_ambb140,&den_ambb140,"cp");
        //eltrig
-       Hist1D * den_h_eltrig = static_cast<Hist1D*>(pm->Figures()[first_index+20].get());
+       Hist1D * den_h_eltrig = static_cast<Hist1D*>(pm->Figures()[first_index+22].get());
        Hist1D::SingleHist1D* den_sh_eltrig = static_cast<Hist1D::SingleHist1D*>(den_h_eltrig->GetComponent(proc.get()));
        TH1D den_eltrig = den_sh_eltrig->scaled_hist_;
-       Hist1D * num_h_eltrig = static_cast<Hist1D*>(pm->Figures()[first_index+21].get());
+       Hist1D * num_h_eltrig = static_cast<Hist1D*>(pm->Figures()[first_index+23].get());
        Hist1D::SingleHist1D* num_sh_eltrig = static_cast<Hist1D::SingleHist1D*>(num_h_eltrig->GetComponent(proc.get()));
        TH1D num_eltrig = num_sh_eltrig->scaled_hist_;
        TGraphAsymmErrors* plot_ratio_eltrig = new TGraphAsymmErrors(&num_eltrig,&den_eltrig,"cp");
        //jettrig
-       Hist1D * den_h_jettrig = static_cast<Hist1D*>(pm->Figures()[first_index+22].get());
+       Hist1D * den_h_jettrig = static_cast<Hist1D*>(pm->Figures()[first_index+24].get());
        Hist1D::SingleHist1D* den_sh_jettrig = static_cast<Hist1D::SingleHist1D*>(den_h_jettrig->GetComponent(proc.get()));
        TH1D den_jettrig = den_sh_jettrig->scaled_hist_;
-       Hist1D * num_h_jettrig = static_cast<Hist1D*>(pm->Figures()[first_index+23].get());
+       Hist1D * num_h_jettrig = static_cast<Hist1D*>(pm->Figures()[first_index+25].get());
        Hist1D::SingleHist1D* num_sh_jettrig = static_cast<Hist1D::SingleHist1D*>(num_h_jettrig->GetComponent(proc.get()));
        TH1D num_jettrig = num_sh_jettrig->scaled_hist_;
        TGraphAsymmErrors* plot_ratio_jettrig = new TGraphAsymmErrors(&num_jettrig,&den_jettrig,"cp");
+       //nel1
+       Hist1D * den_h_nel1 = static_cast<Hist1D*>(pm->Figures()[first_index+26].get());
+       Hist1D::SingleHist1D* den_sh_nel1 = static_cast<Hist1D::SingleHist1D*>(den_h_nel1->GetComponent(proc.get()));
+       TH1D den_nel1 = den_sh_nel1->scaled_hist_;
+       Hist1D * num_h_nel1 = static_cast<Hist1D*>(pm->Figures()[first_index+27].get());
+       Hist1D::SingleHist1D* num_sh_nel1 = static_cast<Hist1D::SingleHist1D*>(num_h_nel1->GetComponent(proc.get()));
+       TH1D num_nel1 = num_sh_nel1->scaled_hist_;
+       TGraphAsymmErrors* plot_ratio_nel1 = new TGraphAsymmErrors(&num_nel1,&den_nel1,"cp");
+       //nel0
+       Hist1D * den_h_nel0 = static_cast<Hist1D*>(pm->Figures()[first_index+28].get());
+       Hist1D::SingleHist1D* den_sh_nel0 = static_cast<Hist1D::SingleHist1D*>(den_h_nel0->GetComponent(proc.get()));
+       TH1D den_nel0 = den_sh_nel0->scaled_hist_;
+       Hist1D * num_h_nel0 = static_cast<Hist1D*>(pm->Figures()[first_index+29].get());
+       Hist1D::SingleHist1D* num_sh_nel0 = static_cast<Hist1D::SingleHist1D*>(num_h_nel0->GetComponent(proc.get()));
+       TH1D num_nel0 = num_sh_nel0->scaled_hist_;
+       TGraphAsymmErrors* plot_ratio_nel0 = new TGraphAsymmErrors(&num_nel0,&den_nel0,"cp");
 	
 	//bool do_datamc = false;
 	ofstream table_file;
 	std::vector<std::vector<double>> variations_table;
 	std::vector<double> variations_row;
+	std::vector<std::vector<double>> ambb_table;
+	std::vector<double> ambb_row;
 	std::vector<std::vector<double>> reference_table;
 	std::vector<double> reference_row;
+	std::vector<std::vector<double>> nel_table;
+	std::vector<double> nel_row;
 	std::vector<std::vector<double>> datamc_table;
 	std::vector<double> datamc_row;
+  std::vector<std::vector<double>> greater_variations_rows;
 	std::vector<std::vector<double>> systematics_rows;
 	table_file.open("tables/"+out_filename+"_trig_sys.tex");
 	table_file << "\\begin{tabular}{lccccccc}\\hline \\hline \n";
-        table_file << "E$_\\text{T}^\\text{miss}$ range& [150,160]& [160,180]& [180,200]& [200,225]& [225,250]& [250,300]& [300+]\\\\ \\hline \\hline \n";
+  table_file << "p$_\\text{T}^\\text{miss}$ range& [150,160]& [160,180]& [180,200]& [200,225]& [225,250]& [250,300]& [300+]\\\\ \\hline \\hline \n";
 	table_file << "\\multicolumn{8}{c}{Kinematic variations}\\\\ \\hline \n";
 	table_file << make_systematic_table_row(plot_ratio_nj3,"$N_\\text{jets}\\geq 3$ (Nominal)") << "\n";
 	variations_table.push_back(get_systematic_table_values(plot_ratio_nj3));
@@ -1398,21 +1464,37 @@ std::vector<double> trig_postprocess_systematics(int year, PlotMaker* pm, int fi
 	variations_table.push_back(get_systematic_table_values(plot_ratio_nb1));
 	table_file << make_systematic_table_row(plot_ratio_nb2,"$N_\\text{b}\\geq2$") << "\n";
 	variations_table.push_back(get_systematic_table_values(plot_ratio_nb2));
-	table_file << make_systematic_table_row(plot_ratio_ambb0,"$\\langle m\\rangle\\le$ 140 GeV, 300 $\\leq H_{T} <$ 400 GeV") << "\n";
-	variations_table.push_back(get_systematic_table_values(plot_ratio_ambb0));
-	table_file << make_systematic_table_row(plot_ratio_ambb140,"$\\langle m\\rangle >$ 140 GeV, 300 $\\leq H_{T} <$ 400 GeV") << "\n";
-	variations_table.push_back(get_systematic_table_values(plot_ratio_ambb140));
 	table_file << make_systematic_table_row(plot_ratio_drmax0,"$\\Delta R_\\text{max}< 2.2$") << "\n";
 	variations_table.push_back(get_systematic_table_values(plot_ratio_drmax0));
-	table_file << make_systematic_table_row(plot_ratio_drmax22,"$\\Delta R_\\text{max}\\geq 2.2$") << "\\hline \n";
+	table_file << make_systematic_table_row(plot_ratio_drmax22,"$\\Delta R_\\text{max}\\geq 2.2$") << " \\hline \n";
 	variations_table.push_back(get_systematic_table_values(plot_ratio_drmax22));
 	variations_row = get_systematic_table_variations(variations_table);
-	systematics_rows.push_back(variations_row);
+	greater_variations_rows.push_back(variations_row);
 	table_file << make_systematic_table_row(variations_row) << "\n";
-	table_file << "\\multicolumn{8}{c}{Reference trigger (for $p_\\text{Tjet}>500$ GeV)}\\\\ \\hline \n";
+	table_file << "\\multicolumn{8}{c}{$\\langle m_{bb}\\rangle$ variations (for $300 \\leq H_{T} < 400$~GeV)}\\\\ \\hline \n";
+	table_file << make_systematic_table_row(plot_ratio_fixht,"$\\langle m_{bb}\\rangle$ Inclusive (Nominal)") << "\n";
+	ambb_table.push_back(get_systematic_table_values(plot_ratio_fixht));
+	table_file << make_systematic_table_row(plot_ratio_ambb0,"$\\langle m_{bb}\\rangle \\leq$ 140 GeV") << "\n";
+	ambb_table.push_back(get_systematic_table_values(plot_ratio_ambb0));
+	table_file << make_systematic_table_row(plot_ratio_ambb140,"$\\langle m_{bb}\\rangle >$ 140 GeV") << " \\hline \n";
+	ambb_table.push_back(get_systematic_table_values(plot_ratio_ambb140));
+	ambb_row = get_systematic_table_variations(ambb_table);
+	greater_variations_rows.push_back(ambb_row);
+	table_file << make_systematic_table_row(ambb_row) << "\n";
+	table_file << "\\multicolumn{8}{c}{$N_\\text{l}$ variations (Jet500 trigger, Max $p_\\text{Tjet}>500$~GeV)}\\\\ \\hline \n";
+	table_file << make_systematic_table_row(plot_ratio_nel1,"$N_\\text{e}=1$ (Nominal)") << "\n";
+	nel_table.push_back(get_systematic_table_values(plot_ratio_nel1));
+	table_file << make_systematic_table_row(plot_ratio_nel0,"$N_\\text{\\mu}=1$") << " \\hline \n";
+	nel_table.push_back(get_systematic_table_values(plot_ratio_nel0));
+	nel_row = get_systematic_table_variations(nel_table);
+	greater_variations_rows.push_back(nel_row);
+	table_file << make_systematic_table_row(nel_row) << "\n";
+  systematics_rows.push_back(max_variations(greater_variations_rows));
+	table_file << make_systematic_table_row(max_variations(greater_variations_rows)) << "\n";
+	table_file << "\\multicolumn{8}{c}{Reference trigger (for Max $p_\\text{Tjet}>500$~GeV)}\\\\ \\hline \n";
 	table_file << make_systematic_table_row(plot_ratio_eltrig,"SingleElectron (Nominal)") << "\n";
 	reference_table.push_back(get_systematic_table_values(plot_ratio_eltrig));
-	table_file << make_systematic_table_row(plot_ratio_jettrig,"Jet500") << "\\hline \n";
+	table_file << make_systematic_table_row(plot_ratio_jettrig,"Jet500") << " \\hline \n";
 	reference_table.push_back(get_systematic_table_values(plot_ratio_jettrig));
 	reference_row = get_systematic_table_variations(reference_table);
 	systematics_rows.push_back(reference_row);
@@ -1518,6 +1600,20 @@ std::vector<double> add_variations_quadrature(std::vector<std::vector<double>> v
 		variations_quadrature.push_back(TMath::Sqrt(quad_sum));
 	}
 	return variations_quadrature;
+}
+
+std::vector<double> max_variations(std::vector<std::vector<double>> values) {
+	std::vector<double> r_max_variations;
+	for (unsigned int met_idx = 0; met_idx < values[0].size(); met_idx++) {
+		double max_var = 0;
+		for (unsigned int row = 0; row < values.size(); row++) {
+      if (values[row][met_idx] > max_var) {
+        max_var = values[row][met_idx];
+      }
+		}
+		r_max_variations.push_back(max_var);
+	}
+	return r_max_variations;
 }
 
 

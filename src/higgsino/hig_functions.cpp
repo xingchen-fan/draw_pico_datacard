@@ -1287,14 +1287,14 @@ const NamedFunc pass_filters("pass_filters", [](const Baby &b) -> NamedFunc::Sca
   if ((b.type()/1000 != 106)  && !b.pass_cschalo_tight()) return false; //not for fastsim
   if (!b.pass_low_neutral_jet()) return false;
   if (!b.pass_htratio_dphi_tight()) return false;
-  //if ((b.type()/1000 == 106)  && !b.pass_jets()) return false; //only for fastsim
-  if (!b.pass_jets()) return false; //was modified
+  if ((b.type()/1000 == 106)  && !b.pass_jets()) return false; //back to only for fastsim
+  //if (!b.pass_jets()) return false; //was modified
   if ((abs(b.SampleType())==2017 || abs(b.SampleType())==2018) && !Higfuncs::pass_ecalnoisejet.GetScalar(b)) return false; 
   if (!Higfuncs::pass_hemveto.GetScalar(b)) return false;
   return true;
 });
 
-const NamedFunc final_pass_filters = pass_filters&& "met/mht<2 && met/met_calo<2&&weight<1.5";
+const NamedFunc final_pass_filters = pass_filters&& "met/mht<2 && met/met_calo<2&&weight<1.5&&pass_jets";
 const NamedFunc final_ttbar_pass_filters = pass_filters&& "met/met_calo<5&&weight<1.5";
 const NamedFunc final_zll_pass_filters = pass_filters&& "met/met_calo<5&&weight<1.5";
 const NamedFunc final_qcd_pass_filters = pass_filters&& "met/mht<2 && met/met_calo<2";
