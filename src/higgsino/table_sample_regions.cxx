@@ -296,8 +296,8 @@ int main(int argc, char *argv[]){
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig*Higfuncs::w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Functions::w_pileup;
-  //NamedFunc weight = Higfuncs::final_weight;
-  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2_v0*Higfuncs::w_years;
+  NamedFunc weight = Higfuncs::final_weight;
+  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2_v0*Higfuncs::w_years;
 
 
   //    Useful binning definitions

@@ -29,31 +29,40 @@ makePlot() {
   imgcat tables.an/regions/$2/$4.pdf
 }
 
+makeUnblindPlot() {
+  scons && $1 --year $2 --sample $3 --unblind
+  mv tables/*.tex tables.an/regions/$2
+  cd tables.an/regions/$2
+  pdflatex $4.tex
+  cd -
+  imgcat tables.an/regions/$2/$4.pdf
+}
+
 
 mkdir -p tables.an/regions/2016
 rm -f tables.an/regions/2016/*
 makePlot "./run/higgsino/table_sample_regions.exe" "2016" "search" "table_search_regions"
-makePlot "./run/higgsino/table_sample_regions.exe" "2016" "ttbar" "table_ttbar_regions"
-makePlot "./run/higgsino/table_sample_regions.exe" "2016" "zll" "table_zll_regions"
-makePlot "./run/higgsino/table_sample_regions.exe" "2016" "qcd" "table_qcd_regions"
+makeUnblindPlot "./run/higgsino/table_sample_regions.exe" "2016" "ttbar" "table_ttbar_regions"
+makeUnblindPlot "./run/higgsino/table_sample_regions.exe" "2016" "zll" "table_zll_regions"
+makeUnblindPlot "./run/higgsino/table_sample_regions.exe" "2016" "qcd" "table_qcd_regions"
 
 mkdir -p tables.an/regions/2017
 rm -f tables.an/regions/2017/*
 makePlot "./run/higgsino/table_sample_regions.exe" "2017" "search" "table_search_regions"
-makePlot "./run/higgsino/table_sample_regions.exe" "2017" "ttbar" "table_ttbar_regions"
-makePlot "./run/higgsino/table_sample_regions.exe" "2017" "zll" "table_zll_regions"
-makePlot "./run/higgsino/table_sample_regions.exe" "2017" "qcd" "table_qcd_regions"
+makeUnblindPlot "./run/higgsino/table_sample_regions.exe" "2017" "ttbar" "table_ttbar_regions"
+makeUnblindPlot "./run/higgsino/table_sample_regions.exe" "2017" "zll" "table_zll_regions"
+makeUnblindPlot "./run/higgsino/table_sample_regions.exe" "2017" "qcd" "table_qcd_regions"
 
 mkdir -p tables.an/regions/2018
 rm -f tables.an/regions/2018/*
 makePlot "./run/higgsino/table_sample_regions.exe" "2018" "search" "table_search_regions"
-makePlot "./run/higgsino/table_sample_regions.exe" "2018" "ttbar" "table_ttbar_regions"
-makePlot "./run/higgsino/table_sample_regions.exe" "2018" "zll" "table_zll_regions"
-makePlot "./run/higgsino/table_sample_regions.exe" "2018" "qcd" "table_qcd_regions"
+makeUnblindPlot "./run/higgsino/table_sample_regions.exe" "2018" "ttbar" "table_ttbar_regions"
+makeUnblindPlot "./run/higgsino/table_sample_regions.exe" "2018" "zll" "table_zll_regions"
+makeUnblindPlot "./run/higgsino/table_sample_regions.exe" "2018" "qcd" "table_qcd_regions"
 
 mkdir -p tables.an/regions/run2
 rm -f tables.an/regions/run2/*
 makePlot "./run/higgsino/table_sample_regions.exe" "run2" "search" "table_search_regions"
-makePlot "./run/higgsino/table_sample_regions.exe" "run2" "ttbar" "table_ttbar_regions"
-makePlot "./run/higgsino/table_sample_regions.exe" "run2" "zll" "table_zll_regions"
-makePlot "./run/higgsino/table_sample_regions.exe" "run2" "qcd" "table_qcd_regions"
+makeUnblindPlot "./run/higgsino/table_sample_regions.exe" "run2" "ttbar" "table_ttbar_regions"
+makeUnblindPlot "./run/higgsino/table_sample_regions.exe" "run2" "zll" "table_zll_regions"
+makeUnblindPlot "./run/higgsino/table_sample_regions.exe" "run2" "qcd" "table_qcd_regions"

@@ -557,6 +557,7 @@ void constructCutflowTable(vector<TableRow> & tablerows,
     TableRow("$N_\\text{tk}=0$", add_cut(current_cut,"ntk==0"),0,0,weight),
     TableRow("$\\Delta m<40 \\text{ GeV}$", add_cut(current_cut,"hig_cand_dm[0]<=40"),0,0,weight),
     TableRow("$\\Delta R_\\text{max}<2.2$", add_cut(current_cut,"hig_cand_drmax[0]<=2.2"),0,0,weight),
+    TableRow("$\\langle m\\rangle <200 \\text{ GeV}$", add_cut(current_cut,"hig_cand_am[0]<=200"),0,0,weight),
 
     TableRow("$100<\\langle m\\rangle <140 \\text{ GeV}$", add_cut(current_cut,"hig_cand_am[0]>100 && hig_cand_am[0]<=140"),0,0,weight),
     TableRow("$N_\\text{b}\\geq 3$", add_cut(current_cut,"nbm>=3"),0,0,weight),

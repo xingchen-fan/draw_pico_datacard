@@ -1,4 +1,5 @@
 #include "higgsino/hig_functions.hpp"
+#include "core/functions.hpp"
 #include "higgsino/apply_trigeffs_v0.hpp"
 #include "higgsino/apply_trigeffs2016.hpp"
 #include "higgsino/apply_trigeffs2017.hpp"
@@ -1312,7 +1313,7 @@ const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
   }
 });
 
-const NamedFunc final_weight = "weight"*eff_higtrig_run2*w_years;
+const NamedFunc final_weight = "weight"*eff_higtrig_run2*w_years*Functions::w_pileup;
 
 const NamedFunc jet_trigger = "HLT_PFJet500";
 

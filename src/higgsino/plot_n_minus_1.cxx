@@ -112,7 +112,7 @@ int main(int argc, char *argv[]){
   if (unblind) plt_log = {log_norm_data};
 
   string higgsino_version = "";
-  bool plot_additional_variables = false;
+  bool plot_additional_variables = true;
 
   // Set options
   //string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
@@ -586,19 +586,6 @@ int main(int argc, char *argv[]){
   //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ht_vs_jet_met_dphi2__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
   //pm.Push<Hist2D>(axis_dict["ht"], axis_dict["jet_met_dphi3"],
   //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ht_vs_jet_met_dphi3__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
-
-  //// Special case for zll. Draw but do not cut on ll_pt
-  //if (sample_name=="zll") {
-  //  pm.Push<Hist1D>(Axis(16, 0, 400., "ll_pt[0]", "p_{T}^{ll} [GeV]", {75., 150., 200., 300}),
-  //    base_filters&&resolved_cuts,
-  //    procs, plt_lin).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ll_pt_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
-  //}
-  //// Special case for ttbar. Draw but do not cut on met
-  //if (sample_name=="ttbar") {
-  //  pm.Push<Hist1D>(axis_dict["met"],
-  //    base_filters&&resolved_cuts,
-  //    procs, plt_log).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_met_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
-  //}
 
   //// Example
   //NamedFunc resolved_cuts = "1";
