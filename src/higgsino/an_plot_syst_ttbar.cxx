@@ -292,6 +292,10 @@ int main(int argc, char *argv[]){
   //pm.Push<Table>("FixName:syst__ttbar_pies__4b_met200_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>200&&met<=300&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
   //pm.Push<Table>("FixName:syst__ttbar_pies__4b_met300_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>300          &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
 
+  // 2b3b4b
+  pm.Push<Table>("FixName:syst__ttbar_pies__2b3b4b"  , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved, 0, 0, weight)}), ttbar_procs, true, true, true);
+
+
   // comparison of data with mc
   // [drmax;no drmax] (2b, 3b+4b, all)
   pm.Push<Hist1D>(Axis(20, 0, 4, "hig_cand_drmax[0]", "#DeltaR_{max}", {2.2}),

@@ -306,6 +306,9 @@ int main(int argc, char *argv[]){
   //pm.Push<Table>("FixName:syst__zll_pies__2b_met200_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>200 &&ll_pt[0]<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
   //pm.Push<Table>("FixName:syst__zll_pies__2b_met300_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>300                 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
 
+  // 0b1b
+  pm.Push<Table>("FixName:syst__zll_pies__0b1b"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm<=1", 0, 0, weight)}), zll_procs, true, true, true);
+
   // comparison of data with mc
   // [drmax;no drmax] (0b, 1b, 0b+1b)
   pm.Push<Hist1D>(Axis(20, 0, 4, "hig_cand_drmax[0]", "#DeltaR_{max}", {2.2}),

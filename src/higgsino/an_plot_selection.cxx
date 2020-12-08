@@ -296,6 +296,9 @@ int main(int argc, char *argv[]){
 
   PlotMaker pm;
 
+  // 2b3b4b 
+  pm.Push<Table>("FixName:selection__search_pies__2b3b4b_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved, 0, 0, weight)}), search_procs, true, true, true);
+
   //pm.Push<Hist1D>(Axis(14, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}),
   //  base_filters&&search_resolved,
   //  search_signal_procs, plt_log_shapes_info).Weight(weight_notrgeff).Tag("FixName:selection__search_met_signal").LuminosityTag(total_luminosity_string);
@@ -552,6 +555,7 @@ int main(int argc, char *argv[]){
     pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}), base_filters&&search_resolved&&"nbt==2&&nbm==2&&hig_cand_drmax[0]>1.1 && met>200 && met<=300", search_procs, plt_lin).Weight(weight).Tag("FixName:selection__search_amjj_2b_met200_highdrmax_"+year_string).LuminosityTag(total_luminosity_string);
     pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}), base_filters&&search_resolved&&"nbt==2&&nbm==2&&hig_cand_drmax[0]>1.1 && met>300 && met<=400", search_procs, plt_lin).Weight(weight).Tag("FixName:selection__search_amjj_2b_met300_highdrmax_"+year_string).LuminosityTag(total_luminosity_string);
     pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}), base_filters&&search_resolved&&"nbt==2&&nbm==2&&hig_cand_drmax[0]>1.1 && met>400            ", search_procs, plt_lin).Weight(weight).Tag("FixName:selection__search_amjj_2b_met400_highdrmax_"+year_string).LuminosityTag(total_luminosity_string);
+
   }
 
   pm.multithreaded_ = !single_thread;
