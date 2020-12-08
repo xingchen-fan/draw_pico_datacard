@@ -252,8 +252,8 @@ int main(int argc, char *argv[]){
   //NamedFunc nom_wgt = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Functions::w_pileup;
   //NamedFunc nom_wgt = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
   //NamedFunc nom_wgt = Higfuncs::final_weight;
-  NamedFunc nom_wgt = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
-  if (trigger_version == 0) nom_wgt = "weight"*Higfuncs::eff_higtrig_run2_v0*Higfuncs::w_years;
+  NamedFunc nom_wgt = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Functions::w_pileup;
+  if (trigger_version == 0) nom_wgt = "weight"*Higfuncs::eff_higtrig_run2_v0*Higfuncs::w_years*Functions::w_pileup;
 
   vector<string> scenarios;
   map<string, NamedFunc> weights;

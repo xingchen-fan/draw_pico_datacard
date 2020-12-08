@@ -259,52 +259,52 @@ int main(int argc, char *argv[]){
 
   PlotMaker pm;
 
-  //// According to true b
-  //// (0b, 1b, 2b tag)  low drmax 
-  //pm.Push<Table>("FixName:syst__zll_pies_trueb__0b_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies_trueb__1b_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies_trueb__2b_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs_trueB, true, true, true);
-  //// (2b, 3b, 4b tag)  high drmax 
-  //pm.Push<Table>("FixName:syst__zll_pies_trueb__0b_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies_trueb__1b_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies_trueb__2b_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs_trueB, true, true, true);
+  // According to true b
+  // (0b, 1b, 2b tag)  low drmax 
+  pm.Push<Table>("FixName:syst__zll_pies_trueb__0b_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies_trueb__1b_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies_trueb__2b_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs_trueB, true, true, true);
+  // (2b, 3b, 4b tag)  high drmax 
+  pm.Push<Table>("FixName:syst__zll_pies_trueb__0b_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies_trueb__1b_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies_trueb__2b_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs_trueB, true, true, true);
 
-  //// 0b (pll[0]: 75, 150, 200, 300) low drmax
-  //pm.Push<Table>("FixName:syst__zll_pies__0b_met0_lowdrmax"    , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0               &&ll_pt[0]<=75  &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies__0b_met75_lowdrmax"   , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>75  &&ll_pt[0]<=150 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies__0b_met150_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>150 &&ll_pt[0]<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies__0b_met200_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>200 &&ll_pt[0]<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies__0b_met300_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>300                 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //// 1b (pll[0]: 75, 150, 200, 300) low drmax
-  //pm.Push<Table>("FixName:syst__zll_pies__1b_met0_lowdrmax"    , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1               &&ll_pt[0]<=75  &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies__1b_met75_lowdrmax"   , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>75  &&ll_pt[0]<=150 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies__1b_met150_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>150 &&ll_pt[0]<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies__1b_met200_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>200 &&ll_pt[0]<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies__1b_met300_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>300                 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //// 2b (pll[0]: 75, 150, 200, 300) low drmax
-  //pm.Push<Table>("FixName:syst__zll_pies__2b_met0_lowdrmax"    , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2               &&ll_pt[0]<=75  &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies__2b_met75_lowdrmax"   , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>75  &&ll_pt[0]<=150 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies__2b_met150_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>150 &&ll_pt[0]<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies__2b_met200_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>200 &&ll_pt[0]<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies__2b_met300_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>300                 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //// 0b (pll[0]: 75, 150, 200, 300) high drmax
-  //pm.Push<Table>("FixName:syst__zll_pies__0b_met0_highdrmax"    , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0               &&ll_pt[0]<=75  &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies__0b_met75_highdrmax"   , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>75  &&ll_pt[0]<=150 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies__0b_met150_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>150 &&ll_pt[0]<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies__0b_met200_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>200 &&ll_pt[0]<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies__0b_met300_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>300                 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //// 1b (pll[0]: 75, 150, 200, 300) high drmax
-  //pm.Push<Table>("FixName:syst__zll_pies__1b_met0_highdrmax"    , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1               &&ll_pt[0]<=75  &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies__1b_met75_highdrmax"   , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>75  &&ll_pt[0]<=150 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies__1b_met150_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>150 &&ll_pt[0]<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies__1b_met200_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>200 &&ll_pt[0]<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies__1b_met300_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>300                 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //// 2b (pll[0]: 75, 150, 200, 300) high drmax
-  //pm.Push<Table>("FixName:syst__zll_pies__2b_met0_highdrmax"    , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2               &&ll_pt[0]<=75  &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies__2b_met75_highdrmax"   , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>75  &&ll_pt[0]<=150 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies__2b_met150_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>150 &&ll_pt[0]<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies__2b_met200_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>200 &&ll_pt[0]<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__zll_pies__2b_met300_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>300                 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  // 0b (pll[0]: 75, 150, 200, 300) low drmax
+  pm.Push<Table>("FixName:syst__zll_pies__0b_met0_lowdrmax"    , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0               &&ll_pt[0]<=75  &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies__0b_met75_lowdrmax"   , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>75  &&ll_pt[0]<=150 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies__0b_met150_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>150 &&ll_pt[0]<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies__0b_met200_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>200 &&ll_pt[0]<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies__0b_met300_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>300                 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  // 1b (pll[0]: 75, 150, 200, 300) low drmax
+  pm.Push<Table>("FixName:syst__zll_pies__1b_met0_lowdrmax"    , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1               &&ll_pt[0]<=75  &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies__1b_met75_lowdrmax"   , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>75  &&ll_pt[0]<=150 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies__1b_met150_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>150 &&ll_pt[0]<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies__1b_met200_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>200 &&ll_pt[0]<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies__1b_met300_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>300                 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  // 2b (pll[0]: 75, 150, 200, 300) low drmax
+  pm.Push<Table>("FixName:syst__zll_pies__2b_met0_lowdrmax"    , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2               &&ll_pt[0]<=75  &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies__2b_met75_lowdrmax"   , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>75  &&ll_pt[0]<=150 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies__2b_met150_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>150 &&ll_pt[0]<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies__2b_met200_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>200 &&ll_pt[0]<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies__2b_met300_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>300                 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  // 0b (pll[0]: 75, 150, 200, 300) high drmax
+  pm.Push<Table>("FixName:syst__zll_pies__0b_met0_highdrmax"    , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0               &&ll_pt[0]<=75  &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies__0b_met75_highdrmax"   , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>75  &&ll_pt[0]<=150 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies__0b_met150_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>150 &&ll_pt[0]<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies__0b_met200_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>200 &&ll_pt[0]<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies__0b_met300_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==0&&ll_pt[0]>300                 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  // 1b (pll[0]: 75, 150, 200, 300) high drmax
+  pm.Push<Table>("FixName:syst__zll_pies__1b_met0_highdrmax"    , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1               &&ll_pt[0]<=75  &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies__1b_met75_highdrmax"   , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>75  &&ll_pt[0]<=150 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies__1b_met150_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>150 &&ll_pt[0]<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies__1b_met200_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>200 &&ll_pt[0]<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies__1b_met300_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==1&&ll_pt[0]>300                 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  // 2b (pll[0]: 75, 150, 200, 300) high drmax
+  pm.Push<Table>("FixName:syst__zll_pies__2b_met0_highdrmax"    , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2               &&ll_pt[0]<=75  &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies__2b_met75_highdrmax"   , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>75  &&ll_pt[0]<=150 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies__2b_met150_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>150 &&ll_pt[0]<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies__2b_met200_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>200 &&ll_pt[0]<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__zll_pies__2b_met300_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm==2&&ll_pt[0]>300                 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), zll_procs, true, true, true);
 
   // 0b1b
   pm.Push<Table>("FixName:syst__zll_pies__0b1b"  , vector<TableRow> ({TableRow("", base_filters&&zll_resolved&&"nbm<=1", 0, 0, weight)}), zll_procs, true, true, true);
@@ -422,11 +422,12 @@ int main(int argc, char *argv[]){
     base_filters&&zll_resolved&&"hig_cand_drmax[0]>=1.1",
     zll_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__zll_amjj_btag__highdrmax__mc").LuminosityTag(total_luminosity_string);
 
-  //// kappa plot
-  //string unblind_string;
-  //if (unblind) unblind_string == "--unblind";
-  //system(("./run/higgsino/plot_kappas.exe --sample zll --scen mc_as_data --year "+year_string+" "+unblind_string).c_str());
-  // Data example: ./run/higgsino/plot_kappas.exe --year 2016 --unblind --sample zll --scen data
+  // kappa plot
+  if (unblind) {
+    system(("./run/higgsino/plot_kappas.exe --sample zll --scen data --unblind --year "+year_string).c_str());
+  } else {
+    system(("./run/higgsino/plot_kappas.exe --sample zll --scen mc_as_data --year "+year_string).c_str());
+  }
 
   pm.multithreaded_ = !single_thread;
   pm.min_print_ = true;

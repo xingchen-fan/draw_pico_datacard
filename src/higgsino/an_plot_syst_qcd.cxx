@@ -98,7 +98,8 @@ int main(int argc, char *argv[]){
 
   //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*Higfuncs::w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig*Higfuncs::w_years;
-  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
+  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
+  NamedFunc weight = Higfuncs::final_weight;
   NamedFunc triggers_data = "1";
   NamedFunc lepton_triggers = Higfuncs::el_trigger || Higfuncs::mu_trigger;
   NamedFunc met_triggers = Higfuncs::met_trigger;
@@ -248,30 +249,30 @@ int main(int argc, char *argv[]){
 
   PlotMaker pm;
 
-  //// 0b (met: 150, 200, 300) low drmax
-  //pm.Push<Table>("FixName:syst__qcd_pies__0b_met150_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==0&&met>150 &&met<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), qcd_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__qcd_pies__0b_met200_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==0&&met>200 &&met<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), qcd_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__qcd_pies__0b_met300_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==0&&met>300            &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), qcd_procs, true, true, true);
-  //// 1b (met: 150, 200, 300) low drmax
-  //pm.Push<Table>("FixName:syst__qcd_pies__1b_met150_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==1&&met>150 &&met<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), qcd_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__qcd_pies__1b_met200_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==1&&met>200 &&met<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), qcd_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__qcd_pies__1b_met300_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==1&&met>300            &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), qcd_procs, true, true, true);
-  //// 2b (met: 150, 200, 300) low drmax
-  //pm.Push<Table>("FixName:syst__qcd_pies__2b_met150_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==2&&met>150 &&met<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), qcd_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__qcd_pies__2b_met200_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==2&&met>200 &&met<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), qcd_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__qcd_pies__2b_met300_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==2&&met>300            &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), qcd_procs, true, true, true);
-  //// 0b (met: 150, 200, 300) high drmax
-  //pm.Push<Table>("FixName:syst__qcd_pies__0b_met150_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==0&&met>150 &&met<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), qcd_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__qcd_pies__0b_met200_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==0&&met>200 &&met<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), qcd_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__qcd_pies__0b_met300_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==0&&met>300            &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), qcd_procs, true, true, true);
-  //// 1b (met: 150, 200, 300) high drmax
-  //pm.Push<Table>("FixName:syst__qcd_pies__1b_met150_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==1&&met>150 &&met<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), qcd_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__qcd_pies__1b_met200_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==1&&met>200 &&met<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), qcd_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__qcd_pies__1b_met300_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==1&&met>300            &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), qcd_procs, true, true, true);
-  //// 2b (met: 150, 200, 300) high drmax
-  //pm.Push<Table>("FixName:syst__qcd_pies__2b_met150_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==2&&met>150 &&met<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), qcd_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__qcd_pies__2b_met200_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==2&&met>200 &&met<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), qcd_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__qcd_pies__2b_met300_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==2&&met>300            &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), qcd_procs, true, true, true);
+  // 0b (met: 150, 200, 300) low drmax
+  pm.Push<Table>("FixName:syst__qcd_pies__0b_met150_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==0&&met>150 &&met<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), qcd_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__qcd_pies__0b_met200_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==0&&met>200 &&met<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), qcd_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__qcd_pies__0b_met300_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==0&&met>300            &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), qcd_procs, true, true, true);
+  // 1b (met: 150, 200, 300) low drmax
+  pm.Push<Table>("FixName:syst__qcd_pies__1b_met150_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==1&&met>150 &&met<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), qcd_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__qcd_pies__1b_met200_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==1&&met>200 &&met<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), qcd_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__qcd_pies__1b_met300_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==1&&met>300            &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), qcd_procs, true, true, true);
+  // 2b (met: 150, 200, 300) low drmax
+  pm.Push<Table>("FixName:syst__qcd_pies__2b_met150_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==2&&met>150 &&met<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), qcd_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__qcd_pies__2b_met200_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==2&&met>200 &&met<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), qcd_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__qcd_pies__2b_met300_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==2&&met>300            &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), qcd_procs, true, true, true);
+  // 0b (met: 150, 200, 300) high drmax
+  pm.Push<Table>("FixName:syst__qcd_pies__0b_met150_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==0&&met>150 &&met<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), qcd_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__qcd_pies__0b_met200_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==0&&met>200 &&met<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), qcd_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__qcd_pies__0b_met300_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==0&&met>300            &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), qcd_procs, true, true, true);
+  // 1b (met: 150, 200, 300) high drmax
+  pm.Push<Table>("FixName:syst__qcd_pies__1b_met150_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==1&&met>150 &&met<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), qcd_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__qcd_pies__1b_met200_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==1&&met>200 &&met<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), qcd_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__qcd_pies__1b_met300_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==1&&met>300            &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), qcd_procs, true, true, true);
+  // 2b (met: 150, 200, 300) high drmax
+  pm.Push<Table>("FixName:syst__qcd_pies__2b_met150_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==2&&met>150 &&met<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), qcd_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__qcd_pies__2b_met200_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==2&&met>200 &&met<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), qcd_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__qcd_pies__2b_met300_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm==2&&met>300            &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), qcd_procs, true, true, true);
 
   // 0b1b
   pm.Push<Table>("FixName:syst__qcd_pies__0b1b"  , vector<TableRow> ({TableRow("", base_filters&&qcd_resolved&&"nbm<=1", 0, 0, weight)}), qcd_procs, true, true, true);
@@ -368,7 +369,11 @@ int main(int argc, char *argv[]){
     qcd_data_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__qcd_amjj_btag__highdrmax__data").LuminosityTag(total_luminosity_string);
 
   // kappa plot
-  //system(("./run/higgsino/plot_kappas.exe --sample qcd --scen mc_as_data --year "+year_string).c_str());
+  if (unblind) {
+    system(("./run/higgsino/plot_kappas.exe --sample qcd --scen data --unblind --year "+year_string).c_str());
+  } else {
+    system(("./run/higgsino/plot_kappas.exe --sample qcd --scen mc_as_data --year "+year_string).c_str());
+  }
 
   pm.multithreaded_ = !single_thread;
   pm.min_print_ = true;

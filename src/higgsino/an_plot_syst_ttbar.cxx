@@ -95,7 +95,8 @@ int main(int argc, char *argv[]){
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig*Higfuncs::w_years;
   //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Functions::w_pileup;
-  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
+  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
+  NamedFunc weight = Higfuncs::final_weight;
   //if (years.size()==1 && *years.begin()==2016) weight *= "137.";
   //else weight *= w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years;
@@ -250,47 +251,47 @@ int main(int argc, char *argv[]){
 
   PlotMaker pm;
 
-  //// 2b, (met 0, 75, 150, 200, 300), low drmax
-  //pm.Push<Table>("FixName:syst__ttbar_pies__2b_met0_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)         &&met<=75 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies__2b_met75_lowdrmax" , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>75 &&met<=150&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies__2b_met150_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>150&&met<=200&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies__2b_met200_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>200&&met<=300&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies__2b_met300_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>300          &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  // 2b, (met 0, 75, 150, 200, 300), low drmax
+  pm.Push<Table>("FixName:syst__ttbar_pies__2b_met0_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)         &&met<=75 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies__2b_met75_lowdrmax" , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>75 &&met<=150&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies__2b_met150_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>150&&met<=200&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies__2b_met200_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>200&&met<=300&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies__2b_met300_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>300          &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
 
-  //// 3b, (met 0, 75, 150, 200, 300), low drmax
-  //pm.Push<Table>("FixName:syst__ttbar_pies__3b_met0_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)         &&met<=75 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies__3b_met75_lowdrmax" , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>75 &&met<=150&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies__3b_met150_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>150&&met<=200&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies__3b_met200_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>200&&met<=300&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies__3b_met300_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>300          &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  // 3b, (met 0, 75, 150, 200, 300), low drmax
+  pm.Push<Table>("FixName:syst__ttbar_pies__3b_met0_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)         &&met<=75 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies__3b_met75_lowdrmax" , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>75 &&met<=150&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies__3b_met150_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>150&&met<=200&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies__3b_met200_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>200&&met<=300&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies__3b_met300_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>300          &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
 
-  //// 4b, (met 0, 75, 150, 200, 300), low drmax
-  //pm.Push<Table>("FixName:syst__ttbar_pies__4b_met0_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)         &&met<=75 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies__4b_met75_lowdrmax" , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>75 &&met<=150&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies__4b_met150_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>150&&met<=200&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies__4b_met200_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>200&&met<=300&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies__4b_met300_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>300          &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  // 4b, (met 0, 75, 150, 200, 300), low drmax
+  pm.Push<Table>("FixName:syst__ttbar_pies__4b_met0_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)         &&met<=75 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies__4b_met75_lowdrmax" , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>75 &&met<=150&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies__4b_met150_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>150&&met<=200&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies__4b_met200_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>200&&met<=300&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies__4b_met300_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>300          &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
 
-  //// 2b, (met 0, 75, 150, 200, 300), high drmax
-  //pm.Push<Table>("FixName:syst__ttbar_pies__2b_met0_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)         &&met<=75 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies__2b_met75_highdrmax" , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>75 &&met<=150&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies__2b_met150_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>150&&met<=200&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies__2b_met200_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>200&&met<=300&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies__2b_met300_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>300          &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  // 2b, (met 0, 75, 150, 200, 300), high drmax
+  pm.Push<Table>("FixName:syst__ttbar_pies__2b_met0_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)         &&met<=75 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies__2b_met75_highdrmax" , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>75 &&met<=150&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies__2b_met150_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>150&&met<=200&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies__2b_met200_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>200&&met<=300&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies__2b_met300_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>300          &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
 
-  //// 3b, (met 0, 75, 150, 200, 300), high drmax
-  //pm.Push<Table>("FixName:syst__ttbar_pies__3b_met0_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)         &&met<=75 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies__3b_met75_highdrmax" , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>75 &&met<=150&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies__3b_met150_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>150&&met<=200&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies__3b_met200_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>200&&met<=300&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies__3b_met300_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>300          &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  // 3b, (met 0, 75, 150, 200, 300), high drmax
+  pm.Push<Table>("FixName:syst__ttbar_pies__3b_met0_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)         &&met<=75 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies__3b_met75_highdrmax" , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>75 &&met<=150&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies__3b_met150_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>150&&met<=200&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies__3b_met200_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>200&&met<=300&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies__3b_met300_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>300          &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
 
-  //// 4b, (met 0, 75, 150, 200, 300), high drmax
-  //pm.Push<Table>("FixName:syst__ttbar_pies__4b_met0_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)         &&met<=75 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies__4b_met75_highdrmax" , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>75 &&met<=150&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies__4b_met150_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>150&&met<=200&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies__4b_met200_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>200&&met<=300&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies__4b_met300_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>300          &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  // 4b, (met 0, 75, 150, 200, 300), high drmax
+  pm.Push<Table>("FixName:syst__ttbar_pies__4b_met0_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)         &&met<=75 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies__4b_met75_highdrmax" , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>75 &&met<=150&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies__4b_met150_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>150&&met<=200&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies__4b_met200_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>200&&met<=300&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies__4b_met300_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>300          &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs, true, true, true);
 
   // 2b3b4b
   pm.Push<Table>("FixName:syst__ttbar_pies__2b3b4b"  , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved, 0, 0, weight)}), ttbar_procs, true, true, true);
@@ -392,152 +393,155 @@ int main(int argc, char *argv[]){
     base_filters&&ttbar_resolved&&"hig_cand_drmax[0]>=1.1",
     ttbar_data_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__highdrmax__data").LuminosityTag(total_luminosity_string);
 
-  //// [nisr shapes (2b,3b,4b);(low, high) drmax]
-  //pm.Push<Hist1D>(Axis(6,-0.5,5.5,"nisr", "N_{ISR jets}", {}),
-  //  base_filters&&ttbar_resolved&&"hig_cand_drmax[0]<1.1",
-  //  ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_nisr__lowdrmax").LuminosityTag(total_luminosity_string);
-  //pm.Push<Hist1D>(Axis(6,-0.5,5.5,"nisr", "N_{ISR jets}", {}),
-  //  base_filters&&ttbar_resolved&&"hig_cand_drmax[0]>=1.1",
-  //  ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_nisr__highdrmax").LuminosityTag(total_luminosity_string);
-  //// [<m> shapes (nisr=0,1,2);(low, high) drmax]
-  //pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
-  //  base_filters&&ttbar_resolved&&"hig_cand_drmax[0]<1.1",
-  //  ttbar_procs_nisr, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_nisr__lowdrmax").LuminosityTag(total_luminosity_string);
-  //pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
-  //  base_filters&&ttbar_resolved&&"hig_cand_drmax[0]>=1.1",
-  //  ttbar_procs_nisr, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_nisr__highdrmax").LuminosityTag(total_luminosity_string);
-  //// [<m> shapes (2b, 3b, 4b);(low, high) drmax]
-  //pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
-  //  base_filters&&ttbar_resolved&&"hig_cand_drmax[0]<1.1",
-  //  ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__lowdrmax").LuminosityTag(total_luminosity_string);
-  //pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
-  //  base_filters&&ttbar_resolved&&"hig_cand_drmax[0]>=1.1",
-  //  ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__highdrmax").LuminosityTag(total_luminosity_string);
-  //// [<m> shapes (2b, 3b, 4b);very high drmax]
-  //pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
-  //  base_filters&&
-  //  "nlep==1&&lep_pt[0]>30&&mt<=100&&njet>=4&&njet<=5&&"
-  //  "hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
-  //  "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))&&"
-  //  "hig_cand_drmax[0]>=2.2",
-  //  ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__veryhighdrmax").LuminosityTag(total_luminosity_string);
-  //// [<m> shapes (2b, 3b, 4b);low drmax, met (0,75,150,200,300)]
-  //pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
-  //  base_filters&&ttbar_resolved&&"hig_cand_drmax[0]<1.1&&met>0&&met<=75",
-  //  ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__lowdrmax_met_0").LuminosityTag(total_luminosity_string);
-  //pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
-  //  base_filters&&ttbar_resolved&&"hig_cand_drmax[0]<1.1&&met>75&&met<=150",
-  //  ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__lowdrmax_met_75").LuminosityTag(total_luminosity_string);
-  //pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
-  //  base_filters&&ttbar_resolved&&"hig_cand_drmax[0]<1.1&&met>150&&met<=200",
-  //  ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__lowdrmax_met_150").LuminosityTag(total_luminosity_string);
-  //pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
-  //  base_filters&&ttbar_resolved&&"hig_cand_drmax[0]<1.1&&met>200&&met<=300",
-  //  ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__lowdrmax_met_200").LuminosityTag(total_luminosity_string);
-  //pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
-  //  base_filters&&ttbar_resolved&&"hig_cand_drmax[0]<1.1&&met>300",
-  //  ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__lowdrmax_met_300").LuminosityTag(total_luminosity_string);
-  //// [<m> shapes (2b, 3b, 4b);high drmax, met (0,75,150,200,300)]
-  //pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
-  //  base_filters&&ttbar_resolved&&"hig_cand_drmax[0]>=1.1&&met>0&&met<=75",
-  //  ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__highdrmax_met_0").LuminosityTag(total_luminosity_string);
-  //pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
-  //  base_filters&&ttbar_resolved&&"hig_cand_drmax[0]>=1.1&&met>75&&met<=150",
-  //  ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__highdrmax_met_75").LuminosityTag(total_luminosity_string);
-  //pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
-  //  base_filters&&ttbar_resolved&&"hig_cand_drmax[0]>=1.1&&met>150&&met<=200",
-  //  ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__highdrmax_met_150").LuminosityTag(total_luminosity_string);
-  //pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
-  //  base_filters&&ttbar_resolved&&"hig_cand_drmax[0]>=1.1&&met>200&&met<=300",
-  //  ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__highdrmax_met_200").LuminosityTag(total_luminosity_string);
-  //pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
-  //  base_filters&&ttbar_resolved&&"hig_cand_drmax[0]>=1.1&&met>300",
-  //  ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__highdrmax_met_300").LuminosityTag(total_luminosity_string);
-  //// [<m> shapes (2b, 3b, 4b);low drmax, nisr (0,1,2)]
-  //pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
-  //  base_filters&&ttbar_resolved&&"hig_cand_drmax[0]<1.1&&nisr==0",
-  //  ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__lowdrmax_nisr_0").LuminosityTag(total_luminosity_string);
-  //pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
-  //  base_filters&&ttbar_resolved&&"hig_cand_drmax[0]<1.1&&nisr==1",
-  //  ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__lowdrmax_nisr_1").LuminosityTag(total_luminosity_string);
-  //pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
-  //  base_filters&&ttbar_resolved&&"hig_cand_drmax[0]<1.1&&nisr==2",
-  //  ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__lowdrmax_nisr_2").LuminosityTag(total_luminosity_string);
-  //// [<m> shapes (2b, 3b, 4b);high drmax, nisr (0,1,2)]
-  //// [TODO] Strange that drmax[1.1,2.2] shows a correlation. Doesn't agree with nisr explanation.
-  //// Could study with xy, xy. Is b[pt high=x, high low=y] close to t1b, t1w, t2b, t2b, none==isr? => bb = 16 combinations, bbbb = 256 combinations
-  //// Could study with xy, xy. Is b[pt high=x, high low=y] close to t1(b,w), t2(b,w), none==isr? => bb = 9 combinations, bbbb = 81 combinations
-  //pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
-  //  //base_filters&&ttbar_resolved&&"hig_cand_drmax[0]>=1.1&&nisr==0",
-  //  base_filters&&
-  //  "nlep==1&&lep_pt[0]>30&&mt<=100&&njet>=4&&njet<=5&&"
-  //  "hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
-  //  "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))&&"
-  //  "hig_cand_drmax[0]>=1.1&&nisr==0",
-  //  ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__highdrmax_nisr_0").LuminosityTag(total_luminosity_string);
-  //pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
-  //  //base_filters&&ttbar_resolved&&"hig_cand_drmax[0]>=1.1&&nisr==1",
-  //  base_filters&&
-  //  "nlep==1&&lep_pt[0]>30&&mt<=100&&njet>=4&&njet<=5&&"
-  //  "hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
-  //  "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))&&"
-  //  "hig_cand_drmax[0]>=1.1&&nisr==1",
-  //  ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__highdrmax_nisr_1").LuminosityTag(total_luminosity_string);
-  //pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
-  //  //base_filters&&ttbar_resolved&&"hig_cand_drmax[0]>=1.1&&nisr==2",
-  //  base_filters&&
-  //  "nlep==1&&lep_pt[0]>30&&mt<=100&&njet>=4&&njet<=5&&"
-  //  "hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
-  //  "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))&&"
-  //  "hig_cand_drmax[0]>=1.1&&nisr==2",
-  //  ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__highdrmax_nisr_2").LuminosityTag(total_luminosity_string);
+  // [nisr shapes (2b,3b,4b);(low, high) drmax]
+  pm.Push<Hist1D>(Axis(6,-0.5,5.5,"nisr", "N_{ISR jets}", {}),
+    base_filters&&ttbar_resolved&&"hig_cand_drmax[0]<1.1",
+    ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_nisr__lowdrmax").LuminosityTag(total_luminosity_string);
+  pm.Push<Hist1D>(Axis(6,-0.5,5.5,"nisr", "N_{ISR jets}", {}),
+    base_filters&&ttbar_resolved&&"hig_cand_drmax[0]>=1.1",
+    ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_nisr__highdrmax").LuminosityTag(total_luminosity_string);
+  // [<m> shapes (nisr=0,1,2);(low, high) drmax]
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&ttbar_resolved&&"hig_cand_drmax[0]<1.1",
+    ttbar_procs_nisr, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_nisr__lowdrmax").LuminosityTag(total_luminosity_string);
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&ttbar_resolved&&"hig_cand_drmax[0]>=1.1",
+    ttbar_procs_nisr, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_nisr__highdrmax").LuminosityTag(total_luminosity_string);
+  // [<m> shapes (2b, 3b, 4b);(low, high) drmax]
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&ttbar_resolved&&"hig_cand_drmax[0]<1.1",
+    ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__lowdrmax").LuminosityTag(total_luminosity_string);
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&ttbar_resolved&&"hig_cand_drmax[0]>=1.1",
+    ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__highdrmax").LuminosityTag(total_luminosity_string);
+  // [<m> shapes (2b, 3b, 4b);very high drmax]
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&
+    "nlep==1&&lep_pt[0]>30&&mt<=100&&njet>=4&&njet<=5&&"
+    "hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
+    "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))&&"
+    "hig_cand_drmax[0]>=2.2",
+    ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__veryhighdrmax").LuminosityTag(total_luminosity_string);
+  // [<m> shapes (2b, 3b, 4b);low drmax, met (0,75,150,200,300)]
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&ttbar_resolved&&"hig_cand_drmax[0]<1.1&&met>0&&met<=75",
+    ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__lowdrmax_met_0").LuminosityTag(total_luminosity_string);
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&ttbar_resolved&&"hig_cand_drmax[0]<1.1&&met>75&&met<=150",
+    ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__lowdrmax_met_75").LuminosityTag(total_luminosity_string);
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&ttbar_resolved&&"hig_cand_drmax[0]<1.1&&met>150&&met<=200",
+    ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__lowdrmax_met_150").LuminosityTag(total_luminosity_string);
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&ttbar_resolved&&"hig_cand_drmax[0]<1.1&&met>200&&met<=300",
+    ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__lowdrmax_met_200").LuminosityTag(total_luminosity_string);
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&ttbar_resolved&&"hig_cand_drmax[0]<1.1&&met>300",
+    ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__lowdrmax_met_300").LuminosityTag(total_luminosity_string);
+  // [<m> shapes (2b, 3b, 4b);high drmax, met (0,75,150,200,300)]
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&ttbar_resolved&&"hig_cand_drmax[0]>=1.1&&met>0&&met<=75",
+    ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__highdrmax_met_0").LuminosityTag(total_luminosity_string);
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&ttbar_resolved&&"hig_cand_drmax[0]>=1.1&&met>75&&met<=150",
+    ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__highdrmax_met_75").LuminosityTag(total_luminosity_string);
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&ttbar_resolved&&"hig_cand_drmax[0]>=1.1&&met>150&&met<=200",
+    ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__highdrmax_met_150").LuminosityTag(total_luminosity_string);
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&ttbar_resolved&&"hig_cand_drmax[0]>=1.1&&met>200&&met<=300",
+    ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__highdrmax_met_200").LuminosityTag(total_luminosity_string);
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&ttbar_resolved&&"hig_cand_drmax[0]>=1.1&&met>300",
+    ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__highdrmax_met_300").LuminosityTag(total_luminosity_string);
+  // [<m> shapes (2b, 3b, 4b);low drmax, nisr (0,1,2)]
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&ttbar_resolved&&"hig_cand_drmax[0]<1.1&&nisr==0",
+    ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__lowdrmax_nisr_0").LuminosityTag(total_luminosity_string);
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&ttbar_resolved&&"hig_cand_drmax[0]<1.1&&nisr==1",
+    ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__lowdrmax_nisr_1").LuminosityTag(total_luminosity_string);
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&ttbar_resolved&&"hig_cand_drmax[0]<1.1&&nisr==2",
+    ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__lowdrmax_nisr_2").LuminosityTag(total_luminosity_string);
+  // [<m> shapes (2b, 3b, 4b);high drmax, nisr (0,1,2)]
+  // [TODO] Strange that drmax[1.1,2.2] shows a correlation. Doesn't agree with nisr explanation.
+  // Could study with xy, xy. Is b[pt high=x, high low=y] close to t1b, t1w, t2b, t2b, none==isr? => bb = 16 combinations, bbbb = 256 combinations
+  // Could study with xy, xy. Is b[pt high=x, high low=y] close to t1(b,w), t2(b,w), none==isr? => bb = 9 combinations, bbbb = 81 combinations
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    //base_filters&&ttbar_resolved&&"hig_cand_drmax[0]>=1.1&&nisr==0",
+    base_filters&&
+    "nlep==1&&lep_pt[0]>30&&mt<=100&&njet>=4&&njet<=5&&"
+    "hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
+    "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))&&"
+    "hig_cand_drmax[0]>=1.1&&nisr==0",
+    ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__highdrmax_nisr_0").LuminosityTag(total_luminosity_string);
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    //base_filters&&ttbar_resolved&&"hig_cand_drmax[0]>=1.1&&nisr==1",
+    base_filters&&
+    "nlep==1&&lep_pt[0]>30&&mt<=100&&njet>=4&&njet<=5&&"
+    "hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
+    "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))&&"
+    "hig_cand_drmax[0]>=1.1&&nisr==1",
+    ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__highdrmax_nisr_1").LuminosityTag(total_luminosity_string);
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    //base_filters&&ttbar_resolved&&"hig_cand_drmax[0]>=1.1&&nisr==2",
+    base_filters&&
+    "nlep==1&&lep_pt[0]>30&&mt<=100&&njet>=4&&njet<=5&&"
+    "hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
+    "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))&&"
+    "hig_cand_drmax[0]>=1.1&&nisr==2",
+    ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__highdrmax_nisr_2").LuminosityTag(total_luminosity_string);
 
-  //// kappa plot
-  //system(("./run/higgsino/plot_kappas.exe --sample ttbar --scen mc_as_data --year "+year_string).c_str());
-  // Data example: ./run/higgsino/plot_kappas.exe --year 2016 --unblind --sample ttbar --scen data
+  // kappa plot
+  if (unblind) {
+    system(("./run/higgsino/plot_kappas.exe --sample ttbar --scen data --unblind --year "+year_string).c_str());
+  } else {
+    system(("./run/higgsino/plot_kappas.exe --sample ttbar --scen mc_as_data --year "+year_string).c_str());
+  }
 
-  //// According to true b
-  //// 2b, (met 0, 75, 150, 200, 300), low drmax 
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__2b_met0_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)         &&met<=75 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__2b_met75_lowdrmax" , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>75 &&met<=150&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__2b_met150_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>150&&met<=200&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__2b_met200_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>200&&met<=300&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__2b_met300_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>300          &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  // According to true b
+  // 2b, (met 0, 75, 150, 200, 300), low drmax 
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__2b_met0_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)         &&met<=75 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__2b_met75_lowdrmax" , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>75 &&met<=150&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__2b_met150_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>150&&met<=200&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__2b_met200_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>200&&met<=300&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__2b_met300_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>300          &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
 
-  //// 3b, (met 0, 75, 150, 200, 300), low drmax
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__3b_met0_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)         &&met<=75 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__3b_met75_lowdrmax" , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>75 &&met<=150&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__3b_met150_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>150&&met<=200&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__3b_met200_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>200&&met<=300&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__3b_met300_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>300          &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  // 3b, (met 0, 75, 150, 200, 300), low drmax
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__3b_met0_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)         &&met<=75 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__3b_met75_lowdrmax" , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>75 &&met<=150&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__3b_met150_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>150&&met<=200&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__3b_met200_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>200&&met<=300&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__3b_met300_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>300          &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
 
-  //// 4b, (met 0, 75, 150, 200, 300), low drmax
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__4b_met0_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)         &&met<=75 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__4b_met75_lowdrmax" , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>75 &&met<=150&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__4b_met150_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>150&&met<=200&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__4b_met200_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>200&&met<=300&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__4b_met300_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>300          &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  // 4b, (met 0, 75, 150, 200, 300), low drmax
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__4b_met0_lowdrmax"  , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)         &&met<=75 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__4b_met75_lowdrmax" , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>75 &&met<=150&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__4b_met150_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>150&&met<=200&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__4b_met200_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>200&&met<=300&&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__4b_met300_lowdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>300          &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
 
-  //// 2b, (met 0, 75, 150, 200, 300), high drmax
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__2b_met0_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)         &&met<=75 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__2b_met75_highdrmax" , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>75 &&met<=150&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__2b_met150_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>150&&met<=200&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__2b_met200_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>200&&met<=300&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__2b_met300_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>300          &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  // 2b, (met 0, 75, 150, 200, 300), high drmax
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__2b_met0_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)         &&met<=75 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__2b_met75_highdrmax" , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>75 &&met<=150&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__2b_met150_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>150&&met<=200&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__2b_met200_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>200&&met<=300&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__2b_met300_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt==2&&nbm==2)&&met>300          &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
 
-  //// 3b, (met 0, 75, 150, 200, 300), high drmax
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__3b_met0_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)         &&met<=75 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__3b_met75_highdrmax" , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>75 &&met<=150&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__3b_met150_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>150&&met<=200&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__3b_met200_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>200&&met<=300&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__3b_met300_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>300          &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  // 3b, (met 0, 75, 150, 200, 300), high drmax
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__3b_met0_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)         &&met<=75 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__3b_met75_highdrmax" , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>75 &&met<=150&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__3b_met150_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>150&&met<=200&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__3b_met200_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>200&&met<=300&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__3b_met300_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>300          &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
 
-  //// 4b, (met 0, 75, 150, 200, 300), high drmax
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__4b_met0_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)         &&met<=75 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__4b_met75_highdrmax" , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>75 &&met<=150&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__4b_met150_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>150&&met<=200&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__4b_met200_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>200&&met<=300&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
-  //pm.Push<Table>("FixName:syst__ttbar_pies_trueb__4b_met300_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>300          &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  // 4b, (met 0, 75, 150, 200, 300), high drmax
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__4b_met0_highdrmax"  , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)         &&met<=75 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__4b_met75_highdrmax" , vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>75 &&met<=150&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__4b_met150_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>150&&met<=200&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__4b_met200_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>200&&met<=300&&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
+  pm.Push<Table>("FixName:syst__ttbar_pies_trueb__4b_met300_highdrmax", vector<TableRow> ({TableRow("", base_filters&&ttbar_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>300          &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), ttbar_procs_trueB, true, true, true);
 
   pm.multithreaded_ = !single_thread;
   pm.min_print_ = true;
