@@ -132,20 +132,8 @@ int main(int argc, char *argv[]){
   HigUtilities::parseYears(year_string, years);
   string total_luminosity_string = HigUtilities::getLuminosityString(year_string);
 
-<<<<<<< HEAD
-=======
-  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
-  NamedFunc weight = Higfuncs::final_weight;
-  //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*w_years;
-  //NamedFunc weight_notrgeff = "w_lumi*w_isr"*w_years;
-  //if (years.size()==1 && *years.begin()==2016) weight *= "137.";
-  //else weight *= w_years;
-  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig*w_years;
-
-  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years;
   NamedFunc weight_notrgeff = "weight"*w_years*Functions::w_pileup;
 
->>>>>>> 9acc701dda54b9adfc6cb5016af521ddddb740d6
   // Set MC 
   map<string, set<string>> mctags; 
   // Set base tags
@@ -153,7 +141,7 @@ int main(int argc, char *argv[]){
                                   "*_TTZ*.root", "*_TTW*.root",
                                  "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root"});
   mctags["single_t"] = set<string>({"*_ST_*.root"});
-  //mctags["vjets"]   = set<string>({"*_ZJet*.root", "*_WJetsToLNu*.root"});
+  mctags["vjets"]   = set<string>({"*_ZJet*.root", "*_WJetsToLNu*.root"});
   mctags["zjets"]   = set<string>({"*_ZJet*.root", "*DYJetsToLL*.root"});
   mctags["wjets"]   = set<string>({"*_WJetsToLNu*.root"});
   mctags["qcd"]     = set<string>({"*_QCD_HT200to300_*","*_QCD_HT300to500_*","*_QCD_HT500to700_*",
@@ -282,9 +270,6 @@ int main(int argc, char *argv[]){
 
   NamedFunc sr_baseline_onlynum = Higfuncs::pass_filters && "met>150&&nvlep==0&&ntk==0" &&
     (Higfuncs::jetid_njet>=4) && (Higfuncs::jetid_njet<=5) && (Higfuncs::jetid_nb>=2);
-
-
-
 
   //number loose b-jets with jet-id jet veto
   const NamedFunc jetid_nbl("jetid_nbl", [](const Baby &b) -> NamedFunc::ScalarType{
