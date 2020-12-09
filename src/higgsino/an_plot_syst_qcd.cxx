@@ -300,12 +300,14 @@ int main(int argc, char *argv[]){
 
   // [<m>;no <m>, low_drmax] (0b, 1b)
   pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&
     "low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
     "hig_cand_drmax[0]<2.2&&hig_cand_dm[0]<40&&"
     "hig_cand_drmax[0]<1.1&&"
     "(nbm==0)", 
     qcd_procs, plt_lin).Weight(weight).Tag("FixName:syst__qcd_amjj_0b_lowdrmax").LuminosityTag(total_luminosity_string);
   pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&
     "low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
     "hig_cand_drmax[0]<2.2&&hig_cand_dm[0]<40&&"
     "hig_cand_drmax[0]<1.1&&"
@@ -313,12 +315,14 @@ int main(int argc, char *argv[]){
     qcd_procs, plt_lin).Weight(weight).Tag("FixName:syst__qcd_amjj_1b_lowdrmax").LuminosityTag(total_luminosity_string);
   // [<m>;no <m>, high_drmax] (0b, 1b)
   pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&
     "low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
     "hig_cand_drmax[0]<2.2&&hig_cand_dm[0]<40&&"
     "hig_cand_drmax[0]>=1.1&&"
     "(nbm==0)", 
     qcd_procs, plt_lin).Weight(weight).Tag("FixName:syst__qcd_amjj_0b_highdrmax").LuminosityTag(total_luminosity_string);
   pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&
     "low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
     "hig_cand_drmax[0]<2.2&&hig_cand_dm[0]<40&&"
     "hig_cand_drmax[0]>=1.1&&"

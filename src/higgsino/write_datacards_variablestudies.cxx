@@ -16,6 +16,7 @@
 #include "TMath.h"
 #include "TError.h" // Controls error level reporting
 #include "TVector2.h"
+#include "TLorentzVector.h"
 
 #include "core/utilities.hpp"
 #include "core/baby.hpp"
@@ -41,6 +42,7 @@ namespace
   string dimensionFilePath = "";
   bool unblind = false;
   string tag = "resolved";
+  std::string variable_cuts = "";
   bool do_met_average = true;
   string higgsino_model = "N1N2";
 }
@@ -93,13 +95,11 @@ int main(int argc, char *argv[])
   HigUtilities::setDataProcesses(years, samplePaths, filters, sampleProcesses);
   HigUtilities::setSignalProcesses(massPoints, years, samplePaths, filters, sampleProcesses);
 
-  //Implementing mtmin cuts, the only place that accepts namedfuncs is the weight so I guess
+  //Implementing variable cuts, the only place that accepts namedfuncs is the weight so I guess
   //this is going to be a weight, but man is this scuffed
   const NamedFunc mtmin_cut("mtmin_cut",[](const Baby &b) -> NamedFunc::ScalarType{
-    //if not in the MET 200 to 300/300 to 400 category or not high drmax, don't bother
-    if (b.met() < 200 || b.met() > 400) return 1.;
-    if (b.njet() < 4) return 1.;
-    if (b.hig_cand_drmax()->at(0) < 1.1) return 1.;
+    //if not in the MET 200 to 300/300 to 400 category, no useful cut
+    if (b.met() < 200 || b.met() > 400) return true;
     //now calculate mTmin
     float mtmin = 9999;
     for (unsigned int jet_idx = 0; jet_idx < b.jet_isgood()->size(); jet_idx++) {
@@ -108,49 +108,93 @@ int main(int argc, char *argv[])
         float jet_px = TMath::Cos(b.jet_phi()->at(jet_idx))*(b.jet_pt()->at(jet_idx)), jet_py = TMath::Sin(b.jet_phi()->at(jet_idx))*(b.jet_pt()->at(jet_idx)), jet_pt = (b.jet_pt()->at(jet_idx));
         float met_px = TMath::Cos(b.met_phi())*(b.met()), met_py = TMath::Sin(b.met_phi())*(b.met()), met_pt = (b.met());
         float mt = TMath::Sqrt((met_pt+jet_pt)*(met_pt+jet_pt)-(jet_px+met_px)*(jet_px+met_px)-(jet_py+met_py)*(jet_py+met_py));
-	if (mt < mtmin) mtmin = mt;
+        if (mt < mtmin) mtmin = mt;
       }
     }
-    //cut on it
-    if (mtmin < 160) return 0.;
-    return 1.;
+    //cuts by bin
+    return (mtmin > 175);
   });
-  //top tagger simulation, again, using scuffed weight alternative
+
+  const NamedFunc mt2_cut("mt2_cut",[](const Baby &b) -> NamedFunc::ScalarType{
+    if (b.njet() < 4) return true;
+    if (b.met() < 300) return true;
+    TLorentzVector higgs_candidate1, higgs_candidate2;
+    for (unsigned int jet_idx = 0; jet_idx < b.jet_pt()->size(); jet_idx++) {
+      if (b.jet_h1d()->at(jet_idx)) {
+        TLorentzVector lv;
+        lv.SetPtEtaPhiM(b.jet_pt()->at(jet_idx),b.jet_eta()->at(jet_idx),b.jet_phi()->at(jet_idx),b.jet_m()->at(jet_idx));
+        higgs_candidate1 += lv;
+      }
+      else if (b.jet_h2d()->at(jet_idx)) {
+        TLorentzVector lv;
+        lv.SetPtEtaPhiM(b.jet_pt()->at(jet_idx),b.jet_eta()->at(jet_idx),b.jet_phi()->at(jet_idx),b.jet_m()->at(jet_idx));
+        higgs_candidate2 += lv;
+      }
+    }
+    float pt1 = higgs_candidate1.Pt();
+    float pt2 = higgs_candidate2.Pt();
+    float phi1 = higgs_candidate1.Phi();
+    float phi2 = higgs_candidate2.Phi();
+    float m1 = higgs_candidate1.M();
+    float m2 = higgs_candidate2.M();
+    float mlsp = 150;
+    float et1 = TMath::Sqrt(pt1*pt1+m1*m1);
+    float et2 = TMath::Sqrt(pt2*pt2+m2*m2);
+    float etlsp = TMath::Sqrt(b.met()*b.met()+mlsp*mlsp);
+    float higgs1_mt = TMath::Sqrt(m1*m1+mlsp*mlsp+2.0*(et1*etlsp-pt1*b.met()*TMath::Cos(phi1-b.met_phi())));
+    float higgs2_mt = TMath::Sqrt(m2*m2+mlsp*mlsp+2.0*(et2*etlsp-pt2*b.met()*TMath::Cos(phi2-b.met_phi())));
+    //logic below assumes mlsp = 0, otherwise, mt would need to be calculated for ptchi1 = -pt1-pt2-ptchi2
+    float mt2 = 0.0;
+    if (higgs1_mt>=(m2+mlsp)) {
+      if (higgs2_mt>=(m1+mlsp)) {
+        //balanced solution
+        float at = (et1*et2+pt1*pt2*TMath::Cos(phi1-phi2));
+        mt2 = TMath::Sqrt(mlsp*mlsp+at+TMath::Sqrt((1.0+4.0*mlsp*mlsp/(2.0*at-m1*m1-m2*m2))*(at*at-m1*m1*m2*m2)));
+      }
+      else {
+        //unbalanced solution
+        mt2 = m1+mlsp;
+      }
+    }
+    else {
+      //unbalanced solution
+      mt2 = m2+mlsp;
+    }
+    if (b.met() >= 300 && b.met() < 400) return (mt2>300);
+    if (b.met() >= 400) return (mt2>500);
+    return true;
+  });
+
   const NamedFunc toptag_cut("toptag_cut",[](const Baby &b) -> NamedFunc::ScalarType{
-    //emulate a top tagger cut by rejecting a fixed amount of background - use toptag > 0.85
-    //only apply in bins where it matters
-    if (b.hig_cand_drmax()->at(0) < 1.1 && b.met()>=150 && b.met()<200) {
-      //150<=MET<200 low drmax
-      if (b.type() % 1000 == 1) //ttbar
-        return (1.0-0.419);
-      if (b.type() % 1000 == 8 || b.type() % 1000 == 2) //V+jets
-        return (1.0-0.0);
-      if (b.type() % 1000 == 106) //TChiHH
-        return (1.0-0.071);
+    if (b.njet() < 4) return true;
+    float max_top_tag = 0;
+    for (unsigned int fat_jet_idx = 0; fat_jet_idx < b.fjet_deep_tvsqcd()->size(); fat_jet_idx++) {
+      max_top_tag = max_top_tag > b.fjet_deep_tvsqcd()->at(fat_jet_idx) ? max_top_tag : b.fjet_deep_tvsqcd()->at(fat_jet_idx);
     }
-    if (b.hig_cand_drmax()->at(0) < 1.1 && b.met()>=200 && b.met()<300) {
-      //200<=MET<300 low drmax
-      if (b.type() % 1000 == 1) //ttbar
-        return (1.0-0.416);
-      if (b.type() % 1000 == 8 || b.type() % 1000 == 2) //V+jets
-        return (1.0-0.0);
-      if (b.type() % 1000 == 106) //TChiHH
-        return (1.0-0.061);
+    if (b.met() < 200) {
+      if (b.hig_cand_drmax()->at(0) >= 1.1) return true;
+      else return (max_top_tag < 0.75);
     }
-    //if (b.hig_cand_drmax()->at(0) >= 1.1 && b.met()>=300 && b.met()<400) {
-    //  //300<=MET<400 high drmax
-    //  if (b.type() % 1000 == 1) //ttbar
-    //    return (1.0-0.185);
-    //  if (b.type() % 1000 == 8 || b.type() % 1000 == 2) //V+jets
-    //    return (1.0-0.1);
-    //  if (b.type() % 1000 == 106) //TChiHH
-    //    return (1.0-0.026);
-    //}
-    return 1.;
+    else if (b.met() >= 200 && b.met() < 300) {
+      if (b.hig_cand_drmax()->at(0) >= 1.1) return (max_top_tag < 0.9);
+      else return (max_top_tag < 0.75);
+    }
+    else if (b.met() >= 300 && b.met() < 400) {
+      if (b.hig_cand_drmax()->at(0) >= 1.1) return (max_top_tag < 0.8);
+      else return (max_top_tag < 0.9);
+    }
+    else if (b.met() >= 400) {
+      if (b.hig_cand_drmax()->at(0) >= 1.1) return (max_top_tag < 0.7);
+      else return true;
+    }
+    return true;
   });
   //------------------
   
-  NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*toptag_cut;
+  NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig;
+  if (variable_cuts=="mtmin") weight *= mtmin_cut;
+  if (variable_cuts=="mt2") weight *= mt2_cut;
+  if (variable_cuts=="toptag") weight *= toptag_cut;
   if (higgsino_model=="N1N2") weight *= HigUtilities::w_CNToN1N2;
   string baseline = "!low_dphi_met && nvlep==0 && ntk==0";
   //string higtrim = "hig_cand_drmax[0]<=2.2 && hig_cand_dm[0] <= 40 && hig_cand_am[0]<=200";
@@ -477,6 +521,7 @@ namespace HigWriteDataCards{
         {"years", required_argument, 0, 'y'},
         {"luminosity", required_argument, 0, 'l'},
         {"dimension", required_argument, 0, 'd'},
+        {"variable", required_argument, 0, 'v'},
         {"tag", required_argument, 0, 't'},
         {"unblind", no_argument, 0, 'u'},
         {"recomet", no_argument, 0, 0},
@@ -497,6 +542,7 @@ namespace HigWriteDataCards{
         case 'l': luminosity = atof(optarg); break;
         case 't': tag = optarg; break;
         case 'm': higgsino_model = optarg; break;
+        case 'v': variable_cuts = optarg; break;
         case 'd': 
           dimensionFilePath = optarg; 
           if (!FileExists(dimensionFilePath)) 
