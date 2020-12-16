@@ -86,6 +86,8 @@ private:
   std::vector<std::unique_ptr<SingleEfficiencyPlot> > datas_;//!<Data components of the figure
 
   Color_t background_color_;//!<color used for background plots
+  std::vector<std::string> signal_names_;//!<names of the signal samples, for legends
+  std::vector<std::string> data_names_;//!<names of the data samples, for legends
   mutable double luminosity_;//!<Luminosity currently being drawn
 
   EfficiencyPlot(const EfficiencyPlot &) = delete;

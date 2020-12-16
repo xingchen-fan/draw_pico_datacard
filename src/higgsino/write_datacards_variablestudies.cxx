@@ -77,8 +77,8 @@ int main(int argc, char *argv[])
   //samplePaths["mc_2016"] = baseFolder + "/cms29r0/pico/NanoAODv5/higgsino_eldorado/2016/mc/merged_higmc_preselect/";
   //samplePaths["signal_2016"] = baseFolder + "/cms29r0/pico/NanoAODv5/higgsino_eldorado/2016/SMS-TChiHH_2D/merged_higmc_preselect/";
   //// samplePaths["data_2016"] = baseFolder + "/cms2r0/babymaker/babies/2017_02_14/data/merged_higdata_higloose/";
-  samplePaths["mc_2016"] = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/2016/mc/merged_higmc_preselect/";
-  samplePaths["signal_2016"] = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/2016/SMS-TChiHH_2D/merged_higmc_preselect/";
+  samplePaths["mc_2016"] = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/2016/mc/merged_higmc_preselect/";
+  samplePaths["signal_2016"] = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/2016/SMS-TChiHH_2D/merged_higmc_preselect/";
 
   vector<pair<string, string> > massPoints;
   if (mass_points_string == "") HigUtilities::findMassPoints(samplePaths["signal_2016"], massPoints);
@@ -195,6 +195,7 @@ int main(int argc, char *argv[])
   if (variable_cuts=="mtmin") weight *= mtmin_cut;
   if (variable_cuts=="mt2") weight *= mt2_cut;
   if (variable_cuts=="toptag") weight *= toptag_cut;
+  if (variable_cuts=="met") weight *= "met>300";
   if (higgsino_model=="N1N2") weight *= HigUtilities::w_CNToN1N2;
   string baseline = "!low_dphi_met && nvlep==0 && ntk==0";
   //string higtrim = "hig_cand_drmax[0]<=2.2 && hig_cand_dm[0] <= 40 && hig_cand_am[0]<=200";
@@ -232,12 +233,20 @@ int main(int argc, char *argv[])
   map<string, vector<pair<string, string> > > dimensionBins;
   if (dimensionFilePath==""){
     if (tag=="resolved") {
-      dimensionBins["met"].push_back({"met0", "met>150 && met<=200"});
-      dimensionBins["met"].push_back({"met1", "met>200 && met<=300"});
-      dimensionBins["met"].push_back({"met2", "met>300 && met<=400"});
-      dimensionBins["met"].push_back({"met3", "met>400"});
-      dimensionBins["drmax"].push_back({"drmax0", "hig_cand_drmax[0]<=1.1"});
-      dimensionBins["drmax"].push_back({"drmax1", "hig_cand_drmax[0]>1.1"});
+      if (variable_cuts != "met") {
+        dimensionBins["met"].push_back({"met0", "met>150 && met<=200"});
+        dimensionBins["met"].push_back({"met1", "met>200 && met<=300"});
+        dimensionBins["met"].push_back({"met2", "met>300 && met<=400"});
+        dimensionBins["met"].push_back({"met3", "met>400"});
+        dimensionBins["drmax"].push_back({"drmax0", "hig_cand_drmax[0]<=1.1"});
+        dimensionBins["drmax"].push_back({"drmax1", "hig_cand_drmax[0]>1.1"});
+      }
+      else {
+        dimensionBins["met"].push_back({"met2", "met>300 && met<=400"});
+        dimensionBins["met"].push_back({"met3", "met>400"});
+        dimensionBins["drmax"].push_back({"drmax0", "hig_cand_drmax[0]<=1.1"});
+        dimensionBins["drmax"].push_back({"drmax1", "hig_cand_drmax[0]>1.1"});
+      }
     } else {
       dimensionBins["met"].push_back({"met0", "met>150 && met<=200"});
       dimensionBins["met"].push_back({"met1", "met>200 && met<=300"});

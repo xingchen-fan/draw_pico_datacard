@@ -46,6 +46,7 @@
 #include "TMath.h"
 #include "TBox.h"
 #include "TLegendEntry.h"
+#include "TFile.h"
 
 #include "core/utilities.hpp"
 
@@ -121,12 +122,34 @@ void EfficiencyPlot::SingleEfficiencyPlot::RecordEvent(const Baby &baby){
   }
 
   if(!have_vec){
-    raw_denominator_hist_.Fill(val_scalar, wgt_scalar);
-    if (numerator_cut_.GetScalar(baby))
-      raw_numerator_hist_.Fill(val_scalar, wgt_scalar);
+    //avoid negative weight events failing numerator since these might make numerator > denominator
+    if (wgt_scalar >= 0 || numerator_cut_.GetScalar(baby)) {
+      raw_denominator_hist_.Fill(val_scalar, wgt_scalar);
+      if (numerator_cut_.GetScalar(baby))
+        raw_numerator_hist_.Fill(val_scalar, wgt_scalar);
+    }
   }else{
     for(size_t i = 0; i < min_vec_size; ++i){
       if(cut.IsVector() && !cut_vector_.at(i)) continue;
+      //avoid negative weight events failing numerator since these might make numerator > denominator
+      //TODO: is there some alternative to deal with negative weights?
+      if(wgt.IsScalar()) {
+        if (numerator_cut_.IsScalar()) {
+          if (wgt_scalar < 0 && !numerator_cut_.GetScalar(baby)) continue;
+        }
+        else {
+          if (wgt_scalar < 0 && !numerator_cut_vector_.at(i)) continue;
+        }
+      }
+      else {
+        if (numerator_cut_.IsScalar()) {
+          if (wgt_vector_.at(i) < 0 && !numerator_cut_.GetScalar(baby)) continue;
+        }
+        else {
+          if (wgt_vector_.at(i) < 0 && !numerator_cut_vector_.at(i)) continue;
+        }
+      }
+      //fill denominator and maybe numerator histograms
       raw_denominator_hist_.Fill(val.IsScalar() ? val_scalar : val_vector_.at(i),
                                  wgt.IsScalar() ? wgt_scalar : wgt_vector_.at(i));
       if (numerator_cut_.IsScalar()) {
@@ -200,16 +223,18 @@ EfficiencyPlot::EfficiencyPlot(const Axis &xaxis, const NamedFunc &denominator_c
     switch(process->type_){
     case Process::Type::data:
       datas_.push_back(move(eff_plot));
+      data_names_.push_back(process->name_);
       break;
     case Process::Type::background:
       backgrounds_.push_back(move(eff_plot));
       if (first_background) {
-        background_color_ = process->GetLineColor();
+        background_color_ = process->GetFillColor();
         first_background = false;
       }
       break;
     case Process::Type::signal:
       signals_.push_back(move(eff_plot));
+      signal_names_.push_back(process->name_);
       break;
     default:
       break;
@@ -270,34 +295,45 @@ void EfficiencyPlot::Print(double luminosity,
     }
     total_background_numerator->Scale(luminosity_);
     total_background_denominator->Scale(luminosity_);
-    double this_linear_y_max = total_background_denominator->GetMaximum();
+    //double this_linear_y_max = total_background_denominator->GetMaximum();
+    double this_linear_y_max = total_background_denominator->GetBinContent(total_background_denominator->GetMaximumBin());
     if (this_linear_y_max > linear_y_max) linear_y_max = this_linear_y_max;
+    TFile* out_file = TFile::Open("ntuples/effplotdebugging.root","UPDATE");
+    total_background_numerator->Write((Name()+"_num").c_str());
+    total_background_denominator->Write((Name()+"_den").c_str());
+    out_file->Close();
+    std::cout << "DEBUG: numerator integral: " << total_background_numerator->Integral() << std::endl;
+    std::cout << "DEBUG: denominator integral: " << total_background_denominator->Integral() << std::endl;
     background_ratio_plot = std::unique_ptr<TGraphAsymmErrors>(
         new TGraphAsymmErrors(total_background_numerator.get(),total_background_denominator.get(),"cp"));
-    double this_ratio_y_max = background_ratio_plot->GetMaximum();
+    double this_ratio_y_max = TMath::MaxElement(background_ratio_plot->GetN(), background_ratio_plot->GetY());
+    std::cout << "DEBUG: this ratio y max: " << this_ratio_y_max << std::endl;
+    std::cout << "DEBUG: ratio plot points: " << background_ratio_plot->GetY()[0] << ", " << background_ratio_plot->GetY()[1] << std::endl;
     if (this_ratio_y_max > ratio_y_max) ratio_y_max = this_ratio_y_max;
   }
   for (unsigned int signal_idx = 0; signal_idx < signals_.size(); signal_idx++) {
     TH1D* numerator_hist = &signals_.at(signal_idx)->raw_numerator_hist_;
     TH1D* denominator_hist = &signals_.at(signal_idx)->raw_denominator_hist_;
-    double this_linear_y_max = denominator_hist->GetMaximum();
+    denominator_hist->Scale(luminosity_);
+    numerator_hist->Scale(luminosity_);
+    //double this_linear_y_max = denominator_hist->GetMaximum();
+    double this_linear_y_max = denominator_hist->GetBinContent(denominator_hist->GetMaximumBin());
     if (this_linear_y_max > linear_y_max) linear_y_max = this_linear_y_max;
     signal_colors.push_back(numerator_hist->GetLineColor());
     signal_numerator_plots.push_back(
         std::unique_ptr<TH1D>(static_cast<TH1D*>(numerator_hist->Clone())));
     signal_denominator_plots.push_back(
         std::unique_ptr<TH1D>(static_cast<TH1D*>(denominator_hist->Clone())));
-    signal_numerator_plots.back()->Scale(luminosity_);
-    signal_denominator_plots.back()->Scale(luminosity_);
     signal_ratio_plots.push_back(
         std::unique_ptr<TGraphAsymmErrors>(new TGraphAsymmErrors(numerator_hist,denominator_hist,"cp")));
-    double this_ratio_y_max = signal_ratio_plots.back()->GetMaximum();
+    double this_ratio_y_max = TMath::MaxElement(signal_ratio_plots.back()->GetN(), signal_ratio_plots.back()->GetY());
     if (this_ratio_y_max > ratio_y_max) ratio_y_max = this_ratio_y_max;
   }
   for (unsigned int data_idx = 0; data_idx < datas_.size(); data_idx++) {
     TH1D* numerator_hist = &datas_.at(data_idx)->raw_numerator_hist_;
     TH1D* denominator_hist = &datas_.at(data_idx)->raw_denominator_hist_;
-    double this_linear_y_max = denominator_hist->GetMaximum();
+    //double this_linear_y_max = denominator_hist->GetMaximum();
+    double this_linear_y_max = denominator_hist->GetBinContent(denominator_hist->GetMaximumBin());
     if (this_linear_y_max > linear_y_max) linear_y_max = this_linear_y_max;
     data_colors.push_back(numerator_hist->GetLineColor());
     data_numerator_plots.push_back(
@@ -306,11 +342,13 @@ void EfficiencyPlot::Print(double luminosity,
         std::unique_ptr<TH1D>(static_cast<TH1D*>(denominator_hist->Clone())));
     data_ratio_plots.push_back(
         std::unique_ptr<TGraphAsymmErrors>(new TGraphAsymmErrors(numerator_hist,denominator_hist,"cp")));
-    double this_ratio_y_max = data_ratio_plots.back()->GetMaximum();
+    double this_ratio_y_max = TMath::MaxElement(data_ratio_plots.back()->GetN(), data_ratio_plots.back()->GetY());
     if (this_ratio_y_max > ratio_y_max) ratio_y_max = this_ratio_y_max;
   }
 
   //second loop: draw
+  std::cout << "DEBUG: ratio y max: " << ratio_y_max << std::endl;
+  std::cout << "DEBUG: linear y max: " << linear_y_max << std::endl;
   std::string draw_options = "AP"; //change after axes are drawn once
   if (backgrounds_.size() > 0) {
     SetRatioPlotDrawOptions(background_ratio_plot, 0, ratio_y_max);
@@ -321,6 +359,8 @@ void EfficiencyPlot::Print(double luminosity,
     if (draw_histograms_) {
       SetLinearPlotDrawOptions(total_background_denominator, linear_y_max, true);
       SetLinearPlotDrawOptions(total_background_numerator, linear_y_max, false);
+      total_background_denominator->SetLineColor(background_color_);
+      total_background_numerator->SetLineColor(background_color_);
       total_background_denominator->Draw("same hist");
       total_background_numerator->Draw("same hist");
     }
@@ -334,6 +374,8 @@ void EfficiencyPlot::Print(double luminosity,
     if (draw_histograms_) {
       SetLinearPlotDrawOptions(signal_denominator_plots.at(signal_idx), linear_y_max, true);
       SetLinearPlotDrawOptions(signal_numerator_plots.at(signal_idx), linear_y_max, false);
+      signal_denominator_plots.at(signal_idx)->SetLineColor(signal_colors.at(signal_idx));
+      signal_numerator_plots.at(signal_idx)->SetLineColor(signal_colors.at(signal_idx));
       signal_denominator_plots.at(signal_idx)->Draw("same hist");
       signal_numerator_plots.at(signal_idx)->Draw("same hist");
     }
@@ -347,6 +389,8 @@ void EfficiencyPlot::Print(double luminosity,
     if (draw_histograms_) {
       SetLinearPlotDrawOptions(data_denominator_plots.at(data_idx), linear_y_max, true);
       SetLinearPlotDrawOptions(data_numerator_plots.at(data_idx), linear_y_max, false);
+      data_denominator_plots.at(data_idx)->SetLineColor(data_colors.at(data_idx));
+      data_numerator_plots.at(data_idx)->SetLineColor(data_colors.at(data_idx));
       data_denominator_plots.at(data_idx)->Draw("same hist");
       data_numerator_plots.at(data_idx)->Draw("same hist");
     }
@@ -405,18 +449,35 @@ void EfficiencyPlot::Print(double luminosity,
   norm_axis->SetTickLength(0.3);
   norm_axis->SetLabelSize(0.03);
   norm_axis->SetTitle("Events/bin");
-  norm_axis->SetTitleColor(kBlue);
+  //norm_axis->SetTitleColor(kBlue);
   norm_axis->SetTitleFont(42);
   norm_axis->SetTitleOffset(1.6);
-  norm_axis->SetLineColor(kBlue);
-  norm_axis->SetLabelColor(kBlue);
+  //norm_axis->SetLineColor(kBlue);
+  //norm_axis->SetLabelColor(kBlue);
   norm_axis->Draw();
     
-  //TODO: add legend
-  //vector<shared_ptr<TLegend> > legends = GetLegends();
-  //for(auto &legend: legends){
-  //  legend->Draw();
-  //}
+  //draw legend
+  unsigned int number_legend_entries = signal_names_.size()+data_names_.size();
+  if (backgrounds_.size() > 0) number_legend_entries++;
+  TLegend * legend = new TLegend(0.5, 0.7, 0.8, 0.8);
+  legend->SetNColumns(3);
+  legend->SetFillStyle(0);
+  legend->SetBorderSize(0);
+  if (backgrounds_.size() > 0) {
+    legend->AddEntry(background_ratio_plot.get(),"Background","l");
+  }
+  for (unsigned int signal_idx = 0; signal_idx < signals_.size(); signal_idx++) {
+    legend->AddEntry(signal_ratio_plots.at(signal_idx).get(),signal_names_.at(signal_idx).c_str(),"l");
+  }
+  for (unsigned int data_idx = 0; data_idx < datas_.size(); data_idx++) {
+    legend->AddEntry(data_ratio_plots.at(data_idx).get(),data_names_.at(data_idx).c_str(),"l");
+  }
+  if (number_legend_entries < 12) {
+    for (unsigned int extra_entries_idx = number_legend_entries; extra_entries_idx < 12; extra_entries_idx++) {
+      legend->AddEntry(static_cast<TObject*>(0), "", "");
+    }
+  }
+  legend->Draw();
 
   //TODO: implement GetCutLines
   //std::vector<TLine> cut_vals = GetCutLines(GetMinDraw(), GetMaxDraw());
@@ -503,7 +564,8 @@ std::string EfficiencyPlot::Title() const{
 
 std::string EfficiencyPlot::YAxisText() const{
   std::string y_axis_title = "Efficiency ";
-  y_axis_title += CodeToRootTex(numerator_cut_.Name());
+  y_axis_title += numerator_cut_.Name();
+  //y_axis_title += CodeToRootTex(numerator_cut_.Name());
   return y_axis_title;
 }
 
@@ -530,7 +592,7 @@ EfficiencyPlot & EfficiencyPlot::FixTitle(const std::string &title){
 void EfficiencyPlot::SetRatioPlotDrawOptions(std::unique_ptr<TGraphAsymmErrors> &ratio_plot, 
                                              double ymin, double ymax) {
   double xmin = xaxis_.Bins().at(0);
-  double xmax = xaxis_.Bins().at(xaxis_.Bins().size());
+  double xmax = xaxis_.Bins().at(xaxis_.Bins().size()-1);
   std::string yaxis_text = YAxisText();
   ratio_plot->SetMarkerStyle(kFullCircle);
   ratio_plot->SetMarkerSize(1);
@@ -538,7 +600,7 @@ void EfficiencyPlot::SetRatioPlotDrawOptions(std::unique_ptr<TGraphAsymmErrors> 
   ratio_plot->GetXaxis()->SetRangeUser(xmin,xmax);
   ratio_plot->GetXaxis()->SetTitleSize(0.04);
   ratio_plot->GetXaxis()->SetTitleOffset(1.0);
-  ratio_plot->GetYaxis()->SetRangeUser(ymin,ymax);
+  ratio_plot->GetYaxis()->SetRangeUser(ymin, 1.4*ymax);
   if (yaxis_text.size() > 40) {
     ratio_plot->GetYaxis()->SetTitleSize(0.025);
     ratio_plot->GetYaxis()->SetTitleOffset(1.6);
