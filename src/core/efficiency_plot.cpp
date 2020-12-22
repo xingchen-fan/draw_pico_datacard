@@ -302,14 +302,12 @@ void EfficiencyPlot::Print(double luminosity,
     total_background_numerator->Write((Name()+"_num").c_str());
     total_background_denominator->Write((Name()+"_den").c_str());
     out_file->Close();
-    std::cout << "DEBUG: numerator integral: " << total_background_numerator->Integral() << std::endl;
-    std::cout << "DEBUG: denominator integral: " << total_background_denominator->Integral() << std::endl;
     background_ratio_plot = std::unique_ptr<TGraphAsymmErrors>(
         new TGraphAsymmErrors(total_background_numerator.get(),total_background_denominator.get(),"cp"));
-    double this_ratio_y_max = TMath::MaxElement(background_ratio_plot->GetN(), background_ratio_plot->GetY());
-    std::cout << "DEBUG: this ratio y max: " << this_ratio_y_max << std::endl;
-    std::cout << "DEBUG: ratio plot points: " << background_ratio_plot->GetY()[0] << ", " << background_ratio_plot->GetY()[1] << std::endl;
-    if (this_ratio_y_max > ratio_y_max) ratio_y_max = this_ratio_y_max;
+    if (background_ratio_plot->GetN() > 0) {
+      double this_ratio_y_max = TMath::MaxElement(background_ratio_plot->GetN(), background_ratio_plot->GetY());
+      if (this_ratio_y_max > ratio_y_max) ratio_y_max = this_ratio_y_max;
+    }
   }
   for (unsigned int signal_idx = 0; signal_idx < signals_.size(); signal_idx++) {
     TH1D* numerator_hist = &signals_.at(signal_idx)->raw_numerator_hist_;
@@ -326,8 +324,10 @@ void EfficiencyPlot::Print(double luminosity,
         std::unique_ptr<TH1D>(static_cast<TH1D*>(denominator_hist->Clone())));
     signal_ratio_plots.push_back(
         std::unique_ptr<TGraphAsymmErrors>(new TGraphAsymmErrors(numerator_hist,denominator_hist,"cp")));
-    double this_ratio_y_max = TMath::MaxElement(signal_ratio_plots.back()->GetN(), signal_ratio_plots.back()->GetY());
-    if (this_ratio_y_max > ratio_y_max) ratio_y_max = this_ratio_y_max;
+    if (signal_ratio_plots.back()->GetN() > 0) {
+      double this_ratio_y_max = TMath::MaxElement(signal_ratio_plots.back()->GetN(), signal_ratio_plots.back()->GetY());
+      if (this_ratio_y_max > ratio_y_max) ratio_y_max = this_ratio_y_max;
+    }
   }
   for (unsigned int data_idx = 0; data_idx < datas_.size(); data_idx++) {
     TH1D* numerator_hist = &datas_.at(data_idx)->raw_numerator_hist_;
@@ -342,13 +342,13 @@ void EfficiencyPlot::Print(double luminosity,
         std::unique_ptr<TH1D>(static_cast<TH1D*>(denominator_hist->Clone())));
     data_ratio_plots.push_back(
         std::unique_ptr<TGraphAsymmErrors>(new TGraphAsymmErrors(numerator_hist,denominator_hist,"cp")));
-    double this_ratio_y_max = TMath::MaxElement(data_ratio_plots.back()->GetN(), data_ratio_plots.back()->GetY());
-    if (this_ratio_y_max > ratio_y_max) ratio_y_max = this_ratio_y_max;
+    if (data_ratio_plots.back()->GetN() > 0) {
+      double this_ratio_y_max = TMath::MaxElement(data_ratio_plots.back()->GetN(), data_ratio_plots.back()->GetY());
+      if (this_ratio_y_max > ratio_y_max) ratio_y_max = this_ratio_y_max;
+    }
   }
 
   //second loop: draw
-  std::cout << "DEBUG: ratio y max: " << ratio_y_max << std::endl;
-  std::cout << "DEBUG: linear y max: " << linear_y_max << std::endl;
   std::string draw_options = "AP"; //change after axes are drawn once
   if (backgrounds_.size() > 0) {
     SetRatioPlotDrawOptions(background_ratio_plot, 0, ratio_y_max);

@@ -105,18 +105,21 @@ int main(int argc, char *argv[]){
 
   std::string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
   std::string mc_skim_folder = "mc/skim_met150/";
+  std::string sr_mc_skim_folder = "mc/merged_higmc_higloose/";
   std::string ttbar_mc_skim_folder = "mc/merged_higmc_higlep1T/";
   std::string zll_mc_skim_folder = "mc/merged_higmc_higlep2T/";
   std::string qcd_mc_skim_folder = "mc/merged_higmc_higqcd/";
 
   std::string data_base_folder = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
   std::string data_skim_folder = "data/skim_met150/";
+  std::string sr_data_skim_folder = "data/merged_higdata_higloose/";
   std::string ttbar_data_skim_folder = "data/merged_higdata_higlep1T/";
   std::string zll_data_skim_folder = "data/merged_higdata_higlep2T/";
   std::string qcd_data_skim_folder = "data/merged_higdata_higqcd/";
 
   std::string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
   std::string search_sig_skim_folder = "SMS-TChiHH_2D/skim_met150/";
+  std::string sr_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higloose/";
   std::string ttbar_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higlep1T/";
   std::string zll_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higlep2T/";
   std::string qcd_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higqcd/";
@@ -155,6 +158,14 @@ int main(int argc, char *argv[]){
                                "*_QCD_HT200to300_*","*_QCD_HT300to500_*","*_QCD_HT500to700_*",
                                "*_QCD_HT1000to1500_*","*_QCD_HT1500to2000_*",
                                "*_QCD_HT2000toInf_*",
+                               "*_WH_HToBB*.root", "*_ZH_HToBB*.root",
+                               "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root", "*DYJetsToLL*.root"
+  });
+  mctags["noqcd"] = std::set<std::string>({"*TTJets_SingleLept*",
+                               "*TTJets_DiLept*",
+                               "*_TTZ*.root", "*_TTW*.root",
+                               "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root", "*_ST_*.root",
+                               "*_WJetsToLNu*.root", "*_ZJet*.root",
                                "*_WH_HToBB*.root", "*_ZH_HToBB*.root",
                                "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root", "*DYJetsToLL*.root"
   });
@@ -235,30 +246,39 @@ int main(int argc, char *argv[]){
 
   // set sr procs
   std::vector<std::shared_ptr<Process> > sr_procs;
-  //sr_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X (#tau_{had}>0)", Process::Type::background,colors("tt_htau"),
-  //                attach_folder(mc_base_folder, years, mc_skim_folder, mctags["tt"]),"stitch&&ntrutauh>0"));
-  if (options.plot_type == "debug") {
-    sr_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}", Process::Type::background, colors("tt_1l"),
-                    attach_folder(mc_base_folder, years, mc_skim_folder, {"*TTJets_SingleLeptFromT_Tune*"}), "stitch"));
-  }
-  else {
-    sr_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t} (N_{l}=0)", Process::Type::signal, colors("tt_htau"),
-                    attach_folder(mc_base_folder, years, mc_skim_folder, mctags["ttbar"]), "stitch&&nlep==0"));
-    sr_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t} (N_{e}=1)", Process::Type::signal, colors("tt_1l"),
-                    attach_folder(mc_base_folder, years, mc_skim_folder, mctags["ttbar"]), "stitch&&nel==1"));
-  }
-  //sr_procs.push_back(Process::MakeShared<Baby_pico>("Z+jets", Process::Type::background, kOrange+1,
-  //                attach_folder(mc_base_folder, years, mc_skim_folder,mctags["zjets"]),"stitch"));
-  //sr_procs.push_back(Process::MakeShared<Baby_pico>("W+jets", Process::Type::background, kGreen+1,
-  //                attach_folder(mc_base_folder, years, mc_skim_folder,mctags["wjets"]),"stitch"));
-  //sr_procs.push_back(Process::MakeShared<Baby_pico>("Single t", Process::Type::background,colors("single_t"),
-  //                attach_folder(mc_base_folder, years, mc_skim_folder, mctags["single_t"]),"stitch"));
-  ////sr_procs.push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background, colors("other"),
-  ////                attach_folder(mc_base_folder, years, mc_skim_folder, mctags["qcd"]),"stitch")); 
-  //sr_procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGray+2,
-  //                attach_folder(mc_base_folder, years, mc_skim_folder, mctags["other"]),"stitch"));
+  sr_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}", Process::Type::background, colors("tt_1l"),
+                  attach_folder(mc_base_folder, years, mc_skim_folder, {"*TTJets_SingleLeptFromT_Tune*"}), "stitch"));
   //sr_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X", 
   //      Process::Type::background,colors("tt_1l"),{"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/2016/mc/unskimmed/pico_TTJets_DiLept*.root"},"stitch"));
+
+  std::vector<std::shared_ptr<Process> > mc_procs;
+  mc_procs.push_back(Process::MakeShared<Baby_pico>("Real p_{T}^{miss} MC (N_{l}=0)", Process::Type::signal, kViolet,
+                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["noqcd"]), "stitch&&nlep==0"));
+  mc_procs.push_back(Process::MakeShared<Baby_pico>("Real p_{T}^{miss} MC (N_{e}=1)", Process::Type::signal, kBlue,
+                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["noqcd"]), "stitch&&nel==1&&nlep==1"));
+  mc_procs.push_back(Process::MakeShared<Baby_pico>("Real p_{T}^{miss} MC (N_{#mu}=1)", Process::Type::signal, kRed,
+                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["noqcd"]), "stitch&&nmu==1&&nlep==1"));
+
+  std::vector<std::shared_ptr<Process> > mc_all_procs;
+  mc_all_procs.push_back(Process::MakeShared<Baby_pico>("Real p_{T}^{miss} MC (N_{l}=0)", Process::Type::signal, kViolet,
+                  attach_folder(mc_base_folder, years, sr_mc_skim_folder, mctags["all"]), "stitch&&nlep==0"));
+  mc_all_procs.push_back(Process::MakeShared<Baby_pico>("Real p_{T}^{miss} MC (N_{e}=1)", Process::Type::signal, kBlue,
+                  attach_folder(mc_base_folder, years, sr_mc_skim_folder, mctags["all"]), "stitch&&nel==1&&nlep==1"));
+  mc_all_procs.push_back(Process::MakeShared<Baby_pico>("Real p_{T}^{miss} MC (N_{#mu}=1)", Process::Type::signal, kRed,
+                  attach_folder(mc_base_folder, years, sr_mc_skim_folder, mctags["all"]), "stitch&&nmu==1&&nlep==1"));
+
+  //mc_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X (#tau_{had}>0)", Process::Type::background,colors("tt_htau"),
+  //                attach_folder(mc_base_folder, years, mc_skim_folder, mctags["tt"]),"stitch&&ntrutauh>0"));
+  //mc_procs.push_back(Process::MakeShared<Baby_pico>("Z+jets", Process::Type::background, kOrange+1,
+  //                attach_folder(mc_base_folder, years, mc_skim_folder,mctags["zjets"]),"stitch"));
+  //mc_procs.push_back(Process::MakeShared<Baby_pico>("W+jets", Process::Type::background, kGreen+1,
+  //                attach_folder(mc_base_folder, years, mc_skim_folder,mctags["wjets"]),"stitch"));
+  //mc_procs.push_back(Process::MakeShared<Baby_pico>("Single t", Process::Type::background,colors("single_t"),
+  //                attach_folder(mc_base_folder, years, mc_skim_folder, mctags["single_t"]),"stitch"));
+  ////mc_procs.push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background, colors("other"),
+  ////                attach_folder(mc_base_folder, years, mc_skim_folder, mctags["qcd"]),"stitch")); 
+  //mc_procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGray+2,
+  //                attach_folder(mc_base_folder, years, mc_skim_folder, mctags["other"]),"stitch"));
 
   std::vector<std::shared_ptr<Process> > data_procs;
   data_procs.push_back(Process::MakeShared<Baby_pico>("Data 1e", Process::Type::data, kBlue,
@@ -283,6 +303,10 @@ int main(int argc, char *argv[]){
     (Higfuncs::jetid_njet>=4) && (Higfuncs::jetid_njet<=5) && (Higfuncs::jetid_nb>=2) && !Higfuncs::jetid_low_dphi_met &&
     (Higfuncs::jetid_hig_cand_dm<40) && (Higfuncs::jetid_hig_cand_am<200) && (Higfuncs::jetid_hig_cand_drmax<2.2);
 
+  NamedFunc sr_baseline_nolepcuts = Higfuncs::pass_filters && "met/met_calo<2&&met/mht<2&&met>150" &&
+    (Higfuncs::jetid_njet>=4) && (Higfuncs::jetid_njet<=5) && (Higfuncs::jetid_nb>=2) && !Higfuncs::jetid_low_dphi_met &&
+    (Higfuncs::jetid_hig_cand_dm<40) && (Higfuncs::jetid_hig_cand_am<200) && (Higfuncs::jetid_hig_cand_drmax<2.2);
+
   NamedFunc ttbar_baseline = Higfuncs::pass_filters && "met/met_calo<2&&met/mht<2&&nlep==1&&mt<100" &&
     (Higfuncs::jetid_njet>=4) && (Higfuncs::jetid_njet<=5) && (Higfuncs::jetid_nb>=2) && (Higfuncs::lead_signal_lepton_pt>30) &&
     (Higfuncs::jetid_hig_cand_dm<40) && (Higfuncs::jetid_hig_cand_am<200) && (Higfuncs::jetid_hig_cand_drmax<2.2);
@@ -295,6 +319,8 @@ int main(int argc, char *argv[]){
     (Higfuncs::jetid_njet>=4) && (Higfuncs::jetid_njet<=5) && Higfuncs::jetid_low_dphi_met &&
     (Higfuncs::jetid_hig_cand_dm<40) && (Higfuncs::jetid_hig_cand_am<200) && (Higfuncs::jetid_hig_cand_drmax<2.2);
 
+  NamedFunc weight_notrig = "weight"*Higfuncs::w_years*Functions::w_pileup;
+
   //------------------------------------------------------------------------------------
   //                                    plots
   //------------------------------------------------------------------------------------
@@ -305,25 +331,44 @@ int main(int argc, char *argv[]){
       Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && 
       !Higfuncs::jetid_low_dphi_met,
       Higfuncs::met_trigger,
-      sr_procs).Weight(Higfuncs::final_weight).Tag("FixName:triggerstudies_mc_0el_"+options.year_string).LuminosityTag(total_luminosity_string);
+      sr_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_"+options.year_string).LuminosityTag(total_luminosity_string);
     pm.Push<EfficiencyPlot>(Axis(50, 150, 450, "met", "p_{T}^{miss} [GeV]", {}),
       Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && 
       !Higfuncs::jetid_low_dphi_met && "nel==1",
       Higfuncs::met_trigger,
-      sr_procs).Weight(Higfuncs::final_weight).Tag("FixName:triggerstudies_mc_1el_"+options.year_string).LuminosityTag(total_luminosity_string);
+      sr_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_1el_"+options.year_string).LuminosityTag(total_luminosity_string);
   }
-  if (options.plot_type == "mc") {
-    pm.Push<EfficiencyPlot>(Axis(50, 150, 450, "met", "p_{T}^{miss} [GeV]", {}),
-      Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met,
-      Higfuncs::met_trigger,
-      sr_procs).Weight(Higfuncs::final_weight).Tag("FixName:triggerstudies_mc_0el_1el_"+options.year_string).LuminosityTag(total_luminosity_string);
-  }
-  if (options.plot_type == "data") {
-    pm.Push<EfficiencyPlot>(Axis(50, 150, 450, "met", "p_{T}^{miss} [GeV]", {}),
-      Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met,
-      met_trigger_onlymu,
-      data_procs).Weight(Higfuncs::final_weight).Tag("FixName:triggerstudies_data_1el_1mu_"+options.year_string).LuminosityTag(total_luminosity_string);
-  }
+  pm.Push<EfficiencyPlot>(Axis(50, 150, 450, "met", "p_{T}^{miss} [GeV]", {}),
+    Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met,
+    Higfuncs::met_trigger,
+    mc_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_1el_1mu_"+options.year_string).LuminosityTag(total_luminosity_string);
+  pm.Push<EfficiencyPlot>(Axis(50, 150, 450, "met", "p_{T}^{miss} [GeV]", {}),
+    Higfuncs::pass_filters && (Higfuncs::jetid_njet>=4) && !Higfuncs::jetid_low_dphi_met,
+    Higfuncs::met_trigger,
+    mc_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_1el_1mu_srish_"+options.year_string).LuminosityTag(total_luminosity_string);
+  pm.Push<EfficiencyPlot>(Axis(50, 150, 450, "met", "p_{T}^{miss} [GeV]", {}),
+    Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && (Higfuncs::jetid_nb >= 2) && "met/mht<2&&met/met_calo<2" && !Higfuncs::jetid_low_dphi_met,
+    met_trigger_onlymu,
+    mc_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_1el_1mu_mutrigs_"+options.year_string).LuminosityTag(total_luminosity_string);
+  pm.Push<EfficiencyPlot>(Axis(50, 150, 450, "met", "p_{T}^{miss} [GeV]", {}),
+    Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met,
+    Higfuncs::met_trigger,
+    mc_all_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_sr_"+options.year_string).LuminosityTag(total_luminosity_string);
+  pm.Push<EfficiencyPlot>(Axis(50, 150, 450, "met", "p_{T}^{miss} [GeV]", {}),
+    Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met,
+    met_trigger_onlymu,
+    data_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_data_1el_1mu_"+options.year_string).LuminosityTag(total_luminosity_string);
+  pm.Push<EfficiencyPlot>(Axis(50, 150, 450, "met", "p_{T}^{miss} [GeV]", {}),
+    Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met,
+    Higfuncs::met_trigger,
+    data_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_data_1el_1mu_allmettrigs_"+options.year_string).LuminosityTag(total_luminosity_string);
+  pm.Push<EfficiencyPlot>(Axis(50, 150, 450, "met", "p_{T}^{miss} [GeV]", {}),
+    Higfuncs::pass_filters && (Higfuncs::jetid_njet>=4) && (Higfuncs::jetid_nb == 2) && "met/mht<2&&met/met_calo<2" && !Higfuncs::jetid_low_dphi_met,
+    met_trigger_onlymu,
+    data_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_data_1el_1mu_srish_"+options.year_string).LuminosityTag(total_luminosity_string);
+
+  pm.Push<Table>("FixName:triggerstudies_pies_mc_sr_met150to200_comp_"+options.year_string, std::vector<TableRow> ({TableRow("", sr_baseline_nolepcuts && "150<=met&&met<200", 0, 0, weight_notrig)}), mc_all_procs, true, true, true);
+  pm.Push<Table>("FixName:triggerstudies_pies_mc_sr_met150to160_comp_"+options.year_string, std::vector<TableRow> ({TableRow("", sr_baseline_nolepcuts && "150<=met&&met<160", 0, 0, weight_notrig)}), mc_all_procs, true, true, true);
 
   pm.multithreaded_ = !options.single_thread;
   pm.min_print_ = true;
