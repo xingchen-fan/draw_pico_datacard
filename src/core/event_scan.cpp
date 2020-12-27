@@ -16,7 +16,8 @@ EventScan::SingleScan::SingleScan(const EventScan &event_scan,
   full_cut_(event_scan.cut_ && process->cut_),
   cut_vector_(),
   val_vectors_(event_scan.columns_.size()),
-  row_(0){
+  row_(0),
+  printFilename_(event_scan.printFilename_){
   out_.precision(event_scan.Precision());
 }
 
@@ -38,7 +39,7 @@ void EventScan::SingleScan::RecordEvent(const Baby &baby){
     }else{
       val_vectors_.at(icol) = col.GetVector(baby);
       if(val_vectors_.at(icol).size() > max_size){
-	max_size = val_vectors_.at(icol).size();
+        max_size = val_vectors_.at(icol).size();
       }
     }
   }
@@ -51,6 +52,7 @@ void EventScan::SingleScan::RecordEvent(const Baby &baby){
     for(const auto &col: scan.columns_){
       out_ << ' ' << setw(w) << col.Name().substr(0,scan.width_);
     }
+    if(printFilename_) out_ << " Filename";
     out_.put('\n');
   }
 
@@ -64,10 +66,11 @@ void EventScan::SingleScan::RecordEvent(const Baby &baby){
         if(instance < val_vectors_.at(icol).size()){
           out_ << ' ' << setw(w) << val_vectors_.at(icol).at(instance);
         }else{
-	  out_ << ' ' << setw(w) << ' ';
-	}
+          out_ << ' ' << setw(w) << ' ';
+        }
       }
     }
+    if(printFilename_) out_ << ' ' << *baby.FileNames().begin();
     out_.put('\n');
   }
 
@@ -82,11 +85,12 @@ EventScan::EventScan(const string &name,
                      const NamedFunc &cut,
                      const vector<NamedFunc> &columns,
                      const vector<shared_ptr<Process> > &processes,
-		     unsigned precision):
+		     unsigned precision, bool printFilename):
   name_(name),
   cut_(cut),
   columns_(columns),
   scans_(),
+  printFilename_(printFilename),
   precision_(precision),
   width_(precision+6){
   for(const auto& proc: processes){
