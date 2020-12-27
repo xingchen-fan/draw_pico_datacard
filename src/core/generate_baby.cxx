@@ -454,6 +454,9 @@ void WriteBaseHeader(const set<Variable> &vars,
   file << "  int SampleType() const;\n";
   file << "  int SetSampleType(const TString &filename);\n\n";
 
+  file << "  void * EventVetoData() const;\n";
+  file << "  void SetEventVetoData(void * event_veto_data);\n\n";
+
   file << "  std::set<const Process*> processes_;\n\n";
 
   for(const auto &var: vars){
@@ -492,6 +495,8 @@ void WriteBaseHeader(const set<Variable> &vars,
   file << "  int sample_type_;//!< Integer indicating what kind of sample the first file has\n";
   file << "  mutable long total_entries_;//!<Cached number of events in TChain\n";
   file << "  mutable bool cached_total_entries_;//!<Flag if cached event count up to date\n\n";
+
+  file << "  void * event_veto_data_;\n\n";
 
   file << "  void ActivateChain();\n";
   file << "  void DeactivateChain();\n\n";
@@ -726,6 +731,15 @@ void WriteBaseSource(const set<Variable> &vars){
 //   file << "  if(filename.Contains(\"_TTG\"))    samp_type = 72;\n";
   file << "  return samp_type;\n";
   file << "}\n\n";
+
+  file << "void * Baby::EventVetoData() const{\n";
+  file << "  return event_veto_data_;\n";
+  file << "}\n\n";
+
+  file << "void Baby::SetEventVetoData(void * event_veto_data){\n";
+  file << "  event_veto_data_ = event_veto_data;\n";
+  file << "}\n\n";
+
 
   file << "/*! \\brief Get underlying TChain for this Baby\n\n";
 
