@@ -112,7 +112,7 @@ int main(int argc, char *argv[]){
   //year-based settings, default to 2016 but changed below
   double lumi = 35.9;
   int year = 2016;
-  string data_dir = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/2016/data/";
+  string data_dir = "/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/2016/data/";
   string mc_dir = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_humboldt/2016/mc/";
   string singleelectron_name = "SingleElectron";
 
@@ -133,13 +133,13 @@ int main(int argc, char *argv[]){
 
   if (year == 2017) {
   	lumi = 41.5;
-  	data_dir = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/2017/data/";
-  	mc_dir = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/2017/mc/";
+  	data_dir = "/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/2017/data/";
+  	mc_dir = "/net/cms25/cms25r0/pico/NanoAODv5/higgsino_humboldt/2017/mc/";
   }
   else if (year == 2018) {
   	lumi = 60.0;
-  	data_dir = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/2018/data/";
-  	mc_dir = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/2018/mc/";
+  	data_dir = "/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/2018/data/";
+  	mc_dir = "/net/cms25/cms25r0/pico/NanoAODv5/higgsino_humboldt/2018/mc/";
 	singleelectron_name = "EGamma";
   }
   set<string> str_met150({data_dir+"skim_met150/raw_pico_met150_"+singleelectron_name+"*.root",data_dir+"skim_met150/raw_pico_met150_MET*.root",data_dir+"skim_met150/raw_pico_met150_SingleMuon*.root",data_dir+"skim_met150/raw_pico_met150_JetHT*.root"});
@@ -636,10 +636,10 @@ int main(int argc, char *argv[]){
   if (do_efficiency) {
   	pm.Push<Hist2D>(Axis(true_met_bins, "met", "MET", {}),
   	                Axis(ht_bins, "ht", "HT", {}),
-  	                pass_filters && "!low_dphi_met&&njet>=4&&nel==1" && el_trigger, procs_met150, twodim_plotopts).Tag("FixName:trig_raw_0l_eff_den");
+  	                pass_filters && "!low_dphi_met&&njet>=4&&nel==1" && (Higfuncs::lead_signal_lepton_pt<35) && el_trigger, procs_met150, twodim_plotopts).Tag("FixName:trig_raw_0l_eff_den");
   	pm.Push<Hist2D>(Axis(true_met_bins, "met", "MET", {}),
   	                Axis(ht_bins, "ht", "HT", {}),
-  	                pass_filters && "!low_dphi_met&&njet>=4&&nel==1" && el_trigger && met_trigger, procs_met150, twodim_plotopts).Tag("FixName:trig_raw_0l_eff_num");
+  	                pass_filters && "!low_dphi_met&&njet>=4&&nel==1" && (Higfuncs::lead_signal_lepton_pt<35) && el_trigger && met_trigger, procs_met150, twodim_plotopts).Tag("FixName:trig_raw_0l_eff_num");
 	//QCD HT bins
   	pm.Push<Hist1D>(Axis(fake_met_bins_ht0to350, "met", "MET [GeV]", {}),
   	                pass_filters && "low_dphi_met&&nvlep==0&&ht<350" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht0to350_den");

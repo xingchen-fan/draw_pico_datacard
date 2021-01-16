@@ -597,7 +597,8 @@ void EfficiencyPlot::SetRatioPlotDrawOptions(std::unique_ptr<TGraphAsymmErrors> 
   ratio_plot->SetMarkerStyle(kFullCircle);
   ratio_plot->SetMarkerSize(1);
   ratio_plot->SetLineWidth(2);
-  ratio_plot->GetXaxis()->SetRangeUser(xmin,xmax);
+  //ratio_plot->GetXaxis()->SetRangeUser(xmin,xmax);
+  ratio_plot->GetXaxis()->SetLimits(xmin,xmax);
   ratio_plot->GetXaxis()->SetTitleSize(0.04);
   ratio_plot->GetXaxis()->SetTitleOffset(1.0);
   ratio_plot->GetYaxis()->SetRangeUser(ymin, 1.4*ymax);

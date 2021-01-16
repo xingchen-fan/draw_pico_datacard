@@ -132,9 +132,9 @@ int main(int argc, char *argv[]){
   int trigger_version = 1;
 
   //string base_dir(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_eldorado/");
-  //string base_dir("/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/");
-  //string base_dir(string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/");
-  string base_dir(string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/");
+  //string base_dir("/net/cms25/cms25r0/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/");
+  //string base_dir(string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/");
+  string base_dir(string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/");
   //string base_dir("/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado");
   string mc_skim_dir("mc/merged_higmc_higloose/"), data_skim_dir("data/merged_higdata_higloose/"), sig_skim_dir("SMS-TChiHH_2D/merged_higmc_higloose/");
   if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "data/merged_higdata_higlep1T/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higlep1T/";} 
@@ -294,6 +294,10 @@ int main(int argc, char *argv[]){
     scenarios = vector<string>();
     scenarios.push_back("syst_comp");
     weights.emplace("syst_comp", nom_wgt*Higfuncs::wgt_syst_comp);
+  } else if(alt_scen == "syst_lowptleptrig"){
+    scenarios = vector<string>();
+    scenarios.push_back("syst_lowptleptrig");
+    weights.emplace("syst_lowptleptrig", nom_wgt*Higfuncs::wgt_syst_lowptleptrig);
   } else if(alt_scen == "mc_as_data"){
     scenarios = vector<string>{"mc_as_data"}; 
     weights.emplace("mc_as_data", nom_wgt);
