@@ -29,12 +29,14 @@
 #include "core/plot_opt.hpp"
 #include "core/palette.hpp"
 #include "core/table.hpp"
+#include "core/efficiency_plot.hpp"
 #include "core/event_scan.hpp"
 #include "core/hist1d.hpp"
 #include "core/hist2d.hpp"
 #include "core/utilities.hpp"
 #include "core/functions.hpp"
 #include "higgsino/hig_functions.hpp"
+#include "higgsino/hig_utilities.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;
@@ -42,12 +44,12 @@ using namespace PlotOptTypes;
 namespace{
   //argument options
   bool single_thread = false;
-  bool do_variables = true;
-  bool do_systematics = true;
-  bool do_efficiency = true;
+  bool do_variables = false;
+  bool do_systematics = false;
+  bool do_efficiency = false;
   std::string year_string = "2016";
   std::string out_filename = "triggereff";
-  bool do_controlregions = true; //false will omit plots of 1l and 2l CRs, speeding up processing by about 10~20x
+  bool do_controlregions = false; //false will omit plots of 1l and 2l CRs, speeding up processing by about 10~20x
 
   //constants
   const std::vector<double> true_met_bins{150,155,160,165,170,175,180,185,190,195,200,210,220,230,240,250,275,300,350};
@@ -109,20 +111,20 @@ int main(int argc, char *argv[]){
   PlotOpt style2D("txt/plot_styles.txt", "Scatter");
   vector<PlotOpt> twodim_plotopts = {style2D().Title(TitleType::info).Overflow(OverflowType::overflow)};
 
+  //------------------------------------------------------------------------------------
+  //                                 samples
+  //------------------------------------------------------------------------------------
+
   //year-based settings, default to 2016 but changed below
   double lumi = 35.9;
   int year = 2016;
-  string data_dir = "/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/2016/data/";
-  string mc_dir = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_humboldt/2016/mc/";
+  string data_dir = "/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/";
+  string mc_dir = "/net/cms25/cms25r0/pico/NanoAODv5/higgsino_inyo/";
   string singleelectron_name = "SingleElectron";
 
   if (year_string=="2016") year = 2016;
   else if (year_string=="2017") year = 2017;
-  else if (year_string=="2018") year = 2018;
-  else {
-    std::cout << "ERROR: unsupported year." << std::endl;
-    return 1;
-  }
+  else year = 2018;
 
   vector<shared_ptr<Process> > procs_met150 = {};
   vector<shared_ptr<Process> > procs_met150_mc = {};
@@ -153,576 +155,472 @@ int main(int argc, char *argv[]){
   procs_met150_mc.push_back(pro_met150_mc);
   procs_1l2j.push_back(pro_1l2j);
 
-  //named funcs
-  //const NamedFunc met_trigger = "HLT_PFMET110_PFMHT110_IDTight||HLT_PFMETNoMu110_PFMHTNoMu110_IDTight||HLT_PFMET120_PFMHT120_IDTight||HLT_PFMETNoMu120_PFMHTNoMu120_IDTight||HLT_PFMET120_PFMHT120_IDTight_PFHT60||HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60";
-  //const NamedFunc el_trigger = "HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf||HLT_Ele115_CaloIdVT_GsfTrkIdT";
-  //const NamedFunc mu_trigger = "HLT_IsoMu24||HLT_IsoMu27||HLT_Mu50";
-  //const NamedFunc ht_trigger = "HLT_PFJet500";
+  //new version of sample loading. Eventually this should completely replace 
+  //the above code
+  string base_folder = "/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/";
+  string data_skim_met150_folder = "data/skim_met150/";
+  string data_skim_1l2j_folder = "data/skim_1l2j/";
+  string mc_skim_met150_folder = "mc/skim_met150/";
 
-  //const NamedFunc met_trigger = "HLT_PFMET90_PFMHT90_IDTight||HLT_PFMETNoMu90_PFMHTNoMu90_IDTight||HLT_PFMET100_PFMHT100_IDTight||HLT_PFMETNoMu100_PFMHTNoMu100_IDTight||HLT_PFMET110_PFMHT110_IDTight||HLT_PFMETNoMu110_PFMHTNoMu110_IDTight||HLT_PFMET120_PFMHT120_IDTight||HLT_PFMETNoMu120_PFMHTNoMu120_IDTight||HLT_PFMET130_PFMHT130_IDTight||HLT_PFMETNoMu130_PFMHTNoMu130_IDTight||HLT_PFMET140_PFMHT140_IDTight||HLT_PFMETNoMu140_PFMHTNoMu140_IDTight||HLT_PFMET100_PFMHT100_IDTight_PFHT60||HLT_PFMETNoMu100_PFMHTNoMu100_IDTight_PFHT60||HLT_PFMET110_PFMHT110_IDTight_PFHT60||HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_PFHT60||HLT_PFMET120_PFMHT120_IDTight_PFHT60||HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60||HLT_PFMET130_PFMHT130_IDTight_PFHT60||HLT_PFMETNoMu130_PFMHTNoMu130_IDTight_PFHT60||HLT_PFMET140_PFMHT140_IDTight_PFHT60||HLT_PFMETNoMu140_PFMHTNoMu140_IDTight_PFHT60||HLT_PFMET120_PFMHT120_IDTight_HFCleaned||HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_HFCleaned||HLT_PFMET120_PFMHT120_IDTight_PFHT60_HFCleaned";
-  //const NamedFunc el_trigger = "HLT_Ele25_WPTight_Gsf||HLT_Ele27_WPTight_Gsf||HLT_Ele28_WPTight_Gsf||HLT_Ele32_WPTight_Gsf_L1DoubleEG||HLT_Ele32_WPTight_Gsf||HLT_Ele35_WPTight_Gsf||HLT_Ele45_WPLoose_Gsf||HLT_Ele105_CaloIdVT_GsfTrkIdT||HLT_Ele115_CaloIdVT_GsfTrkIdT||HLT_Ele135_CaloIdVT_GsfTrkIdT||HLT_Ele145_CaloIdVT_GsfTrkIdT||HLT_Ele25_eta2p1_WPTight_Gsf||HLT_Ele27_eta2p1_WPTight_Gsf||HLT_Ele27_eta2p1_WPLoose_Gsf||HLT_Ele20_WPLoose_Gsf||HLT_Ele20_eta2p1_WPLoose_Gsf||HLT_Ele25_eta2p1_WPLoose_Gsf||HLT_Ele15_IsoVVVL_PFHT350||HLT_Ele15_IsoVVVL_PFHT400||HLT_Ele15_IsoVVVL_PFHT450||HLT_Ele15_IsoVVVL_PFHT600||HLT_Ele50_IsoVVVL_PFHT450";
-  //const NamedFunc mu_trigger = "HLT_IsoMu20||HLT_IsoMu22||HLT_IsoMu24||HLT_IsoMu27||HLT_IsoTkMu20||HLT_IsoTkMu22||HLT_IsoTkMu24||HLT_Mu50||HLT_Mu55||HLT_TkMu50||HLT_IsoMu22_eta2p1||HLT_IsoMu24_eta2p1||HLT_Mu45_eta2p1||HLT_Mu15_IsoVVVL_PFHT350||HLT_Mu15_IsoVVVL_PFHT400||HLT_Mu15_IsoVVVL_PFHT450||HLT_Mu15_IsoVVVL_PFHT600||HLT_Mu50_IsoVVVL_PFHT400||HLT_Mu50_IsoVVVL_PFHT450";
-  const NamedFunc jet_trigger = "HLT_PFJet500";
-  //const NamedFunc ht_trigger = "(HLT_PFHT125 || HLT_PFHT200 || HLT_PFHT300 || HLT_PFHT400 || HLT_PFHT475 || HLT_PFHT600 || HLT_PFHT650 || HLT_PFHT800 || HLT_PFHT900 || HLT_PFHT180 || HLT_PFHT370 || HLT_PFHT430 || HLT_PFHT510 || HLT_PFHT590 || HLT_PFHT680 || HLT_PFHT780 || HLT_PFHT890 || HLT_PFHT1050 || HLT_PFHT250 || HLT_PFHT350)";
+  std::set<int> years;
+  HigUtilities::parseYears(year_string, years);
+  std::string total_luminosity_string = HigUtilities::getLuminosityString(year_string);
+  std::vector<std::shared_ptr<Process>> procs_data_met150_allyears = {};
+  std::vector<std::shared_ptr<Process>> procs_data_1l2j_allyears = {};
+  std::vector<std::vector<std::shared_ptr<Process>>> procs_data_ambb = {};
+  std::vector<std::string> year_strings;
+  std::vector<std::string> luminosity_year_string;
 
-  const NamedFunc met_trigger("met_trigger", [](const Baby &b) -> NamedFunc::ScalarType{
-    //can't used string-based named func because name being too long causes histograms to crash
-    bool r_met_trigger = b.HLT_PFMET90_PFMHT90_IDTight()||b.HLT_PFMETNoMu90_PFMHTNoMu90_IDTight()||b.HLT_PFMET100_PFMHT100_IDTight()||b.HLT_PFMETNoMu100_PFMHTNoMu100_IDTight()||b.HLT_PFMET110_PFMHT110_IDTight()||b.HLT_PFMETNoMu110_PFMHTNoMu110_IDTight()||b.HLT_PFMET120_PFMHT120_IDTight()||b.HLT_PFMETNoMu120_PFMHTNoMu120_IDTight()||b.HLT_PFMET130_PFMHT130_IDTight()||b.HLT_PFMETNoMu130_PFMHTNoMu130_IDTight()||b.HLT_PFMET140_PFMHT140_IDTight()||b.HLT_PFMETNoMu140_PFMHTNoMu140_IDTight()||b.HLT_PFMET100_PFMHT100_IDTight_PFHT60()||b.HLT_PFMETNoMu100_PFMHTNoMu100_IDTight_PFHT60()||b.HLT_PFMET110_PFMHT110_IDTight_PFHT60()||b.HLT_PFMETNoMu110_PFMHTNoMu110_IDTight_PFHT60()||b.HLT_PFMET120_PFMHT120_IDTight_PFHT60()||b.HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60()||b.HLT_PFMET130_PFMHT130_IDTight_PFHT60()||b.HLT_PFMETNoMu130_PFMHTNoMu130_IDTight_PFHT60()||b.HLT_PFMET140_PFMHT140_IDTight_PFHT60()||b.HLT_PFMETNoMu140_PFMHTNoMu140_IDTight_PFHT60()||b.HLT_PFMET120_PFMHT120_IDTight_HFCleaned()||b.HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_HFCleaned()||b.HLT_PFMET120_PFMHT120_IDTight_PFHT60_HFCleaned();
-    return r_met_trigger;
-  });
+  unsigned int year_idx = 0;
+  lumi = 0.0;
+  for (int iyear : years) {
+    std::string iyear_string = "2018";
+    std::string iyear_lumi = "60";
+    std::set<int> iyear_set = {iyear};
+    short iyear_color = kRed;
+    if (iyear==2016) { 
+      iyear_string = "2016";
+      iyear_lumi = "35.9";
+      iyear_color = kBlue;
+      lumi += 35.9;
+    }
+    else if (iyear==2017) {
+      iyear_string = "2017";
+      iyear_lumi = "41.5";
+      iyear_color = kGreen;
+      lumi += 41.5;
+    }
+    else {
+      lumi += 60.0;
+    }
+    procs_data_met150_allyears.push_back(
+        Process::MakeShared<Baby_pico>("Data "+iyear_string, Process::Type::data, iyear_color,
+        attach_folder(base_folder, iyear_set, data_skim_met150_folder, {"*.root"}), "stitch"));
+    procs_data_1l2j_allyears.push_back(
+        Process::MakeShared<Baby_pico>("Data "+iyear_string, Process::Type::data, iyear_color,
+        attach_folder(base_folder, iyear_set, data_skim_1l2j_folder, {"*.root"}), "stitch"));
+    procs_data_ambb.push_back(std::vector<std::shared_ptr<Process>>());
+    procs_data_ambb[year_idx].push_back(
+        Process::MakeShared<Baby_pico>("Data "+iyear_string+" #LT m_{bb} #GT < 100 GeV", 
+        Process::Type::data, kRed,
+        attach_folder(base_folder, iyear_set, data_skim_met150_folder, {"*.root"}), 
+        "stitch&&njet>=4&&hig_cand_am[0]<100"));
+    procs_data_ambb[year_idx].push_back(
+        Process::MakeShared<Baby_pico>("Data "+iyear_string+" 100 #leq #LT m_{bb} #GT < 150 GeV", 
+        Process::Type::data, kGreen,
+        attach_folder(base_folder, iyear_set, data_skim_met150_folder, {"*.root"}), 
+        "stitch&&njet>=4&&hig_cand_am[0]>=100&&hig_cand_am[0]<150"));
+    procs_data_ambb[year_idx].push_back(
+        Process::MakeShared<Baby_pico>("Data "+iyear_string+"#LT m_{bb} #GT #geq 150 GeV", 
+        Process::Type::data, kBlue,
+        attach_folder(base_folder, iyear_set, data_skim_met150_folder, {"*.root"}), 
+        "stitch&&njet>=4&&hig_cand_am[0]>=150"));
+    year_strings.push_back(iyear_string);
+    luminosity_year_string.push_back(iyear_lumi);
+    year_idx += 1;
+  }
 
-  const NamedFunc metnomu_trigger("metnomu_trigger", [](const Baby &b) -> NamedFunc::ScalarType{
-    //can't used string-based named func because name being too long causes histograms to crash
-    bool r_met_trigger = b.HLT_PFMET90_PFMHT90_IDTight()||b.HLT_PFMET100_PFMHT100_IDTight()||b.HLT_PFMET110_PFMHT110_IDTight()||b.HLT_PFMET120_PFMHT120_IDTight()||b.HLT_PFMET130_PFMHT130_IDTight()||b.HLT_PFMET140_PFMHT140_IDTight()||b.HLT_PFMET100_PFMHT100_IDTight_PFHT60()||b.HLT_PFMET110_PFMHT110_IDTight_PFHT60()||b.HLT_PFMET120_PFMHT120_IDTight_PFHT60()||b.HLT_PFMET130_PFMHT130_IDTight_PFHT60()||b.HLT_PFMET140_PFMHT140_IDTight_PFHT60()||b.HLT_PFMET120_PFMHT120_IDTight_HFCleaned()||b.HLT_PFMET120_PFMHT120_IDTight_PFHT60_HFCleaned();
-    return r_met_trigger;
-  });
-
-  const NamedFunc el_trigger("el_trigger", [](const Baby &b) -> NamedFunc::ScalarType{
-    //can't used string-based named func because name being too long causes histograms to crash
-    bool r_el_trigger = b.HLT_Ele25_WPTight_Gsf()||b.HLT_Ele27_WPTight_Gsf()||b.HLT_Ele28_WPTight_Gsf()||b.HLT_Ele32_WPTight_Gsf_L1DoubleEG()||b.HLT_Ele32_WPTight_Gsf()||b.HLT_Ele35_WPTight_Gsf()||b.HLT_Ele45_WPLoose_Gsf()||b.HLT_Ele105_CaloIdVT_GsfTrkIdT()||b.HLT_Ele115_CaloIdVT_GsfTrkIdT()||b.HLT_Ele135_CaloIdVT_GsfTrkIdT()||b.HLT_Ele145_CaloIdVT_GsfTrkIdT()||b.HLT_Ele25_eta2p1_WPTight_Gsf()||b.HLT_Ele27_eta2p1_WPTight_Gsf()||b.HLT_Ele27_eta2p1_WPLoose_Gsf()||b.HLT_Ele20_WPLoose_Gsf()||b.HLT_Ele20_eta2p1_WPLoose_Gsf()||b.HLT_Ele25_eta2p1_WPLoose_Gsf()||b.HLT_Ele15_IsoVVVL_PFHT350()||b.HLT_Ele15_IsoVVVL_PFHT400()||b.HLT_Ele15_IsoVVVL_PFHT450()||b.HLT_Ele15_IsoVVVL_PFHT600()||b.HLT_Ele50_IsoVVVL_PFHT450();
-    return r_el_trigger;
-  });
-
-  const NamedFunc mu_trigger("mu_trigger", [](const Baby &b) -> NamedFunc::ScalarType{
-    //can't used string-based named func because name being too long causes histograms to crash
-    bool r_mu_trigger = b.HLT_IsoMu20()||b.HLT_IsoMu22()||b.HLT_IsoMu24()||b.HLT_IsoMu27()||b.HLT_IsoTkMu20()||b.HLT_IsoTkMu22()||b.HLT_IsoTkMu24()||b.HLT_Mu50()||b.HLT_Mu55()||b.HLT_TkMu50()||b.HLT_IsoMu22_eta2p1()||b.HLT_IsoMu24_eta2p1()||b.HLT_Mu45_eta2p1()||b.HLT_Mu15_IsoVVVL_PFHT350()||b.HLT_Mu15_IsoVVVL_PFHT400()||b.HLT_Mu15_IsoVVVL_PFHT450()||b.HLT_Mu15_IsoVVVL_PFHT600()||b.HLT_Mu50_IsoVVVL_PFHT400()||b.HLT_Mu50_IsoVVVL_PFHT450();
-    return r_mu_trigger;
-  });
-
-  const NamedFunc ht_trigger("ht_trigger", [](const Baby &b) -> NamedFunc::ScalarType{
-    //can't used string-based named func because name being too long causes histograms to crash
-    bool r_ht_trigger = b.HLT_PFHT125()||b.HLT_PFHT200()||b.HLT_PFHT300()||b.HLT_PFHT400()||b.HLT_PFHT475()||b.HLT_PFHT600()||b.HLT_PFHT650()||b.HLT_PFHT800()||b.HLT_PFHT900()||b.HLT_PFHT180()||b.HLT_PFHT370()||b.HLT_PFHT430()||b.HLT_PFHT510()||b.HLT_PFHT590()||b.HLT_PFHT680()||b.HLT_PFHT780()||b.HLT_PFHT890()||b.HLT_PFHT1050()||b.HLT_PFHT250()||b.HLT_PFHT350();
-    return r_ht_trigger;
-  });
-
-  const NamedFunc jetht_trigger = "HLT_PFJet500" || ht_trigger;
-
-  const NamedFunc ht_loose_jets("ht_loose_jets", [](const Baby &b) -> NamedFunc::ScalarType{
-		  float r_ht_loose_jets = 0;
-		  for (unsigned jet_idx = 0; jet_idx < b.jet_pt()->size(); jet_idx++) {
-		    //jetid is bugged in current nano2pico
-		    if (b.jet_isgood()->at(jet_idx) && (b.jet_id()->at(jet_idx))) {
-		      r_ht_loose_jets += b.jet_pt()->at(jet_idx);
-		    }
-		  }
-		  return r_ht_loose_jets;
-  });
+  //------------------------------------------------------------------------------------
+  //                                     named funcs
+  //------------------------------------------------------------------------------------
 
   const NamedFunc high_pt_jet("high_pt_jet", [](const Baby &b) -> NamedFunc::ScalarType{
-		  bool r_high_pt_jet = false;
-		  if (b.njet()>0) {
-		    if (b.jet_pt()->at(0) > 500) {
-			    r_high_pt_jet = true;
-		    }
+		bool r_high_pt_jet = false;
+		if (b.njet()>0) {
+		  if (b.jet_pt()->at(0) > 500) {
+		    r_high_pt_jet = true;
 		  }
-		  return r_high_pt_jet;
-  });
-
-  const NamedFunc nbb("nbb", [](const Baby &b) -> NamedFunc::ScalarType{
-      int r_nbb = 0;
-      for (unsigned int fjet_idx = 0; fjet_idx < static_cast<unsigned int>(b.nfjet()); fjet_idx++) {
-        if (fjet_idx >= 2)  break;
-        if (b.fjet_deep_md_hbb_btv()->at(fjet_idx)>0.7)
-          r_nbb++;
-      }
-		  return r_nbb;
+		}
+		return r_high_pt_jet;
   });
 
   const NamedFunc nb_higgsino("nb_higgsino", [](const Baby &b) -> NamedFunc::ScalarType{
-        	  int r_nb_higgsino;
-        	  if (b.nbm() == 0) r_nb_higgsino = 0;
-        	  else if (b.nbm() == 1) r_nb_higgsino = 1;
-        	  else if (b.nbt() == 2 && b.nbm() == 2) r_nb_higgsino = 2;
-        	  else if (b.nbt() >= 2 && b.nbm() == 3 && b.nbl() == 3) r_nb_higgsino = 3;
-        	  else if (b.nbt() >= 2 && b.nbm() >= 3 && b.nbl() >= 4) r_nb_higgsino = 4;
-		  else r_nb_higgsino = -1;
-		  return r_nb_higgsino;
+    int r_nb_higgsino;
+    if (b.nbm() == 0) r_nb_higgsino = 0;
+    else if (b.nbm() == 1) r_nb_higgsino = 1;
+    else if (b.nbt() == 2 && b.nbm() == 2) r_nb_higgsino = 2;
+    else if (b.nbt() >= 2 && b.nbm() == 3 && b.nbl() == 3) r_nb_higgsino = 3;
+    else if (b.nbt() >= 2 && b.nbm() >= 3 && b.nbl() >= 4) r_nb_higgsino = 4;
+		else r_nb_higgsino = -1;
+		return r_nb_higgsino;
   });
 
-  const NamedFunc reminiaod_ht("reminiaod_ht", [](const Baby &b) -> NamedFunc::ScalarType{
-    float pico_ht = b.ht();
-    TRandom3 rndgen;
-    float deltaht_mean = 7.67, deltaht_sigma = 0;
-    //float deltaht_mean = 7.67, deltaht_sigma = 18.79;
-    //if (pico_ht> 0 && pico_ht <= 200) { deltaht_mean = -0.357143; deltaht_sigma = 18.681;}
-    //else if (pico_ht> 200 && pico_ht <= 300) { deltaht_mean = 5.41667; deltaht_sigma = 9.86013;}
-    //else if (pico_ht> 300 && pico_ht <= 400) { deltaht_mean = 5.18519; deltaht_sigma = 13.5985;}
-    //else if (pico_ht> 400 && pico_ht <= 500) { deltaht_mean = 9.25; deltaht_sigma = 15.5141;}
-    //else if (pico_ht> 500 && pico_ht <= 600) { deltaht_mean = 12.2143; deltaht_sigma = 13.0353;}
-    //else if (pico_ht> 600 && pico_ht <= 9999) { deltaht_mean = 9.85294; deltaht_sigma = 13.7859;}
-    return pico_ht-rndgen.Gaus(deltaht_mean, deltaht_sigma);
-  });
-  
-  const NamedFunc reminiaod_met("reminiaod_met", [](const Baby &b) -> NamedFunc::ScalarType{
-    float pico_met = b.met();
-    TRandom3 rndgen;
-    float deltamet_mean = 3., deltamet_sigma = 0.;
-    //float deltamet_mean = 3.168, deltamet_sigma = 12.51;
-    //if (pico_met> 0 && pico_met <= 80) { deltamet_mean = -1.36364; deltamet_sigma = 12.0226;}
-    //else if (pico_met> 80 && pico_met <= 160) { deltamet_mean = 2.23333; deltamet_sigma = 9.4361;}
-    //else if (pico_met> 160 && pico_met <= 240) { deltamet_mean = 4.66495; deltamet_sigma = 12.3294;}
-    //else if (pico_met> 240 && pico_met <= 320) { deltamet_mean = 3.58108; deltamet_sigma = 13.0558;}
-    //else if (pico_met> 320 && pico_met <= 9999) { deltamet_mean = 3.33333; deltamet_sigma = 1.86339;}
-    return pico_met-rndgen.Gaus(deltamet_mean, deltamet_sigma);
-  });
-
-  const NamedFunc pass_filters("pass_filters", [](const Baby &b) -> NamedFunc::ScalarType{
-    if (!b.pass_goodv() || !b.pass_hbhe() || !b.pass_hbheiso() || !b.pass_ecaldeadcell() || !b.pass_badpfmu() || !b.pass_muon_jet()) return false;
-    if (b.type()/1000 == 0 && !b.pass_eebadsc()) return false; //only apply eebadsc fiter for data
-    if ((b.type()/1000 != 106)  && !b.pass_cschalo_tight()) return false; //not for fastsim
-    if (!b.pass_low_neutral_jet()) return false;
-    if (!b.pass_htratio_dphi_tight()) return false;
-    if (!b.pass_jets()) return false; //was modified
-    if ((abs(b.SampleType())==2017 || abs(b.SampleType())==2018) && !Higfuncs::pass_ecalnoisejet.GetScalar(b)) return false; 
-    if (!Higfuncs::pass_hemveto.GetScalar(b)) return false;
-    return true;
-  });
+  //------------------------------------------------------------------------------------
+  //                                          plots
+  //------------------------------------------------------------------------------------
 
   PlotMaker pm;
 
   //plots of efficiency with respect to various analysis variables
   if (do_variables) {
-	//-------------6.2 table 1 plots (MET and HT dependenece)-------------
-	//eff vs MET (real MET)
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_plot_den");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_plot_num");
-	//eff vs HT (low MET)
-  	pm.Push<Hist1D>(Axis(13, 0., 1300., "ht", "HT [GeV]", {0.,1300.}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&150<met&&met<=200" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lhtlowmet_plot_den");
-  	pm.Push<Hist1D>(Axis(13, 0., 1300., "ht", "HT [GeV]", {0.,1300.}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&150<met&&met<=200" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lhtlowmet_plot_num");
-	//eff vs HT (high MET)
-  	pm.Push<Hist1D>(Axis(13, 0., 1300., "ht", "HT [GeV]", {0.,1300.}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&200<met&&met<=300" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lhthighmet_plot_den");
-  	pm.Push<Hist1D>(Axis(13, 0., 1300., "ht", "HT [GeV]", {0.,1300.}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&200<met&&met<=300" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lhthighmet_plot_num");
-	//-------------6.2 table 2 plots (AN variable dependenece- Nj Nb DRmax)-------------
-	//eff vs nb
-  	pm.Push<Hist1D>(Axis(5, -0.5, 4.5, nb_higgsino, "N_{b}", {-0.5,4.5}),
-  	                pass_filters && "njet>=4&&njet<=5&&!low_dphi_met&&nel==1&&200<met" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_nb_plot_den");
-  	pm.Push<Hist1D>(Axis(5, -0.5, 4.5, nb_higgsino, "N_{b}", {-0.5,4.5}),
-  	                pass_filters && "njet>=4&&njet<=5&&!low_dphi_met&&nel==1&&200<met" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_nb_plot_num");
-	//eff vs njet
-  	pm.Push<Hist1D>(Axis(5, 2.5, 7.5, "njet", "N_{j}", {2.5,7.5}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&200<met" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_njet_plot_den");
-  	pm.Push<Hist1D>(Axis(5, 2.5, 7.5, "njet", "N_{j}", {2.5,7.5}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&200<met" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_njet_plot_num");
-	//eff vs drmax
-  	pm.Push<Hist1D>(Axis(20, 0., 4., "hig_cand_drmax[0]", "#Delta R_{max}", {0.,4.}),
-  	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&200<met" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_drmax_plot_den");
-  	pm.Push<Hist1D>(Axis(20, 0., 4., "hig_cand_drmax[0]", "#Delta R_{max}", {0.,4.}),
-  	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&200<met" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_drmax_plot_num");
-	//-------------6.2 table 3 plots (AN variable dependenece- <mbb>)-------------
-	//eff vs MET (250<= HT< 300, <m> < 100)
-  	pm.Push<Hist1D>(Axis(50, 150., 400., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&250<=ht&&ht<300&&hig_cand_am[0]<100" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metht250am0_plot_den");
-  	pm.Push<Hist1D>(Axis(50, 150., 400., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&250<=ht&&ht<300&&hig_cand_am[0]<100" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metht250am0_plot_num");
-	//eff vs MET (250<= HT< 300, 100 <= <m> < 150)
-  	pm.Push<Hist1D>(Axis(50, 150., 400., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&250<=ht&&ht<300&&100<=hig_cand_am[0]&&hig_cand_am[0]<150" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metht250am100_plot_den");
-  	pm.Push<Hist1D>(Axis(50, 150., 400., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&250<=ht&&ht<300&&100<=hig_cand_am[0]&&hig_cand_am[0]<150" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metht250am100_plot_num");
-	//eff vs MET (250<= HT< 300, 150 <= <m>)
-  	pm.Push<Hist1D>(Axis(50, 150., 400., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&250<=ht&&ht<300&&150<=hig_cand_am[0]" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metht250am150_plot_den");
-  	pm.Push<Hist1D>(Axis(50, 150., 400., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&250<=ht&&ht<300&&150<=hig_cand_am[0]" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metht250am150_plot_num");
-
-	//eff vs MET (300<= HT< 400, <m> < 100)
-  	pm.Push<Hist1D>(Axis(50, 150., 400., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&300<=ht&&ht<400&&hig_cand_am[0]<100" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metht300am0_plot_den");
-  	pm.Push<Hist1D>(Axis(50, 150., 400., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&300<=ht&&ht<400&&hig_cand_am[0]<100" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metht300am0_plot_num");
-	//eff vs MET (300<= HT< 400, 100 <= <m> < 150)
-  	pm.Push<Hist1D>(Axis(50, 150., 400., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&300<=ht&&ht<400&&100<=hig_cand_am[0]&&hig_cand_am[0]<150" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metht300am100_plot_den");
-  	pm.Push<Hist1D>(Axis(50, 150., 400., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&300<=ht&&ht<400&&100<=hig_cand_am[0]&&hig_cand_am[0]<150" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metht300am100_plot_num");
-	//eff vs MET (300<= HT< 400, 150 <= <m>)
-  	pm.Push<Hist1D>(Axis(50, 150., 400., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&300<=ht&&ht<400&&150<=hig_cand_am[0]" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metht300am150_plot_den");
-  	pm.Push<Hist1D>(Axis(50, 150., 400., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&300<=ht&&ht<400&&150<=hig_cand_am[0]" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metht300am150_plot_num");
-
-	//eff vs MET (400<= HT< 600, <m> < 100)
-  	pm.Push<Hist1D>(Axis(50, 150., 400., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&400<=ht&&ht<600&&hig_cand_am[0]<100" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metht400am0_plot_den");
-  	pm.Push<Hist1D>(Axis(50, 150., 400., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&400<=ht&&ht<600&&hig_cand_am[0]<100" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metht400am0_plot_num");
-	//eff vs MET (400<= HT< 600, 100 <= <m> < 150)
-  	pm.Push<Hist1D>(Axis(50, 150., 400., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&400<=ht&&ht<600&&100<=hig_cand_am[0]&&hig_cand_am[0]<150" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metht400am100_plot_den");
-  	pm.Push<Hist1D>(Axis(50, 150., 400., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&400<=ht&&ht<600&&100<=hig_cand_am[0]&&hig_cand_am[0]<150" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metht400am100_plot_num");
-	//eff vs MET (400<= HT< 600, 150 <= <m>)
-  	pm.Push<Hist1D>(Axis(50, 150., 400., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&400<=ht&&ht<600&&150<=hig_cand_am[0]" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metht400am150_plot_den");
-  	pm.Push<Hist1D>(Axis(50, 150., 400., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&400<=ht&&ht<600&&150<=hig_cand_am[0]" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metht400am150_plot_num");
-	//-------------Misc <mbb> plots not in AN-------------
-	//eff vs <m> higgs
-  	pm.Push<Hist1D>(Axis(20, 0., 300., "hig_cand_am[0]", "#LT m#GT [GeV]", {0.,250.}),
-  	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&nmu==0&&200<met" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_am_plot_den");
-  	pm.Push<Hist1D>(Axis(20, 0., 300., "hig_cand_am[0]", "#LT m#GT [GeV]", {0.,250.}),
-  	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&nmu==0&&200<met" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_am_plot_num");
-	////eff vs <m> higgs 200<HT<300 for HT studies
-  	//pm.Push<Hist1D>(Axis(20, 0., 300., "hig_cand_am[0]", "#LT m#GT [GeV]", {0.,250.}),
-  	//                pass_filters && "(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=4&&!low_dphi_met&&nel==1&&nmu==0&&150<met&&200<ht&&ht<300", procs_met150, all_plot_types).Tag("FixName:trig_raw_amht200_plot_den");
-  	//pm.Push<Hist1D>(Axis(20, 0., 300., "hig_cand_am[0]", "#LT m#GT [GeV]", {0.,250.}),
-  	//                pass_filters && "(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=4&&!low_dphi_met&&nel==1&&nmu==0&&150<met&&200<ht&&ht<300" && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_amht200_plot_num");
-	////eff vs <m> higgs 300<HT<400 for HT studies
-  	//pm.Push<Hist1D>(Axis(20, 0., 300., "hig_cand_am[0]", "#LT m#GT [GeV]", {0.,250.}),
-  	//                pass_filters && "(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=4&&!low_dphi_met&&nel==1&&nmu==0&&150<met&&300<ht&&ht<400", procs_met150, all_plot_types).Tag("FixName:trig_raw_amht300_plot_den");
-  	//pm.Push<Hist1D>(Axis(20, 0., 300., "hig_cand_am[0]", "#LT m#GT [GeV]", {0.,250.}),
-  	//                pass_filters && "(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=4&&!low_dphi_met&&nel==1&&nmu==0&&150<met&&300<ht&&ht<400" && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_amht300_plot_num");
-	////eff vs <m> higgs 400<HT<500 for HT studies
-  	//pm.Push<Hist1D>(Axis(20, 0., 300., "hig_cand_am[0]", "#LT m#GT [GeV]", {0.,250.}),
-  	//                pass_filters && "(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=4&&!low_dphi_met&&nel==1&&nmu==0&&150<met&&400<ht&&ht<500", procs_met150, all_plot_types).Tag("FixName:trig_raw_amht400_plot_den");
-  	//pm.Push<Hist1D>(Axis(20, 0., 300., "hig_cand_am[0]", "#LT m#GT [GeV]", {0.,250.}),
-  	//                pass_filters && "(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=4&&!low_dphi_met&&nel==1&&nmu==0&&150<met&&400<ht&&ht<500" && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_amht400_plot_num");
-	////eff vs <m> higgs 500<HT<600 for HT studies
-  	//pm.Push<Hist1D>(Axis(20, 0., 300., "hig_cand_am[0]", "#LT m#GT [GeV]", {0.,250.}),
-  	//                pass_filters && "(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=4&&!low_dphi_met&&nel==1&&nmu==0&&150<met&&500<ht&&ht<600", procs_met150, all_plot_types).Tag("FixName:trig_raw_amht500_plot_den");
-  	//pm.Push<Hist1D>(Axis(20, 0., 300., "hig_cand_am[0]", "#LT m#GT [GeV]", {0.,250.}),
-  	//                pass_filters && "(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=4&&!low_dphi_met&&nel==1&&nmu==0&&150<met&&500<ht&&ht<600" && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_am_ht500_plot_num");
-
-	//-------------6.3 table 1 plots (MET and HT dependenece)-------------
-	//eff vs MET (QCD MET)
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "low_dphi_met&&nvlep==0" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_plot_den");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "low_dphi_met&&nvlep==0" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_plot_num");
-	//eff vs HT (low fake MET)
-  	pm.Push<Hist1D>(Axis(13, 0., 1300., "ht", "HT [GeV]", {0.,1300.}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&150<met&&met<=200" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_htlowmetqcd_plot_den");
-  	pm.Push<Hist1D>(Axis(13, 0., 1300., "ht", "HT [GeV]", {0.,1300.}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&150<met&&met<=200" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_htlowmetqcd_plot_num");
-	//eff vs HT (high fake MET)
-  	pm.Push<Hist1D>(Axis(13, 0., 1300., "ht", "HT [GeV]", {0.,1300.}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&200<met&&met<=300" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_hthighmetqcd_plot_den");
-  	pm.Push<Hist1D>(Axis(13, 0., 1300., "ht", "HT [GeV]", {0.,1300.}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&200<met&&met<=300" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_hthighmetqcd_plot_num");
-	if (do_controlregions) {
-		//-------------6.4 table 1 plots (1l CR plots)-------------
-		//eff vs MET (1e region)
-  		pm.Push<Hist1D>(Axis(55, 0., 550., "met", "Offline MET [GeV]", {0,1500}),
-  		                pass_filters && "njet>=2&&nel==1" && jetht_trigger, procs_1l2j, all_plot_types).Tag("FixName:trig_raw_met1e_plot_den");
-  		pm.Push<Hist1D>(Axis(55, 0., 550., "met", "Offline MET [GeV]", {0,1500}),
-  		                pass_filters && "njet>=2&&nel==1" && jetht_trigger && (met_trigger||el_trigger), procs_1l2j, all_plot_types).Tag("FixName:trig_raw_met1e_plot_num");
-		//eff vs el_pt (1el region)
-  		pm.Push<Hist1D>(Axis(30, 20., 170., Higfuncs::lead_signal_electron_pt, "Offline Electron p_{T} [GeV]", {20.,170.}),
-  		                pass_filters && "njet>=2&&nel==1&&150<met&&met<200" && jetht_trigger, procs_1l2j, all_plot_types).Tag("FixName:trig_raw_elpt1e_plot_den");
-  		pm.Push<Hist1D>(Axis(30, 20., 170., Higfuncs::lead_signal_electron_pt, "Offline Electron p_{T} [GeV]", {20.,170.}),
-  		                pass_filters && "njet>=2&&nel==1&&150<met&&met<200" && jetht_trigger && (met_trigger||el_trigger), procs_1l2j, all_plot_types).Tag("FixName:trig_raw_elpt1e_plot_num");
-		//eff vs ht (1el region, low MET)
-  		pm.Push<Hist1D>(Axis(13, 0., 1300., "ht", "Offline H_{T} [GeV]", {}),
-  		                pass_filters && "njet>=2&&nel==1&&150<met&&met<200" && jetht_trigger, procs_1l2j, all_plot_types).Tag("FixName:trig_raw_htlowmet1e_plot_den");
-  		pm.Push<Hist1D>(Axis(13, 0., 1300., "ht", "Offline H_{T} [GeV]", {}),
-  		                pass_filters && "njet>=2&&nel==1&&150<met&&met<200" && jetht_trigger && (met_trigger||el_trigger), procs_1l2j, all_plot_types).Tag("FixName:trig_raw_htlowmet1e_plot_num");
-		//eff vs ht (1el region, high MET)
-  		pm.Push<Hist1D>(Axis(13, 0., 1300., "ht", "Offline H_{T} [GeV]", {}),
-  		                pass_filters && "njet>=2&&nel==1&&200<met&&met<300" && jetht_trigger, procs_1l2j, all_plot_types).Tag("FixName:trig_raw_hthighmet1e_plot_den");
-  		pm.Push<Hist1D>(Axis(13, 0., 1300., "ht", "Offline H_{T} [GeV]", {}),
-  		                pass_filters && "njet>=2&&nel==1&&200<met&&met<300" && jetht_trigger && (met_trigger||el_trigger), procs_1l2j, all_plot_types).Tag("FixName:trig_raw_hthighmet1e_plot_num");
-		//eff vs MET (1mu region)
-  		pm.Push<Hist1D>(Axis(55, 0., 550., "met", "Offline MET [GeV]", {0,1500}),
-  		                pass_filters && "njet>=2&&nmu==1" && jetht_trigger, procs_1l2j, all_plot_types).Tag("FixName:trig_raw_met1mu_plot_den");
-  		pm.Push<Hist1D>(Axis(55, 0., 550., "met", "Offline MET [GeV]", {0,1500}),
-  		                pass_filters && "njet>=2&&nmu==1" && jetht_trigger && (met_trigger||mu_trigger), procs_1l2j, all_plot_types).Tag("FixName:trig_raw_met1mu_plot_num");
-		//eff vs mu_pt (1mu region)
-  		pm.Push<Hist1D>(Axis(30, 20., 170., Higfuncs::lead_signal_muon_pt, "Offline Muon p_{T} [GeV]", {20.,170.}),
-  		                pass_filters && "njet>=2&&nmu==1&&150<met&&met<200" && jetht_trigger, procs_1l2j, all_plot_types).Tag("FixName:trig_raw_mupt1mu_plot_den");
-  		pm.Push<Hist1D>(Axis(30, 20., 170., Higfuncs::lead_signal_muon_pt, "Offline Muon p_{T} [GeV]", {20.,170.}),
-  		                pass_filters && "njet>=2&&nmu==1&&150<met&&met<200" && jetht_trigger && (met_trigger||mu_trigger), procs_1l2j, all_plot_types).Tag("FixName:trig_raw_mupt1mu_plot_num");
-		//eff vs ht (1mu region, low MET)
-  		pm.Push<Hist1D>(Axis(13, 0., 1300., "ht", "Offline H_{T} [GeV]", {}),
-  		                pass_filters && "njet>=2&&nmu==1&&150<met&&met<200" && jetht_trigger, procs_1l2j, all_plot_types).Tag("FixName:trig_raw_htlowmet1mu_plot_den");
-  		pm.Push<Hist1D>(Axis(13, 0., 1300., "ht", "Offline H_{T} [GeV]", {}),
-  		                pass_filters && "njet>=2&&nmu==1&&150<met&&met<200" && jetht_trigger && (met_trigger||mu_trigger), procs_1l2j, all_plot_types).Tag("FixName:trig_raw_htlowmet1mu_plot_num");
-		//eff vs ht (1mu region, high MET)
-  		pm.Push<Hist1D>(Axis(13, 0., 1300., "ht", "Offline H_{T} [GeV]", {}),
-  		                pass_filters && "njet>=2&&nmu==1&&200<met&&met<300" && jetht_trigger, procs_1l2j, all_plot_types).Tag("FixName:trig_raw_hthighmet1mu_plot_den");
-  		pm.Push<Hist1D>(Axis(13, 0., 1300., "ht", "Offline H_{T} [GeV]", {}),
-  		                pass_filters && "njet>=2&&nmu==1&&200<met&&met<300" && jetht_trigger && (met_trigger||mu_trigger), procs_1l2j, all_plot_types).Tag("FixName:trig_raw_hthighmet1mu_plot_num");
-		//-------------6.4 table 1 plots (2l CR plots)-------------
-		//eff vs el_pt (2el region)
-  		pm.Push<Hist1D>(Axis(30, 20., 170., Higfuncs::lead_signal_electron_pt, "Offline Max Electron p_{T} [GeV]", {}),
-  		                pass_filters && "njet>=2&&nel==2&&(80<ll_m[0]&&ll_m[0]<100)" && (met_trigger||jetht_trigger), procs_1l2j, all_plot_types).Tag("FixName:trig_raw_elpt2e_plot_den");
-  		pm.Push<Hist1D>(Axis(30, 20., 170., Higfuncs::lead_signal_electron_pt, "Offline Max Electron p_{T} [GeV]", {}),
-  		                pass_filters && "njet>=2&&nel==2&&(80<ll_m[0]&&ll_m[0]<100)" && (met_trigger||jetht_trigger) && el_trigger, procs_1l2j, all_plot_types).Tag("FixName:trig_raw_elpt2e_plot_num");
-		//eff vs ht (2el region)
-  		pm.Push<Hist1D>(Axis(10, 0., 1000., "ht", "H_{T} [GeV]", {}),
-  		                pass_filters && "njet>=2&&nel==2&&(80<ll_m[0]&&ll_m[0]<100)" && (met_trigger||jetht_trigger), procs_1l2j, all_plot_types).Tag("FixName:trig_raw_ht2e_plot_den");
-  		pm.Push<Hist1D>(Axis(10, 0., 1000., "ht", "H_{T} [GeV]", {}),
-  		                pass_filters && "njet>=2&&nel==2&&(80<ll_m[0]&&ll_m[0]<100)" && (met_trigger||jetht_trigger) && el_trigger, procs_1l2j, all_plot_types).Tag("FixName:trig_raw_ht2e_plot_num");
-		//eff vs mu_pt (2mu region)
-  		pm.Push<Hist1D>(Axis(30, 20., 170., Higfuncs::lead_signal_muon_pt, "Offline Max Muon p_{T} [GeV]", {}),
-  		                pass_filters && "njet>=2&&nmu==2&&(80<ll_m[0]&&ll_m[0]<100)" && (met_trigger||jetht_trigger), procs_1l2j, all_plot_types).Tag("FixName:trig_raw_mupt2mu_plot_den");
-  		pm.Push<Hist1D>(Axis(30, 20., 170., Higfuncs::lead_signal_muon_pt, "Offline Max Muon p_{T} [GeV]", {}),
-  		                pass_filters && "njet>=2&&nmu==2&&(80<ll_m[0]&&ll_m[0]<100)" && (met_trigger||jetht_trigger) && mu_trigger, procs_1l2j, all_plot_types).Tag("FixName:trig_raw_mupt2mu_plot_num");
-		//eff vs ht (2mu region)
-  		pm.Push<Hist1D>(Axis(10, 0., 1000., "ht", "H_{T} [GeV]", {}),
-  		                pass_filters && "njet>=2&&nmu==2&&(80<ll_m[0]&&ll_m[0]<100)" && (met_trigger||jetht_trigger), procs_1l2j, all_plot_types).Tag("FixName:trig_raw_ht2mu_plot_den");
-  		pm.Push<Hist1D>(Axis(10, 0., 1000., "ht", "H_{T} [GeV]", {}),
-  		                pass_filters && "njet>=2&&nmu==2&&(80<ll_m[0]&&ll_m[0]<100)" && (met_trigger||jetht_trigger) && mu_trigger, procs_1l2j, all_plot_types).Tag("FixName:trig_raw_ht2mu_plot_num");
-	}
-	//-------------Misc MC comparison not in AN-------------
-	//MET120 only (nominal)
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&nmu==0&&nel==1", procs_met150, all_plot_types).Tag("FixName:trig_raw_met120_plot_den");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&nmu==0&&nel==1&&(HLT_PFMET120_PFMHT120_IDTight)", procs_met150, all_plot_types).Tag("FixName:trig_raw_met120_plot_num");
-	//MET120 MC
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                "(pass&&stitch&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&nmu==0&&nel==1)", procs_met150_mc, all_plot_types).Weight("weight").Tag("FixName:trig_raw_mc_plot_den");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                "(pass&&stitch&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&nmu==0&&nel==1&&(HLT_PFMET120_PFMHT120_IDTight))", procs_met150_mc, all_plot_types).Weight("weight").Tag("FixName:trig_raw_mc_plot_num");
-	//-------------HT binned plots to determine trigger binning for 0l-------------
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&ht<=200" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht1_plot_den");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&ht<=200" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht1_plot_num");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&200<=ht&&ht<=350" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht2_plot_den");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&200<=ht&&ht<=350" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht2_plot_num");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&350<=ht&&ht<=450" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht3_plot_den");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&350<=ht&&ht<=450" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht3_plot_num");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&450<=ht&&ht<=550" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht4_plot_den");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&450<=ht&&ht<=550" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht4_plot_num");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&550<=ht&&ht<=650" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht5_plot_den");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&550<=ht&&ht<=650" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht5_plot_num");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&650<=ht&&ht<=800" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht6_plot_den");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&650<=ht&&ht<=800" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht6_plot_num");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&800<=ht&&ht<=900" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht7_plot_den");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&800<=ht&&ht<=900" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht7_plot_num");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&900<=ht&&ht<=1000" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht8_plot_den");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&900<=ht&&ht<=1000" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht8_plot_num");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&1000<=ht" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht9_plot_den");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&1000<=ht" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht9_plot_num");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&ht<=200" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht1_plot_den");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&ht<=200" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht1_plot_num");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&200<=ht&&ht<=350" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht2_plot_den");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&200<=ht&&ht<=350" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht2_plot_num");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&350<=ht&&ht<=450" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht3_plot_den");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&350<=ht&&ht<=450" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht3_plot_num");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&450<=ht&&ht<=550" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht4_plot_den");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&450<=ht&&ht<=550" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht4_plot_num");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&550<=ht&&ht<=650" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht5_plot_den");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&550<=ht&&ht<=650" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht5_plot_num");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&650<=ht&&ht<=800" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht6_plot_den");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&650<=ht&&ht<=800" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht6_plot_num");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&800<=ht&&ht<=900" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht7_plot_den");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&800<=ht&&ht<=900" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht7_plot_num");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&900<=ht&&ht<=1000" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht8_plot_den");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&900<=ht&&ht<=1000" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht8_plot_num");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&1000<=ht" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht9_plot_den");
-  	pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&1000<=ht" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht9_plot_num");
+	  //-------------6.2 table 1 plots (0l Real MET: MET, HT(low MET), HT(high MET))-------------
+  	pm.Push<EfficiencyPlot>(Axis(100, 150., 550., "met", "Offline p_{T}^{miss} [GeV]", {}),
+  	    Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && Higfuncs::el_trigger, 
+        Higfuncs::met_trigger,
+        procs_data_met150_allyears).Tag("FixName:trig_eff_0lrealmet_met").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
+  	pm.Push<EfficiencyPlot>(Axis(13, 0., 1300., "ht", "H_{T} [GeV]", {}),
+  	    Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&150<met&&met<=200" && Higfuncs::el_trigger,
+        Higfuncs::met_trigger,
+        procs_data_met150_allyears).Tag("FixName:trig_eff_0lrealmet_ht_lowmet").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
+  	pm.Push<EfficiencyPlot>(Axis(13, 0., 1300., "ht", "H_{T} [GeV]", {}),
+  	    Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&200<met&&met<=300" && Higfuncs::el_trigger,
+        Higfuncs::met_trigger,
+        procs_data_met150_allyears).Tag("FixName:trig_eff_0lrealmet_ht_highmet").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
+	  //-------------6.3 table 1 plots (0l Fake MET: MET, HT(low MET), HT(high MET))-------------
+  	pm.Push<EfficiencyPlot>(Axis(100, 150., 550., "met", "Offline p_{T}^{miss} [GeV]", {}),
+  	    Higfuncs::pass_filters && "low_dphi_met&&nvlep==0" && Higfuncs::jetht_trigger,
+        Higfuncs::met_trigger,
+        procs_data_met150_allyears).Tag("FixName:trig_eff_0lfakemet_met").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
+  	pm.Push<EfficiencyPlot>(Axis(13, 0., 1300., "ht", "H_{T} [GeV]", {}),
+  	    Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&150<met&&met<=200" && Higfuncs::jetht_trigger,
+        Higfuncs::met_trigger,
+        procs_data_met150_allyears).Tag("FixName:trig_eff_0lfakmet_ht_lowmet").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
+  	pm.Push<EfficiencyPlot>(Axis(13, 0., 1300., "ht", "H_{T} [GeV]", {}),
+  	    Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&200<met&&met<=300" && Higfuncs::jetht_trigger,
+        Higfuncs::met_trigger,
+        procs_data_met150_allyears).Tag("FixName:trig_eff_0lfakmet_ht_highmet").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
+	  //-------------9.3 table 1 plots (0l Real MET: Nj Nb DRmax, Ambb(not in AN))-------------
+  	pm.Push<EfficiencyPlot>(Axis(5, -0.5, 4.5, nb_higgsino, "N_{b}", {}),
+  	    Higfuncs::pass_filters && "njet>=4&&njet<=5&&!low_dphi_met&&nel==1&&200<met" && Higfuncs::el_trigger, 
+        Higfuncs::met_trigger,
+        procs_data_met150_allyears).Tag("FixName:trig_eff_0lrealmet_nb").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
+  	pm.Push<EfficiencyPlot>(Axis(5, 2.5, 7.5, "njet", "N_{j}", {}),
+  	    Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&200<met" && Higfuncs::el_trigger, 
+        Higfuncs::met_trigger,
+        procs_data_met150_allyears).Tag("FixName:trig_eff_0lrealmet_njet").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
+  	pm.Push<EfficiencyPlot>(Axis(20, 0.0, 4.0, "hig_cand_drmax[0]", "#Delta R_{max}", {}),
+  	    Higfuncs::pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&200<met" && Higfuncs::el_trigger, 
+        Higfuncs::met_trigger,
+        procs_data_met150_allyears).Tag("FixName:trig_eff_0lrealmet_drmax").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
+  	pm.Push<EfficiencyPlot>(Axis(20, 0., 300., "hig_cand_am[0]", "#LT m_{bb} #GT [GeV]", {}),
+  	    Higfuncs::pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&200<met" && Higfuncs::el_trigger, 
+        Higfuncs::met_trigger,
+        procs_data_met150_allyears).Tag("FixName:trig_eff_0lrealmet_ambb");
+	  //-------------9.3 table 2 plots (0l Real MET: <mbb> dependence)-------------
+    for (unsigned int year_index = 0; year_index < procs_data_ambb.size(); year_index++) {
+  	  pm.Push<EfficiencyPlot>(Axis(30, 150., 300., "met", "Offline p_{T}^{miss} [GeV]", {}),
+  	      Higfuncs::pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&250<=ht&&ht<300" && Higfuncs::el_trigger, 
+          Higfuncs::met_trigger,
+          procs_data_ambb[year_index]).Tag("FixName:trig_eff_0lrealmet_met_ht250to300_ambbcuts_"+year_strings[year_index]).YTitle("p_{T}^{miss} Triggers").LuminosityTag(luminosity_year_string[year_index]);
+  	  pm.Push<EfficiencyPlot>(Axis(30, 150., 300., "met", "Offline p_{T}^{miss} [GeV]", {}),
+  	      Higfuncs::pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&300<=ht&&ht<400" && Higfuncs::el_trigger, 
+          Higfuncs::met_trigger,
+          procs_data_ambb[year_index]).Tag("FixName:trig_eff_0lrealmet_met_ht300to400_ambbcuts_"+year_strings[year_index]).YTitle("p_{T}^{miss} Triggers").LuminosityTag(luminosity_year_string[year_index]);
+  	  pm.Push<EfficiencyPlot>(Axis(30, 150., 300., "met", "Offline p_{T}^{miss} [GeV]", {}),
+  	      Higfuncs::pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&400<=ht&&ht<600" && Higfuncs::el_trigger, 
+          Higfuncs::met_trigger,
+          procs_data_ambb[year_index]).Tag("FixName:trig_eff_0lrealmet_met_ht400to600_ambbcuts_"+year_strings[year_index]).YTitle("p_{T}^{miss} Triggers").LuminosityTag(luminosity_year_string[year_index]);
+    }
+	  if (do_controlregions) {
+		  //-------------6.4 table 1 plots (1l CR: MET lep_pt HT(lowmet) HT(highmet))-------------
+      //electrons
+  		pm.Push<EfficiencyPlot>(Axis(55, 0., 550., "met", "Offline p_{T}^{miss} [GeV]", {}),
+  		    Higfuncs::pass_filters && "njet>=2&&nel==1" && Higfuncs::jetht_trigger, 
+          (Higfuncs::met_trigger||Higfuncs::el_trigger),
+          procs_data_1l2j_allyears).Tag("FixName:trig_eff_1el_met").YTitle("p_{T}^{miss} and Electron Triggers").LuminosityTag(total_luminosity_string);
+  		pm.Push<EfficiencyPlot>(Axis(30, 20., 170., Higfuncs::lead_signal_electron_pt, "Offline Electron p_{T} [GeV]", {}),
+  		    Higfuncs::pass_filters && "njet>=2&&nel==1&&150<=met&&met<200" && Higfuncs::jetht_trigger, 
+          (Higfuncs::met_trigger||Higfuncs::el_trigger),
+          procs_data_1l2j_allyears).Tag("FixName:trig_eff_1el_leppt").YTitle("p_{T}^{miss} and Electron Triggers").LuminosityTag(total_luminosity_string);
+  		pm.Push<EfficiencyPlot>(Axis(13, 0., 1300., "ht", "H_{T} [GeV]", {}),
+  		    Higfuncs::pass_filters && "njet>=2&&nel==1&&150<=met&&met<200" && Higfuncs::jetht_trigger, 
+          (Higfuncs::met_trigger||Higfuncs::el_trigger),
+          procs_data_1l2j_allyears).Tag("FixName:trig_eff_1el_ht_lowmet").YTitle("p_{T}^{miss} and Electron Triggers").LuminosityTag(total_luminosity_string);
+  		pm.Push<EfficiencyPlot>(Axis(13, 0., 1300., "ht", "H_{T} [GeV]", {}),
+  		    Higfuncs::pass_filters && "njet>=2&&nel==1&&200<=met&&met<300" && Higfuncs::jetht_trigger, 
+          (Higfuncs::met_trigger||Higfuncs::el_trigger),
+          procs_data_1l2j_allyears).Tag("FixName:trig_eff_1el_ht_highmet").YTitle("p_{T}^{miss} and Electron Triggers").LuminosityTag(total_luminosity_string);
+      //muons
+  		pm.Push<EfficiencyPlot>(Axis(55, 0., 550., "met", "Offline p_{T}^{miss} [GeV]", {}),
+  		    Higfuncs::pass_filters && "njet>=2&&nmu==1" && Higfuncs::jetht_trigger, 
+          (Higfuncs::met_trigger||Higfuncs::mu_trigger),
+          procs_data_1l2j_allyears).Tag("FixName:trig_eff_1mu_met").YTitle("p_{T}^{miss} and Muon Triggers").LuminosityTag(total_luminosity_string);
+  		pm.Push<EfficiencyPlot>(Axis(30, 20., 170., Higfuncs::lead_signal_muon_pt, "Offline Muon p_{T} [GeV]", {}),
+  		    Higfuncs::pass_filters && "njet>=2&&nmu==1&&150<=met&&met<200" && Higfuncs::jetht_trigger, 
+          (Higfuncs::met_trigger||Higfuncs::mu_trigger),
+          procs_data_1l2j_allyears).Tag("FixName:trig_eff_1mu_leppt").YTitle("p_{T}^{miss} and Muon Triggers").LuminosityTag(total_luminosity_string);
+  		pm.Push<EfficiencyPlot>(Axis(13, 0., 1300., "ht", "H_{T} [GeV]", {}),
+  		    Higfuncs::pass_filters && "njet>=2&&nmu==1&&150<=met&&met<200" && Higfuncs::jetht_trigger, 
+          (Higfuncs::met_trigger||Higfuncs::mu_trigger),
+          procs_data_1l2j_allyears).Tag("FixName:trig_eff_1mu_ht_lowmet").YTitle("p_{T}^{miss} and Muon Triggers").LuminosityTag(total_luminosity_string);
+  		pm.Push<EfficiencyPlot>(Axis(13, 0., 1300., "ht", "H_{T} [GeV]", {}),
+  		    Higfuncs::pass_filters && "njet>=2&&nmu==1&&200<=met&&met<300" && Higfuncs::jetht_trigger, 
+          (Higfuncs::met_trigger||Higfuncs::mu_trigger),
+          procs_data_1l2j_allyears).Tag("FixName:trig_eff_1mu_ht_highmet").YTitle("p_{T}^{miss} and Muon Triggers").LuminosityTag(total_luminosity_string);
+		  //-------------6.5 table 1 plots (2l CR: lep_pt HT)-------------
+      //electrons
+  		pm.Push<EfficiencyPlot>(Axis(30, 20., 170., Higfuncs::lead_signal_electron_pt, "Offline Max Electron p_{T} [GeV]", {}),
+  		    Higfuncs::pass_filters && "njet>=2&&nel==2&&(80<ll_m[0]&&ll_m[0]<100)" && (Higfuncs::met_trigger||Higfuncs::jetht_trigger), 
+          Higfuncs::el_trigger,
+          procs_data_1l2j_allyears).Tag("FixName:trig_eff_2el_leppt").YTitle("Electron Triggers").LuminosityTag(total_luminosity_string);
+  		pm.Push<EfficiencyPlot>(Axis(10, 0., 1000., "ht", "H_{T} [GeV]", {}),
+  		    Higfuncs::pass_filters && "njet>=2&&nel==2&&(80<ll_m[0]&&ll_m[0]<100)" && (Higfuncs::met_trigger||Higfuncs::jetht_trigger), 
+          Higfuncs::el_trigger,
+          procs_data_1l2j_allyears).Tag("FixName:trig_eff_2el_ht").YTitle("Electron Triggers").LuminosityTag(total_luminosity_string);
+      //muons
+  		pm.Push<EfficiencyPlot>(Axis(30, 20., 170., Higfuncs::lead_signal_muon_pt, "Offline Max Muon p_{T} [GeV]", {}),
+  		    Higfuncs::pass_filters && "njet>=2&&nmu==2&&(80<ll_m[0]&&ll_m[0]<100)" && (Higfuncs::met_trigger||Higfuncs::jetht_trigger), 
+          Higfuncs::mu_trigger,
+          procs_data_1l2j_allyears).Tag("FixName:trig_eff_2mu_leppt").YTitle("Muon Triggers").LuminosityTag(total_luminosity_string);
+  		pm.Push<EfficiencyPlot>(Axis(10, 0., 1000., "ht", "H_{T} [GeV]", {}),
+  		    Higfuncs::pass_filters && "njet>=2&&nmu==2&&(80<ll_m[0]&&ll_m[0]<100)" && (Higfuncs::met_trigger||Higfuncs::jetht_trigger), 
+          Higfuncs::mu_trigger,
+          procs_data_1l2j_allyears).Tag("FixName:trig_eff_2mu_ht").YTitle("Muon Triggers").LuminosityTag(total_luminosity_string);
+	  }
+	  ////-------------Misc MC comparison not in AN-------------
+	  ////MET120 only (nominal)
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&nmu==0&&nel==1", procs_met150, all_plot_types).Tag("FixName:trig_raw_met120_plot_den");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&nmu==0&&nel==1&&(HLT_PFMET120_PFMHT120_IDTight)", procs_met150, all_plot_types).Tag("FixName:trig_raw_met120_plot_num");
+	////MET120 MC
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                "(pass&&stitch&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&nmu==0&&nel==1)", procs_met150_mc, all_plot_types).Weight("weight").Tag("FixName:trig_raw_mc_plot_den");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                "(pass&&stitch&&(HLT_Ele27_WPTight_Gsf||HLT_Ele35_WPTight_Gsf)&&njet>=3&&!low_dphi_met&&nel==1&&nmu==0&&nel==1&&(HLT_PFMET120_PFMHT120_IDTight))", procs_met150_mc, all_plot_types).Weight("weight").Tag("FixName:trig_raw_mc_plot_num");
+	  ////-------------HT binned plots to determine trigger binning for 0l-------------
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&ht<=200" && Higfuncs::el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht1_plot_den");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&ht<=200" && Higfuncs::el_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht1_plot_num");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&200<=ht&&ht<=350" && Higfuncs::el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht2_plot_den");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&200<=ht&&ht<=350" && Higfuncs::el_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht2_plot_num");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&350<=ht&&ht<=450" && Higfuncs::el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht3_plot_den");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&350<=ht&&ht<=450" && Higfuncs::el_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht3_plot_num");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&450<=ht&&ht<=550" && Higfuncs::el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht4_plot_den");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&450<=ht&&ht<=550" && Higfuncs::el_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht4_plot_num");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&550<=ht&&ht<=650" && Higfuncs::el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht5_plot_den");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&550<=ht&&ht<=650" && Higfuncs::el_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht5_plot_num");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&650<=ht&&ht<=800" && Higfuncs::el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht6_plot_den");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&650<=ht&&ht<=800" && Higfuncs::el_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht6_plot_num");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&800<=ht&&ht<=900" && Higfuncs::el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht7_plot_den");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&800<=ht&&ht<=900" && Higfuncs::el_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht7_plot_num");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&900<=ht&&ht<=1000" && Higfuncs::el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht8_plot_den");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&900<=ht&&ht<=1000" && Higfuncs::el_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht8_plot_num");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&1000<=ht" && Higfuncs::el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht9_plot_den");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&1000<=ht" && Higfuncs::el_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_0lmet_ht9_plot_num");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&ht<=200" && Higfuncs::jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht1_plot_den");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&ht<=200" && Higfuncs::jetht_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht1_plot_num");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&200<=ht&&ht<=350" && Higfuncs::jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht2_plot_den");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&200<=ht&&ht<=350" && Higfuncs::jetht_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht2_plot_num");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&350<=ht&&ht<=450" && Higfuncs::jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht3_plot_den");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&350<=ht&&ht<=450" && Higfuncs::jetht_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht3_plot_num");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&450<=ht&&ht<=550" && Higfuncs::jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht4_plot_den");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&450<=ht&&ht<=550" && Higfuncs::jetht_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht4_plot_num");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&550<=ht&&ht<=650" && Higfuncs::jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht5_plot_den");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&550<=ht&&ht<=650" && Higfuncs::jetht_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht5_plot_num");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&650<=ht&&ht<=800" && Higfuncs::jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht6_plot_den");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&650<=ht&&ht<=800" && Higfuncs::jetht_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht6_plot_num");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&800<=ht&&ht<=900" && Higfuncs::jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht7_plot_den");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&800<=ht&&ht<=900" && Higfuncs::jetht_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht7_plot_num");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&900<=ht&&ht<=1000" && Higfuncs::jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht8_plot_den");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&900<=ht&&ht<=1000" && Higfuncs::jetht_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht8_plot_num");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&1000<=ht" && Higfuncs::jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht9_plot_den");
+  	//pm.Push<Hist1D>(Axis(100, 150., 550., "met", "MET [GeV]", {150,1500}),
+  	//                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&1000<=ht" && Higfuncs::jetht_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_metqcd_ht9_plot_num");
   }
   //0l systematics plots
   if (do_systematics) {
 	//nj3 (nominal)
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_nj3_sys_den");
+  	                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && Higfuncs::el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_nj3_sys_den");
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_nj3_sys_num");
+  	                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && Higfuncs::el_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_nj3_sys_num");
 	//nj4
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet==4&&!low_dphi_met&&nel==1" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_nj4_sys_den");
+  	                Higfuncs::pass_filters && "njet==4&&!low_dphi_met&&nel==1" && Higfuncs::el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_nj4_sys_den");
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet==4&&!low_dphi_met&&nel==1" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_nj4_sys_num");
+  	                Higfuncs::pass_filters && "njet==4&&!low_dphi_met&&nel==1" && Higfuncs::el_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_nj4_sys_num");
 	//nj5
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet==5&&!low_dphi_met&&nel==1" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_nj5_sys_den");
+  	                Higfuncs::pass_filters && "njet==5&&!low_dphi_met&&nel==1" && Higfuncs::el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_nj5_sys_den");
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet==5&&!low_dphi_met&&nel==1" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_nj5_sys_num");
+  	                Higfuncs::pass_filters && "njet==5&&!low_dphi_met&&nel==1" && Higfuncs::el_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_nj5_sys_num");
 	//nb0
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && el_trigger && nb_higgsino==0., procs_met150, all_plot_types).Tag("FixName:trig_raw_nb0_sys_den");
+  	                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && Higfuncs::el_trigger && nb_higgsino==0., procs_met150, all_plot_types).Tag("FixName:trig_raw_nb0_sys_den");
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && el_trigger && nb_higgsino==0. && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_nb0_sys_num");
+  	                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && Higfuncs::el_trigger && nb_higgsino==0. && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_nb0_sys_num");
 	//nb1
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && el_trigger && nb_higgsino==1., procs_met150, all_plot_types).Tag("FixName:trig_raw_nb1_sys_den");
+  	                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && Higfuncs::el_trigger && nb_higgsino==1., procs_met150, all_plot_types).Tag("FixName:trig_raw_nb1_sys_den");
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && el_trigger && nb_higgsino==1. && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_nb1_sys_num");
+  	                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && Higfuncs::el_trigger && nb_higgsino==1. && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_nb1_sys_num");
 	//nb2
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && el_trigger && nb_higgsino>=2., procs_met150, all_plot_types).Tag("FixName:trig_raw_nb2_sys_den");
+  	                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && Higfuncs::el_trigger && nb_higgsino>=2., procs_met150, all_plot_types).Tag("FixName:trig_raw_nb2_sys_den");
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && el_trigger && nb_higgsino>=2. && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_nb2_sys_num");
+  	                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && Higfuncs::el_trigger && nb_higgsino>=2. && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_nb2_sys_num");
 	//drmax < 2.2
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&hig_cand_drmax[0]<2.2" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_drmax0_sys_den");
+  	                Higfuncs::pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&hig_cand_drmax[0]<2.2" && Higfuncs::el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_drmax0_sys_den");
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&hig_cand_drmax[0]<2.2" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_drmax0_sys_num");
+  	                Higfuncs::pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&hig_cand_drmax[0]<2.2" && Higfuncs::el_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_drmax0_sys_num");
 	//drmax > 2.2
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&hig_cand_drmax[0]>=2.2" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_drmax22_sys_den");
+  	                Higfuncs::pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&hig_cand_drmax[0]>=2.2" && Higfuncs::el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_drmax22_sys_den");
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&hig_cand_drmax[0]>=2.2" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_drmax22_sys_num");
+  	                Higfuncs::pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&hig_cand_drmax[0]>=2.2" && Higfuncs::el_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_drmax22_sys_num");
 	//300<=ht<400 (nominal)
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&300<=ht&&ht<400&&!low_dphi_met&&nel==1" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_ht300to400_sys_den");
+  	                Higfuncs::pass_filters && "njet>=4&&300<=ht&&ht<400&&!low_dphi_met&&nel==1" && Higfuncs::el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_ht300to400_sys_den");
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&300<=ht&&ht<400&&!low_dphi_met&&nel==1" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_ht300to400_sys_num");
+  	                Higfuncs::pass_filters && "njet>=4&&300<=ht&&ht<400&&!low_dphi_met&&nel==1" && Higfuncs::el_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_ht300to400_sys_num");
 	//am<140, 300<=ht<400
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&300<=ht&&ht<400&&!low_dphi_met&&nel==1&&hig_cand_am[0]<140" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_am0_sys_den");
+  	                Higfuncs::pass_filters && "njet>=4&&300<=ht&&ht<400&&!low_dphi_met&&nel==1&&hig_cand_am[0]<140" && Higfuncs::el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_am0_sys_den");
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&300<=ht&&ht<400&&!low_dphi_met&&nel==1&&hig_cand_am[0]<140" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_am0_sys_num");
+  	                Higfuncs::pass_filters && "njet>=4&&300<=ht&&ht<400&&!low_dphi_met&&nel==1&&hig_cand_am[0]<140" && Higfuncs::el_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_am0_sys_num");
 	//am>140, 300<=ht<400
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&300<=ht&&ht<400&&!low_dphi_met&&nel==1&&hig_cand_am[0]>=140" && el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_am140_sys_den");
+  	                Higfuncs::pass_filters && "njet>=4&&300<=ht&&ht<400&&!low_dphi_met&&nel==1&&hig_cand_am[0]>=140" && Higfuncs::el_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_am140_sys_den");
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=4&&300<=ht&&ht<400&&!low_dphi_met&&nel==1&&hig_cand_am[0]>=140" && el_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_am140_sys_num");
+  	                Higfuncs::pass_filters && "njet>=4&&300<=ht&&ht<400&&!low_dphi_met&&nel==1&&hig_cand_am[0]>=140" && Higfuncs::el_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_am140_sys_num");
 	//jet_pt>500 (nominal)
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && el_trigger && high_pt_jet, procs_met150, all_plot_types).Tag("FixName:trig_raw_refel_sys_den");
+  	                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && Higfuncs::el_trigger && high_pt_jet, procs_met150, all_plot_types).Tag("FixName:trig_raw_refel_sys_den");
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && el_trigger && high_pt_jet && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_refel_sys_num");
+  	                Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && Higfuncs::el_trigger && high_pt_jet && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_refel_sys_num");
 	//jet_pt>500, ref trigger jet500
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "HLT_PFJet500&&njet>=3&&!low_dphi_met&&nel==1" && high_pt_jet, procs_met150, all_plot_types).Tag("FixName:trig_raw_refjet_sys_den");
+  	                Higfuncs::pass_filters && "HLT_PFJet500&&njet>=3&&!low_dphi_met&&nel==1" && high_pt_jet, procs_met150, all_plot_types).Tag("FixName:trig_raw_refjet_sys_den");
   	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "HLT_PFJet500&&njet>=3&&!low_dphi_met&&nel==1" && high_pt_jet && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_refjet_sys_num");
-	//jet_pt>500 nel=1, ref trigger jet500 (nominal)
-  	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "(met/mht<2)&&(met/met_calo<2)&&HLT_PFJet500&&njet>=3&&!low_dphi_met&&nel==1" && high_pt_jet, procs_met150, all_plot_types).Tag("FixName:trig_raw_1e_sys_den");
-  	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "(met/mht<2)&&(met/met_calo<2)&&HLT_PFJet500&&njet>=3&&!low_dphi_met&&nel==1" && high_pt_jet && metnomu_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_1e_sys_num");
-	//jet_pt>500 nmu=1, ref trigger jet500
-  	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "(met/mht<2)&&(met/met_calo<2)&&HLT_PFJet500&&njet>=3&&!low_dphi_met&&nmu==1" && high_pt_jet, procs_met150, all_plot_types).Tag("FixName:trig_raw_1mu_sys_den");
-  	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
-  	                pass_filters && "(met/mht<2)&&(met/met_calo<2)&&HLT_PFJet500&&njet>=3&&!low_dphi_met&&nmu==1" && high_pt_jet && metnomu_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_1mu_sys_num");
+  	                Higfuncs::pass_filters && "HLT_PFJet500&&njet>=3&&!low_dphi_met&&nel==1" && high_pt_jet && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_refjet_sys_num");
+	////jet_pt>500 nel=1, ref trigger jet500 (nominal)
+  //	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
+  //	                Higfuncs::pass_filters && "(met/mht<2)&&(met/met_calo<2)&&HLT_PFJet500&&njet>=3&&!low_dphi_met&&nel==1" && high_pt_jet, procs_met150, all_plot_types).Tag("FixName:trig_raw_1e_sys_den");
+  //	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
+  //	                Higfuncs::pass_filters && "(met/mht<2)&&(met/met_calo<2)&&HLT_PFJet500&&njet>=3&&!low_dphi_met&&nel==1" && high_pt_jet && metnoHigfuncs::mu_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_1e_sys_num");
+	////jet_pt>500 nmu=1, ref trigger jet500
+  //	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
+  //	                Higfuncs::pass_filters && "(met/mht<2)&&(met/met_calo<2)&&HLT_PFJet500&&njet>=3&&!low_dphi_met&&nmu==1" && high_pt_jet, procs_met150, all_plot_types).Tag("FixName:trig_raw_1mu_sys_den");
+  //	pm.Push<Hist1D>(Axis(sys_met_bins, "met", "MET [GeV]", {150,1500}),
+  //	                Higfuncs::pass_filters && "(met/mht<2)&&(met/met_calo<2)&&HLT_PFJet500&&njet>=3&&!low_dphi_met&&nmu==1" && high_pt_jet && metnoHigfuncs::mu_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_1mu_sys_num");
   }
   // trigger efficiency plots and application file
   if (do_efficiency) {
   	pm.Push<Hist2D>(Axis(true_met_bins, "met", "MET", {}),
   	                Axis(ht_bins, "ht", "HT", {}),
-  	                pass_filters && "!low_dphi_met&&njet>=4&&nel==1" && (Higfuncs::lead_signal_lepton_pt<35) && el_trigger, procs_met150, twodim_plotopts).Tag("FixName:trig_raw_0l_eff_den");
+  	                Higfuncs::pass_filters && "!low_dphi_met&&njet>=4&&nel==1" && (Higfuncs::lead_signal_lepton_pt<35) && Higfuncs::el_trigger, procs_met150, twodim_plotopts).Tag("FixName:trig_raw_0l_eff_den");
   	pm.Push<Hist2D>(Axis(true_met_bins, "met", "MET", {}),
   	                Axis(ht_bins, "ht", "HT", {}),
-  	                pass_filters && "!low_dphi_met&&njet>=4&&nel==1" && (Higfuncs::lead_signal_lepton_pt<35) && el_trigger && met_trigger, procs_met150, twodim_plotopts).Tag("FixName:trig_raw_0l_eff_num");
+  	                Higfuncs::pass_filters && "!low_dphi_met&&njet>=4&&nel==1" && (Higfuncs::lead_signal_lepton_pt<35) && Higfuncs::el_trigger && Higfuncs::met_trigger, procs_met150, twodim_plotopts).Tag("FixName:trig_raw_0l_eff_num");
 	//QCD HT bins
   	pm.Push<Hist1D>(Axis(fake_met_bins_ht0to350, "met", "MET [GeV]", {}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&ht<350" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht0to350_den");
+  	                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&ht<350" && Higfuncs::jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht0to350_den");
   	pm.Push<Hist1D>(Axis(fake_met_bins_ht0to350, "met", "MET [GeV]", {}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&ht<350" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht0to350_num");
+  	                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&ht<350" && Higfuncs::jetht_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht0to350_num");
   	pm.Push<Hist1D>(Axis(fake_met_bins_ht350to450, "met", "MET [GeV]", {}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&350<=ht&&ht<450" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht350to450_den");
+  	                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&350<=ht&&ht<450" && Higfuncs::jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht350to450_den");
   	pm.Push<Hist1D>(Axis(fake_met_bins_ht350to450, "met", "MET [GeV]", {}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&350<=ht&&ht<450" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht350to450_num");
+  	                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&350<=ht&&ht<450" && Higfuncs::jetht_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht350to450_num");
   	pm.Push<Hist1D>(Axis(fake_met_bins_ht450to550, "met", "MET [GeV]", {}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&450<=ht&&ht<550" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht450to550_den");
+  	                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&450<=ht&&ht<550" && Higfuncs::jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht450to550_den");
   	pm.Push<Hist1D>(Axis(fake_met_bins_ht450to550, "met", "MET [GeV]", {}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&450<=ht&&ht<550" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht450to550_num");
+  	                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&450<=ht&&ht<550" && Higfuncs::jetht_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht450to550_num");
   	pm.Push<Hist1D>(Axis(fake_met_bins_ht550to650, "met", "MET [GeV]", {}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&550<=ht&&ht<650" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht550to650_den");
+  	                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&550<=ht&&ht<650" && Higfuncs::jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht550to650_den");
   	pm.Push<Hist1D>(Axis(fake_met_bins_ht550to650, "met", "MET [GeV]", {}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&550<=ht&&ht<650" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht550to650_num");
+  	                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&550<=ht&&ht<650" && Higfuncs::jetht_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht550to650_num");
   	pm.Push<Hist1D>(Axis(fake_met_bins, "met", "MET [GeV]", {}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&650<=ht&&ht<800" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht650to800_den");
+  	                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&650<=ht&&ht<800" && Higfuncs::jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht650to800_den");
   	pm.Push<Hist1D>(Axis(fake_met_bins, "met", "MET [GeV]", {}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&650<=ht&&ht<800" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht650to800_num");
+  	                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&650<=ht&&ht<800" && Higfuncs::jetht_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht650to800_num");
   	pm.Push<Hist1D>(Axis(fake_met_bins, "met", "MET [GeV]", {}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&800<=ht&&ht<1000" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht800to1000_den");
+  	                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&800<=ht&&ht<1000" && Higfuncs::jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht800to1000_den");
   	pm.Push<Hist1D>(Axis(fake_met_bins, "met", "MET [GeV]", {}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&800<=ht&&ht<1000" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht800to1000_num");
+  	                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&800<=ht&&ht<1000" && Higfuncs::jetht_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht800to1000_num");
   	pm.Push<Hist1D>(Axis(fake_met_bins, "met", "MET [GeV]", {}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&1000<=ht" && jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht1000toInf_den");
+  	                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&1000<=ht" && Higfuncs::jetht_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht1000toInf_den");
   	pm.Push<Hist1D>(Axis(fake_met_bins, "met", "MET [GeV]", {}),
-  	                pass_filters && "low_dphi_met&&nvlep==0&&1000<=ht" && jetht_trigger && met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht1000toInf_num");
+  	                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&1000<=ht" && Higfuncs::jetht_trigger && Higfuncs::met_trigger, procs_met150, all_plot_types).Tag("FixName:trig_raw_qcd_eff_ht1000toInf_num");
   	//pm.Push<Hist2D>(Axis(fake_met_bins, "met", "MET", {}),
   	//                Axis(ht_fake_met_bins, "ht", "HT", {}),
-  	//                pass_filters && "low_dphi_met&&nvlep==0" && ht_trigger, procs_met150, twodim_plotopts).Tag("FixName:trig_raw_qcd_eff_den");
+  	//                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0" && ht_trigger, procs_met150, twodim_plotopts).Tag("FixName:trig_raw_qcd_eff_den");
   	//pm.Push<Hist2D>(Axis(fake_met_bins, "met", "MET", {}),
   	//                Axis(ht_fake_met_bins, "ht", "HT", {}),
-  	//                pass_filters && "low_dphi_met&&nvlep==0" && ht_trigger && met_trigger, procs_met150, twodim_plotopts).Tag("FixName:trig_raw_qcd_eff_num");
+  	//                Higfuncs::pass_filters && "low_dphi_met&&nvlep==0" && ht_trigger && Higfuncs::met_trigger, procs_met150, twodim_plotopts).Tag("FixName:trig_raw_qcd_eff_num");
 	if (do_controlregions) {
 		//1e
   		pm.Push<Hist2D>(Axis(twodim_met_bins, "met", "MET", {}),
   		                Axis(el_pt_bins, Higfuncs::lead_signal_electron_pt, "Electron pt", {}),
-  		                pass_filters && "njet>=2&&nel==1&&0<=ht&&ht<400" && jetht_trigger, procs_1l2j, twodim_plotopts).Tag("FixName:trig_raw_1el_ht0to400_eff_den");
+  		                Higfuncs::pass_filters && "njet>=2&&nel==1&&0<=ht&&ht<400" && Higfuncs::jetht_trigger, procs_1l2j, twodim_plotopts).Tag("FixName:trig_raw_1el_ht0to400_eff_den");
   		pm.Push<Hist2D>(Axis(twodim_met_bins, "met", "MET", {}),
   		                Axis(el_pt_bins, Higfuncs::lead_signal_electron_pt, "Electron pt", {}),
-  		                pass_filters && "njet>=2&&nel==1&&0<=ht&&ht<400" && jetht_trigger && (met_trigger||el_trigger), procs_1l2j, twodim_plotopts).Tag("FixName:trig_raw_1el_ht0to400_eff_num");
+  		                Higfuncs::pass_filters && "njet>=2&&nel==1&&0<=ht&&ht<400" && Higfuncs::jetht_trigger && (Higfuncs::met_trigger||Higfuncs::el_trigger), procs_1l2j, twodim_plotopts).Tag("FixName:trig_raw_1el_ht0to400_eff_num");
   		pm.Push<Hist2D>(Axis(twodim_met_bins, "met", "MET", {}),
   		                Axis(el_pt_bins, Higfuncs::lead_signal_electron_pt, "Electron pt", {}),
-  		                pass_filters && "njet>=2&&nel==1&&400<=ht&&ht<600" && jetht_trigger, procs_1l2j, twodim_plotopts).Tag("FixName:trig_raw_1el_ht400to600_eff_den");
+  		                Higfuncs::pass_filters && "njet>=2&&nel==1&&400<=ht&&ht<600" && Higfuncs::jetht_trigger, procs_1l2j, twodim_plotopts).Tag("FixName:trig_raw_1el_ht400to600_eff_den");
   		pm.Push<Hist2D>(Axis(twodim_met_bins, "met", "MET", {}),
   		                Axis(el_pt_bins, Higfuncs::lead_signal_electron_pt, "Electron pt", {}),
-  		                pass_filters && "njet>=2&&nel==1&&400<=ht&&ht<600" && jetht_trigger && (met_trigger||el_trigger), procs_1l2j, twodim_plotopts).Tag("FixName:trig_raw_1el_ht400to600_eff_num");
+  		                Higfuncs::pass_filters && "njet>=2&&nel==1&&400<=ht&&ht<600" && Higfuncs::jetht_trigger && (Higfuncs::met_trigger||Higfuncs::el_trigger), procs_1l2j, twodim_plotopts).Tag("FixName:trig_raw_1el_ht400to600_eff_num");
   		pm.Push<Hist2D>(Axis(twodim_met_bins, "met", "MET", {}),
   		                Axis(el_pt_bins, Higfuncs::lead_signal_electron_pt, "Electron pt", {}),
-  		                pass_filters && "njet>=2&&nel==1&&600<=ht" && jetht_trigger, procs_1l2j, twodim_plotopts).Tag("FixName:trig_raw_1el_ht600toInf_eff_den");
+  		                Higfuncs::pass_filters && "njet>=2&&nel==1&&600<=ht" && Higfuncs::jetht_trigger, procs_1l2j, twodim_plotopts).Tag("FixName:trig_raw_1el_ht600toInf_eff_den");
   		pm.Push<Hist2D>(Axis(twodim_met_bins, "met", "MET", {}),
   		                Axis(el_pt_bins, Higfuncs::lead_signal_electron_pt, "Electron pt", {}),
-  		                pass_filters && "njet>=2&&nel==1&&600<=ht" && jetht_trigger && (met_trigger||el_trigger), procs_1l2j, twodim_plotopts).Tag("FixName:trig_raw_1el_ht600toInf_eff_num");
+  		                Higfuncs::pass_filters && "njet>=2&&nel==1&&600<=ht" && Higfuncs::jetht_trigger && (Higfuncs::met_trigger||Higfuncs::el_trigger), procs_1l2j, twodim_plotopts).Tag("FixName:trig_raw_1el_ht600toInf_eff_num");
 		//1mu
   		pm.Push<Hist2D>(Axis(twodim_met_bins, "met", "MET", {}),
   		                Axis(mu_pt_bins, Higfuncs::lead_signal_muon_pt, "Muon pt", {}),
-  		                pass_filters && "njet>=2&&nmu==1&&0<=ht&&ht<=400" && jetht_trigger, procs_1l2j, twodim_plotopts).Tag("FixName:trig_raw_1mu_ht0to400_eff_den");
+  		                Higfuncs::pass_filters && "njet>=2&&nmu==1&&0<=ht&&ht<=400" && Higfuncs::jetht_trigger, procs_1l2j, twodim_plotopts).Tag("FixName:trig_raw_1mu_ht0to400_eff_den");
   		pm.Push<Hist2D>(Axis(twodim_met_bins, "met", "MET", {}),
   		                Axis(mu_pt_bins, Higfuncs::lead_signal_muon_pt, "Muon pt", {}),
-  		                pass_filters && "njet>=2&&nmu==1&&0<=ht&&ht<=400" && jetht_trigger && (met_trigger||mu_trigger), procs_1l2j, twodim_plotopts).Tag("FixName:trig_raw_1mu_ht0to400_eff_num");
+  		                Higfuncs::pass_filters && "njet>=2&&nmu==1&&0<=ht&&ht<=400" && Higfuncs::jetht_trigger && (Higfuncs::met_trigger||Higfuncs::mu_trigger), procs_1l2j, twodim_plotopts).Tag("FixName:trig_raw_1mu_ht0to400_eff_num");
   		pm.Push<Hist2D>(Axis(twodim_met_bins, "met", "MET", {}),
   		                Axis(mu_pt_bins, Higfuncs::lead_signal_muon_pt, "Muon pt", {}),
-  		                pass_filters && "njet>=2&&nmu==1&&400<=ht&&ht<=600" && jetht_trigger, procs_1l2j, twodim_plotopts).Tag("FixName:trig_raw_1mu_ht400to600_eff_den");
+  		                Higfuncs::pass_filters && "njet>=2&&nmu==1&&400<=ht&&ht<=600" && Higfuncs::jetht_trigger, procs_1l2j, twodim_plotopts).Tag("FixName:trig_raw_1mu_ht400to600_eff_den");
   		pm.Push<Hist2D>(Axis(twodim_met_bins, "met", "MET", {}),
   		                Axis(mu_pt_bins, Higfuncs::lead_signal_muon_pt, "Muon pt", {}),
-  		                pass_filters && "njet>=2&&nmu==1&&400<=ht&&ht<=600" && jetht_trigger && (met_trigger||mu_trigger), procs_1l2j, twodim_plotopts).Tag("FixName:trig_raw_1mu_ht400to600_eff_num");
+  		                Higfuncs::pass_filters && "njet>=2&&nmu==1&&400<=ht&&ht<=600" && Higfuncs::jetht_trigger && (Higfuncs::met_trigger||Higfuncs::mu_trigger), procs_1l2j, twodim_plotopts).Tag("FixName:trig_raw_1mu_ht400to600_eff_num");
   		pm.Push<Hist2D>(Axis(twodim_met_bins, "met", "MET", {}),
   		                Axis(mu_pt_bins, Higfuncs::lead_signal_muon_pt, "Muon pt", {}),
-  		                pass_filters && "njet>=2&&nmu==1&&600<=ht" && jetht_trigger, procs_1l2j, twodim_plotopts).Tag("FixName:trig_raw_1mu_ht600toInf_eff_den");
+  		                Higfuncs::pass_filters && "njet>=2&&nmu==1&&600<=ht" && Higfuncs::jetht_trigger, procs_1l2j, twodim_plotopts).Tag("FixName:trig_raw_1mu_ht600toInf_eff_den");
   		pm.Push<Hist2D>(Axis(twodim_met_bins, "met", "MET", {}),
   		                Axis(mu_pt_bins, Higfuncs::lead_signal_muon_pt, "Muon pt", {}),
-  		                pass_filters && "njet>=2&&nmu==1&&600<=ht" && jetht_trigger && (met_trigger||mu_trigger), procs_1l2j, twodim_plotopts).Tag("FixName:trig_raw_1mu_ht600toInf_eff_num");
+  		                Higfuncs::pass_filters && "njet>=2&&nmu==1&&600<=ht" && Higfuncs::jetht_trigger && (Higfuncs::met_trigger||Higfuncs::mu_trigger), procs_1l2j, twodim_plotopts).Tag("FixName:trig_raw_1mu_ht600toInf_eff_num");
 		//2l
   		pm.Push<Hist1D>(Axis(twoel_pt_bins, Higfuncs::lead_signal_electron_pt, "Offline Max Electron p_{T} [GeV]", {}),
-  		                pass_filters && "njet>=2&&nel==2&&(80<ll_m[0]&&ll_m[0]<100)" && (met_trigger||jetht_trigger), procs_1l2j, all_plot_types).Tag("FixName:trig_raw_2el_eff_den");
+  		                Higfuncs::pass_filters && "njet>=2&&nel==2&&(80<ll_m[0]&&ll_m[0]<100)" && (Higfuncs::met_trigger||Higfuncs::jetht_trigger), procs_1l2j, all_plot_types).Tag("FixName:trig_raw_2el_eff_den");
   		pm.Push<Hist1D>(Axis(twoel_pt_bins, Higfuncs::lead_signal_electron_pt, "Offline Max Electron p_{T} [GeV]", {}),
-  		                pass_filters && "njet>=2&&nel==2&&(80<ll_m[0]&&ll_m[0]<100)" && (met_trigger||jetht_trigger) && el_trigger, procs_1l2j, all_plot_types).Tag("FixName:trig_raw_2el_eff_num");
+  		                Higfuncs::pass_filters && "njet>=2&&nel==2&&(80<ll_m[0]&&ll_m[0]<100)" && (Higfuncs::met_trigger||Higfuncs::jetht_trigger) && Higfuncs::el_trigger, procs_1l2j, all_plot_types).Tag("FixName:trig_raw_2el_eff_num");
   		pm.Push<Hist1D>(Axis(twomu_pt_bins, Higfuncs::lead_signal_muon_pt, "Offline Max Muon p_{T} [GeV]", {}),
-  		                pass_filters && "njet>=2&&nmu==2&&(80<ll_m[0]&&ll_m[0]<100)" && (met_trigger||jetht_trigger), procs_1l2j, all_plot_types).Tag("FixName:trig_raw_2mu_eff_den");
+  		                Higfuncs::pass_filters && "njet>=2&&nmu==2&&(80<ll_m[0]&&ll_m[0]<100)" && (Higfuncs::met_trigger||Higfuncs::jetht_trigger), procs_1l2j, all_plot_types).Tag("FixName:trig_raw_2mu_eff_den");
   		pm.Push<Hist1D>(Axis(twomu_pt_bins, Higfuncs::lead_signal_muon_pt, "Offline Max Muon p_{T} [GeV]", {}),
-  		                pass_filters && "njet>=2&&nmu==2&&(80<ll_m[0]&&ll_m[0]<100)" && (met_trigger||jetht_trigger) && mu_trigger, procs_1l2j, all_plot_types).Tag("FixName:trig_raw_2mu_eff_num");
+  		                Higfuncs::pass_filters && "njet>=2&&nmu==2&&(80<ll_m[0]&&ll_m[0]<100)" && (Higfuncs::met_trigger||Higfuncs::jetht_trigger) && Higfuncs::mu_trigger, procs_1l2j, all_plot_types).Tag("FixName:trig_raw_2mu_eff_num");
 	}
   }
 
@@ -755,234 +653,92 @@ int main(int argc, char *argv[]){
   TFile* out_file = TFile::Open(("ntuples/"+out_filename+".root").c_str(),"RECREATE");
   int pm_idx = 0;
   if (do_variables) {
-	//-------------6.2 table 1 plots (MET and HT dependenece)-------------
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_"+year_string+".pdf");
-	pm_idx += 2;
-	
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1 150<MET#leq 200, 35.9 fb^{-1} (13 TeV); Offline HT [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_htlowmet");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, 150 GeV #leq p_{T}^{miss}<200 GeV","Offline H_{T}","Efficiency "+str_met_trig,"GeV","htlowmet_"+year_string+".pdf");
-	pm_idx += 2;
+    pm_idx += (10+3*procs_data_ambb.size());
+	  if (do_controlregions) {
+      pm_idx += 4*3;
+	  }
+	  ////-------------Misc MC comparison not in AN-------------
+    //	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET120]","hist_datamet120");
+	  //make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1","Offline p_{T}^{miss}","Efficiency MET[NoMu]120","GeV","datamet120_"+year_string+".pdf");
+	  //pm_idx += 2;
 
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1 200<MET, 35.9 fb^{-1} (13 TeV); Offline HT [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_hthighmet");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, 200 GeV #leq p_{T}^{miss}<300 GeV","Offline H_{T}","Efficiency "+str_met_trig,"GeV","hthighmet_"+year_string+".pdf");
-	pm_idx += 2;
+    //	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150_mc, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, Summer16 t#bar{t} 1l; Offline E_{T}^{miss} [GeV]; Efficiency [MET120]","hist_mcmet120");
+	  //make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150_mc,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1","Offline p_{T}^{miss}","Efficiency MET[NoMu]120","GeV","mcmet120_"+year_string+".pdf",false,true);
+	  //pm_idx += 2;
 
-	//-------------6.2 table 2 plots (AN variable dependenece- Nj Nb DRmax)-------------
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 4 high #Delta#phi N_{e}=1 200<MET, 35.9 fb^{-1} (13 TeV); Offline N_{b}; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_nb");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 4, high #Delta #phi, N_{e}=1, p_{T}^{miss} #geq 200 GeV","Offline N_{b}","Efficiency "+str_met_trig,"","nb_nj4_"+year_string+".pdf");
-	pm_idx += 2;
+	  ////-------------HT binned plots to determine trigger binning for 0l-------------
+    //	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, H_{T}<200 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht0to200");
+	  //make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, H_{T}<200 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht0to200_"+year_string+".pdf");
+	  //pm_idx += 2;
 
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1 200<MET, 35.9 fb^{-1} (13 TeV); Offline N_{j}; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_nj");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, p_{T}^{miss} #geq 200 GeV","Offline N_{j}","Efficiency "+str_met_trig,"","nj_"+year_string+".pdf");
-	pm_idx += 2;
+    //	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, 200<H_{T}<350 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht200to350");
+	  //make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, 200 #leq H_{T}<350 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht200to350_"+year_string+".pdf");
+	  //pm_idx += 2;
 
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1 200<MET, 35.9 fb^{-1} (13 TeV); Offline #Delta R_{max}; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_higcanddrmax");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 4, high #Delta #phi, N_{e}=1, p_{T}^{miss} #geq 200 GeV","Offline #Delta R_{max}","Efficiency "+str_met_trig,"","higcanddrmax_"+year_string+".pdf");
-	pm_idx += 2;
+    //	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, 350<H_{T}<450 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht350to450");
+	  //make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, 350 #leq H_{T}<450 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht350to450_"+year_string+".pdf");
+	  //pm_idx += 2;
 
-	//-------------6.2 table 3 plots (AN variable dependenece- <mbb>)-------------
-	make_ambb_plots(&pm, pm_idx, pm_idx+1, pm_idx+2, pm_idx+3, pm_idx+4, pm_idx+5, pro_met150, str_lumi, "250 #leq H_{T} < 300 GeV", "ht250to300_"+year_string);
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 4 high #Delta#phi N_{e}=1 250#leq H_{T} < 300 GeV #LT m_{bb}#GT < 100 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_metambb0to100");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 4, high #Delta #phi, N_{e}=1, 250 #leq H_{T} < 300 GeV, #LT m_{bb} #GT < 100 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","met_ambb0to100ht250to300_"+year_string+".pdf");
-	pm_idx += 2;
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 4 high #Delta#phi N_{e}=1 250#leq H_{T} < 300 GeV 100 #leq #LT m_{bb}#GT < 150 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_metambb100to150");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 4, high #Delta #phi, N_{e}=1, 250 #leq H_{T} < 300 GeV, 100 #leq #LT m_{bb} #GT < 150 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","met_ambb100to150ht250to300_"+year_string+".pdf");
-	pm_idx += 2;
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 4 high #Delta#phi N_{e}=1 250#leq H_{T} < 300 GeV 150 GeV #leq #LT m_{bb}#GT, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_metambb150toInf");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 4, high #Delta #phi, N_{e}=1, 250 #leq H_{T} < 300 GeV, 150 GeV #leq #LT m_{bb} #GT","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","met_ambb150toinfht250to300_"+year_string+".pdf");
-	pm_idx += 2;
-	
-	make_ambb_plots(&pm, pm_idx, pm_idx+1, pm_idx+2, pm_idx+3, pm_idx+4, pm_idx+5, pro_met150, str_lumi, "300 #leq H_{T} < 400 GeV", "ht300to400_"+year_string);
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 4 high #Delta#phi N_{e}=1 300#leq H_{T} < 400 GeV #LT m_{bb}#GT < 100 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_metambb0to100");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 4, high #Delta #phi, N_{e}=1, 300 #leq H_{T} < 400 GeV, #LT m_{bb} #GT < 100 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","met_ambb0to100ht300to400_"+year_string+".pdf");
-	pm_idx += 2;
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 4 high #Delta#phi N_{e}=1 300#leq H_{T} < 400 GeV 100 #leq #LT m_{bb}#GT < 150 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_metambb100to150");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 4, high #Delta #phi, N_{e}=1, 300 #leq H_{T} < 400 GeV, 100 #leq #LT m_{bb} #GT < 150 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","met_ambb100to150ht300to400_"+year_string+".pdf");
-	pm_idx += 2;
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 4 high #Delta#phi N_{e}=1 300#leq H_{T} < 400 GeV 150 GeV #leq #LT m_{bb}#GT, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_metambb150toInf");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 4, high #Delta #phi, N_{e}=1, 300 #leq H_{T} < 400 GeV, 150 GeV #leq #LT m_{bb} #GT","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","met_ambb150toinfht300to400_"+year_string+".pdf");
-	pm_idx += 2;
+    //	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, 450<H_{T}<550 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht450to550");
+	  //make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, 450 #leq H_{T}<550 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht450to550_"+year_string+".pdf");
+	  //pm_idx += 2;
 
-	make_ambb_plots(&pm, pm_idx, pm_idx+1, pm_idx+2, pm_idx+3, pm_idx+4, pm_idx+5, pro_met150, str_lumi, "400 #leq H_{T} < 600 GeV", "ht400to600_"+year_string);
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 4 high #Delta#phi N_{e}=1 400 #leq H_{T} < 600 GeV #LT m_{bb}#GT < 100 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_metambb0to100");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 4, high #Delta #phi, N_{e}=1, 400 #leq H_{T} < 600 GeV, #LT m_{bb} #GT < 100 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","met_ambb0to100ht400to600_"+year_string+".pdf");
-	pm_idx += 2;
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 4 high #Delta#phi N_{e}=1 400 #leq H_{T} < 600 GeV 100 #leq #LT m_{bb}#GT < 150 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_metambb100to150");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 4, high #Delta #phi, N_{e}=1, 400 #leq H_{T} < 600 GeV, 100 #leq #LT m_{bb} #GT < 150 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","met_ambb100to150ht400to600_"+year_string+".pdf");
-	pm_idx += 2;
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 4 high #Delta#phi N_{e}=1 400 #leq H_{T} < 600 GeV 150 GeV #leq #LT m_{bb}#GT, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_metambb150toInf");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 4, high #Delta #phi, N_{e}=1, 400 #leq H_{T} < 600 GeV, 150 GeV #leq #LT m_{bb} #GT","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","met_ambb150toinfht400to600_"+year_string+".pdf");
-	pm_idx += 2;
+    //	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, 550<H_{T}<650 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht550to650");
+	  //make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, 550 #leq H_{T}<650 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht550to650_"+year_string+".pdf");
+	  //pm_idx += 2;
 
-	//-------------Misc <mbb> plots not in AN-------------
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1 200<MET, 35.9 fb^{-1} (13 TeV); Offline #LT m#RT [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_higcandam");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 4, high #Delta #phi, N_{e}=1, p_{T}^{miss} #geq 200 GeV","Offline #LT m_{bb} #GT","Efficiency "+str_met_trig,"GeV","higcandam_"+year_string+".pdf");
-	pm_idx += 2;
+    //	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, 650<H_{T}<800 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht650to800");
+	  //make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, 650 #leq H_{T}<800 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht650to800_"+year_string+".pdf");
+	  //pm_idx += 2;
 
-  	//generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1 150<MET 200<HT<300, 35.9 fb^{-1} (13 TeV); Offline #LT m#RT [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_higcandamht200300");
-	//make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 4, high #Delta #phi, N_{e}=1, p_{T}^{miss} #geq 200 GeV, 200 #leq H_{T} < 300 GeV","Offline #LT m_{bb} #GT","Efficiency "+str_met_trig,"GeV","higcandam_ht200to300_"+year_string+".pdf");
-	//pm_idx += 2;
-	//
-  	//generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1 150<MET 300<HT<400, 35.9 fb^{-1} (13 TeV); Offline #LT m#RT [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_higcandamht300400");
-	//make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 4, high #Delta #phi, N_{e}=1, p_{T}^{miss} #geq 200 GeV, 300 #leq H_{T} < 400 GeV","Offline #LT m_{bb} #GT","Efficiency "+str_met_trig,"GeV","higcandam_ht300to400_"+year_string+".pdf");
-	//pm_idx += 2;
+    //	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, 800<H_{T}<900 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht800to900");
+	  //make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, 800 #leq H_{T}<900 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht800to900_"+year_string+".pdf");
+	  //pm_idx += 2;
 
-  	//generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1 150<MET 400<HT<500, 35.9 fb^{-1} (13 TeV); Offline #LT m#RT [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_higcandamht400500");
-	//make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 4, high #Delta #phi, N_{e}=1, p_{T}^{miss} #geq 200 GeV, 400 #leq H_{T} < 500 GeV","Offline #LT m_{bb} #GT","Efficiency "+str_met_trig,"GeV","higcandam_ht400to500_"+year_string+".pdf");
-	//pm_idx += 2;
+    //	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, 900<H_{T}<1000 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht900to1000");
+	  //make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, 900 #leq H_{T}<1000 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht900to1000_"+year_string+".pdf");
+	  //pm_idx += 2;
 
-  	//generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1 150<MET 500<HT<600, 35.9 fb^{-1} (13 TeV); Offline #LT m#RT [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_higcandamht500600");
-	//make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 4, high #Delta #phi, N_{e}=1, p_{T}^{miss} #geq 200 GeV, 500 #leq H_{T} < 600 GeV","Offline #LT m_{bb} #GT","Efficiency "+str_met_trig,"GeV","higcandam_ht500to600_"+year_string+".pdf");
-	//pm_idx += 2;
+    //	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, H_{T}>1000 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht1000toInf");
+	  //make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, H_{T} #geq 1000 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht1000toInf_"+year_string+".pdf");
+	  //pm_idx += 2;
 
-	//-------------6.3 table 1 plots (QCD CR MET and HT dependenece)-------------
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_"+year_string+".pdf");
-	pm_idx += 2;
+	  ////QCD
+    //	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, H_{T}<200 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht0to200");
+	  //make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, H_{T}<200 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht0to200_"+year_string+".pdf");
+	  //pm_idx += 2;
 
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=1 150<MET#leq 200, 35.9 fb^{-1} (13 TeV); Offline HT [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_htfakelowmet");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, 150 #leq p_{T}^{miss} < 200 GeV","Offline H_{T}","Efficiency "+str_met_trig,"GeV","htfakelowmet_"+year_string+".pdf");
-	pm_idx += 2;
+    //	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, 200<H_{T}<350 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht200to350");
+	  //make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, 200 #leq H_{T}<350 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht200to350_"+year_string+".pdf");
+	  //pm_idx += 2;
 
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0 200<MET, 35.9 fb^{-1} (13 TeV); Offline HT [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_htfakehighmet");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, 200 #leq p_{T}^{miss} < 300 GeV","Offline H_{T}","Efficiency "+str_met_trig,"GeV","htfakehighmet_"+year_string+".pdf");
-	pm_idx += 2;
+    //	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, 350<H_{T}<450 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht350to450");
+	  //make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, 350 #leq H_{T}<450 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht350to450_"+year_string+".pdf");
+	  //pm_idx += 2;
 
-	if (do_controlregions) {
-		//-------------6.4 table 1 plots (1l CR plots)-------------
-  		generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_1l2j, "Trigger Efficiency, baseline: HLT_PFJet500 N_{j}#geq 2 N_{e}=1, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)||Ele(27_WPTight||35_WPTight||115)]","hist_elmet");
-		make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_1l2j,str_lumi,"Denom: #it{JetHT}, N_{j}#geq 2, N_{e}=1","Offline p_{T}^{miss}","Efficiency "+str_met_trig+"|"+str_el_trig,"GeV","elmet_"+year_string+".pdf");
-		pm_idx += 2;
+    //	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, 450<H_{T}<550 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht450to550");
+	  //make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, 450 #leq H_{T}<550 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht450to550_"+year_string+".pdf");
+	  //pm_idx += 2;
 
-  		generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_1l2j, "Trigger Efficiency, baseline: HLT_PFJet500 N_{j}#geq 2 N_{e}=1, 35.9 fb^{-1} (13 TeV); Offline Electron Pt [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)||Ele(27_WPTight||35_WPTight||115)]","hist_elpt");
-		make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_1l2j,str_lumi,"Denom: #it{JetHT}, N_{j}#geq 2, N_{e}=1, 150 #leq p_{T}^{miss} < 200 GeV","Offline Electron p_{T}","Efficiency "+str_met_trig+"|"+str_el_trig,"GeV","elpt_"+year_string+".pdf");
-		pm_idx += 2;
+    //	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, 550<H_{T}<650 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht550to650");
+	  //make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, 550 #leq H_{T}<650 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht550to650_"+year_string+".pdf");
+	  //pm_idx += 2;
 
-  		generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_1l2j, "Trigger Efficiency, baseline: HLT_PFJet500 N_{j}#geq 2 N_{e}=1, 35.9 fb^{-1} (13 TeV); Offline H_{T} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)||Ele(27_WPTight||35_WPTight||115)]","hist_elhtlowmet");
-		make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_1l2j,str_lumi,"Denom: #it{JetHT}, N_{j}#geq 2, N_{e}=1, 150 #leq p_{T}^{miss} < 200 GeV","Offline H_{T}","Efficiency "+str_met_trig+"|"+str_el_trig,"GeV","el_htlowmet_"+year_string+".pdf");
-		pm_idx += 2;
+    //	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, 650<H_{T}<800 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht650to800");
+	  //make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, 650 #leq H_{T}<800 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht650to800_"+year_string+".pdf");
+	  //pm_idx += 2;
 
-  		generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_1l2j, "Trigger Efficiency, baseline: HLT_PFJet500 N_{j}#geq 2 N_{e}=1, 35.9 fb^{-1} (13 TeV); Offline H_{T} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)||Ele(27_WPTight||35_WPTight||115)]","hist_elhthighmet");
-		make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_1l2j,str_lumi,"Denom: #it{JetHT}, N_{j}#geq 2, N_{e}=1, 200 #leq p_{T}^{miss} < 300 GeV","Offline H_{T}","Efficiency "+str_met_trig+"|"+str_el_trig,"GeV","el_hthighmet_"+year_string+".pdf");
-		pm_idx += 2;
+    //	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, 800<H_{T}<900 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht800to900");
+	  //make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, 800 #leq H_{T}<900 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht800to900_"+year_string+".pdf");
+	  //pm_idx += 2;
 
-  		generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_1l2j, "Trigger Efficiency, baseline: HLT_PFJet500 N_{j}#geq 2 N_{#mu}=1, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)||(IsoMu(24||27)||Mu50)]","hist_mumet");
-		make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_1l2j,str_lumi,"Denom: #it{JetHT}, N_{j}#geq 2, N_{#mu}=1","Offline p_{T}^{miss}","Efficiency "+str_met_trig+"|"+str_mu_trig,"GeV","mumet_"+year_string+".pdf");
-		pm_idx += 2;
+    //	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, 900<H_{T}<1000 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht900to1000");
+	  //make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, 900 #leq H_{T}<1000 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht900to1000_"+year_string+".pdf");
+	  //pm_idx += 2;
 
-  		generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_1l2j, "Trigger Efficiency, baseline: HLT_PFJet500 N_{j}#geq 2 N_{#mu}=1, 35.9 fb^{-1} (13 TeV); Offline Muon Pt [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)||(IsoMu(24||27)||Mu50)]","hist_mupt");
-		make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_1l2j,str_lumi,"Denom: #it{JetHT}, N_{j}#geq 2, N_{#mu}=1, 150 #leq p_{T}^{miss} < 200 GeV","Offline Muon p_{T}","Efficiency "+str_met_trig+"|"+str_mu_trig,"GeV","mupt_"+year_string+".pdf");
-		pm_idx += 2;
-
-  		generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_1l2j, "Trigger Efficiency, baseline: HLT_PFJet500 N_{j}#geq 2 N_{#mu}=1, 35.9 fb^{-1} (13 TeV); Offline H_{T} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)||(IsoMu(24||27)||Mu50)]","hist_muhtlowmet");
-		make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_1l2j,str_lumi,"Denom: #it{JetHT}, N_{j}#geq 2, N_{#mu}=1, 150 #leq p_{T}^{miss} < 200 GeV","Offline H_{T}","Efficiency "+str_met_trig+"|"+str_mu_trig,"GeV","mu_htlowmet_"+year_string+".pdf");
-		pm_idx += 2;
-
-  		generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_1l2j, "Trigger Efficiency, baseline: HLT_PFJet500 N_{j}#geq 2 N_{#mu}=1, 35.9 fb^{-1} (13 TeV); Offline H_{T} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)||(IsoMu(24||27)||Mu50)]","hist_muhtlowmet");
-		make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_1l2j,str_lumi,"Denom: #it{JetHT}, N_{j}#geq 2, N_{#mu}=1, 200 #leq p_{T}^{miss} < 300 GeV","Offline H_{T}","Efficiency "+str_met_trig+"|"+str_mu_trig,"GeV","mu_hthighmet_"+year_string+".pdf");
-		pm_idx += 2;
-
-		//-------------6.4 table 1 plots (2l CR plots)-------------
-  		generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_1l2j, "Trigger Efficiency, baseline: HLT_PFJet500||HLT_MET[NoMu](110||120||120_HT60) N_{j}#geq 2 N_{e}=2 80<m_{ee}<100 GeV, 35.9 fb^{-1} (13 TeV); Offline Max Electron Pt [GeV]; Efficiency [Ele(27_WPTight||35_WPTight||115)]","hist_elel_show");
-		make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_1l2j,str_lumi,"Denom: #it{MET|JetHT}, N_{j}#geq 2, N_{e}=2, 80 < m_{ee} #leq 100 GeV","Max Offline Electron p_{T}","Efficiency "+str_el_trig,"GeV","elel_show_"+year_string+".pdf");
-		pm_idx += 2;
-
-  		generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_1l2j, "Trigger Efficiency, baseline: HLT_PFJet500||HLT_MET[NoMu](110||120||120_HT60) N_{j}#geq 2 N_{e}=2 80<m_{ee}<100 GeV, 35.9 fb^{-1} (13 TeV); Offline H_{T} [GeV]; Efficiency [Ele(27_WPTight||35_WPTight||115)]","hist_elel_ht");
-		make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_1l2j,str_lumi,"Denom: #it{MET|JetHT}, N_{j}#geq 2, N_{e}=2, 80 < m_{ee} #leq 100 GeV","Offline H_{T}","Efficiency "+str_el_trig,"GeV","elel_ht_"+year_string+".pdf");
-		pm_idx += 2;
-
-  		generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_1l2j, "Trigger Efficiency, baseline: HLT_PFJet500||HLT_MET[NoMu](110||120||120_HT60) N_{j}#geq 2 N_{#mu}=2 80<m_{#mu#mu}<100 GeV, 35.9 fb^{-1} (13 TeV); Offline Max Muon Pt [GeV]; Efficiency [IsoMu(24||27)||Mu50]","hist_mumu_show");
-		make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_1l2j,str_lumi,"Denom: #it{MET|JetHT}, N_{j}#geq 2, N_{#mu}=2, 80 < m_{#mu#mu} #leq 100 GeV","Max Offline Muon p_{T}","Efficiency "+str_mu_trig,"GeV","mumu_show_"+year_string+".pdf");
-		pm_idx += 2;
-
-  		generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_1l2j, "Trigger Efficiency, baseline: HLT_PFJet500||HLT_MET[NoMu](110||120||120_HT60) N_{j}#geq 2 N_{#mu}=2 80<m_{#mu#mu}<100 GeV, 35.9 fb^{-1} (13 TeV); Offline H_{T} [GeV]; Efficiency [IsoMu(24||27)||Mu50]","hist_mumu_ht");
-		make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_1l2j,str_lumi,"Denom: #it{MET|JetHT}, N_{j}#geq 2, N_{#mu}=2, 80 < m_{#mu#mu} #leq 100 GeV","H_{T}","Efficiency "+str_mu_trig,"GeV","mumu_ht_"+year_string+".pdf");
-		pm_idx += 2;
-
-	}
-	//-------------Misc MC comparison not in AN-------------
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET120]","hist_datamet120");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1","Offline p_{T}^{miss}","Efficiency MET[NoMu]120","GeV","datamet120_"+year_string+".pdf");
-	pm_idx += 2;
-
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150_mc, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, Summer16 t#bar{t} 1l; Offline E_{T}^{miss} [GeV]; Efficiency [MET120]","hist_mcmet120");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150_mc,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1","Offline p_{T}^{miss}","Efficiency MET[NoMu]120","GeV","mcmet120_"+year_string+".pdf",false,true);
-	pm_idx += 2;
-
-	//-------------HT binned plots to determine trigger binning for 0l-------------
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, H_{T}<200 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht0to200");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, H_{T}<200 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht0to200_"+year_string+".pdf");
-	pm_idx += 2;
-
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, 200<H_{T}<350 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht200to350");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, 200 #leq H_{T}<350 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht200to350_"+year_string+".pdf");
-	pm_idx += 2;
-
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, 350<H_{T}<450 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht350to450");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, 350 #leq H_{T}<450 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht350to450_"+year_string+".pdf");
-	pm_idx += 2;
-
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, 450<H_{T}<550 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht450to550");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, 450 #leq H_{T}<550 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht450to550_"+year_string+".pdf");
-	pm_idx += 2;
-
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, 550<H_{T}<650 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht550to650");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, 550 #leq H_{T}<650 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht550to650_"+year_string+".pdf");
-	pm_idx += 2;
-
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, 650<H_{T}<800 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht650to800");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, 650 #leq H_{T}<800 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht650to800_"+year_string+".pdf");
-	pm_idx += 2;
-
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, 800<H_{T}<900 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht800to900");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, 800 #leq H_{T}<900 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht800to900_"+year_string+".pdf");
-	pm_idx += 2;
-
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, 900<H_{T}<1000 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht900to1000");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, 900 #leq H_{T}<1000 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht900to1000_"+year_string+".pdf");
-	pm_idx += 2;
-
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_Ele27 N_{j}#geq 3 high #Delta#phi N_{e}=1, H_{T}>1000 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_realmet_ht1000toInf");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_realmet_ref_trig+", N_{j}#geq 3, high #Delta #phi, N_{e}=1, H_{T} #geq 1000 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","realmet_ht1000toInf_"+year_string+".pdf");
-	pm_idx += 2;
-
-	//QCD
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, H_{T}<200 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht0to200");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, H_{T}<200 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht0to200_"+year_string+".pdf");
-	pm_idx += 2;
-
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, 200<H_{T}<350 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht200to350");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, 200 #leq H_{T}<350 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht200to350_"+year_string+".pdf");
-	pm_idx += 2;
-
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, 350<H_{T}<450 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht350to450");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, 350 #leq H_{T}<450 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht350to450_"+year_string+".pdf");
-	pm_idx += 2;
-
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, 450<H_{T}<550 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht450to550");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, 450 #leq H_{T}<550 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht450to550_"+year_string+".pdf");
-	pm_idx += 2;
-
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, 550<H_{T}<650 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht550to650");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, 550 #leq H_{T}<650 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht550to650_"+year_string+".pdf");
-	pm_idx += 2;
-
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, 650<H_{T}<800 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht650to800");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, 650 #leq H_{T}<800 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht650to800_"+year_string+".pdf");
-	pm_idx += 2;
-
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, 800<H_{T}<900 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht800to900");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, 800 #leq H_{T}<900 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht800to900_"+year_string+".pdf");
-	pm_idx += 2;
-
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, 900<H_{T}<1000 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht900to1000");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, 900 #leq H_{T}<1000 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht900to1000_"+year_string+".pdf");
-	pm_idx += 2;
-
-  	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, H_{T}>1000 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht1000toInf");
-	make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, H_{T} #geq 1000 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht1000toInf_"+year_string+".pdf");
-	pm_idx += 2;
+    //	generate_ratio_plots(&pm, pm_idx, pm_idx+1, pro_met150, "Trigger Efficiency, baseline: HLT_PFJet500 low #Delta#phi N_{vl}=0, H_{T}>1000 GeV, 35.9 fb^{-1} (13 TeV); Offline E_{T}^{miss} [GeV]; Efficiency [MET[NoMu](110||120||120_HT60)]","hist_fakemet_ht1000toInf");
+	  //make_efficiency_plot_wrapper(&pm,pm_idx,pm_idx+1,pro_met150,str_lumi,"Denom: "+str_fakemet_ref_trig+", low #Delta #phi, N_{l veto}=0, H_{T} #geq 1000 GeV","Offline p_{T}^{miss}","Efficiency "+str_met_trig,"GeV","fakemet_ht1000toInf_"+year_string+".pdf");
+	  //pm_idx += 2;
   }
   std::vector<double> systematics;
   if (do_systematics) {
@@ -1850,10 +1606,10 @@ void GetOptions(int argc, char *argv[]){
       {"single_thread", no_argument, 0, 's'},
       {"out", required_argument, 0, 0},
       {"year", required_argument, 0, 0},
-      {"noplots", no_argument, 0, 0},
-      {"nosystematics", no_argument, 0, 0},
-      {"noefficiency", no_argument, 0, 0},
-      {"nocr", no_argument, 0, 0},
+      {"plots", no_argument, 0, 0},
+      {"systematics", no_argument, 0, 0},
+      {"efficiencies", no_argument, 0, 0},
+      {"includecr", no_argument, 0, 0},
       {0, 0, 0, 0}
     };
 
@@ -1872,14 +1628,14 @@ void GetOptions(int argc, char *argv[]){
       optname = long_options[option_index].name;
       if(optname == "year"){
         year_string = optarg;
-      } else if (optname == "noplots") {
-        do_variables = false;
-      } else if (optname == "nosystematics") {
-        do_systematics = false;
-      } else if (optname == "noefficiency") {
-        do_efficiency = false;
-      } else if (optname == "nocr") {
-        do_controlregions = false;
+      } else if (optname == "plots") {
+        do_variables = true;
+      } else if (optname == "systematics") {
+        do_systematics = true;
+      } else if (optname == "efficiencies") {
+        do_efficiency = true;
+      } else if (optname == "includecr") {
+        do_controlregions = true;
       } else if (optname == "out") {
         out_filename = optarg;
       }else{

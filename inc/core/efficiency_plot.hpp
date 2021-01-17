@@ -68,6 +68,7 @@ public:
   EfficiencyPlot & Tag(const std::string &tag);
   EfficiencyPlot & LuminosityTag(const std::string &tag);
   EfficiencyPlot & FixTitle(const std::string &title);
+  EfficiencyPlot & YTitle(const std::string &ytitle);
   //EfficiencyPlot & SaveEfficiencyFile(); //TODO: allow for saving as cpp file 
 
   Axis xaxis_;//!<Specification of content: plotted variable, binning, etc.
@@ -77,6 +78,7 @@ public:
 
   NamedFunc weight_;//!<Event weight
   std::string tag_;//!<Filename tag to identify plot
+  std::string ytitle_;//!<Title used on y-axis of plot
   std::string luminosity_tag_;//!<Filename tag to identify plot
   std::string fixed_title_;//!<title fixed using FixTitle method, empty string indicates default
 

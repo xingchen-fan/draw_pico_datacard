@@ -188,6 +188,8 @@ EfficiencyPlot::EfficiencyPlot(const Axis &xaxis, const NamedFunc &denominator_c
   draw_histograms_(draw_histograms),
   weight_("weight"),
   tag_(""),
+  ytitle_(""),
+  luminosity_tag_(""),
   fixed_title_(""),
   backgrounds_(),
   signals_(),
@@ -410,14 +412,19 @@ void EfficiencyPlot::Print(double luminosity,
 	TLatex t;
 	t.SetTextColor(kBlack);
 	t.SetTextSize(0.04);
-  t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}");
-  //t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Simulation}}");
+  if (datas_.size() == 0)
+    t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Simulation}}");
+  else
+    t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}");
 	t.SetTextAlign(31);
-  TString lumi_string = RoundNumber(luminosity_,1)+" fb^{-1}";
+  TString lumi_string = RoundNumber(luminosity_,1) + " fb^{-1}";
+  if (luminosity_tag_ != "")
+    lumi_string = luminosity_tag_ + " fb^{-1}";
 	t.DrawLatexNDC(0.845,0.87,("#font[42]{"+lumi_string+"}").Data());
 	t.SetTextAlign(33);
-	t.SetTextSize(0.03);
+	t.SetTextSize(0.025);
   if (Title().size() >= 66) t.SetTextSize(0.015);
+  if (Title().size() >= 120) t.SetTextSize(0.015*120.0/static_cast<float>(Title().size()));
 	t.DrawLatexNDC(0.825,0.83,("#font[42]{"+Title()+"}").c_str());
 	//if (Title().size() < 66) {
 	//	t.DrawLatexNDC(0.825,0.83,("#font[42]{"+Title()+"}").c_str());
@@ -459,7 +466,7 @@ void EfficiencyPlot::Print(double luminosity,
   //draw legend
   unsigned int number_legend_entries = signal_names_.size()+data_names_.size();
   if (backgrounds_.size() > 0) number_legend_entries++;
-  TLegend * legend = new TLegend(0.5, 0.7, 0.8, 0.8);
+  TLegend * legend = new TLegend(0.35, 0.65, 0.8, 0.8);
   legend->SetNColumns(3);
   legend->SetFillStyle(0);
   legend->SetBorderSize(0);
@@ -564,7 +571,10 @@ std::string EfficiencyPlot::Title() const{
 
 std::string EfficiencyPlot::YAxisText() const{
   std::string y_axis_title = "Efficiency ";
-  y_axis_title += numerator_cut_.Name();
+  if (ytitle_ != "")
+    y_axis_title += ytitle_;
+  else
+    y_axis_title += numerator_cut_.Name();
   //y_axis_title += CodeToRootTex(numerator_cut_.Name());
   return y_axis_title;
 }
@@ -576,6 +586,11 @@ EfficiencyPlot & EfficiencyPlot::Weight(const NamedFunc &weight){
 
 EfficiencyPlot & EfficiencyPlot::Tag(const std::string &tag){
   tag_ = tag;
+  return *this;
+}
+
+EfficiencyPlot & EfficiencyPlot::YTitle(const std::string &ytitle){
+  ytitle_ = ytitle;
   return *this;
 }
 
