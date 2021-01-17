@@ -125,6 +125,10 @@ namespace Functions{
     return weight;
   });
 
+  const NamedFunc SampleType("SampleType",[](const Baby &b) -> NamedFunc::ScalarType{
+    return b.SampleType();
+  });
+
 
   bool IsGoodJet(const Baby &b, size_t ijet){
     return ijet<b.jet_pt()->size()

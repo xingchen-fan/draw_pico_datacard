@@ -54,6 +54,13 @@ PlotMaker::PlotMaker():
 */
 void PlotMaker::MakePlots(double luminosity,
                           const string &subdir){
+
+  // Setup babies with event veto data
+  auto babies = GetBabies();
+  for(const auto &baby: babies){
+    baby->SetEventVetoData(event_veto_data_);
+  }
+
   GetYields();
 
   for(auto &figure: figures_){
@@ -71,6 +78,10 @@ const vector<unique_ptr<Figure> > & PlotMaker::Figures() const{
  */
 void PlotMaker::Clear(){
   figures_.clear();
+}
+
+void PlotMaker::SetEventVetoData(void * eventVetoData) {
+  event_veto_data_ = eventVetoData;
 }
 
 void PlotMaker::GetYields(){

@@ -40,9 +40,12 @@ public:
   }
   void Clear();
 
+  void SetEventVetoData(void * eventVetoData);
+
   bool multithreaded_;
   bool min_print_;
   bool print_2d_figures_;
+  void * event_veto_data_;
 
 private:
   std::vector<std::unique_ptr<Figure> > figures_;//!<Figures to be produced

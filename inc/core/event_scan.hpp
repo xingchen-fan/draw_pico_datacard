@@ -33,13 +33,14 @@ class EventScan final : public Figure{
    NamedFunc::VectorType cut_vector_;//!<Cut results (to avoid creating new vector each event)
    std::vector<NamedFunc::VectorType> val_vectors_;//!<Values for each column (to avoid creating new vectors each event)
    std::size_t row_;
+   bool printFilename_;
  };
 
  EventScan(const std::string &name,
            const NamedFunc &cut,
            const std::vector<NamedFunc> &columns,
            const std::vector<std::shared_ptr<Process> > &processes,
-	   unsigned precision = 10);
+	   unsigned precision = 10, bool printFilename=false);
  EventScan(EventScan &&) = default;
  EventScan& operator=(EventScan &&) = default;
  ~EventScan() = default;
@@ -60,6 +61,7 @@ class EventScan final : public Figure{
 
  private:
  std::vector<std::unique_ptr<SingleScan> > scans_;//!<One scan for each process
+ bool printFilename_;
  unsigned precision_;//!<Decimal places to print
  unsigned width_;//!<Width of column in characters. Determined from precision
  

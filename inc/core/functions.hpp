@@ -13,6 +13,7 @@ namespace Functions{
   extern const NamedFunc lowDphiFix;
   extern const NamedFunc boostedRegionIdx;
   extern const NamedFunc amBoostedRegionIdx;
+  extern const NamedFunc SampleType;
   extern const NamedFunc ntrub;
   extern const NamedFunc w_pileup;
 

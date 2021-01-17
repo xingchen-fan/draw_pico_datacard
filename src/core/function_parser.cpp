@@ -187,6 +187,8 @@ void FunctionParser::ResolveVariables() const{
         token = Functions::boostedRegionIdx;
       } else if(token.string_rep_ == "amBoostedRegionIdx"){
         token = Functions::amBoostedRegionIdx;
+      } else if(token.string_rep_ == "SampleType"){
+        token = Functions::SampleType;
       }
       else {
         token.function_ = Baby::GetFunction(token.string_rep_);
