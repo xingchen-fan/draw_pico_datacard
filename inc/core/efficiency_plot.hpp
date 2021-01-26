@@ -82,6 +82,10 @@ public:
   std::string luminosity_tag_;//!<Filename tag to identify plot
   std::string fixed_title_;//!<title fixed using FixTitle method, empty string indicates default
 
+  std::unique_ptr<TGraphAsymmErrors> background_ratio_plot_;
+  std::vector<std::unique_ptr<TGraphAsymmErrors>> signal_ratio_plots_;
+  std::vector<std::unique_ptr<TGraphAsymmErrors>> data_ratio_plots_;
+
 private:
   std::vector<std::unique_ptr<SingleEfficiencyPlot> > backgrounds_;//!<Background components of the figure
   std::vector<std::unique_ptr<SingleEfficiencyPlot> > signals_;//!<Signal components of the figure
