@@ -69,6 +69,10 @@ namespace Higfuncs{
   extern const NamedFunc h1b2_eta;
   extern const NamedFunc h2b1_eta;
   extern const NamedFunc h2b2_eta;
+  extern const NamedFunc h1b1_jetid;
+  extern const NamedFunc h1b2_jetid;
+  extern const NamedFunc h2b1_jetid;
+  extern const NamedFunc h2b2_jetid;
   extern const NamedFunc h1_dr;
   extern const NamedFunc h2_dr;
   extern const NamedFunc h1_mass;
@@ -91,6 +95,7 @@ namespace Higfuncs{
   // weights
   extern const NamedFunc w_years;
   extern const NamedFunc final_weight;
+  extern const NamedFunc final_weight_notrgeff;
 
   //triggers
   extern const NamedFunc jet_trigger;
