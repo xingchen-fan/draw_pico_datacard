@@ -1045,6 +1045,7 @@ const NamedFunc h2b2_pt("h2b2_pt",[](const Baby &b) -> NamedFunc::ScalarType{
   return (*b.jet_pt())[bbjet_indices.at(3)];
 });
 
+
 const NamedFunc h1b1_eta("h1b1_eta",[](const Baby &b) -> NamedFunc::ScalarType{
   vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
   return (*b.jet_eta())[bbjet_indices.at(0)];
@@ -1063,6 +1064,26 @@ const NamedFunc h2b1_eta("h2b1_eta",[](const Baby &b) -> NamedFunc::ScalarType{
 const NamedFunc h2b2_eta("h2b2_eta",[](const Baby &b) -> NamedFunc::ScalarType{
   vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
   return (*b.jet_eta())[bbjet_indices.at(3)];
+});
+
+const NamedFunc h1b1_jetid("h1b1_jetid",[](const Baby &b) -> NamedFunc::ScalarType{
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
+  return (*b.jet_id())[bbjet_indices.at(0)];
+});
+
+const NamedFunc h1b2_jetid("h1b2_jetid",[](const Baby &b) -> NamedFunc::ScalarType{
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
+  return (*b.jet_id())[bbjet_indices.at(1)];
+});
+
+const NamedFunc h2b1_jetid("h2b1_jetid",[](const Baby &b) -> NamedFunc::ScalarType{
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
+  return (*b.jet_id())[bbjet_indices.at(2)];
+});
+
+const NamedFunc h2b2_jetid("h2b2_jetid",[](const Baby &b) -> NamedFunc::ScalarType{
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
+  return (*b.jet_id())[bbjet_indices.at(3)];
 });
 
 
@@ -1217,8 +1238,8 @@ const NamedFunc pass_filters("pass_filters", [](const Baby &b) -> NamedFunc::Sca
   if ((b.type()/1000 != 106)  && !b.pass_cschalo_tight()) return false; //not for fastsim
   if (!b.pass_low_neutral_jet()) return false;
   if (!b.pass_htratio_dphi_tight()) return false;
-  //if ((b.type()/1000 == 106)  && !b.pass_jets()) return false; //only for fastsim
-  if (!b.pass_jets()) return false; //was modified
+  if ((b.type()/1000 == 106)  && !b.pass_jets()) return false; //only for fastsim
+  //if (!b.pass_jets()) return false; //was modified
   if ((abs(b.SampleType())==2017 || abs(b.SampleType())==2018) && !Higfuncs::pass_ecalnoisejet.GetScalar(b)) return false; 
   if (!Higfuncs::pass_hemveto.GetScalar(b)) return false;
   return true;
@@ -1234,15 +1255,16 @@ const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
 
   double weight = 1;
   if (b.SampleType()==2016){
-    return weight*35.9;
+    return weight*35.92; // prev 35.9
   } else if (b.SampleType()==2017){
-    return weight*41.5;
+    return weight*41.53; // prev 41.5
   } else {
-    return weight*59.6;
+    return weight*59.74; // prev 59.6
   }
 });
 
 const NamedFunc final_weight = "weight"*eff_higtrig_run2*w_years*Functions::w_pileup;
+const NamedFunc final_weight_notrgeff = "weight"*w_years*Functions::w_pileup;
 
 const NamedFunc jet_trigger = "HLT_PFJet500";
 

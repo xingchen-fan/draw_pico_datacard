@@ -134,14 +134,19 @@ int main(int argc, char *argv[]){
   //string base_dir(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_eldorado/");
   //string base_dir("/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/");
   //string base_dir(string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/");
-  string base_dir(string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/");
+  //string base_dir(string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/");
+  string base_dir(string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/");
   //string base_dir("/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado");
-  string mc_skim_dir("mc/merged_higmc_higloose/"), data_skim_dir("data/merged_higdata_higloose/"), sig_skim_dir("SMS-TChiHH_2D/merged_higmc_higloose/");
-  if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "data/merged_higdata_higlep1T/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higlep1T/";} 
-  //if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "data/skim_higlep1T/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higlep1T/";} 
-  else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "data/merged_higdata_higlep2T/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higlep2T/";} 
-  //else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "data/skim_higlep2T/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higlep2T/";} 
-  else if (sample=="qcd") {mc_skim_dir = "mc/merged_higmc_higqcd/";  data_skim_dir = "data/merged_higdata_higqcd/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higqcd/";} 
+  //string mc_skim_dir("mc/merged_higmc_higloose/"), data_skim_dir("data/merged_higdata_higloose/"), sig_skim_dir("SMS-TChiHH_2D/merged_higmc_higloose/");
+  //if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "data/merged_higdata_higlep1T/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higlep1T/";} 
+  ////if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "data/skim_higlep1T/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higlep1T/";} 
+  //else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "data/merged_higdata_higlep2T/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higlep2T/";} 
+  ////else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "data/skim_higlep2T/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higlep2T/";} 
+  //else if (sample=="qcd") {mc_skim_dir = "mc/merged_higmc_higqcd/";  data_skim_dir = "data/merged_higdata_higqcd/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higqcd/";} 
+  string mc_skim_dir("mc/merged_higmc_higloose/"), data_skim_dir("data/merged_higdata_higloose/"), sig_skim_dir("SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higloose/");
+  if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "data/merged_higdata_higlep1T/"; sig_skim_dir = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep1T/";} 
+  else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "data/merged_higdata_higlep2T/"; sig_skim_dir = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep2T/";} 
+  else if (sample=="qcd") {mc_skim_dir = "mc/merged_higmc_higqcd/";  data_skim_dir = "data/merged_higdata_higqcd/"; sig_skim_dir = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higqcd/";} 
 
   map<string, set<string>> mctags; 
   mctags["ttx"]     = set<string>({
@@ -172,6 +177,7 @@ int main(int argc, char *argv[]){
   TString c_hig_trim = "hig_cand_drmax[0]<2.2  && hig_cand_dm[0]<40 && hig_cand_am[0]<200";
   string baseline_s = "njet>=4 && njet<=5";
   if (sample=="search") baseline_s += " && nvlep==0 && ntk==0 && !low_dphi_met &&"+c_hig_trim;
+  //if (sample=="search") baseline_s += " && nvlep==0 && ntk>=1 && !low_dphi_met &&"+c_hig_trim;
   else if (sample=="ttbar") baseline_s += " && nlep==1 && mt<100 &&"+c_hig_trim;
   else if (sample=="zll") baseline_s += " && nlep==2 && met<50 &&"+c_hig_trim;
   else if (sample=="qcd") baseline_s += " && nvlep==0 && ntk==0 && low_dphi_met &&"+c_hig_trim;
@@ -253,11 +259,13 @@ int main(int argc, char *argv[]){
   //NamedFunc nom_wgt = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
   //NamedFunc nom_wgt = Higfuncs::final_weight;
   NamedFunc nom_wgt = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Functions::w_pileup;
+  NamedFunc wgt_syst_trg_eff = "weight"*Higfuncs::w_years*Functions::w_pileup;
   if (trigger_version == 0) nom_wgt = "weight"*Higfuncs::eff_higtrig_run2_v0*Higfuncs::w_years*Functions::w_pileup;
 
   vector<string> scenarios;
   map<string, NamedFunc> weights;
   weights.emplace("nominal", nom_wgt);
+  //weights.emplace("nominal", wgt_syst_trg_eff);
   if(alt_scen == "data"){
     scenarios = vector<string>{"data"};
   } else if(alt_scen == "bctag"){ 
@@ -294,6 +302,10 @@ int main(int argc, char *argv[]){
     scenarios = vector<string>();
     scenarios.push_back("syst_comp");
     weights.emplace("syst_comp", Higfuncs::wgt_syst_comp);
+  } else if(alt_scen == "syst_trg_eff"){
+    scenarios = vector<string>();
+    scenarios.push_back("syst_trg_eff");
+    weights.emplace("syst_trg_eff", wgt_syst_trg_eff);
   } else if(alt_scen == "mc_as_data"){
     scenarios = vector<string>{"mc_as_data"}; 
     weights.emplace("mc_as_data", nom_wgt);
@@ -323,10 +335,17 @@ int main(int argc, char *argv[]){
   } else if (sample=="ttbar") {
     metcuts.push_back(metdef+">0&&"+metdef+"<=75");
     metcuts.push_back(metdef+">75&&"+metdef+"<=150");
-    metcuts.push_back(metdef+">150");
+    //metcuts.push_back(metdef+">150");
+
+    //metcuts.push_back(metdef+">150&&"+metdef+"<=200");
+    //metcuts.push_back(metdef+">200"+metdef+"<=300");
+    //metcuts.push_back(metdef+">300");
+
+    metcuts.push_back(metdef+">150&&"+metdef+"<=200");
+    metcuts.push_back(metdef+">200");
   }
   if (do_incl_met) {
-    if (sample=="qcd") { // add an inclusive bin
+    if (sample=="qcd" || sample=="search") { // add an inclusive bin
       metcuts.push_back(metdef+">150");
     } else if (sample=="ttbar" || sample=="zll"){
       metcuts.push_back(metdef+">0");
