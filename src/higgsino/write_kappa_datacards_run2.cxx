@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
     xBins["sig0"] = "((!"+j1bb+"&&"+j2bb+")||("+j1bb+"&& !"+j2bb+"))";
     xBins["sig1"] = j1bb+"&&"+j2bb;
   }
-  
+
   map<string, string> yBins; // Shares sideband
   if (tag=="resolved") {
     yBins["sig"] = "hig_cand_am[0]>100 && hig_cand_am[0]<=140";

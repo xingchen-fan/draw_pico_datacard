@@ -72,7 +72,9 @@ sed -i 's/std::vector<double>\* xsecUncs;/std::vector<double>\* xsecUncs=0;/' ge
 
 ~~~~bash
 cd cross_section
-../scripts/change_higgsino_cross_sections.py -i /net/cms29/cms29r0/pico/NanoAODv5/nano/2016/SMS-TChiHH_2D
+../scripts/print_higgsino_cross_sections.py -i /net/cms25/cms25r0/pico/NanoAODv7/nano/2016/SMS-TChiHH_2D -m CN
+../scripts/print_higgsino_cross_sections.py -i /net/cms25/cms25r0/pico/NanoAODv7/nano/2016/SMS-TChiHH_2D -m N1N2
+../scripts/print_higgsino_cross_sections.py -i /net/cms25/cms25r0/pico/NanoAODv7/nano/2016/SMS-TChiHH_2D -c
 ~~~~
 
 ## Zgamma useful commands
