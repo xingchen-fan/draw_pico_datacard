@@ -44,8 +44,9 @@ namespace Higfuncs{
   extern const NamedFunc wgt_syst_qcd;
 
   // NamedFunc that returns weight with scaling for composition systematic
-  // note this returns the full weight, not a variation
+  // note this returns the weight scaling, not a variation
   extern const NamedFunc wgt_syst_comp;
+  extern const NamedFunc wgt_syst_lowptleptrig;
 
   // analysis trigger and its efficiency
   //NamedFunc::ScalarType trig_hig_decision(const Baby &b);

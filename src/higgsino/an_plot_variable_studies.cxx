@@ -10,6 +10,7 @@
 #include <getopt.h>
 
 #include "TError.h"
+#include "TFile.h"
 #include "TColor.h"
 #include "TVector2.h"
 #include "TMath.h"
@@ -60,6 +61,10 @@ int main(int argc, char *argv[]){
   vector<PlotOpt> plt_shapes = {plot_type.Title(TitleType::info).Bottom(BottomType::ratio).YAxis(YAxisType::linear).Stack(StackType::shapes).LegendColumns(3)};
   vector<PlotOpt> plt_lin_shapes = {plot_type.Title(TitleType::info).Bottom(BottomType::off).YAxis(YAxisType::linear).Stack(StackType::data_norm).LegendColumns(3), plot_type.Title(TitleType::info).Bottom(BottomType::off).YAxis(YAxisType::linear).Stack(StackType::shapes).LegendColumns(3)};
   PlotOpt style2D("txt/plot_styles.txt", "Scatter");
+  vector<PlotOpt> plt_lin_sorb = {plot_type.Title(TitleType::info).Bottom(BottomType::sorb).YAxis(YAxisType::linear).Stack(StackType::data_norm).LegendColumns(3)};
+  vector<PlotOpt> plt_lin_sorb_upper = {plot_type.Title(TitleType::info).Bottom(BottomType::sorb_cut_upper).YAxis(YAxisType::linear).Stack(StackType::data_norm).LegendColumns(3)};
+  vector<PlotOpt> plt_log_sorb = {plot_type.Title(TitleType::info).Bottom(BottomType::sorb).YAxis(YAxisType::log).LogMinimum(.001).Stack(StackType::data_norm).LegendColumns(3)};
+  vector<PlotOpt> plt_log_sorb_upper = {plot_type.Title(TitleType::info).Bottom(BottomType::sorb_cut_upper).YAxis(YAxisType::log).LogMinimum(.001).Stack(StackType::data_norm).LegendColumns(3)};
   vector<PlotOpt> twodim_plotopts = {style2D().Title(TitleType::info).YAxis(YAxisType::log).Overflow(OverflowType::overflow)};
 
   // Set options
@@ -401,6 +406,8 @@ int main(int argc, char *argv[]){
   NamedFunc cms_baseline_nob = "stitch&&150<=met&&nvlep==0&&ntk==0&&4<=njet&&njet<=5&&!low_dphi_met&&(met/met_calo)<2&&(met/mht)<2&&hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200";
   NamedFunc atlas_hm_baseline_nob = "stitch&&200<=met&&nvlep==0&&ntk==0&&4<=njet&&jet_met_dphi[0]>=0.4&&jet_met_dphi[1]>=0.4&&jet_met_dphi[2]>=0.4&&jet_met_dphi[3]>=0.4&&(met/met_calo)<2&&(met/mht)<2&&hig_cand_drmax[0]<=2.4" && (110<=mh1) && (mh1<150) && (90<=mh2) && (mh2<140);
 
+  std::vector<int> plot_type_vector;
+
   PlotMaker pm;
 
   //pm.Push<Hist1D>(Axis(cms_met_bins, "met", "p_{T}^{miss} [GeV]", {}),
@@ -527,19 +534,19 @@ int main(int argc, char *argv[]){
     switch (met_bin_idx) {
       case 0:
         met_bin_cuts = "150<=met&&met<200";
-	met_filename = "met150to200_";
-	break;
+        met_filename = "met150to200_";
+        break;
       case 1:
         met_bin_cuts = "200<=met&&met<300";
-	met_filename = "FixName:met200to300_";
-	break;
+        met_filename = "FixName:met200to300_";
+        break;
       case 2:
         met_bin_cuts = "300<=met&&met<400";
-	met_filename = "FixName:met300to400_";
-	break;
+        met_filename = "FixName:met300to400_";
+        break;
       default:
         met_bin_cuts = "400<=met";
-	met_filename = "FixName:met400toInf_";
+        met_filename = "FixName:met400toInf_";
     }
     for (int drmax_bin_idx = 0; drmax_bin_idx < 2; drmax_bin_idx++) {
       NamedFunc drmax_bin_cuts = "";
@@ -547,56 +554,75 @@ int main(int argc, char *argv[]){
       switch (drmax_bin_idx) {
         case 0:
           drmax_bin_cuts = "hig_cand_drmax[0]<1.1";
-	  drmax_filename = "lowdrmax_";
-	  break;
+          drmax_filename = "lowdrmax";
+          break;
         default:
           drmax_bin_cuts = "hig_cand_drmax[0]>=1.1";
-	  drmax_filename = "highdrmax_";
+          drmax_filename = "highdrmax";
       }
-      for (int nb_bin_idx = 3; nb_bin_idx <= 4; nb_bin_idx++) {
+      for (int nb_bin_idx = 0; nb_bin_idx < 3; nb_bin_idx++) {
         NamedFunc nb_bin_cuts = "";
         std::string nb_filename = "";
         switch (nb_bin_idx) {
-	  case 3:
+          case 0:
             nb_bin_cuts = "nbm==3&&nbl==3";
-	    nb_filename = "nb3";
-	    break;
-	  default:
+            nb_filename = "_nb3";
+            continue;
+            break;
+          case 1:
             nb_bin_cuts = "nbm>=3&&nbl>=4";
-	    nb_filename = "nb4";
-	}
-	for (int njet_bin_idx = 4; njet_bin_idx <= 5; njet_bin_idx++) {
+            nb_filename = "_nb4";
+            continue;
+          default:
+            nb_bin_cuts = "nbm>=3";
+            nb_filename = "";
+          }
+          for (int njet_bin_idx = 4; njet_bin_idx <= 5; njet_bin_idx++) {
           NamedFunc njet_bin_cuts = "";
           std::string njet_filename = "";
           switch (njet_bin_idx) {
-	    case 4:
+            case 4:
               njet_bin_cuts = "njet==4";
-	      njet_filename = "_nj4";
-	      continue;
-	      break;
-	    default:
+              njet_filename = "_nj4";
+              continue;
+              break;
+            default:
               njet_bin_cuts = "njet>=4";
-	  }
-	  //code here
+          }
+          //code here
+          plot_type_vector.push_back(1);
+          plot_type_vector.push_back(1);
+          plot_type_vector.push_back(2);
+          plot_type_vector.push_back(5);
+          plot_type_vector.push_back(3);
+          plot_type_vector.push_back(3);
+          plot_type_vector.push_back(4);
+          plot_type_vector.push_back(4);
           pm.Push<Hist1D>(Axis(20, 0, 1000, mt2, "M_{T2} [GeV]", {}),
-              cms_baseline && "100<=hig_cand_am[0]&&hig_cand_am[0]<140&&njet==4" && met_bin_cuts && drmax_bin_cuts && nb_bin_cuts && njet_bin_cuts,
-              search_procs, plt_lin).Weight(mixed_model_weight).Tag(("FixName:varstudies_mt2_lin_"+met_filename+drmax_filename+nb_filename+njet_filename).c_str()).LuminosityTag(total_luminosity_string);
+              cms_baseline && "100<=hig_cand_am[0]&&hig_cand_am[0]<140" && met_bin_cuts && drmax_bin_cuts && nb_bin_cuts && njet_bin_cuts,
+              search_procs, plt_lin_sorb).Weight(mixed_model_weight).Tag(("FixName:varstudies_mt2_lin_"+met_filename+drmax_filename+nb_filename+njet_filename).c_str()).LuminosityTag(total_luminosity_string);
           pm.Push<Hist1D>(Axis(20, 0, 1000, mt2, "M_{T2} [GeV]", {}),
-              cms_baseline && "100<=hig_cand_am[0]&&hig_cand_am[0]<140&&njet==4" && met_bin_cuts && drmax_bin_cuts && nb_bin_cuts && njet_bin_cuts,
-              search_procs, plt_log).Weight(mixed_model_weight).Tag(("FixName:varstudies_mt2_log_"+met_filename+drmax_filename+nb_filename+njet_filename).c_str()).LuminosityTag(total_luminosity_string);
+              cms_baseline && "100<=hig_cand_am[0]&&hig_cand_am[0]<140" && met_bin_cuts && drmax_bin_cuts && nb_bin_cuts && njet_bin_cuts,
+              search_procs, plt_log_sorb).Weight(mixed_model_weight).Tag(("FixName:varstudies_mt2_log_"+met_filename+drmax_filename+nb_filename+njet_filename).c_str()).LuminosityTag(total_luminosity_string);
           pm.Push<Hist1D>(Axis(20, 0, 500, mtmin, "m_{Tmin} [GeV]", {}),
               cms_baseline && "100<=hig_cand_am[0]&&hig_cand_am[0]<140" && met_bin_cuts && drmax_bin_cuts && nb_bin_cuts && njet_bin_cuts,
-              search_procs, plt_lin).Weight(mixed_model_weight).Tag(("FixName:varstudies_mtmin_lin_"+met_filename+drmax_filename+nb_filename+njet_filename).c_str()).LuminosityTag(total_luminosity_string);
+              search_procs, plt_lin_sorb).Weight(mixed_model_weight).Tag(("FixName:varstudies_mtmin_lin_"+met_filename+drmax_filename+nb_filename+njet_filename).c_str()).LuminosityTag(total_luminosity_string);
           pm.Push<Hist1D>(Axis(20, 0, 500, mtmin, "m_{Tmin} [GeV]", {}),
               cms_baseline && "100<=hig_cand_am[0]&&hig_cand_am[0]<140" && met_bin_cuts && drmax_bin_cuts && nb_bin_cuts && njet_bin_cuts,
-              search_procs, plt_log).Weight(mixed_model_weight).Tag(("FixName:varstudies_mtmin_log_"+met_filename+drmax_filename+nb_filename+njet_filename).c_str()).LuminosityTag(total_luminosity_string);
+              search_procs, plt_log_sorb).Weight(mixed_model_weight).Tag(("FixName:varstudies_mtmin_log_"+met_filename+drmax_filename+nb_filename+njet_filename).c_str()).LuminosityTag(total_luminosity_string);
+          pm.Push<Hist1D>(Axis(20, 0, 500, mtmin, "m_{Tmin} [GeV]", {}),
+              cms_baseline && "100<=hig_cand_am[0]&&hig_cand_am[0]<140" && met_bin_cuts && drmax_bin_cuts && nb_bin_cuts && njet_bin_cuts,
+              search_procs, plt_lin).Weight(mixed_model_weight).Tag(("FixName:varstudies_mtmin_nosorblin_"+met_filename+drmax_filename+nb_filename+njet_filename).c_str()).LuminosityTag(total_luminosity_string);
+          pm.Push<Hist1D>(Axis(20, 0, 500, mtmin, "m_{Tmin} [GeV]", {}),
+              cms_baseline && "100<=hig_cand_am[0]&&hig_cand_am[0]<140" && met_bin_cuts && drmax_bin_cuts && nb_bin_cuts && njet_bin_cuts,
+              search_procs, plt_log).Weight(mixed_model_weight).Tag(("FixName:varstudies_mtmin_nosorblog_"+met_filename+drmax_filename+nb_filename+njet_filename).c_str()).LuminosityTag(total_luminosity_string);
           pm.Push<Hist1D>(Axis(20, 0., 1., max_top_tag, "max top tag score", {}),
               cms_baseline && "100<=hig_cand_am[0]&&hig_cand_am[0]<140" && met_bin_cuts && drmax_bin_cuts && nb_bin_cuts && njet_bin_cuts,
-              search_procs, plt_lin).Weight(mixed_model_weight).Tag(("FixName:varstudies_maxtopscore_lin_"+met_filename+drmax_filename+nb_filename+njet_filename).c_str()).LuminosityTag(total_luminosity_string);
+              search_procs, plt_lin_sorb_upper).Weight(mixed_model_weight).Tag(("FixName:varstudies_maxtopscore_lin_"+met_filename+drmax_filename+nb_filename+njet_filename).c_str()).LuminosityTag(total_luminosity_string);
           pm.Push<Hist1D>(Axis(20, 0., 1., max_top_tag, "max top tag score", {}),
               cms_baseline && "100<=hig_cand_am[0]&&hig_cand_am[0]<140" && met_bin_cuts && drmax_bin_cuts && nb_bin_cuts && njet_bin_cuts,
-              search_procs, plt_log).Weight(mixed_model_weight).Tag(("FixName:varstudies_maxtopscore_log_"+met_filename+drmax_filename+nb_filename+njet_filename).c_str()).LuminosityTag(total_luminosity_string);
-	} // /jet loop
+              search_procs, plt_log_sorb_upper).Weight(mixed_model_weight).Tag(("FixName:varstudies_maxtopscore_log_"+met_filename+drmax_filename+nb_filename+njet_filename).c_str()).LuminosityTag(total_luminosity_string);
+  } // /jet loop
       } // /bjet loop
     } // /drmax loop
   } // /met loop
@@ -605,6 +631,20 @@ int main(int argc, char *argv[]){
   pm.multithreaded_ = !single_thread;
   pm.min_print_ = true;
   pm.MakePlots(1.);
+
+  //debugging time
+  TFile* out_file = TFile::Open("ntuples/sorb_debugging.root","RECREATE");
+  for (unsigned int plot_idx = 0; plot_idx < plot_type_vector.size(); plot_idx++) {
+    if (plot_type_vector[plot_idx] == 2) {
+      double bot_min = 0, bot_max = 0;
+      Hist1D *sorb_hist = static_cast<Hist1D*>(pm.Figures()[plot_idx].get());
+      for (unsigned int proc_idx = 0; proc_idx < sorb_hist->GetBottomPlots(bot_min, bot_max).size(); proc_idx++) {
+        TH1D sorb_th1 = sorb_hist->GetBottomPlots(bot_min, bot_max).at(proc_idx);
+        sorb_th1.Write(("sorb_plot_"+std::to_string(plot_idx)+"_"+std::to_string(proc_idx)).c_str());
+      }
+    }
+  }
+  out_file->Close();
 
   time(&endtime); 
   cout<<endl<<"Took "<<difftime(endtime, begtime)<<" seconds"<<endl<<endl;
