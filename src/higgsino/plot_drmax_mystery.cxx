@@ -137,7 +137,7 @@ int main(int argc, char *argv[]){
   dr_cuts.push_back("hig_cand_drmax[0]>2.2");
 
   PlotMaker pm;
-  NamedFunc wgt = "w_lumi*w_isr" * HigUtilities::w_years;//Higfuncs::weight_higd;
+  NamedFunc wgt = "w_lumi*w_isr" * Higfuncs::w_years;//Higfuncs::weight_higd;
 
   for (auto idr: dr_cuts) {
     pm.Push<Hist1D>(Axis(13,0,260,"hig_cand_am[0]", "#LTm#GT [GeV]", {100., 140.}),

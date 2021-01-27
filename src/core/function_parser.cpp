@@ -189,6 +189,10 @@ void FunctionParser::ResolveVariables() const{
         token = Functions::amBoostedRegionIdx;
       } else if(token.string_rep_ == "SampleType"){
         token = Functions::SampleType;
+      } else if(token.string_rep_ == "boostSignalRegion"){
+        token = Functions::boostSignalRegion;
+      } else if(token.string_rep_ == "boostControlRegion"){
+        token = Functions::boostControlRegion;
       }
       else {
         token.function_ = Baby::GetFunction(token.string_rep_);

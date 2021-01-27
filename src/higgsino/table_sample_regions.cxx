@@ -5,6 +5,8 @@
 #include <vector>
 #include <ctime>
 #include <getopt.h>
+#include <regex>
+#include <math.h>
 
 #include "TError.h" // Controls error level reporting
 #include "TColor.h" // Controls error level reporting
@@ -40,6 +42,72 @@ namespace{
   bool unblind = false;
 }
 
+string regSearch(string inString, string const & regExPattern) {
+    std::smatch match;
+    std::regex pattern(regExPattern);
+    std::regex_search (inString, match, pattern);
+    return match.str();
+}
+
+string getPartialDatasetName(string filename) {
+  string baseFilename = filename.substr(filename.find_last_of("/\\")+1);
+  string fullDatasetName = regSearch(baseFilename, "[A-Z].*|ttHTobb.*");
+  //cout<<datasetName.substr(0,datasetName.find_last_of("Tune"))<<endl;;
+  string datasetName = fullDatasetName;
+  if (datasetName.find("Run") != string::npos && datasetName.find("RunII") == string::npos) datasetName = "DATA";
+  if (datasetName.find("SMS-TChiHH") != string::npos) {
+    if (datasetName.find("2D") != string::npos) datasetName = "TChiHH_HToBB_HToBB_2D_Tune";
+    else datasetName = "TChiHH_HToBB_HToBB_Tune";
+  }
+  if (datasetName.find("Tune") != string::npos) datasetName = datasetName.substr(0, datasetName.find("Tune")+4);
+  if (datasetName.find("_13TeV") != string::npos) datasetName = datasetName.substr(0, datasetName.find("_13TeV"));
+  return datasetName;
+}
+
+pair<int, int> getSignalMassValues(string filename) {
+  pair<int, int> nlsp_lsp_mass;
+  string baseFilename = filename.substr(filename.find_last_of("/\\")+1);
+  string datasetName = regSearch(baseFilename, "[A-Z].*|ttHTobb.*");
+  if (datasetName.find("SMS-TChiHH") == string::npos) return {-1,-1};
+  string NLSPMassString = regSearch(datasetName, "mChi-.*?_").substr(5);
+  string LSPMassString = regSearch(datasetName, "mLSP-.*?_").substr(5);
+  //cout<<NLSPMassString<<" "<<LSPMassString<<endl;
+  return {stoi(NLSPMassString),stoi(LSPMassString)};
+}
+
+const NamedFunc eventNumberVeto("eventNumberVeto", [](const Baby &b) -> NamedFunc::ScalarType{
+  //b.SampleType();
+  //vector<set<tuple<string, int, int, int, Long64_t> > > * eventVetoData = static_cast<vector<set<tuple<string, int, int, int, Long64_t> > > *> (b.EventVetoData());
+  //cout<<get<0>((*(*eventVetoData)[0].begin()))<<endl;
+  //if ((*eventVetoData)[0].count({})!=0) continue;
+
+  //vector<map<Long64_t, tuple<string, int, int, int> > > * eventVetoData = static_cast<vector<map<Long64_t, tuple<string, int, int, int> > > *> (b.EventVetoData());
+  //for (auto const & it : (*eventVetoData)[0]) {
+  //  cout<<it.first<<" "<<get<0>(it.second)<<endl;
+  //}
+
+  vector<map<Long64_t, set<tuple<string, int, int, int> > > > * eventVetoData = static_cast<vector<map<Long64_t, set< tuple<string, int, int, int> > > > *> (b.EventVetoData());
+  bool found = false;
+  if ((*eventVetoData)[0].count(b.event())==1) {
+    for (auto const & it : (*eventVetoData)[0][b.event()]) {
+      if (get<1>(it) == abs(b.SampleType()) && get<3>(it) == b.lumiblock() && get<2>(it) == b.run()) {
+        if (getPartialDatasetName(*b.FileNames().begin()) == get<0>(it)) {
+          //cout<<get<0>(it)<<" "<<get<1>(it)<<" "<<get<2>(it)<<" "<<get<3>(it)<<" "<<b.event()<<endl;
+          found = true;
+          break;
+        }
+      }
+    }
+  }
+
+  //int index = 0;
+  //for (auto const & name : b.FileNames()) {
+  //  if(index!=0) cout<<index<<" "<<name<<" "<<b.SampleType()<<" "<<b.run()<<" "<<b.lumiblock()<<" "<<b.event()<<endl;
+  //  index = index+1;
+  //}
+  return !found;
+});
+
 string getLuminosityString(string const & year_string) {
   set<int> years;
   HigUtilities::parseYears(year_string, years);
@@ -53,6 +121,7 @@ string getLuminosityString(string const & year_string) {
   return total_luminosity_string;
 }
 
+// Sets folders and filenames
 // nanoAodFolder: /net/cms29/cms29r0/pico/NanoAODv5/
 // production: higgsino_humboldt
 // dataType: mc/data/signal
@@ -87,7 +156,7 @@ void addProcess(string const & processName, Process::Type type, int color, Named
                                "*_TTGJets*.root", "*ttHTobb*.root","*_TTTT*.root", "*_ST_*.root",
                                "*_WJetsToLNu*.root", "*_ZJet*.root",
                                "*_QCD_HT200to300_*","*_QCD_HT300to500_*","*_QCD_HT500to700_*",
-                               "*_QCD_HT1000to1500_*","*_QCD_HT1500to2000_*",
+                               "*_QCD_HT700to1000_*", "*_QCD_HT1000to1500_*","*_QCD_HT1500to2000_*",
                                "*_QCD_HT2000toInf_*",
                                "*_WH*.root", "*_ZH_HToBB*.root",
                                "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root", "*DYJetsToLL*.root"
@@ -100,7 +169,9 @@ void addProcess(string const & processName, Process::Type type, int color, Named
     HigUtilities::stringToVectorString(fileTag, massPoints, "_");
     // Special case for angeles production
     if (production == "higgsino_angeles" && massPoints[1] == "0") massPoints[1] = "1";
-    fileNames = {"*TChiHH_mChi-"+massPoints[0]+"_mLSP-"+massPoints[1]+"_*.root"};
+    if (fileTag=="1D") fileNames = {"*TChiHH*HToBB_Tune*.root"};
+    else if (fileTag=="2D") fileNames = {"*TChiHH*HToBB_2D_Tune*.root"};
+    else fileNames = {"*TChiHH_mChi-"+massPoints[0]+"_mLSP-"+massPoints[1]+"_*.root"};
   }
   else fileNames = mctags[fileTag];
 
@@ -117,7 +188,8 @@ void addProcess(string const & processName, Process::Type type, int color, Named
   // higloose: 
   //   (nbt>=2 || nbdft>=2 || Sum$(fjet_pt>300 && fjet_msoftdrop>50)>0)&&
   //   met>150 && nvlep==0
-  folderDict.insert("search_mc_skim_folder", "mc/merged_higmc_higloose/");
+  //folderDict.insert("search_mc_skim_folder", "mc/merged_higmc_higloose/");
+  folderDict.insert("search_mc_skim_folder", "mc/skim_met150/");
   // higlep1T:
   //   (Sum$(fjet_pt>300 && fjet_msoftdrop>50)>1 || ((nbt>=2 || nbdft>=2) && njet>=4 && njet<=5)) &&
   //   nlep==1 && 
@@ -136,13 +208,15 @@ void addProcess(string const & processName, Process::Type type, int color, Named
   folderDict.insert("qcd_mc_skim_folder", "mc/merged_higmc_higqcd/");
 
   folderDict.insert("data_production_folder", dataProductionFolder);
-  folderDict.insert("search_data_skim_folder","data/merged_higdata_higloose/");
+  //folderDict.insert("search_data_skim_folder","data/merged_higdata_higloose/");
+  folderDict.insert("search_data_skim_folder","data/skim_met150/");
   folderDict.insert("ttbar_data_skim_folder","data/merged_higdata_higlep1T/");
   folderDict.insert("zll_data_skim_folder","data/merged_higdata_higlep2T/");
   folderDict.insert("qcd_data_skim_folder","data/merged_higdata_higqcd/");
 
   folderDict.insert("signal_production_folder", signalProductionFolder);
-  folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higloose/");
+  //folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higloose/");
+  folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_2D/skim_met150/");
   folderDict.insert("ttbar_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higlep1T/");
   folderDict.insert("zll_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higlep2T/");
   folderDict.insert("qcd_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higqcd/");
@@ -198,9 +272,12 @@ void addDataProcess(string const & processName_postfix, NamedFunc const & additi
   string const & nanoAodFolder, string const & production, string const & sample, string const & year_string, 
   vector<shared_ptr<Process> > & procs) 
 {
+    //NamedFunc lepton_triggers = "(HLT_IsoMu24 || HLT_IsoMu27 || HLT_Mu50 || HLT_Ele27_WPTight_Gsf || HLT_Ele35_WPTight_Gsf || HLT_Ele115_CaloIdVT_GsfTrkIdT)";
+    //NamedFunc met_triggers = "(HLT_PFMET110_PFMHT110_IDTight || HLT_PFMETNoMu110_PFMHTNoMu110_IDTight || HLT_PFMET120_PFMHT120_IDTight || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight || HLT_PFMET120_PFMHT120_IDTight_PFHT60 || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60)";
+    NamedFunc lepton_triggers = Higfuncs::el_trigger || Higfuncs::mu_trigger;
+    NamedFunc met_triggers = Higfuncs::met_trigger;;
+
     NamedFunc triggers_data = "1";
-    NamedFunc lepton_triggers = "(HLT_IsoMu24 || HLT_IsoMu27 || HLT_Mu50 || HLT_Ele27_WPTight_Gsf || HLT_Ele35_WPTight_Gsf || HLT_Ele115_CaloIdVT_GsfTrkIdT)";
-    NamedFunc met_triggers = "(HLT_PFMET110_PFMHT110_IDTight || HLT_PFMETNoMu110_PFMHTNoMu110_IDTight || HLT_PFMET120_PFMHT120_IDTight || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight || HLT_PFMET120_PFMHT120_IDTight_PFHT60 || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60)";
     if (sample == "zll") triggers_data = lepton_triggers;
     else if (sample == "ttbar") triggers_data = lepton_triggers || met_triggers;
     else if (sample == "qcd") triggers_data = met_triggers;
@@ -229,11 +306,11 @@ int main(int argc, char *argv[]){
 
   //string production_a = "higgsino_humboldt"+higgsino_version; string nanoAodFolder_a = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv5";
   string production_a = "higgsino_inyo"; 
-  string nanoAodFolder_a = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7";
+  string nanoAodFolder_a = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7";
   string sample_a = sample_name;
   string year_string_a = year_string;
 
-  string total_luminosity_string = getLuminosityString(year_string_a);
+  string total_luminosity_string = HigUtilities::getLuminosityString(year_string_a);
 
   //    Define processes, including intersections
   //--------------------------------------------------
@@ -288,6 +365,44 @@ int main(int argc, char *argv[]){
       nanoAodFolder_a, production_a, 
       sample_a, year_string_a,
       procs);
+  }
+
+  vector<shared_ptr<Process> > procs_all;
+  addProcess("MC_2016", Process::Type::background, 1, base_filters&&resolved_cuts,
+    nanoAodFolder_a, production_a, "mc", "all", sample_a, "2016",
+    procs_all);
+  addProcess("TChiHH1D_2016", Process::Type::signal, 1, base_filters&&resolved_cuts,
+    nanoAodFolder_a, production_a, "signal", "1D", sample_a, "2016",
+    procs_all);
+  addProcess("TChiHH2D_2016", Process::Type::signal, 1, base_filters&&resolved_cuts,
+    nanoAodFolder_a, production_a, "signal", "2D", sample_a, "2016",
+    procs_all);
+
+  addProcess("MC_2017", Process::Type::background, 1, base_filters&&resolved_cuts,
+    nanoAodFolder_a, production_a, "mc", "all", sample_a, "2017",
+    procs_all);
+  addProcess("TChiHH1D_2017", Process::Type::signal, 1, base_filters&&resolved_cuts,
+    nanoAodFolder_a, production_a, "signal", "1D", sample_a, "2017",
+    procs_all);
+  addProcess("TChiHH2D_2017", Process::Type::signal, 1, base_filters&&resolved_cuts,
+    nanoAodFolder_a, production_a, "signal", "2D", sample_a, "2017",
+    procs_all);
+
+  addProcess("MC_2018", Process::Type::background, 1, base_filters&&resolved_cuts,
+    nanoAodFolder_a, production_a, "mc", "all", sample_a, "2018",
+    procs_all);
+  addProcess("TChiHH1D_2018", Process::Type::signal, 1, base_filters&&resolved_cuts,
+    nanoAodFolder_a, production_a, "signal", "1D", sample_a, "2018",
+    procs_all);
+  addProcess("TChiHH2D_2018", Process::Type::signal, 1, base_filters&&resolved_cuts,
+    nanoAodFolder_a, production_a, "signal", "2D", sample_a, "2018",
+    procs_all);
+
+  if (unblind) {
+    addDataProcess("DATA", base_filters&&resolved_cuts,
+      nanoAodFolder_a, production_a, 
+      sample_a, year_string_a,
+      procs_all);
   }
 
   //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*Higfuncs::w_years;
@@ -391,8 +506,124 @@ int main(int argc, char *argv[]){
   bool print_uncertainty = true;
   pm.Push<Table>("FixName:table_"+sample_a+"_regions", tablerows, procs, 0, 1, 0, 1, 0, print_uncertainty).LuminosityTag(total_luminosity_string);
 
+  // signal region
+  NamedFunc signalRegion = "hig_cand_am[0]>100 && hig_cand_am[0]<140 && nbm>=3";
+  //pm.Push<EventScan>("resolved_list_SR", base_filters&&search_resolved_cuts&&signalRegion,vector<NamedFunc>{"SampleType","run","lumiblock","event"}, procs_all, 10, true);
+  //pm.Push<EventScan>("resolved_list_CR", base_filters&&search_resolved_cuts&&!signalRegion,vector<NamedFunc>{"SampleType", "run","lumiblock","event"}, procs_all, 10, true);
+  //pm.Push<EventScan>("resolved_list_SR", base_filters&&search_resolved_cuts&&signalRegion&&eventNumberVeto,vector<NamedFunc>{"SampleType","run","lumiblock","event"}, procs_all, 10, true);
+  //pm.Push<EventScan>("resolved_list_CR", base_filters&&search_resolved_cuts&&!signalRegion&&eventNumberVeto,vector<NamedFunc>{"SampleType", "run","lumiblock","event"}, procs_all, 10, true);
+
+  // Load event veto data
+  //set<string> vetoEventListNames = {"processed_resolved_list_CR_SCAN_MC.txt", "processed_resolved_list_SR_SCAN_MC.txt",
+  //                                  "processed_resolved_list_CR_SCAN_TChiHH.txt", "processed_resolved_list_SR_SCAN_TChiHH.txt"};
+  //set<string> vetoEventListNames = {"processed_resolved_list_CR_SCAN_MC.txt", "processed_resolved_list_SR_SCAN_MC.txt"};
+  set<string> vetoEventListNames = {};
+  //eventVetoData[0][event] = {[sampleType, year, run, lumiblock]}
+  vector<map<Long64_t, set<tuple<string, int, int, int> > > > * eventVetoData = new vector<map<Long64_t, set<tuple<string, int, int, int> > > >(1, map<Long64_t, set<tuple<string, int, int, int> > > ());
+  for (string const & vetoEventListName : vetoEventListNames) {
+    ifstream vetoEventList(vetoEventListName);
+    string line;
+    while (getline(vetoEventList, line)) {
+      if(line[0]=='#') continue;
+      vector<string> lineSplit;
+      HigUtilities::stringToVectorString(line, lineSplit, ",");
+      string const & sampleType = lineSplit[0];
+      int year = stoi(lineSplit[1]);
+      int run = stoi(lineSplit[2]);
+      int lumiblock = stoi(lineSplit[3]);
+      Long64_t event = stoll(lineSplit[4]);
+      // Insert data
+      if ((*eventVetoData)[0].count(event) == 0) {
+        (*eventVetoData)[0][event] = {{sampleType, year, run, lumiblock}};
+      } else {
+        if ((*eventVetoData)[0][event].count({sampleType, year, run, lumiblock}) != 0) cout<<"Duplicate: "<<sampleType<<" "<<year<<" "<<run<<" "<<lumiblock<<" "<<event<<endl;
+        (*eventVetoData)[0][event].insert({sampleType, year, run, lumiblock});
+      }
+    }
+    vetoEventList.close();
+  }
+
+  // Old method
+  //vector<set<tuple<string, int, int, int, Long64_t> > > * eventVetoData = new vector<set<tuple<string, int, int, int, Long64_t> > >(1, set<tuple<string, int, int, int, Long64_t> >());
+  //set<string> vetoEventListNames = {"processed_resolved_list_CR_SCAN_MC.txt", "processed_resolved_list_SR_SCAN_MC.txt",
+  //                                  "processed_resolved_list_CR_SCAN_TChiHH.txt", "processed_resolved_list_SR_SCAN_TChiHH.txt"};
+  ////(*eventVetoData)[0].insert({"hmm", 2016, 1, 11, 111});
+  //for (string const & vetoEventListName : vetoEventListNames) {
+  //  ifstream vetoEventList(vetoEventListName);
+  //  string line;
+  //  while (getline(vetoEventList, line)) {
+  //    if(line[0]=='#') continue;
+  //    vector<string> lineSplit;
+  //    HigUtilities::stringToVectorString(line, lineSplit, ",");
+  //    string const & sampleType = lineSplit[0];
+  //    int year = stoi(lineSplit[1]);
+  //    int run = stoi(lineSplit[2]);
+  //    int lumiblock = stoi(lineSplit[3]);
+  //    Long64_t event = stoll(lineSplit[4]);
+  //    (*eventVetoData)[0].insert({sampleType,year,run,lumiblock, event});
+  //  }
+  //  vetoEventList.close();
+  //}
+
+  pm.SetEventVetoData(static_cast<void * >(eventVetoData));
+
   pm.min_print_ = true;
-  pm.MakePlots(1.);
+
+  ////pm.Push<EventScan>("resolved_list_SR", base_filters&&search_resolved_cuts&&signalRegion,vector<NamedFunc>{"SampleType","run","lumiblock","event", "met"}, procs_all, 10, true);
+  ////pm.Push<EventScan>("resolved_list_CR", base_filters&&search_resolved_cuts&&!signalRegion,vector<NamedFunc>{"SampleType", "run","lumiblock","event", "met"}, procs_all, 10, true);
+  //pm.Push<EventScan>("resolved_list_SR_met300", "met>300"&&base_filters&&search_resolved_cuts&&signalRegion,vector<NamedFunc>{"SampleType","run","lumiblock","event", "met"}, procs_all, 10, true);
+  //pm.Push<EventScan>("resolved_list_CR_met300", "met>300"&&base_filters&&search_resolved_cuts&&!signalRegion,vector<NamedFunc>{"SampleType", "run","lumiblock","event", "met"}, procs_all, 10, true);
+  //pm.MakePlots(1.);
+
+  bool processEventList = true;
+  if (processEventList) {
+    // Make new event list with processed_ prefix.
+    set<string> eventListNames = {
+                                  "resolved_list_CR_met300_SCAN_MC_2016.txt","resolved_list_SR_met300_SCAN_MC_2016.txt",
+                                  "resolved_list_CR_met300_SCAN_MC_2017.txt","resolved_list_SR_met300_SCAN_MC_2017.txt",
+                                  "resolved_list_CR_met300_SCAN_MC_2018.txt","resolved_list_SR_met300_SCAN_MC_2018.txt",
+                                  "resolved_list_CR_met300_SCAN_TChiHH1D_2016.txt", "resolved_list_SR_met300_SCAN_TChiHH1D_2016.txt",
+                                  "resolved_list_CR_met300_SCAN_TChiHH1D_2017.txt", "resolved_list_SR_met300_SCAN_TChiHH1D_2017.txt",
+                                  "resolved_list_CR_met300_SCAN_TChiHH1D_2018.txt", "resolved_list_SR_met300_SCAN_TChiHH1D_2018.txt",
+                                  "resolved_list_CR_met300_SCAN_TChiHH2D_2016.txt", "resolved_list_SR_met300_SCAN_TChiHH2D_2016.txt",
+                                  "resolved_list_CR_met300_SCAN_TChiHH2D_2017.txt", "resolved_list_SR_met300_SCAN_TChiHH2D_2017.txt",
+                                  "resolved_list_CR_met300_SCAN_TChiHH2D_2018.txt", "resolved_list_SR_met300_SCAN_TChiHH2D_2018.txt",
+                                  };
+    //set<string> eventListNames = {"resolved_list_CR_met300_SCAN_MC.txt","resolved_list_SR_met300_SCAN_MC.txt",
+    //                              "resolved_list_CR_met300_SCAN_TChiHH1D.txt", "resolved_list_SR_met300_SCAN_TChiHH1D.txt",
+    //                              "resolved_list_CR_met300_SCAN_TChiHH2D.txt", "resolved_list_SR_met300_SCAN_TChiHH2D.txt",
+    //                              };
+    //set<string> eventListNames = {//"resolved_list_CR_SCAN_MC.txt","resolved_list_SR_SCAN_MC.txt",
+    //                              "resolved_list_CR_SCAN_TChiHH1D.txt", "resolved_list_SR_SCAN_TChiHH1D.txt",
+    //                              //"resolved_list_CR_SCAN_TChiHH2D.txt", "resolved_list_SR_SCAN_TChiHH2D.txt",
+    //                              };
+    for (string const & eventListName : eventListNames) {
+      ifstream eventList(eventListName);
+      bool isSignal = false;
+      if (eventListName.find("TChiHH") != string::npos) isSignal = true;
+      string processedEventListName = "processed_"+eventListName;
+      cout<<"Processing "<<eventListName<<" to "<<processedEventListName<<endl;
+      ofstream processedEventList(processedEventListName);
+      if (isSignal) processedEventList<<"# SampleName, Year, RunNumber, LumiBlockNumber, EventNumber, MET, NLSP mass, LSP mass"<<endl;
+      else processedEventList<<"# SampleName, Year, RunNumber, LumiBlockNumber, EventNumber, MET"<<endl;
+      string line;
+      while (getline(eventList, line)) {
+        if (Contains(line, "Instance")) continue;
+        vector<string> lineSplit;
+        HigUtilities::stringToVectorString(line, lineSplit, " ");
+        // Expect "Row Instance SampleType run lumiblock event Filename" sequence
+        int sampleType = stoi(lineSplit[2]); string run = lineSplit[3]; string lumiblock = lineSplit[4]; string event = lineSplit[5]; string met_string = lineSplit[6]; string filename = lineSplit[7];
+        int met = round(stof(met_string));
+        string datasetName = getPartialDatasetName(filename);
+        if (isSignal) {
+          pair<int, int> nlsp_lsp_mass = getSignalMassValues(filename);
+          processedEventList<<datasetName<<", "<<abs(sampleType)<<", "<<run<<", "<<lumiblock<<", "<<event<<", "<<met<<", "<<nlsp_lsp_mass.first<<", "<<nlsp_lsp_mass.second<<endl;
+        } else processedEventList<<datasetName<<", "<<abs(sampleType)<<", "<<run<<", "<<lumiblock<<", "<<event<<", "<<met<<endl;
+      }
+      eventList.close();
+      processedEventList.close();
+    };
+  }
 
   time(&endtime);
   cout<<endl<<"Making cutflow took "<<difftime(endtime, begtime)<<" seconds"<<endl<<endl;

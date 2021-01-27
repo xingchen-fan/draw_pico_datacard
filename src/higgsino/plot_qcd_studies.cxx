@@ -71,7 +71,7 @@ int main(){
   string baseline_s = "pass && stitch && nvlep==0 && ntk==0 && met>150 && njet>=4 && njet<=5 && nbt>=2";
   // baseline_s += " && hig_cand_dm[0]<=40 && hig_cand_am[0]<200 && hig_cand_drmax[0]<=2.2";
   NamedFunc baseline = baseline_s;
-  NamedFunc wgt = "w_lumi"*HigUtilities::w_years;
+  NamedFunc wgt = "w_lumi"*Higfuncs::w_years;
 
   vector<int> colors = {kRed+3, kRed+1, kOrange-3, kOrange, kSpring+10, kGreen+1, kAzure+1};
   vector<shared_ptr<Process> > procs;

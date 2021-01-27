@@ -90,7 +90,7 @@ int main(int argc, char *argv[]){
   }
 
   // Baseline definitions
-  NamedFunc wgt = "w_lumi*w_isr"*HigUtilities::w_years*Higfuncs::eff_higtrig;//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
+  NamedFunc wgt = "w_lumi*w_isr"*Higfuncs::w_years*Higfuncs::eff_higtrig;//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
 
   TString c_hig_trim = "hig_cand_drmax[0]<=2.2  && hig_cand_dm[0]<=40 && hig_cand_am[0]<200";
   string baseline = "njet>=4 && njet<=5 && nbt>=2";
