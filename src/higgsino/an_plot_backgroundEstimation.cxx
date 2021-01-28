@@ -84,6 +84,7 @@ int main(int argc, char *argv[]){
   //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig_run2*w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years;
   NamedFunc weight = Higfuncs::final_weight;
+  NamedFunc weight_notrgeff = Higfuncs::final_weight_notrgeff;
 
   // Set MC 
   map<string, set<string>> mctags; 
@@ -182,10 +183,30 @@ int main(int argc, char *argv[]){
   pm.Push<Table>("FixName:pie_bkgest__trueb_pies_onemet__3b", vector<TableRow> ({TableRow("", base_filters&&base_resolved&&"(nbt>=2&&nbm==3&&nbl==3)", 0, 0, weight)}), procs_trueB, true, true, true);
   pm.Push<Table>("FixName:pie_bkgest__trueb_pies_onemet__4b", vector<TableRow> ({TableRow("", base_filters&&base_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)", 0, 0, weight)}), procs_trueB, true, true, true);
 
+  // No trigger study
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    base_filters&&base_resolved, procs_btag, plt_shapes).Weight(weight_notrgeff).Tag("FixName:bkgest__amjj_shapes_notrgeff").LuminosityTag(total_luminosity_string);
+  // Plane MET vs drmax
+  vector<NamedFunc> plane_cuts;
+  plane_cuts.push_back("met>150&&met<=200 && hig_cand_drmax[0]<=1.1");
+  plane_cuts.push_back("met>200&&met<=300 && hig_cand_drmax[0]<=1.1");
+  plane_cuts.push_back("met>300&&met<=400 && hig_cand_drmax[0]<=1.1");
+  plane_cuts.push_back("met>400           && hig_cand_drmax[0]<=1.1");
+  plane_cuts.push_back("met>150&&met<=200 && hig_cand_drmax[0]>1.1");
+  plane_cuts.push_back("met>200&&met<=300 && hig_cand_drmax[0]>1.1");
+  plane_cuts.push_back("met>300&&met<=400 && hig_cand_drmax[0]>1.1");
+  plane_cuts.push_back("met>400           && hig_cand_drmax[0]>1.1");
+  for (unsigned iPlane = 0; iPlane < plane_cuts.size(); ++iPlane) {
+    pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+      base_filters&&base_resolved&&plane_cuts[iPlane], procs_btag, plt_shapes).Weight(weight).Tag("FixName:bkgest__amjj_shapes_plane"+to_string(iPlane)).LuminosityTag(total_luminosity_string);
+    pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+      base_filters&&base_resolved&&plane_cuts[iPlane], procs_btag, plt_shapes).Weight(weight_notrgeff).Tag("FixName:bkgest__amjj_shapes_plane"+to_string(iPlane)+"_notrgeff").LuminosityTag(total_luminosity_string);
+  }
+
   //pm.Push<Table>("syst__ttbar_pies__2b_met300", vector<TableRow> ({TableRow("", base_filters&&base_resolved&&"(nbt==2&&nbm==2)&&met>300          &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), procs, true, true, true);
 
   // kappa plot
-  system(("./run/higgsino/plot_kappas.exe --sample search --scen mc --year "+year_string).c_str());
+  //system(("./run/higgsino/plot_kappas.exe --sample search --scen mc --year "+year_string).c_str());
 
   pm.multithreaded_ = !single_thread;
   pm.min_print_ = true;

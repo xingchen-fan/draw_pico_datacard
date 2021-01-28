@@ -19,6 +19,7 @@
 #include "core/styles.hpp"
 #include "core/utilities.hpp"
 #include "core/plot_opt.hpp"
+#include "core/cross_sections.hpp"
 
 using namespace std;
 
@@ -53,6 +54,7 @@ int main(int argc, char *argv[]){
   vector<double> vexp, vup, vdown, v2up, v2down, vsigobs, vsigexp, zeroes, ones;
   double maxy=-99., miny=1e99, maxsig = -99., minsig = 1e99;
   vector<double> vxsecup, vxsecdown;
+
   
   string line_s;
   while(getline(infile, line_s)){
@@ -86,6 +88,13 @@ int main(int argc, char *argv[]){
   }
   infile.close();
 
+  vector<double> vxsec2d;
+  for (auto const & mass : vmx) {
+    double xsec2d, xsec2d_unc;
+    xsec::higgsino2DCrossSection(mass, xsec2d, xsec2d_unc);
+    vxsec2d.push_back(xsec2d/hh4b_bf);
+  }
+
   if(vmx.size() <= 0) ERROR("Need at least 1 model to draw limits");
   if(vmx.size() != vmy.size()
      || vmx.size() != vxsec.size()
@@ -99,13 +108,15 @@ int main(int argc, char *argv[]){
      || vmx.size() != v2up.size()
      || vmx.size() != v2down.size()
      || vmx.size() != vsigobs.size()
-     || vmx.size() != vsigexp.size()) ERROR("Error parsing text file. Model point not fully specified");
+     || vmx.size() != vsigexp.size()
+     || vmx.size() != vxsec2d.size()) ERROR("Error parsing text file. Model point not fully specified");
   
   // Sorting vectors
   vector<size_t> perm = SortPermutation(vmx);
   vmx      = ApplyPermutation(vmx      , perm);
   vmy	   = ApplyPermutation(vmy      , perm);
   vxsec	   = ApplyPermutation(vxsec    , perm);	
+  vxsec2d  = ApplyPermutation(vxsec2d  , perm);	
   vexsec   = ApplyPermutation(vexsec   , perm);	
   vobs	   = ApplyPermutation(vobs     , perm);	
   vobsup   = ApplyPermutation(vobsup   , perm);	 	
@@ -249,6 +260,7 @@ int main(int argc, char *argv[]){
   maxy=-99.; miny=1e99;
   for(size_t i = 0; i < vxsec.size(); ++i){
     vxsec[i]   *= 1000; // Converting it to fb
+    vxsec2d[i]   *= 1000; // Converting it to fb
     vexsec[i]  *= vxsec[i];
     vobs[i]    *= vxsec[i];
     vobsup[i]  *= vxsec[i]; 	
@@ -293,6 +305,10 @@ int main(int argc, char *argv[]){
   TGraph gxsecdown(vmx.size(), &(vmx[0]), &(vxsecdown[0]));
   gxsecdown.SetLineWidth(1); gxsecdown.SetLineStyle(2); gxsecdown.SetLineColor(thcolor); 
   gxsecdown.Draw("same"); 
+
+  TGraph gxsec2d(vmx.size(), &(vmx[0]), &(vxsec2d[0]));
+  gxsec2d.SetLineWidth(thwidth); gxsec2d.SetLineColor(kBlue); gxsec2d.SetLineStyle(1);
+  gxsec2d.Draw("same");
 
   can.SetLogy(true);
 

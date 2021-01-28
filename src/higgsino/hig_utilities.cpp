@@ -115,21 +115,21 @@ namespace HigUtilities {
     else return b.weight()/b.w_btag()*b.w_bhig();
   });
 
-  const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
-    if (b.SampleType()<0) return 1.;
+  //const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
+  //  if (b.SampleType()<0) return 1.;
 
-    double wgt = 1;
-    if (b.type()==106000) {
-      return 137.;
-    }
-    if (b.SampleType()==2016){
-      return wgt*35.9;
-    } else if (b.SampleType()==2017){
-      return wgt*41.5;
-    } else {
-      return wgt*59.6;
-    }
-  });
+  //  double wgt = 1;
+  //  if (b.type()==106000) {
+  //    return 137.;
+  //  }
+  //  if (b.SampleType()==2016){
+  //    return wgt*35.9;
+  //  } else if (b.SampleType()==2017){
+  //    return wgt*41.5;
+  //  } else {
+  //    return wgt*59.6;
+  //  }
+  //});
   
   const NamedFunc pass_nhig_cand("pass_nhig_cand", [](const Baby &b) -> NamedFunc::ScalarType{
     if (b.hig_cand_drmax()->size() == 0) return 0;
@@ -144,62 +144,122 @@ namespace HigUtilities {
   const NamedFunc w_CNToN1N2("w_CNToN1N2", [](const Baby &b) -> NamedFunc::ScalarType{
     if(b.type() != 106000) return 1;
     if(b.mprod() ==127) return 1.44725/7.6022;
-    if(b.mprod() ==150) return 0.71514/3.83231;
-    if(b.mprod() ==175) return 0.419059/2.26794;
-    if(b.mprod() ==200) return 0.244213/1.33562;
-    if(b.mprod() ==225) return 0.156286/0.860597;
-    if(b.mprod() ==250) return 0.104252/0.577314;
-    if(b.mprod() ==275) return 0.0719125/0.400107;
-    if(b.mprod() ==300) return 0.0509994/0.284855;
-    if(b.mprod() ==325) return 0.0369715/0.20736;
-    if(b.mprod() ==350) return 0.0273286/0.153841;
-    if(b.mprod() ==375) return 0.0205429/0.116006;
-    if(b.mprod() ==400) return 0.0156691/0.0887325;
-    if(b.mprod() ==425) return 0.0120965/0.0686963;
-    if(b.mprod() ==450) return 0.00944017/0.0537702;
-    if(b.mprod() ==475) return 0.00743587/0.0424699;
-    if(b.mprod() ==500) return 0.00590757/0.0338387;
-    if(b.mprod() ==526) return 0.00469101/0.0269524;
-    if(b.mprod() ==550) return 0.0038167/0.0219868;
-    if(b.mprod() ==576) return 0.003073/0.0177611;
-    if(b.mprod() ==600) return 0.00253015/0.0146677;
-    if(b.mprod() ==626) return 0.00206136/0.0119691;
-    if(b.mprod() ==650) return 0.00171418/0.00996406;
-    if(b.mprod() ==676) return 0.00140934/0.00822165;
-    if(b.mprod() ==700) return 0.00118113/0.00689981;
-    if(b.mprod() ==726) return 0.000979349/0.00574289;
-    if(b.mprod() ==750) return 0.000826366/0.0048731;
-    if(b.mprod() ==776) return 0.000690208/0.00407012;
-    if(b.mprod() ==800) return 0.000586211/0.00346143;
-    if(b.mprod() ==826) return 0.00049277/0.00291514;
-    if(b.mprod() ==850) return 0.000420556/0.0024923;
-    if(b.mprod() ==876) return 0.000358734/0.00212322;
-    if(b.mprod() ==900) return 0.000305935/0.00180616;
-    if(b.mprod() ==926) return 0.000260948/0.00154462;
-    if(b.mprod() ==950) return 0.00022285/0.00132692;
-    if(b.mprod() ==976) return 0.000189681/0.00112253;
-    if(b.mprod() ==1000) return 0.00016428/0.000968853;
-    if(b.mprod() ==1024) return 0.000142206/0.000845522;
-    if(b.mprod() ==1052) return 0.000120971/0.000717628;
-    if(b.mprod() ==1076) return 0.000105301/0.000623403;
-    if(b.mprod() ==1100) return 9.12469e-05/0.000538005;
-    if(b.mprod() ==1124) return 7.9765e-05/0.00047022;
-    if(b.mprod() ==1152) return 6.78234e-05/0.000398787;
-    if(b.mprod() ==1176) return 5.9016e-05/0.000346209;
-    if(b.mprod() ==1200) return 5.16263e-05/0.000299347;
-    if(b.mprod() ==1224) return 4.5147e-05/0.000267704;
-    if(b.mprod() ==1252) return 3.88343e-05/0.000222061;
-    if(b.mprod() ==1276) return 3.41304e-05/0.00018915;
-    if(b.mprod() ==1300) return 2.99353e-05/0.000160765;
-    if(b.mprod() ==1324) return 2.63637e-05/0.000137188;
-    if(b.mprod() ==1352) return 2.26779e-05/0.000113724;
-    if(b.mprod() ==1376) return 1.99318e-05/9.68213e-05;
-    if(b.mprod() ==1400) return 1.75031e-05/7.80263e-05;
-    if(b.mprod() ==1424) return 1.53974e-05/7.0157e-05;
-    if(b.mprod() ==1452) return 1.3245e-05/5.81247e-05;
-    if(b.mprod() ==1476) return 1.16416e-05/4.94646e-05;
+    else if(b.mprod() ==150) return 0.71514/3.83231;
+    else if(b.mprod() ==175) return 0.419059/2.26794;
+    else if(b.mprod() ==200) return 0.244213/1.33562;
+    else if(b.mprod() ==225) return 0.156286/0.860597;
+    else if(b.mprod() ==250) return 0.104252/0.577314;
+    else if(b.mprod() ==275) return 0.0719125/0.400107;
+    else if(b.mprod() ==300) return 0.0509994/0.284855;
+    else if(b.mprod() ==325) return 0.0369715/0.20736;
+    else if(b.mprod() ==350) return 0.0273286/0.153841;
+    else if(b.mprod() ==375) return 0.0205429/0.116006;
+    else if(b.mprod() ==400) return 0.0156691/0.0887325;
+    else if(b.mprod() ==425) return 0.0120965/0.0686963;
+    else if(b.mprod() ==450) return 0.00944017/0.0537702;
+    else if(b.mprod() ==475) return 0.00743587/0.0424699;
+    else if(b.mprod() ==500) return 0.00590757/0.0338387;
+    else if(b.mprod() ==525) return 0.00473235/0.0271867;
+    else if(b.mprod() ==550) return 0.0038167/0.0219868;
+    else if(b.mprod() ==575) return 0.00309847/0.0179062;
+    else if(b.mprod() ==600) return 0.00253015/0.0146677;
+    else if(b.mprod() ==625) return 0.00207755/0.012062;
+    else if(b.mprod() ==650) return 0.00171418/0.00996406;
+    else if(b.mprod() ==675) return 0.0014199/0.00828246;
+    else if(b.mprod() ==700) return 0.00118113/0.00689981;
+    else if(b.mprod() ==725) return 0.00098639/0.00578355;
+    else if(b.mprod() ==750) return 0.000826366/0.0048731;
+    else if(b.mprod() ==775) return 0.000694985/0.00409781;
+    else if(b.mprod() ==800) return 0.000586211/0.00346143;
+    else if(b.mprod() ==825) return 0.000495914/0.0029337;
+    else if(b.mprod() ==850) return 0.000420556/0.0024923;
+    else if(b.mprod() ==875) return 0.000361029/0.00213679;
+    else if(b.mprod() ==900) return 0.000305935/0.00180616;
+    else if(b.mprod() ==925) return 0.000262621/0.00155453;
+    else if(b.mprod() ==950) return 0.00022285/0.00132692;
+    else if(b.mprod() ==975) return 0.0001909/0.00112975;
+    else if(b.mprod() ==1000) return 0.00016428/0.000968853;
+    else if(b.mprod() ==1025) return 0.00014139/0.000840602;
+    else if(b.mprod() ==1050) return 0.000121865/0.000731306;
+    else if(b.mprod() ==1075) return 0.000105913/0.000627083;
+    else if(b.mprod() ==1100) return 9.12469e-05/0.000538005;
+    else if(b.mprod() ==1125) return 7.93058e-05/0.00046747;
+    else if(b.mprod() ==1150) return 6.84561e-05/0.000405108;
+    else if(b.mprod() ==1175) return 5.93602e-05/0.000348261;
+    else if(b.mprod() ==1200) return 5.16263e-05/0.000299347;
+    else if(b.mprod() ==1225) return 4.4906e-05/0.000265935;
+    else if(b.mprod() ==1250) return 3.91587e-05/0.000240471;
+    else if(b.mprod() ==1275) return 3.43135e-05/0.000190411;
+    else if(b.mprod() ==1300) return 2.99353e-05/0.000160765;
+    else if(b.mprod() ==1325) return 2.62223e-05/0.000136272;
+    else if(b.mprod() ==1350) return 2.28072e-05/0.000111174;
+    else if(b.mprod() ==1375) return 2.00393e-05/9.74728e-05;
+    else if(b.mprod() ==1400) return 1.75031e-05/7.80263e-05;
+    else if(b.mprod() ==1425) return 1.53144e-05/6.96843e-05;
+    else if(b.mprod() ==1450) return 1.34572e-05/6.96962e-05;
+    else if(b.mprod() ==1475) return 1.17047e-05/4.98006e-05;
     else return 0;
   });
+
+  //const NamedFunc w_CNToN1N2("w_CNToN1N2", [](const Baby &b) -> NamedFunc::ScalarType{
+  //  if(b.type() != 106000) return 1;
+  //  if(b.mprod() ==127) return 1.44725/7.6022;
+  //  if(b.mprod() ==150) return 0.71514/3.83231;
+  //  if(b.mprod() ==175) return 0.419059/2.26794;
+  //  if(b.mprod() ==200) return 0.244213/1.33562;
+  //  if(b.mprod() ==225) return 0.156286/0.860597;
+  //  if(b.mprod() ==250) return 0.104252/0.577314;
+  //  if(b.mprod() ==275) return 0.0719125/0.400107;
+  //  if(b.mprod() ==300) return 0.0509994/0.284855;
+  //  if(b.mprod() ==325) return 0.0369715/0.20736;
+  //  if(b.mprod() ==350) return 0.0273286/0.153841;
+  //  if(b.mprod() ==375) return 0.0205429/0.116006;
+  //  if(b.mprod() ==400) return 0.0156691/0.0887325;
+  //  if(b.mprod() ==425) return 0.0120965/0.0686963;
+  //  if(b.mprod() ==450) return 0.00944017/0.0537702;
+  //  if(b.mprod() ==475) return 0.00743587/0.0424699;
+  //  if(b.mprod() ==500) return 0.00590757/0.0338387;
+  //  if(b.mprod() ==526) return 0.00469101/0.0269524;
+  //  if(b.mprod() ==550) return 0.0038167/0.0219868;
+  //  if(b.mprod() ==576) return 0.003073/0.0177611;
+  //  if(b.mprod() ==600) return 0.00253015/0.0146677;
+  //  if(b.mprod() ==626) return 0.00206136/0.0119691;
+  //  if(b.mprod() ==650) return 0.00171418/0.00996406;
+  //  if(b.mprod() ==676) return 0.00140934/0.00822165;
+  //  if(b.mprod() ==700) return 0.00118113/0.00689981;
+  //  if(b.mprod() ==726) return 0.000979349/0.00574289;
+  //  if(b.mprod() ==750) return 0.000826366/0.0048731;
+  //  if(b.mprod() ==776) return 0.000690208/0.00407012;
+  //  if(b.mprod() ==800) return 0.000586211/0.00346143;
+  //  if(b.mprod() ==826) return 0.00049277/0.00291514;
+  //  if(b.mprod() ==850) return 0.000420556/0.0024923;
+  //  if(b.mprod() ==876) return 0.000358734/0.00212322;
+  //  if(b.mprod() ==900) return 0.000305935/0.00180616;
+  //  if(b.mprod() ==926) return 0.000260948/0.00154462;
+  //  if(b.mprod() ==950) return 0.00022285/0.00132692;
+  //  if(b.mprod() ==976) return 0.000189681/0.00112253;
+  //  if(b.mprod() ==1000) return 0.00016428/0.000968853;
+  //  if(b.mprod() ==1024) return 0.000142206/0.000845522;
+  //  if(b.mprod() ==1052) return 0.000120971/0.000717628;
+  //  if(b.mprod() ==1076) return 0.000105301/0.000623403;
+  //  if(b.mprod() ==1100) return 9.12469e-05/0.000538005;
+  //  if(b.mprod() ==1124) return 7.9765e-05/0.00047022;
+  //  if(b.mprod() ==1152) return 6.78234e-05/0.000398787;
+  //  if(b.mprod() ==1176) return 5.9016e-05/0.000346209;
+  //  if(b.mprod() ==1200) return 5.16263e-05/0.000299347;
+  //  if(b.mprod() ==1224) return 4.5147e-05/0.000267704;
+  //  if(b.mprod() ==1252) return 3.88343e-05/0.000222061;
+  //  if(b.mprod() ==1276) return 3.41304e-05/0.00018915;
+  //  if(b.mprod() ==1300) return 2.99353e-05/0.000160765;
+  //  if(b.mprod() ==1324) return 2.63637e-05/0.000137188;
+  //  if(b.mprod() ==1352) return 2.26779e-05/0.000113724;
+  //  if(b.mprod() ==1376) return 1.99318e-05/9.68213e-05;
+  //  if(b.mprod() ==1400) return 1.75031e-05/7.80263e-05;
+  //  if(b.mprod() ==1424) return 1.53974e-05/7.0157e-05;
+  //  if(b.mprod() ==1452) return 1.3245e-05/5.81247e-05;
+  //  if(b.mprod() ==1476) return 1.16416e-05/4.94646e-05;
+  //  else return 0;
+  //});
 
 
   TString nom2genmet(TString ibin){
@@ -332,7 +392,45 @@ namespace HigUtilities {
       }
     }
   }
+
+  // 1. RSR, RCR, BSR, BCR
+  // 2. BSR, BCR, RSR, RCR
+  // 3. RSR, BSR, RCR, BCR
+  // 4. BSR, RSR, BCR, RCR
+  void setABCDBinsPriority(map<string, string> xBins, map<string, string> yBins, map<string, vector<pair<string, string> > > dimensionBins, vector<pair<string, string> > & sampleBins, int priority)
+  {
+    // Combine dimensions to one list of dimensions.
+    combineDimensionBins(dimensionBins);
   
+    auto dimension = dimensionBins.begin();
+    for (unsigned iBin = 0; iBin < dimension->second.size(); ++iBin)
+    {
+      for (auto yBin: yBins)
+      {
+        for (auto xBin : xBins)
+        {
+          string label = "x"+xBin.first+"_y"+yBin.first+"_"+(dimension->second)[iBin].first;
+          // Check if label is signal region or sideband region
+          bool isSignalRegion = false;
+          if (label.find("xsig")!=string::npos && label.find("ysig")!=string::npos) isSignalRegion = true;
+          // Apply cut according to SR,CR and priority
+          string cut = xBin.second+"&&"+yBin.second+"&&"+(dimension->second)[iBin].second;
+          if (priority==1) cut = cut;
+          else if (priority==2) cut = cut+"&&!boostSignalRegion&&!boostControlRegion";
+          else if (priority==3) {
+            if (isSignalRegion) cut = cut;
+            else cut = cut+"&&!boostSignalRegion";
+          } else if (priority==4) {
+            if (isSignalRegion) cut = cut+"&&!boostSignalRegion";
+            else cut = cut+"&&!boostSignalRegion&&!boostControlRegion";
+          }
+          //cout<<"bins: "<<label<<" "<<cut<<endl;
+          sampleBins.push_back({label, cut});
+        }
+      }
+    }
+  }
+
   void combineDimensionBins(map<string, vector<pair<string, string> > > & dimensionBins)
   {
     unsigned nDimensions = dimensionBins.size();
@@ -532,7 +630,9 @@ namespace HigUtilities {
       {
         string const & label = process->name_ + "_" +signalRow.labels[ipar];
         addToMapYields(label, yields[ipar], signalRow.tableRows[ipar], mYields);
-        if (verbose) cout<<label<<": "<<mYields.at(label).first.Yield()<<endl;
+        if (verbose) {
+          cout<<label<<": "<<mYields.at(label).first.Yield()<<endl;
+        }
         //cout<<label<<": "<<mYields.at(label).first.Yield()<<" "<<mYields.at(label).second.cut_.Name()<<" "<<mYields.at(label).second.weight_.Name()<<endl;
       }
     }
@@ -601,9 +701,9 @@ namespace HigUtilities {
     HigUtilities::parseYears(year_string, years);
     float total_luminosity = 0;
     for (auto const & year : years) {
-      if (year == 2016) total_luminosity += 35.9;
-      if (year == 2017) total_luminosity += 41.5;
-      if (year == 2018) total_luminosity += 60;
+      if (year == 2016) total_luminosity += 35.92;
+      if (year == 2017) total_luminosity += 41.53;
+      if (year == 2018) total_luminosity += 59.74;
     }
     string total_luminosity_string = RoundNumber(total_luminosity, 1, 1).Data();
     return total_luminosity_string;

@@ -675,10 +675,10 @@ int main(int argc, char *argv[]){
   string production_a = "higgsino_inyo"; string nanoAodFolder_a = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7";
   //string production_a = "higgsino_inyo"; string nanoAodFolder_a = "/cms29r0/pico/NanoAODv7";
   string sample_a = "search";
-  string year_string_a = "run2";
+  string year_string_a = "2016";
   TString tablename_a = "FixName:table_resolved_"+production_a+"_"+sample_a+"_"+CopyReplaceAll(year_string_a, ",","_")+"_a";
   // trigger_version: 0 or 1
-  int trigger_version_a = 0;
+  int trigger_version_a = 1;
 
   string total_luminosity_string_a = HigUtilities::getLuminosityString(year_string_a);
 
@@ -691,8 +691,8 @@ int main(int argc, char *argv[]){
   //NamedFunc base_filters_a = Functions::hem_veto && "pass";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
   //NamedFunc base_filters_a = Higfuncs::pass_filters&&"met/met_calo<5";
   //NamedFunc base_filters_a = "1";
-  //NamedFunc base_filters_a = Higfuncs::final_loose_pass_filters&&Functions::hem_veto;
-  NamedFunc base_filters_a = Higfuncs::final_ttbar_pass_filters;
+  NamedFunc base_filters_a = Higfuncs::final_pass_filters;
+  //NamedFunc base_filters_a = Higfuncs::final_ttbar_pass_filters;
 
   //NamedFunc weight_a = "w_lumi*w_isr"*Higfuncs::eff_higtrig*Higfuncs::w_years;
   //NamedFunc weight_a = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Functions::w_pileup;
@@ -709,9 +709,10 @@ int main(int argc, char *argv[]){
 
   //string production_b = "higgsino_humboldt"; string nanoAodFolder_b = "/net/cms25/cms25r5/pico/NanoAODv5";
   //string production_b = "higgsino_inyo"; string nanoAodFolder_b = "/net/cms25/cms25r5/pico/NanoAODv7";
-  string production_b = "higgsino_inyo"; string nanoAodFolder_b = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7";
+  //string production_b = "higgsino_inyo"; string nanoAodFolder_b = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7";
+  string production_b = "higgsino_klamath"; string nanoAodFolder_b = "/net/cms25/cms25r5/pico/NanoAODv7";
   string sample_b = "search";
-  string year_string_b = "run2";
+  string year_string_b = "2016";
   TString tablename_b = "FixName:table_resolved_"+production_b+"_"+sample_b+"_"+CopyReplaceAll(year_string_b, ",","_")+"_b";
   // trigger_version: 0 or 1
   int trigger_version_b = 1;
@@ -727,8 +728,9 @@ int main(int argc, char *argv[]){
   //NamedFunc base_filters_b = Higfuncs::final_pass_filters;
   //NamedFunc base_filters_b = Functions::hem_veto && "pass";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
   //NamedFunc base_filters_b = Higfuncs::pass_filters&&"met/met_calo<5";
-  NamedFunc base_filters_b = Higfuncs::final_ttbar_pass_filters;
+  //NamedFunc base_filters_b = Higfuncs::final_ttbar_pass_filters;
   //NamedFunc base_filters_b = "1";
+  NamedFunc base_filters_b = Higfuncs::final_pass_filters;
 
   //NamedFunc weight_b = "w_lumi*w_isr"*Higfuncs::eff_higtrig*Higfuncs::w_years;
   //NamedFunc weight_b = "w_lumi*w_isr"*Higfuncs::eff_higtrig_run2_v0*Higfuncs::w_years;

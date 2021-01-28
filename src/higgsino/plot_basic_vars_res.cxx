@@ -117,7 +117,7 @@ int main(int argc, char *argv[]){
   NamedFunc baseline = baseline_s;
 
   // Baseline definitions
-  NamedFunc wgt = "w_lumi*w_isr"*HigUtilities::w_years*Higfuncs::eff_higtrig;//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
+  NamedFunc wgt = "w_lumi*w_isr"*Higfuncs::w_years*Higfuncs::eff_higtrig;//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
 
   string cr_sample_label = "";
   if (cr_sample=="zll") cr_sample_label = "2L CS";

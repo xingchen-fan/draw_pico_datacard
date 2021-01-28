@@ -117,6 +117,31 @@ const NamedFunc mc_true_subleadH_dr("mc_true_subleadH_dr", [](const Baby &b) ->N
   if (higgs_pt[0]<=higgs_pt[1]) return dr_bb[0];
   else return dr_bb[1];
 });
+const NamedFunc mc_true_leadH_pt("mc_true_leadH_pt", [](const Baby &b) ->NamedFunc::ScalarType{
+  // Find b pair relaed with higgs
+  // index_higgs_to_b[higgs_index] = [b_index]
+  map<int, vector<int> > index_higgs_to_b;
+  for (unsigned iParticle = 0; iParticle < (*b.mc_id()).size(); ++iParticle) {
+    if (abs((*b.mc_id())[iParticle]) != 5) continue;
+    if ((*b.mc_mom())[iParticle] != 25) continue;
+    index_higgs_to_b[(*b.mc_momidx())[iParticle]].push_back(iParticle);
+  }
+  vector<double> dr_bb;
+  vector<double> higgs_pt;
+  for(auto it = index_higgs_to_b.begin(); it != index_higgs_to_b.end(); ++it) {
+    if (it->second.size()!=2) continue;
+    int higgs_index = it->first;
+    int b0_index = it->second[0];
+    int b1_index = it->second[1];
+    ROOT::Math::PtEtaPhiMVector higgs_b0((*b.mc_pt())[b0_index], (*b.mc_eta())[b0_index], (*b.mc_phi())[b0_index], (*b.mc_mass())[b0_index]);
+    ROOT::Math::PtEtaPhiMVector higgs_b1((*b.mc_pt())[b1_index], (*b.mc_eta())[b1_index], (*b.mc_phi())[b1_index], (*b.mc_mass())[b1_index]);
+    dr_bb.push_back(DeltaR(higgs_b0,higgs_b1));
+    higgs_pt.push_back((*b.mc_pt())[higgs_index]);
+  };
+  if (dr_bb.size()!=2) return -1;
+  if (higgs_pt[0]>higgs_pt[1]) return higgs_pt[0];
+  else return higgs_pt[1];
+});
 
 namespace{
   bool single_thread = false;
@@ -152,11 +177,11 @@ int main(int argc, char *argv[]){
   vector<PlotOpt> plt_shapes_info = {lin_shapes_info};
 
   // Set options
-  string mc_base_folder = "/net/cms25/cms25r5/jbkim/pico/NanoAODv5/higgsino_humboldt/";
+  string mc_base_folder = "/net/cms25/cms25r0/jbkim/pico/NanoAODv5/higgsino_humboldt/";
   string mc_skim_folder = "mc/merged_higmc_higloose/";
 
   //string sig_base_folder = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado/";
-  string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/";
+  string sig_base_folder = "/net/cms25/cms25r0/pico/NanoAODv5/higgsino_humboldt/";
   string sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higloose/";
 
   set<int> years;
@@ -220,7 +245,8 @@ int main(int argc, char *argv[]){
   //procs.push_back(Process::MakeShared<Baby_pico>("TChiHH(500,150)", Process::Type::background, 
   //  sig_colors[0], attach_folder(sig_base_folder, years, sig_skim_folder, {"*TChiHH_mChi-500_mLSP-150*.root"}), "1"));
   procs.push_back(Process::MakeShared<Baby_pico>("TChiHH(300,150)", Process::Type::background, 
-    sig_colors[0], attach_folder(sig_base_folder, years, sig_skim_folder, {"*TChiHH_mChi-950_mLSP-600*.root"}), "1"));
+    //sig_colors[0], attach_folder(sig_base_folder, years, sig_skim_folder, {"*TChiHH_mChi-950_mLSP-600*.root"}), "1"));
+    sig_colors[0], attach_folder(sig_base_folder, years, sig_skim_folder, {"*TChiHH_mChi-*.root"}), "1"));
 
   NamedFunc base_filters = HigUtilities::pass_2016 && "met/met_calo<5"; //since pass_fsjets is not quite usable...
 
@@ -243,9 +269,9 @@ int main(int argc, char *argv[]){
   //// Plot average mc_true deltaR_bb
   ////pm.Push<Hist1D>(Axis(16, 0, 3.2, mc_true_avg_dr, "true avg. \\Delta R_{bb}", {}),
   ////  base_filters&&base_resolved&&signal_resolved, procs, plt_lin).Weight(weight).Tag("ShortName:ResolvedSignalRegion");
-  //pm.Push<Hist2D>(Axis(16, 0, 3.2, mc_true_leadH_dr, "Leading H \\Delta R_{bb}", {}),
-  //  Axis(16, 0, 3.2, mc_true_subleadH_dr, "Subleading H \\Delta R_{bb}", {}),
-  //  base_filters&&"met>150&&!low_dphi_met&&nvlep==0&&ntk==0"&&"((njet>=4&&njet<=5)||(nfjet>=2))", procs, plt_2D).Weight(weight);
+  pm.Push<Hist2D>(Axis(16, 0, 3.2, mc_true_leadH_dr, "Leading H \\Delta R_{bb}", {}),
+    Axis(20, 0, 500, mc_true_leadH_pt, "Leading H pT [GeV]", {}),
+    base_filters, procs, plt_2D).Weight(weight);
   //pm.Push<Hist2D>(Axis(11, 0, 2.2, mc_true_leadH_dr, "Leading H \\Delta R_{bb}", {}),
   //  Axis(11, 0, 2.2, mc_true_subleadH_dr, "Subleading H \\Delta R_{bb}", {}),
   //  base_filters&&base_resolved&&signal_resolved, procs, plt_2D).Weight(weight).Tag("ShortName:ResolvedSignalRegion");

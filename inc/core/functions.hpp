@@ -26,6 +26,9 @@ namespace Functions{
                                      Variation variation = Variation::central);
   NamedFunc MismeasurementWeight(const std::string &file_path,
                                  const std::string &mismeas_scenario);
+
+  extern const NamedFunc boostSignalRegion;
+  extern const NamedFunc boostControlRegion;
 }
 
 #endif

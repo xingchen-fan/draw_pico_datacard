@@ -9,6 +9,7 @@
 #include <unistd.h> // getopt in Macs
 #include <getopt.h>
 #include <dirent.h>
+#include <regex>
 
 #include "TSystem.h"
 #include "TString.h"
@@ -34,6 +35,7 @@ namespace
 {
   string outFolder = getenv("PWD");
   string mass_points_string = ""; // run over all the points, otherwise specify, e.g. "175_1,200_1"
+  string mass_point_glob = "";
   string years_string = "2016,2017,2018";
   float luminosity = 1.;
   //float luminosity = 35.9;
@@ -42,6 +44,12 @@ namespace
   string tag = "resolved";
   bool do_met_average = true;
   string higgsino_model = "N1N2";
+  // 1. RSR, RCR, BSR, BCR
+  // 2. BSR, BCR, RSR, RCR
+  // 3. RSR, BSR, RCR, BCR
+  // 4. BSR, RSR, BCR, RCR
+  int priority = 1;
+  bool is1D = true;
 }
 
 const NamedFunc min_jet_dphi("min_jet_dphi", [](const Baby &b) -> NamedFunc::ScalarType{
@@ -52,6 +60,132 @@ const NamedFunc min_jet_dphi("min_jet_dphi", [](const Baby &b) -> NamedFunc::Sca
   }
   return min_dphi;
 });
+
+string regSearch(string inString, string const & regExPattern) {
+    std::smatch match;
+    std::regex pattern(regExPattern);
+    std::regex_search (inString, match, pattern);
+    return match.str();
+}
+
+string getPartialDatasetName(string filename) {
+  string baseFilename = filename.substr(filename.find_last_of("/\\")+1);
+  string fullDatasetName = regSearch(baseFilename, "[A-Z].*|ttHTobb.*");
+  //cout<<datasetName.substr(0,datasetName.find_last_of("Tune"))<<endl;;
+  string datasetName = fullDatasetName;
+  if (datasetName.find("Run") != string::npos) datasetName = "DATA";
+  if (datasetName.find("SMS-TChiHH") != string::npos) datasetName = "TChiHH";
+  if (datasetName.find("Tune") != string::npos) datasetName = datasetName.substr(0, datasetName.find("Tune")+4);
+  if (datasetName.find("_13TeV") != string::npos) datasetName = datasetName.substr(0, datasetName.find("_13TeV"));
+  return datasetName;
+}
+
+bool findStringIC(const std::string & strHaystack, const std::string & strNeedle)
+{
+  auto it = std::search(
+    strHaystack.begin(), strHaystack.end(),
+    strNeedle.begin(),   strNeedle.end(),
+    [](char ch1, char ch2) { return std::toupper(ch1) == std::toupper(ch2); }
+  );
+  return (it != strHaystack.end() );
+}
+
+pair<int, int> getSignalMassValues(string filename) {
+  pair<int, int> nlsp_lsp_mass;
+  string baseFilename = filename.substr(filename.find_last_of("/\\")+1);
+  string datasetName = regSearch(baseFilename, "[A-Z].*|ttHTobb.*");
+  if (datasetName.find("SMS-TChiHH") == string::npos) return {-1,-1};
+  string NLSPMassString = regSearch(datasetName, "mChi-.*?_").substr(5);
+  string LSPMassString = regSearch(datasetName, "mLSP-.*?_").substr(5);
+  //cout<<NLSPMassString<<" "<<LSPMassString<<endl;
+  return {stoi(NLSPMassString),stoi(LSPMassString)};
+}
+
+bool regionCut(const Baby & b, int regionIndex) {
+  bool inRegion = false;
+  vector<map<Long64_t, set<tuple<string, int, int, int, int, int, int> > > > * eventNumberData = static_cast<vector<map<Long64_t, set< tuple<string, int, int, int, int, int, int> > > > *> (b.EventVetoData());
+  // 0: sampleType, 1: year, 2: run, 3: lumiblock, 4: met, 5: nlsp_mass, 6: lsp_mass
+  // Check event nuber
+  if ((*eventNumberData)[regionIndex].count(b.event())==1) {
+    for (auto const & it : (*eventNumberData)[regionIndex][b.event()]) {
+      // Check year
+      if (get<1>(it) != abs(b.SampleType())) continue;
+      // Check run
+      if (get<2>(it) != b.run()) continue;
+      bool isSignal = ((*b.FileNames().begin()).find("TChiHH") != string::npos) ? true : false;
+      // Check met out of 20%
+      if (isSignal) {if (get<4>(it) < b.met()*0.8 || get<4>(it) > b.met()*1.2) continue;}
+      else if (get<4>(it) != round(b.met())) continue;
+      pair<int, int> signal_mass = getSignalMassValues(*b.FileNames().begin());
+      // Check nlsp_mass
+      if (signal_mass.first != get<5>(it)) continue;
+      // Check lsp_mass
+      int regionLsp = get<6>(it)==1? 0:get<6>(it);
+      if (signal_mass.second != regionLsp) continue;
+      // Check sample name
+      //if (get<5>(it) != -1) cout<<*b.FileNames().begin()<<" "<<get<0>(it)<<endl;
+      if ((*b.FileNames().begin()).find("TChiHH") != string::npos && get<0>(it).find("TChiHH") != string::npos)  {
+        if ((*b.FileNames().begin()).find("HToBB_2D") != get<0>(it).find("2D")) continue;
+      } else if (!findStringIC(*b.FileNames().begin(), get<0>(it))) continue;
+
+      //if (b.met()<300) cout<<get<0>(it)<<" "<<get<1>(it)<<" "<<get<2>(it)<<" "<<get<3>(it)<<" "<<b.event()<<endl;
+      //cout<<"sampleType: "<<get<0>(it)<<" year: "<<get<1>(it)<<" run: "<<get<2>(it)<<" lumiblock: "<<get<3>(it)<<" met: "<<b.event()<<get<4>(it)<<" nlsp_mass: "<<b.event()<<get<5>(it)<<" lsp_mass: "<<b.event()<<get<6>(it)<<endl;
+
+      inRegion = true;
+      break;
+    }
+  }
+  return inRegion;
+}
+
+const NamedFunc boostSignalRegion("boostSignalRegion",[](const Baby &b) -> NamedFunc::ScalarType{
+  return regionCut(b, 0);
+});
+const NamedFunc boostControlRegion("boostControlRegion",[](const Baby &b) -> NamedFunc::ScalarType{
+  return regionCut(b, 1);
+});
+
+void addEventNumberData(set<string> eventNumberFilenames, vector<map<Long64_t, set<tuple<string, int, int, int, int, int, int> > > > * eventNumberData) {
+  eventNumberData->push_back(map<Long64_t, set<tuple<string, int, int, int, int, int, int> > > ());
+  for (string const & eventNumberFilename : eventNumberFilenames) {
+    ifstream eventNumberFile(eventNumberFilename);
+    string line;
+    while (getline(eventNumberFile, line)) {
+      if(line[0]=='#') continue;
+      if(line.find("tree") != string::npos) continue;
+      vector<string> lineSplit;
+      HigUtilities::stringToVectorString(line, lineSplit, ",");
+      string const & sampleType = lineSplit[0];
+      int year = stoi(lineSplit[1]);
+      int run = stoi(lineSplit[2]);
+      int lumiblock = stoi(lineSplit[3]);
+      Long64_t event = stoll(lineSplit[4]);
+      int met = stoi(lineSplit[5]);
+      int nlsp_mass = -1; int lsp_mass = -1;
+      bool isSignal = false; if (sampleType.find("TChiHH") != string::npos) isSignal = true;
+      if (isSignal) {nlsp_mass = stoi(lineSplit[6]); lsp_mass = stoi(lineSplit[7]);}
+      // Insert data
+      if ((*eventNumberData).back().count(event) == 0) {
+        //cout<<"sampleType: "<<sampleType<<" year: "<<year<<" run: "<<run<<" lumiblock: "<<lumiblock<<" met: "<<met<<" nlsp_mass: "<<nlsp_mass<<" lsp_mass: "<<lsp_mass<<endl;
+        (*eventNumberData).back()[event] = {{sampleType, year, run, lumiblock, met, nlsp_mass, lsp_mass}};
+      } else {
+        if ((*eventNumberData).back()[event].count({sampleType, year, run, lumiblock, met, nlsp_mass, lsp_mass}) != 0) cout<<"Duplicate: "<<sampleType<<" "<<year<<" "<<run<<" "<<lumiblock<<" "<<event<<" "<<met<<" "<<nlsp_mass<<" "<<lsp_mass<<endl;
+        (*eventNumberData).back()[event].insert({sampleType, year, run, lumiblock, met, nlsp_mass, lsp_mass});
+      }
+    }
+    eventNumberFile.close();
+  }
+
+  //// Read out map
+  //int regionIndex = 1;
+  //for (auto const & regionIt : (*eventNumberData)[regionIndex]) {
+  //  Long64_t const & event = regionIt.first;
+  //  for (auto const & it : (*eventNumberData)[regionIndex][event]) {
+  //      cout<<"sampleType: "<<get<0>(it)<<" year: "<<get<1>(it)<<" run: "<<get<2>(it)<<" lumiblock: "<<get<3>(it)<<" met: "<<get<4>(it)<<" nlsp_mass: "<<get<5>(it)<<" lsp_mass: "<<get<6>(it)<<endl;
+  //  }
+  //}
+
+}
 
 int main(int argc, char *argv[])
 {
@@ -88,27 +222,62 @@ int main(int argc, char *argv[])
   //samplePaths["mc_2018"] = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/2018/mc/merged_higmc_preselect/";
   //samplePaths["signal_2018"] = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/2018/SMS-TChiHH_2D/merged_higmc_preselect/";
 
-  samplePaths["mc_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/2016/mc/merged_higmc_preselect/";
-  samplePaths["signal_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/2016/SMS-TChiHH_2D/merged_higmc_preselect/";
-  samplePaths["mc_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/2017/mc/merged_higmc_preselect/";
-  samplePaths["signal_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/2017/SMS-TChiHH_2D/merged_higmc_preselect/";
-  samplePaths["mc_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/2018/mc/merged_higmc_preselect/";
-  samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/2018/SMS-TChiHH_2D/merged_higmc_preselect/";
+  //samplePaths["mc_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/2016/mc/merged_higmc_preselect/";
+  //samplePaths["signal_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/2016/SMS-TChiHH_2D/merged_higmc_preselect/";
+  //samplePaths["mc_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/2017/mc/merged_higmc_preselect/";
+  //samplePaths["signal_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/2017/SMS-TChiHH_2D/merged_higmc_preselect/";
+  //samplePaths["mc_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/2018/mc/merged_higmc_preselect/";
+  //samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/2018/SMS-TChiHH_2D/merged_higmc_preselect/";
 
-  // massPoints = { {"1000","1"} }
+  samplePaths["mc_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2016/mc/merged_higmc_preselect/";
+  samplePaths["signal_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2016/SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_preselect/";
+  samplePaths["mc_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2017/mc/merged_higmc_preselect/";
+  samplePaths["signal_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2017/SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_preselect/";
+  samplePaths["mc_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/mc/merged_higmc_preselect/";
+  samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_preselect/";
+
+  //// massPoints = { {"1000","1"} }
   vector<pair<string, string> > massPoints;
-  if (higgsino_model == "N1N2") {
+  //if (higgsino_model == "N1N2") {
+  //  string signal_folder = samplePaths["signal_2016"];
+  //  set<string> signal_files = Glob(signal_folder+"/*.root");
+  //  string mLSP, mChi;
+  //  for (string signal_file : signal_files) {
+  //    HigUtilities::filenameToMassPoint(signal_file, mChi, mLSP);
+  //    if (stoi(mChi)>800) continue; // Ingore points above 800 GeV
+  //    massPoints.push_back({mChi, mLSP});
+  //  }
+  //}
+  //else if (mass_points_string == "") HigUtilities::findMassPoints(samplePaths["signal_2016"], massPoints);
+  //else HigUtilities::parseMassPoints(mass_points_string, massPoints);
+
+  if (mass_points_string != "") {
+    HigUtilities::parseMassPoints(mass_points_string, massPoints);
+  } else if (mass_point_glob != "") {
     string signal_folder = samplePaths["signal_2016"];
-    set<string> signal_files = Glob(signal_folder+"/*.root");
+    set<string> signal_files;
+    signal_files = Glob(signal_folder+"/"+mass_point_glob);
     string mLSP, mChi;
     for (string signal_file : signal_files) {
       HigUtilities::filenameToMassPoint(signal_file, mChi, mLSP);
-      if (stoi(mChi)>800) continue; // Ingore points above 800 GeV
+      if (!is1D && stoi(mChi)>800) continue; // Ingore points above 800 GeV for 2D
+      massPoints.push_back({mChi, mLSP});
+    }
+  } else {
+    string signal_folder = samplePaths["signal_2016"];
+    set<string> signal_files;
+    if (is1D) {
+      signal_files = Glob(signal_folder+"/*mLSP-0_*.root");
+    } else {
+      signal_files = Glob(signal_folder+"/*.root");
+    }
+    string mLSP, mChi;
+    for (string signal_file : signal_files) {
+      HigUtilities::filenameToMassPoint(signal_file, mChi, mLSP);
+      if (!is1D && stoi(mChi)>800) continue; // Ingore points above 800 GeV for 2D
       massPoints.push_back({mChi, mLSP});
     }
   }
-  else if (mass_points_string == "") HigUtilities::findMassPoints(samplePaths["signal_2016"], massPoints);
-  else HigUtilities::parseMassPoints(mass_points_string, massPoints);
 
   //NamedFunc filters = HigUtilities::pass_2016;
   //NamedFunc filters = Functions::hem_veto && "pass && met/mht<2 && met/met_calo<2";
@@ -124,8 +293,9 @@ int main(int argc, char *argv[])
   
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Functions::w_pileup;
-  //NamedFunc weight = Higfuncs::final_weight;
-  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
+  NamedFunc weight = Higfuncs::final_weight;
+  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
+  //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*Higfuncs::w_years;
 
   if (higgsino_model=="N1N2") weight *= HigUtilities::w_CNToN1N2;
   string baseline = "!low_dphi_met && nvlep==0 && ntk==0";
@@ -150,7 +320,6 @@ int main(int argc, char *argv[])
     xBins["sig0"] = "((!"+j1bb+"&&"+j2bb+")||("+j1bb+"&& !"+j2bb+"))";
     xBins["sig1"] = j1bb+"&&"+j2bb;
   }
-
   map<string, string> yBins; // Shares sideband
   if (tag=="resolved") {
     yBins["sig"] = "hig_cand_am[0]>100 && hig_cand_am[0]<=140";
@@ -215,7 +384,11 @@ int main(int argc, char *argv[])
 
   // sampleBins = { {label, cut} }
   vector<pair<string, string> > sampleBins;
-  HigUtilities::setABCDBins(xBins, yBins, dimensionBins, sampleBins);
+  // 1. RSR, RCR, BSR, BCR
+  // 2. BSR, BCR, RSR, RCR
+  // 3. RSR, BSR, RCR, BCR
+  // 4. BSR, RSR, BCR, RCR
+  HigUtilities::setABCDBinsPriority(xBins, yBins, dimensionBins, sampleBins, priority);
   //sampleBins = {{"test","1"}};
 
   // Set systematics somehow..
@@ -232,6 +405,48 @@ int main(int argc, char *argv[])
   HigUtilities::addBinCuts(sampleBins, baseline, weight, "mc", cutTable["mc"]);
 
   PlotMaker pm;
+  set<string> boostedSignalRegion = {
+                                     "BoostedEvents/boostedEvts_MC2016bkg_SR_noVeto.txt",
+                                     "BoostedEvents/boostedEvts_MC2017bkg_SR_noVeto.txt",
+                                     "BoostedEvents/boostedEvts_MC2018bkg_SR_noVeto.txt",
+                                     "BoostedEvents/boostedEvts_MC2016sig1D_SR_noVeto.txt",
+                                     "BoostedEvents/boostedEvts_MC2017sig1D_SR_noVeto.txt",
+                                     "BoostedEvents/boostedEvts_MC2018sig1D_SR_noVeto.txt",
+                                     "BoostedEvents/boostedEvts_MC2016sig2D_SR_noVeto.txt",
+                                     "BoostedEvents/boostedEvts_MC2017sig2D_SR_noVeto.txt",
+                                     "BoostedEvents/boostedEvts_MC2018sig2D_SR_noVeto.txt",
+                                     };
+  set<string> boostedControlRegion = {
+                                     "BoostedEvents/boostedEvts_MC2016bkg_CR_noVeto.txt",
+                                     "BoostedEvents/boostedEvts_MC2017bkg_CR_noVeto.txt",
+                                     "BoostedEvents/boostedEvts_MC2018bkg_CR_noVeto.txt",
+                                     "BoostedEvents/boostedEvts_MC2016sig1D_CR_noVeto.txt",
+                                     "BoostedEvents/boostedEvts_MC2017sig1D_CR_noVeto.txt",
+                                     "BoostedEvents/boostedEvts_MC2018sig1D_CR_noVeto.txt",
+                                     "BoostedEvents/boostedEvts_MC2016sig2D_CR_noVeto.txt",
+                                     "BoostedEvents/boostedEvts_MC2017sig2D_CR_noVeto.txt",
+                                     "BoostedEvents/boostedEvts_MC2018sig2D_CR_noVeto.txt",
+                                     };
+  //set<string> resolvedSignalRegion = {
+  //                                    "eventlist/processed_resolved_list_SR_SCAN_MC.txt",
+  //                                    "eventlist/processed_resolved_list_SR_SCAN_TChiHH1D.txt",
+  //                                    //"eventlist/processed_resolved_list_SR_SCAN_TChiHH2D.txt",
+  //                                   };
+  //set<string> resolvedControlRegion = {
+  //                                    "eventlist/processed_resolved_list_CR_SCAN_MC.txt",
+  //                                    "eventlist/processed_resolved_list_CR_SCAN_TChiHH1D.txt",
+  //                                    //"eventlist/processed_resolved_list_CR_SCAN_TChiHH2D.txt",
+  //                                    };
+  //eventNumberData[0][event] = {[sampleType, year, run, lumiblock, met, NLSP, LSP]} // Boosted SR
+  //eventNumberData[1][event] = {[sampleType, year, run, lumiblock, met, NSLP, LSP]} // Boosted CR
+  //eventNumberData[2][event] = {[sampleType, year, run, lumiblock, met, NLSP, LSP]} // Resolved SR
+  //eventNumberData[3][event] = {[sampleType, year, run, lumiblock, met, NLSP, LSP]} // Resolved CR
+  vector<map<Long64_t, set<tuple<string, int, int, int, int, int, int> > > > * eventNumberData = new vector<map<Long64_t, set<tuple<string, int, int, int, int, int, int> > > >();
+  addEventNumberData(boostedSignalRegion, eventNumberData);
+  addEventNumberData(boostedControlRegion, eventNumberData);
+  //addEventNumberData(resolvedSignalRegion, eventNumberData);
+  //addEventNumberData(resolvedControlRegion, eventNumberData);
+  pm.SetEventVetoData(static_cast<void * >(eventNumberData));
   // Luminosity used for labeling for table
   // Luminosity used for scaling for hist1d
   bool verbose = false;
@@ -243,7 +458,7 @@ int main(int argc, char *argv[])
   // Luminosity used for scaling
   HigUtilities::fillMcYields(pm, luminosity, cutTable["mc"], mYields, true);
   // Luminosity used for scaling
-  HigUtilities::fillSignalYieldsProcesses(pm, luminosity, sampleProcesses["signal"], cutTable["signal"], mYields);
+  HigUtilities::fillSignalYieldsProcesses(pm, luminosity, sampleProcesses["signal"], cutTable["signal"], mYields, true);
   HigUtilities::fillAverageGenMetYields(sampleProcesses["signal"], sampleBins, "signal", "signalGenMet", "signalAverageGenMet", mYields);
 
   // Calculate kappas from mc
@@ -263,7 +478,7 @@ int main(int argc, char *argv[])
     string model;
     int mGluino=0, mLSP=0;
     HigUtilities::getInfoFromProcessName(process->name_, model, mGluino, mLSP);
-    TString outPath = outFolder+"/datacard-"+HigUtilities::setProcessNameLong(model, mGluino, mLSP)+"_"+years_string+"_"+tag+".txt";
+    TString outPath = outFolder+"/datacard-"+HigUtilities::setProcessNameLong(model, mGluino, mLSP)+"_"+years_string+"_priority"+to_string(priority)+"_"+tag+".txt";
     cout<<"open "<<outPath<<endl;
     ofstream cardFile(outPath);
     HigWriteDataCards::writeDataCardHeader(sampleBins,cardFile);
@@ -655,22 +870,25 @@ namespace HigWriteDataCards{
         {"unblind", no_argument, 0, 'u'},
         {"recomet", no_argument, 0, 0},
         {"higgsino_model", required_argument, 0, 'm'},
+        {"priority", required_argument, 0, 'r'},
         {0, 0, 0, 0}
       };
   
       char opt = -1;
       int option_index;
-      opt = getopt_long(argc, argv, "o:p:y:l:d:t:m:nu", long_options, &option_index);
+      opt = getopt_long(argc, argv, "o:p:g:y:l:d:t:m:r:nu12", long_options, &option_index);
       if( opt == -1) break;
   
       string optname;
       switch(opt){
         case 'o': outFolder = optarg; break;
         case 'p': mass_points_string = optarg; break;
+        case 'g': mass_point_glob = optarg; break;
         case 'y': years_string = optarg; break;
         case 'l': luminosity = atof(optarg); break;
         case 't': tag = optarg; break;
         case 'm': higgsino_model = optarg; break;
+        case 'r': priority = atoi(optarg); break;
         case 'd': 
           dimensionFilePath = optarg; 
           if (!FileExists(dimensionFilePath)) 
@@ -681,6 +899,12 @@ namespace HigWriteDataCards{
           break;
         case 'u':
           unblind = true;
+          break;
+        case '1':
+          is1D = true;
+          break;
+        case '2':
+          is1D = false;
           break;
         case 0:
           optname = long_options[option_index].name;

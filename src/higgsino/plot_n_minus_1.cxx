@@ -116,7 +116,8 @@ int main(int argc, char *argv[]){
 
   // Set options
   //string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
-  string mc_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo";
+  //string mc_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo";
+  string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_klamath";
   // preselect:
   //   ((nbt>=2 && njet>=4 && njet<=5)||(Sum$(fjet_pt>300 && fjet_msoftdrop>50)>1))
   //   nvlep==0 && ntk==0 && !low_dphi_met && met>150 && 
@@ -140,7 +141,8 @@ int main(int argc, char *argv[]){
   string qcd_mc_skim_folder = "mc/merged_higmc_higqcd/";
 
   //string data_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
-  string data_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
+  //string data_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
+  string data_base_folder = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_klamath/";
   string search_data_skim_folder = "data/merged_higdata_higloose/";
   string ttbar_data_skim_folder = "data/merged_higdata_higlep1T/";
   //string ttbar_data_skim_folder = "data/skim_higlep1T/";
@@ -149,7 +151,8 @@ int main(int argc, char *argv[]){
   string qcd_data_skim_folder = "data/merged_higdata_higqcd/";
 
   //string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
-  string sig_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
+  //string sig_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
+  string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_klamath/";
   string search_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higloose/";
   string ttbar_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higlep1T/";
   string zll_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higlep2T/";
@@ -374,6 +377,10 @@ int main(int argc, char *argv[]){
   axis_dict.insert("jet_met_dphi1",Axis(63, 0, 3.14, "jet_met_dphi[1]", "DeltaR(jet,MET)", {}));
   axis_dict.insert("jet_met_dphi2",Axis(63, 0, 3.14, "jet_met_dphi[2]", "DeltaR(jet,MET)", {}));
   axis_dict.insert("jet_met_dphi3",Axis(63, 0, 3.14, "jet_met_dphi[3]", "DeltaR(jet,MET)", {}));
+  axis_dict.insert("h1b1_jetid",Axis(20, -0.5, 19.5, h1b1_jetid, "Jet id lead higgs high-tag b jet [GeV]", {0.5}));
+  axis_dict.insert("h1b2_jetid",Axis(20, -0.5, 19.5, h1b2_jetid, "Jet id lead higgs low-tag b jet [GeV]", {0.5}));
+  axis_dict.insert("h2b1_jetid",Axis(20, -0.5, 19.5, h2b1_jetid, "Jet id sublead higgs high-tag b jet [GeV]", {0.5}));
+  axis_dict.insert("h2b2_jetid",Axis(20, -0.5, 19.5, h2b2_jetid, "Jet id sublead higgs low-tag b jet [GeV]", {0.5}));
   axis_dict.insert("h1b1_pt",Axis(16, 0, 480., h1b1_pt, "p_{T} lead higgs high-tag b jet [GeV]", {}));
   axis_dict.insert("h1b2_pt",Axis(16, 0, 480., h1b2_pt, "p_{T} lead higgs low-tag b jet [GeV]", {}));
   axis_dict.insert("h2b1_pt",Axis(16, 0, 480., h2b1_pt, "p_{T} sublead higgs high-tag b jet [GeV]", {}));
@@ -408,7 +415,7 @@ int main(int argc, char *argv[]){
   axis_dict.insert("mht_filter",Axis(10, 0, 10, "met/mht", "MET/MHT", {2}));
   axis_dict.insert("met_calo_filter",Axis(10, 0, 10, "met/met_calo", "MET/MET_calo", {2,5}));
   axis_dict.insert("weight",Axis(80, 0, 20, "weight", "weight", {1.5}));
-  vector<string> log_plots = {"met", "btags", "weight"};
+  vector<string> log_plots = {"met", "btags", "weight", "h1b1_jetid", "h1b2_jetid", "h2b1_jetid", "h1b2_jetid"};
 
 
   // Draw n-1
@@ -447,6 +454,10 @@ int main(int argc, char *argv[]){
     target_variables.insert("h1b2_pt");
     target_variables.insert("h2b1_pt");
     target_variables.insert("h2b2_pt");
+    target_variables.insert("h1b1_jetid");
+    target_variables.insert("h1b2_jetid");
+    target_variables.insert("h2b1_jetid");
+    target_variables.insert("h2b2_jetid");
     target_variables.insert("h1_dr");
     target_variables.insert("h2_dr");
     target_variables.insert("h1_mass");
@@ -500,7 +511,7 @@ int main(int argc, char *argv[]){
     else if (std::find(log_plots.begin(), log_plots.end(), target_var) != log_plots.end()) {
       pm.Push<Hist1D>(axis_dict[target_var],
         base_filters&&n_minus_1_cut,
-        procs, plt_log).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_"+target_var+"_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+        procs, plt_log).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_"+target_var+"_"+CopyReplaceAll(year_string, ",","_")+"_log").LuminosityTag(total_luminosity_string);
     // Normal case
     } else {
       pm.Push<Hist1D>(axis_dict[target_var],

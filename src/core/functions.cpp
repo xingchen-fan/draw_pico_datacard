@@ -1,4 +1,5 @@
 #include "core/functions.hpp"
+#include <regex>
 
 #include "TVector2.h"
 
@@ -221,4 +222,79 @@ namespace Functions{
       }
     }
   }
+
+  string regSearch(string inString, string const & regExPattern) {
+      std::smatch match;
+      std::regex pattern(regExPattern);
+      std::regex_search (inString, match, pattern);
+      return match.str();
+  }
+  pair<int, int> getSignalMassValues(string filename) {
+    pair<int, int> nlsp_lsp_mass;
+    string baseFilename = filename.substr(filename.find_last_of("/\\")+1);
+    string datasetName = regSearch(baseFilename, "[A-Z].*|ttHTobb.*");
+    if (datasetName.find("SMS-TChiHH") == string::npos) return {-1,-1};
+    string NLSPMassString = regSearch(datasetName, "mChi-.*?_").substr(5);
+    string LSPMassString = regSearch(datasetName, "mLSP-.*?_").substr(5);
+    //cout<<NLSPMassString<<" "<<LSPMassString<<endl;
+    return {stoi(NLSPMassString),stoi(LSPMassString)};
+  }
+  bool findStringIC(const std::string & strHaystack, const std::string & strNeedle)
+  {
+    auto it = std::search(
+      strHaystack.begin(), strHaystack.end(),
+      strNeedle.begin(),   strNeedle.end(),
+      [](char ch1, char ch2) { return std::toupper(ch1) == std::toupper(ch2); }
+    );
+    return (it != strHaystack.end() );
+  }
+
+  bool regionCut(const Baby & b, int regionIndex) {
+    bool inRegion = false;
+    vector<map<Long64_t, set<tuple<string, int, int, int, int, int, int> > > > * eventNumberData = static_cast<vector<map<Long64_t, set< tuple<string, int, int, int, int, int, int> > > > *> (b.EventVetoData());
+    // 0: sampleType, 1: year, 2: run, 3: lumiblock, 4: met, 5: nlsp_mass, 6: lsp_mass
+    // Check event nuber
+    if ((*eventNumberData)[regionIndex].count(b.event())==1) {
+      for (auto const & it : (*eventNumberData)[regionIndex][b.event()]) {
+        // Check year
+        if (get<1>(it) != abs(b.SampleType())) continue;
+        // Check run
+        if (get<2>(it) != b.run()) continue;
+        bool isSignal = ((*b.FileNames().begin()).find("TChiHH") != string::npos) ? true : false;
+        // Check met out of 20%
+        if (isSignal) {if (get<4>(it) < b.met()*0.8 || get<4>(it) > b.met()*1.2) continue;}
+        else if (get<4>(it) != round(b.met())) continue;
+        pair<int, int> signal_mass = getSignalMassValues(*b.FileNames().begin());
+        // Check nlsp_mass
+        if (signal_mass.first != get<5>(it)) continue;
+        // Check lsp_mass
+        int regionLsp = get<6>(it)==1? 0:get<6>(it);
+        if (signal_mass.second != regionLsp) continue;
+        // Check sample name
+        //if (get<5>(it) != -1) cout<<*b.FileNames().begin()<<" "<<get<0>(it)<<endl;
+        if ((*b.FileNames().begin()).find("TChiHH") != string::npos && get<0>(it).find("TChiHH") != string::npos)  {
+          // Need to reject if 1D is compared with 2D
+          int babyDimension = (*b.FileNames().begin()).find("HToBB_2D") == string::npos ? 1 : 2;
+          int eventListDimension = get<0>(it).find("2D") == string::npos ? 1 : 2;
+          if (babyDimension != eventListDimension) continue;
+          //if ((*b.FileNames().begin()).find("HToBB_2D") != get<0>(it).find("2D")) continue;
+        } else if (!findStringIC(*b.FileNames().begin(), get<0>(it))) continue;
+        //if (isSignal) cout<<"event: "<<b.event()<<" => sampleType: "<<get<0>(it)<<" year: "<<get<1>(it)<<" run: "<<get<2>(it)<<" lumiblock: "<<get<3>(it)<<" met: "<<get<4>(it)<<" nlsp_mass: "<<get<5>(it)<<" lsp_mass: "<<get<6>(it)<<endl;
+  
+        //if (b.met()<300) cout<<get<0>(it)<<" "<<get<1>(it)<<" "<<get<2>(it)<<" "<<get<3>(it)<<" "<<b.event()<<endl;
+        //cout<<"event: "<<b.event()<<" => sampleType: "<<get<0>(it)<<" year: "<<get<1>(it)<<" run: "<<get<2>(it)<<" lumiblock: "<<get<3>(it)<<" met: "<<get<4>(it)<<" nlsp_mass: "<<get<5>(it)<<" lsp_mass: "<<get<6>(it)<<endl;
+  
+        inRegion = true;
+        break;
+      }
+    }
+    return inRegion;
+  }
+  const NamedFunc boostSignalRegion("boostSignalRegion",[](const Baby &b) -> NamedFunc::ScalarType{
+    return regionCut(b, 0);
+  });
+  const NamedFunc boostControlRegion("boostControlRegion",[](const Baby &b) -> NamedFunc::ScalarType{
+    return regionCut(b, 1);
+  });
+
 }

@@ -58,6 +58,7 @@ namespace HigUtilities {
 
   // sampleBins = { {label, cut} }
   void setABCDBins(std::map<std::string, std::string> xBins, std::map<std::string, std::string> yBins, std::map<std::string, std::vector<std::pair<std::string, std::string> > > dimensionBins, std::vector<std::pair<std::string, std::string> > & sampleBins);
+  void setABCDBinsPriority(std::map<std::string, std::string> xBins, std::map<std::string, std::string> yBins, std::map<std::string, std::vector<std::pair<std::string, std::string> > > dimensionBins, std::vector<std::pair<std::string, std::string> > & sampleBins, int priority);
   void combineDimensionBins(std::map<std::string, std::vector<std::pair<std::string, std::string> > > & dimensionBins);
 
   void setMcProcesses(std::set<int> years, std::map<std::string, std::string> samplePaths, NamedFunc filters, std::map<std::string, std::vector<std::shared_ptr<Process> > > & sampleProcesses);

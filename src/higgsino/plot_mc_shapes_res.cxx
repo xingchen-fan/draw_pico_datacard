@@ -195,7 +195,7 @@ int main(int argc, char *argv[]){
   // xcuts.push_back("hig_cand_drmax[0]>1.1");
 
   PlotMaker pm;
-  NamedFunc wgt = "w_lumi*w_isr" * HigUtilities::w_years*Higfuncs::eff_higtrig;//Higfuncs::weight_higd;
+  NamedFunc wgt = "w_lumi*w_isr" * Higfuncs::w_years*Higfuncs::eff_higtrig;//Higfuncs::weight_higd;
 
   for (unsigned ic(0); ic<xcuts.size(); ic++){
     if (unblind && cr_sample!="search") {

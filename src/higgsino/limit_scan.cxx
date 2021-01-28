@@ -28,7 +28,7 @@ using namespace std;
 namespace{
   int num_smooth_ = 0; // Number of times to smooth TH2D
   string filename_ = "txt/t1tttt_limit_scan.txt";
-  string tag = "";
+  string tag = "2D";
   //string model_ = "T1tttt";
   string model_ = "CN";
 }
@@ -186,8 +186,9 @@ TH2D MakeObservedSignificancePlot(vector<double> vmx,
   ltitle.Draw("same");
   rtitle.Draw("same");
 
-  c.Print((model_+"_sigobs_"+tag+".pdf").c_str());
-  c.Print((model_+"_sigobs_"+tag+".root").c_str());
+  c.Print(("plots/"+model_+"_sigobs_"+tag+".pdf").c_str());
+  cout<<"open "<<"plots/"+model_+"_sigobs_"+tag+".pdf"<<endl;
+  c.Print(("plots/"+model_+"_sigobs_"+tag+".root").c_str());
 
   TH2D h = *g.GetHistogram();
   h.SetTitle("Observed Significance");
@@ -244,8 +245,9 @@ TH2D MakeExpectedSignificancePlot(vector<double> vmx,
   ltitle.Draw("same");
   rtitle.Draw("same");
   
-  c.Print((model_+"_sigexp_"+tag+".pdf").c_str());
-  c.Print((model_+"_sigexp_"+tag+".root").c_str());
+  c.Print(("plots/"+model_+"_sigexp_"+tag+".pdf").c_str());
+  cout<<"open "<<"plots/"+model_+"_sigexp_"+tag+".pdf"<<endl;
+  c.Print(("plots/"+model_+"_sigexp_"+tag+".root").c_str());
 
   TH2D h = *g.GetHistogram();
   h.SetTitle("Expected Significance");
@@ -280,10 +282,12 @@ void MakeLimitPlot(vector<double> vmx,
   glim.SetMinimum(0.00001);
   glim.SetMaximum(2);
 
-  //glim.SetNpx((2600.-800.)/12.5);
-  //glim.SetNpy(1600/12.5);
-  glim.SetNpx(800/12.5);
-  glim.SetNpy(700/12.5);
+  glim.SetNpx((2600.-800.)/12.5);
+  glim.SetNpy(1600/12.5);
+  //glim.SetNpx(800/12.5);
+  //glim.SetNpy(700/12.5);
+  //glim.SetNpx(800/25);
+  //glim.SetNpy(700/25);
 
   glim.SetTitle(title.c_str());
 
@@ -328,6 +332,9 @@ void MakeLimitPlot(vector<double> vmx,
 
   l.Draw("same");
 
+  TLatex model = GetModelLabel(c.GetLeftMargin()+0.03, 1.-c.GetTopMargin()-0.03);
+  model.Draw("same");
+
   ltitle.Draw("same");
   rtitle.Draw("same");
   
@@ -341,9 +348,11 @@ void MakeLimitPlot(vector<double> vmx,
   glim.GetZaxis()->SetTitleOffset(1.3);
   glim.GetXaxis()->SetRangeUser(0,800);
   glim.GetYaxis()->SetRangeUser(0,700);
-  c.Print((filebase+"_"+tag+".pdf").c_str());
+
+  c.Print(("plots/"+filebase+"_"+tag+".pdf").c_str());
+  cout<<"open "<<"plots/"+filebase+"_"+tag+".pdf"<<endl;
   
-  TFile file((filebase+"_"+tag+".root").c_str(), "recreate");
+  TFile file(("plots/"+filebase+"_"+tag+".root").c_str(), "recreate");
   glim.GetHistogram()->Write((model_+"ObservedExcludedXsec").c_str());
   if (unblind) {
     cobs.Write((model_+"ObservedLimit").c_str());
@@ -399,6 +408,15 @@ TLatex GetModelLabel(double x, double y){
   }else if(model_=="T5tttt"){
     label = "#splitline{pp #rightarrow #tilde{g}#kern[0.3]{#tilde{g}}, #tilde{g} #rightarrow #tilde{t}_{1}t, #tilde{t}_{1} #rightarrow #bar{t}#kern[0.4]{"
       +lsp+"}}{(m#kern[0.3]{_{#lower[-0.12]{#tilde{t}_{1}}}} - m#kern[0.12]{_{"+lsp+"}} = 175 GeV)}";
+  }else if(model_=="N1N2") {
+    TString chii= "#lower[-0.12]{#tilde{#chi}}#kern[+0.1]{#lower[0.2]{#scale[0.99]{^{0,#kern[+0.2]{#lower[-0.15]{#pm}}}}}}#kern[-4]{#scale[0.99]{_{i}}}";
+    TString chij= "#lower[-0.12]{#tilde{#chi}}#kern[+0.1]{#lower[0.2]{#scale[0.99]{^{0,#kern[+0.2]{#lower[0.15]{#mp}}}}}}#kern[-4]{#scale[0.99]{_{j}}}";
+    TString chi10= "#lower[-0.12]{#tilde{#chi}}#kern[+0.2]{#lower[0.2]{#scale[0.99]{^{0}}}}#kern[-1.3]{#scale[0.99]{_{1}}}";
+    TString chi20= "#lower[-0.12]{#tilde{#chi}}#kern[+0.2]{#lower[0.2]{#scale[0.99]{^{0}}}}#kern[-1.3]{#scale[0.99]{_{2}}}";
+    TString chi30= "#lower[-0.12]{#tilde{#chi}}#kern[+0.2]{#lower[0.2]{#scale[0.99]{^{0}}}}#kern[-1.3]{#scale[0.99]{_{3}}}";
+    TString xsoft= "X#lower[-0.2]{#scale[0.85]{_{soft}}}";
+    //label = "pp #rightarrow "+chii+"#kern[0.7]{"+chij+"}  #rightarrow "+chi10+"#kern[0.3]{"+chi10+"} + "
+    label = "pp #rightarrow "+chi30+"#kern[0.3]{"+chi20+"} #rightarrow HH#kern[0.3]{"+chi10+"}#kern[0.3]{"+chi10+"}";
   }else{
     DBG(("Unknown model: "+model_));
     label = "";

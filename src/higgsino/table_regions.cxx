@@ -77,7 +77,7 @@ int main(int argc, char *argv[]){
   //-----------------------------------------
   NamedFunc wgt = "w_lumi*w_isr"*Higfuncs::eff_higtrig;
   if (years.size()==1 && *years.begin()==2016) wgt *= "137.";
-  else wgt *= HigUtilities::w_years;
+  else wgt *= Higfuncs::w_years;
   string baseline = "stitch && nvlep==0 && ntk==0 && !low_dphi_met";
   string higtrim = "hig_cand_drmax[0]<=2.2 && hig_cand_dm[0] <= 40 && hig_cand_am[0]<=200";
   if (resolved) {
