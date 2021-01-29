@@ -47,6 +47,8 @@ namespace Higfuncs{
   // note this returns the weight scaling, not a variation
   extern const NamedFunc wgt_syst_comp;
   extern const NamedFunc wgt_syst_lowptleptrig;
+  extern const NamedFunc wgt_syst_lumi_up;
+  extern const NamedFunc wgt_syst_lumi_down;
 
   // analysis trigger and its efficiency
   //NamedFunc::ScalarType trig_hig_decision(const Baby &b);

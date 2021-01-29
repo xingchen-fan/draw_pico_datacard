@@ -382,6 +382,18 @@ const NamedFunc wgt_syst_comp("wgt_syst_comp",[](const Baby &b) -> NamedFunc::Sc
   return weight;
 });
 
+const NamedFunc wgt_syst_lumi_up("wgt_syst_lumi_up",[](const Baby &b) -> NamedFunc::ScalarType{
+    if (b.SampleType() < 0) return 1.0; //data
+    else if (b.SampleType()==2017) return 1.023;
+    return 1.025;
+});
+
+const NamedFunc wgt_syst_lumi_down("wgt_syst_lumi_down",[](const Baby &b) -> NamedFunc::ScalarType{
+    if (b.SampleType() < 0) return 1.0; //data
+    else if (b.SampleType()==2017) return 0.977;
+    return 0.975;
+});
+
 //// Definition of analysis trigger
 // NamedFunc::ScalarType trig_hig_decision(const Baby &b){
 //    bool mettrig = b.trig()->at(13)||b.trig()->at(33)||b.trig()->at(14)||b.trig()->at(15)

@@ -9,6 +9,7 @@
 #include <unistd.h> // getopt in Macs
 #include <getopt.h>
 #include <dirent.h>
+#include <utility>
 
 #include "TSystem.h"
 #include "TString.h"
@@ -223,6 +224,11 @@ int main(int argc, char *argv[])
   map<string, map<string, float> > controlSystematics;
   HigWriteDataCards::setControlSystematics(controlSystematics);
   // Consider weight for nonHH somehow..
+  
+  //vector holding systematic variations as a name and weights. May need to be extended to a class
+  vector<pair<string, vector<NamedFunc>>> systematics_vector;
+  systematics_vector.push_back(make_pair(string("lumi"),
+      vector<NamedFunc>({weight*Higfuncs::wgt_syst_lumi_up, weight*Higfuncs::wgt_syst_lumi_down})));
 
   // cuts[mc,data,signal] = RowInformation(labels, tableRows, yields)
   map<string, HigUtilities::RowInformation > cutTable;
@@ -230,13 +236,25 @@ int main(int argc, char *argv[])
   HigUtilities::addBinCuts(sampleBins, baseline, weight, "signal", cutTable["signal"]);
   HigUtilities::addBinCuts(sampleBins, baseline, weight, "signalGenMet", HigUtilities::nom2genmet, cutTable["signal"]);
   HigUtilities::addBinCuts(sampleBins, baseline, weight, "mc", cutTable["mc"]);
+  for (pair<string, vector<NamedFunc>> sys : systematics_vector) {
+    for (unsigned wgt_idx = 0; wgt_idx < sys.second.size(); wgt_idx++) {
+      string sys_name = sys.first+to_string(wgt_idx);
+      cout << "DEBUG: Calling addBinCuts for sytematics" << endl;
+      HigUtilities::addBinCuts(sampleBins, baseline, sys.second[wgt_idx], 
+                               "signal_"+sys_name, cutTable["signal"]);
+      HigUtilities::addBinCuts(sampleBins, baseline, sys.second[wgt_idx], 
+                               "signalGenMet_"+sys_name, HigUtilities::nom2genmet,
+                               cutTable["signal"]);
+    }
+  }
 
   PlotMaker pm;
   // Luminosity used for labeling for table
   // Luminosity used for scaling for hist1d
-  bool verbose = false;
+  bool verbose = true;
   HigUtilities::makePlots(cutTable, sampleProcesses, luminosity, pm, verbose);
 
+  // fill mYields
   // mYields[process_tag_sampleBinLabel] = GammaParams, TableRow
   map<string, pair<GammaParams, TableRow> > mYields;
   //HigUtilities::fillDataYields(pm, cutTable["data"], mYields);
@@ -245,6 +263,15 @@ int main(int argc, char *argv[])
   // Luminosity used for scaling
   HigUtilities::fillSignalYieldsProcesses(pm, luminosity, sampleProcesses["signal"], cutTable["signal"], mYields);
   HigUtilities::fillAverageGenMetYields(sampleProcesses["signal"], sampleBins, "signal", "signalGenMet", "signalAverageGenMet", mYields);
+  for (pair<string, vector<NamedFunc>> sys : systematics_vector) {
+    for (unsigned wgt_idx = 0; wgt_idx < sys.second.size(); wgt_idx++) {
+      string sys_name = sys.first+to_string(wgt_idx);
+      cout << "DEBUG: Filling average Gen Met Yields for systematics" << endl;
+      HigUtilities::fillAverageGenMetYields(sampleProcesses["signal"], sampleBins, 
+          "signal_"+sys_name, "signalGenMet_"+sys_name, 
+          "signalAverageGenMet_"+sys_name, mYields);
+    }
+  }
 
   // Calculate kappas from mc
   // kappas[xsigX_ysigY_metA_drmaxB]
@@ -274,9 +301,11 @@ int main(int argc, char *argv[])
     if (do_met_average) {
       HigWriteDataCards::setDataCardSignalBackground(process->name_, "signalAverageGenMet", mYields, sampleBins, tableValues);
       HigWriteDataCards::setDataCardSignalStatistics(process->name_, "signalAverageGenMet", mYields, sampleBins, tableValues);
+      HigWriteDataCards::setDataCardSignalSystematics(process->name_, "signalAverageGenMet", mYields, sampleBins, tableValues, systematics_vector);
     } else {
       HigWriteDataCards::setDataCardSignalBackground(process->name_, "signal", mYields, sampleBins, tableValues);
       HigWriteDataCards::setDataCardSignalStatistics(process->name_, "signal", mYields, sampleBins, tableValues);      
+      HigWriteDataCards::setDataCardSignalSystematics(process->name_, "signal", mYields, sampleBins, tableValues, systematics_vector);
     }
     HigWriteDataCards::setDataCardControlSystematics(controlSystematics, sampleBins, tableValues);
     HigWriteDataCards::writeTableValues(tableValues,cardFile);
@@ -479,6 +508,58 @@ namespace HigWriteDataCards{
       tableValues.push_back(row);
     }
   
+    setRow(row,"");
+    tableValues.push_back(row);
+  }
+
+  void setDataCardSignalSystematics(string const & processName, string const & signalAverageGenMetTag, 
+      map<string, pair<GammaParams, TableRow> > & mYields, vector<pair<string, string> > sampleBins, 
+      vector<vector<string> > & tableValues, vector<pair<string, vector<NamedFunc>>> systematics_vector)
+  {
+    //temporary test code
+    //vector<vector<float>> signal_syst_values; //percent difference between nominal and variation
+    //vector<string> signal_syst_names;
+    ////test with lumi uncertainty
+    //signal_syst_values.push_back(std::vector<float>(2*sampleBins.size(),-1)); 
+    //for (unsigned int bin_idx = 0; bin_idx < sampleBins.size(); bin_idx++) {
+    //  //signal is every other bin
+    //  signal_syst_values[0][2*bin_idx] = 1.025; //in reality, should be different for 2017
+    //}
+    //signal_syst_names.push_back("lumi");
+
+    // title + type + nBins * 2
+    vector<string> row(2+2*sampleBins.size());
+
+    cout << "DEBUG: Entering variations" << endl;
+    for (pair<string, vector<NamedFunc>> sys : systematics_vector) {
+      setRow(row,"-");
+      row[0] = sys.first;
+      row[1] = "lnN";
+      for (unsigned int bin_idx = 0; bin_idx < (sampleBins.size()); bin_idx++) {
+        string label = processName + "_" + signalAverageGenMetTag + "_" + sampleBins[bin_idx].first;
+        cout << "DEBUG: using label " << label << endl;
+        float nominal_value = mYields.at(label).first.Yield();
+        if (nominal_value == 0) {
+          cout << "DEBUG: nominal value 0" << endl;
+          row[2+2*bin_idx] = "1.00";
+        }
+        else {
+          cout << "DEBUG: nominal value nonzero" << endl;
+          float max_variation = 0.0;
+          for (unsigned wgt_idx = 0; wgt_idx < sys.second.size(); wgt_idx++) {
+            label = processName + "_" + signalAverageGenMetTag + "_" + sys.first + to_string(wgt_idx) + "_" + sampleBins[bin_idx].first;
+            cout << "DEBUG: using label " << label << endl;
+            float variation_value = mYields.at(label).first.Yield();
+            float variation = fabs(variation_value-nominal_value)/nominal_value;
+            if (variation > max_variation)
+              max_variation = variation;
+          }
+          row[2+2*bin_idx] = to_string(max_variation+1.0);
+        }
+      }
+      tableValues.push_back(row);
+    }
+
     setRow(row,"");
     tableValues.push_back(row);
   }
