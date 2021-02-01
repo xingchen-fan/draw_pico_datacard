@@ -536,7 +536,6 @@ namespace HigUtilities {
   {
     for (auto binCut : sampleBins)
     {
-      std::cout << "DEBUG: adding label " << (tag+"_"+binCut.first) << endl;
       cutRows.labels.push_back(tag +"_" + binCut.first);
       cutRows.tableRows.push_back(TableRow("", baseline&&binCut.second,0,0,weight));
       //cout<<cutRows.labels.back()<<" "<<cutRows.tableRows.back().cut_.Name()<<endl;
@@ -547,7 +546,6 @@ namespace HigUtilities {
   {
     for (auto binCut : sampleBins)
     {
-      std::cout << "DEBUG: adding label " << (tag+"_"+binCut.first) << endl;
       cutRows.labels.push_back(tag +"_" + binCut.first);
       cutRows.tableRows.push_back(TableRow("", replaceFunc(baseline+"&&"+binCut.second),0,0,weight));
       //cout<<cutRows.labels.back()<<" "<<cutRows.tableRows.back().cut_.Name()<<endl;
@@ -573,7 +571,6 @@ namespace HigUtilities {
     {
       // type = mc, data, signal
       string const & type = cutRow.first;
-      cout << "DEBUG: adding table with label " << cutRow.first << ", and " << cutTable[type].tableRows.size() << " rows." << endl;
       pm.Push<Table>(type, cutTable[type].tableRows, sampleProcesses[type], true, false);
       cutTable[type].tableIndex= tableIndex;
       tableIndex++;
@@ -586,7 +583,6 @@ namespace HigUtilities {
 
   void addToMapYields(string const & label, GammaParams & yield, TableRow & yieldMeta, map<string, pair<GammaParams, TableRow> > & mYields)
   {
-      cout << "DEBUG: adding yield with label " << label << endl;
       if (mYields.find(label) != mYields.end())
       {
         cout<<"[Warning] addYieldData(): "<<label<<" already exists in mYields. Will not add data."<<endl;
@@ -630,12 +626,9 @@ namespace HigUtilities {
     for (auto & process : signalProcesses)
     {
       vector<GammaParams> yields = yieldTable->Yield(process.get(), luminosity);
-      cout << "DEBUG: yields size: " << yields.size() << endl;
-      cout << "DEBUG: signalRow.labels size: " << signalRow.labels.size() << endl;
       for (unsigned ipar(0); ipar< yields.size(); ipar++) 
       {
         string const & label = process->name_ + "_" +signalRow.labels[ipar];
-        cout << "DEBUG: adding label " << label << " to yields." << endl;
         addToMapYields(label, yields[ipar], signalRow.tableRows[ipar], mYields);
         if (verbose) {
           cout<<label<<": "<<mYields.at(label).first.Yield()<<endl;

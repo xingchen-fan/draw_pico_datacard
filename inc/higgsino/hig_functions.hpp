@@ -55,6 +55,8 @@ namespace Higfuncs{
   //extern const NamedFunc trig_hig;
   extern const NamedFunc eff_higtrig;
   extern const NamedFunc eff_higtrig_run2;
+  extern const NamedFunc eff_higtrig_run2_syst_up;
+  extern const NamedFunc eff_higtrig_run2_syst_down;
   extern const NamedFunc eff_higtrig_run2_v0;
   extern const NamedFunc err_higtrig;
   extern const NamedFunc weight_higd;

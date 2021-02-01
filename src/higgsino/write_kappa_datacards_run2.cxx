@@ -125,8 +125,8 @@ int main(int argc, char *argv[])
   
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Functions::w_pileup;
-  //NamedFunc weight = Higfuncs::final_weight;
-  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
+  NamedFunc weight = Higfuncs::final_weight;
+  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
 
   if (higgsino_model=="N1N2") weight *= HigUtilities::w_CNToN1N2;
   string baseline = "!low_dphi_met && nvlep==0 && ntk==0";
@@ -229,6 +229,32 @@ int main(int argc, char *argv[])
   vector<pair<string, vector<NamedFunc>>> systematics_vector;
   systematics_vector.push_back(make_pair(string("lumi"),
       vector<NamedFunc>({weight*Higfuncs::wgt_syst_lumi_up, weight*Higfuncs::wgt_syst_lumi_down})));
+  systematics_vector.push_back(make_pair(string("trigeff"),
+      vector<NamedFunc>({Higfuncs::final_weight_notrgeff*Higfuncs::eff_higtrig_run2_syst_up, 
+      Higfuncs::final_weight_notrgeff*Higfuncs::eff_higtrig_run2_syst_down})));
+  systematics_vector.push_back(make_pair(string("fsjetid"),
+      vector<NamedFunc>({weight*1.01, weight*0.99})));
+  systematics_vector.push_back(make_pair(string("bctag"),
+      vector<NamedFunc>({weight*"sys_bchig[0]", weight*"sys_bchig[1]"})));
+  systematics_vector.push_back(make_pair(string("fs_bctag"),
+      vector<NamedFunc>({weight*"sys_fs_bchig[0]", weight*"sys_fs_bchig[1]"})));
+  systematics_vector.push_back(make_pair(string("udsgtag"),
+      vector<NamedFunc>({weight*"sys_udsghig[0]", weight*"sys_udsghig[1]"})));
+  systematics_vector.push_back(make_pair(string("fs_udsgtag"),
+      vector<NamedFunc>({weight*"sys_fs_udsghig[0]", weight*"sys_fs_udsghig[1]"})));
+  //systematics_vector.push_back(make_pair(string("pu"),
+  //    vector<NamedFunc>({weight*"sys_pu[0]", weight*"sys_pu[1]"})));
+  systematics_vector.push_back(make_pair(string("prefire"),
+      vector<NamedFunc>({weight*"sys_prefire[0]", weight*"sys_prefire[1]"})));
+  systematics_vector.push_back(make_pair(string("isr"),
+      vector<NamedFunc>({weight*"sys_isr[0]", weight*"sys_isr[1]"})));
+  //TODO: add the following systematics? (from RA4, Old HH+MET, and HH+MET AN)
+  //mc stats(?)
+  //fs met swap
+  //JECs
+  //renorm & factorization scales
+  //JER
+  //PU weights
 
   // cuts[mc,data,signal] = RowInformation(labels, tableRows, yields)
   map<string, HigUtilities::RowInformation > cutTable;
@@ -239,7 +265,6 @@ int main(int argc, char *argv[])
   for (pair<string, vector<NamedFunc>> sys : systematics_vector) {
     for (unsigned wgt_idx = 0; wgt_idx < sys.second.size(); wgt_idx++) {
       string sys_name = sys.first+to_string(wgt_idx);
-      cout << "DEBUG: Calling addBinCuts for sytematics" << endl;
       HigUtilities::addBinCuts(sampleBins, baseline, sys.second[wgt_idx], 
                                "signal_"+sys_name, cutTable["signal"]);
       HigUtilities::addBinCuts(sampleBins, baseline, sys.second[wgt_idx], 
@@ -251,7 +276,7 @@ int main(int argc, char *argv[])
   PlotMaker pm;
   // Luminosity used for labeling for table
   // Luminosity used for scaling for hist1d
-  bool verbose = true;
+  bool verbose = false;
   HigUtilities::makePlots(cutTable, sampleProcesses, luminosity, pm, verbose);
 
   // fill mYields
@@ -266,7 +291,6 @@ int main(int argc, char *argv[])
   for (pair<string, vector<NamedFunc>> sys : systematics_vector) {
     for (unsigned wgt_idx = 0; wgt_idx < sys.second.size(); wgt_idx++) {
       string sys_name = sys.first+to_string(wgt_idx);
-      cout << "DEBUG: Filling average Gen Met Yields for systematics" << endl;
       HigUtilities::fillAverageGenMetYields(sampleProcesses["signal"], sampleBins, 
           "signal_"+sys_name, "signalGenMet_"+sys_name, 
           "signalAverageGenMet_"+sys_name, mYields);
@@ -530,25 +554,20 @@ namespace HigWriteDataCards{
     // title + type + nBins * 2
     vector<string> row(2+2*sampleBins.size());
 
-    cout << "DEBUG: Entering variations" << endl;
     for (pair<string, vector<NamedFunc>> sys : systematics_vector) {
       setRow(row,"-");
       row[0] = sys.first;
       row[1] = "lnN";
       for (unsigned int bin_idx = 0; bin_idx < (sampleBins.size()); bin_idx++) {
         string label = processName + "_" + signalAverageGenMetTag + "_" + sampleBins[bin_idx].first;
-        cout << "DEBUG: using label " << label << endl;
         float nominal_value = mYields.at(label).first.Yield();
         if (nominal_value == 0) {
-          cout << "DEBUG: nominal value 0" << endl;
           row[2+2*bin_idx] = "1.00";
         }
         else {
-          cout << "DEBUG: nominal value nonzero" << endl;
           float max_variation = 0.0;
           for (unsigned wgt_idx = 0; wgt_idx < sys.second.size(); wgt_idx++) {
             label = processName + "_" + signalAverageGenMetTag + "_" + sys.first + to_string(wgt_idx) + "_" + sampleBins[bin_idx].first;
-            cout << "DEBUG: using label " << label << endl;
             float variation_value = mYields.at(label).first.Yield();
             float variation = fabs(variation_value-nominal_value)/nominal_value;
             if (variation > max_variation)

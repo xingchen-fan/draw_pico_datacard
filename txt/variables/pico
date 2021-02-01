@@ -393,6 +393,7 @@ std::vector<float> sys_fs_udsghig
 
 std::vector<float> sys_trig
 std::vector<float> sys_isr
+std::vector<float> sys_prefire
 std::vector<float> sys_pu
 
 # std::vector<float> sys_mur
