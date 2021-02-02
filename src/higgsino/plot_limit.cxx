@@ -55,8 +55,6 @@ int main(int argc, char *argv[]){
   double maxy=-99., miny=1e99, maxsig = -99., minsig = 1e99;
   vector<double> vxsecup, vxsecdown;
 
-  cout << "DEBUG: checkpoint 1 " << endl;
-  
   string line_s;
   while(getline(infile, line_s)){
     istringstream iss(line_s);
@@ -89,8 +87,6 @@ int main(int argc, char *argv[]){
   }
   infile.close();
 
-  cout << "DEBUG: checkpoint 2 " << endl;
-
   vector<double> vxsec2d;
   for (auto const & mass : vmx) {
     double xsec2d, xsec2d_unc;
@@ -114,8 +110,6 @@ int main(int argc, char *argv[]){
      || vmx.size() != vsigexp.size()
      || vmx.size() != vxsec2d.size()) ERROR("Error parsing text file. Model point not fully specified");
 
-  cout << "DEBUG: checkpoint 3 " << endl;
-  
   // Sorting vectors
   vector<size_t> perm = SortPermutation(vmx);
   vmx      = ApplyPermutation(vmx      , perm);
@@ -166,8 +160,6 @@ int main(int argc, char *argv[]){
   TLine linXsec;
   linXsec.SetLineColor(thcolor); linXsec.SetLineStyle(1); linXsec.SetLineWidth(thwidth);
   TLatex label;  label.SetNDC(kTRUE);
-
-  cout << "DEBUG: checkpoint 4 " << endl;
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////// 
   //////////////////////////////////////////////////////////////////////////////////////////////////////// 

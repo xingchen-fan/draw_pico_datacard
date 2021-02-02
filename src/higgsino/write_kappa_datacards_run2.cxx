@@ -235,21 +235,20 @@ int main(int argc, char *argv[])
   systematics_vector.push_back(make_pair(string("fsjetid"),
       vector<NamedFunc>({weight*1.01, weight*0.99})));
   systematics_vector.push_back(make_pair(string("bctag"),
-      vector<NamedFunc>({weight*"sys_bchig[0]", weight*"sys_bchig[1]"})));
+      vector<NamedFunc>({weight*"sys_bchig[0]/w_bhig", weight*"sys_bchig[1]/w_bhig"})));
   systematics_vector.push_back(make_pair(string("fs_bctag"),
-      vector<NamedFunc>({weight*"sys_fs_bchig[0]", weight*"sys_fs_bchig[1]"})));
+      vector<NamedFunc>({weight*"sys_fs_bchig[0]/w_bhig", weight*"sys_fs_bchig[1]/w_bhig"})));
   systematics_vector.push_back(make_pair(string("udsgtag"),
-      vector<NamedFunc>({weight*"sys_udsghig[0]", weight*"sys_udsghig[1]"})));
+      vector<NamedFunc>({weight*"sys_udsghig[0]/w_bhig", weight*"sys_udsghig[1]/w_bhig"})));
   systematics_vector.push_back(make_pair(string("fs_udsgtag"),
-      vector<NamedFunc>({weight*"sys_fs_udsghig[0]", weight*"sys_fs_udsghig[1]"})));
+      vector<NamedFunc>({weight*"sys_fs_udsghig[0]/w_bhig", weight*"sys_fs_udsghig[1]/w_bhig"})));
   //systematics_vector.push_back(make_pair(string("pu"),
   //    vector<NamedFunc>({weight*"sys_pu[0]", weight*"sys_pu[1]"})));
   systematics_vector.push_back(make_pair(string("prefire"),
-      vector<NamedFunc>({weight*"sys_prefire[0]", weight*"sys_prefire[1]"})));
+      vector<NamedFunc>({weight*"sys_prefire[0]/w_prefire", weight*"sys_prefire[1]/w_prefire"})));
   systematics_vector.push_back(make_pair(string("isr"),
-      vector<NamedFunc>({weight*"sys_isr[0]", weight*"sys_isr[1]"})));
+      vector<NamedFunc>({weight*"sys_isr[0]/w_isr", weight*"sys_isr[1]/w_isr"})));
   //TODO: add the following systematics? (from RA4, Old HH+MET, and HH+MET AN)
-  //mc stats(?)
   //fs met swap
   //JECs
   //renorm & factorization scales
@@ -540,18 +539,7 @@ namespace HigWriteDataCards{
       map<string, pair<GammaParams, TableRow> > & mYields, vector<pair<string, string> > sampleBins, 
       vector<vector<string> > & tableValues, vector<pair<string, vector<NamedFunc>>> systematics_vector)
   {
-    //temporary test code
-    //vector<vector<float>> signal_syst_values; //percent difference between nominal and variation
-    //vector<string> signal_syst_names;
-    ////test with lumi uncertainty
-    //signal_syst_values.push_back(std::vector<float>(2*sampleBins.size(),-1)); 
-    //for (unsigned int bin_idx = 0; bin_idx < sampleBins.size(); bin_idx++) {
-    //  //signal is every other bin
-    //  signal_syst_values[0][2*bin_idx] = 1.025; //in reality, should be different for 2017
-    //}
-    //signal_syst_names.push_back("lumi");
 
-    // title + type + nBins * 2
     vector<string> row(2+2*sampleBins.size());
 
     for (pair<string, vector<NamedFunc>> sys : systematics_vector) {
