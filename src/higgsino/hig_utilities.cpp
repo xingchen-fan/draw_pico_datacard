@@ -2,8 +2,10 @@
 #include <stdlib.h>
 #include <regex>
 #include "higgsino/hig_utilities.hpp"
+#include "core/hist1d.hpp"
 #include "core/utilities.hpp"
 #include "core/palette.hpp"
+#include "core/plot_opt.hpp"
 
 namespace HigUtilities {
   using std::string;
@@ -17,6 +19,12 @@ namespace HigUtilities {
   using std::shared_ptr;
   using std::max;
   using std::make_pair;
+
+
+  //HistInformation::HistInformation(Axis axis, NamedFunc cut, PlotOpt plot_opt) :
+  //    axis_(axis), cut_(cut), plot_opt_(plot_opt) {
+  //  figure_index = -1;
+  //}
 
   int stringToVectorString(std::string const& inString, std::vector<std::string>& outputVector, std::string const & delimiter)
   {
@@ -575,6 +583,34 @@ namespace HigUtilities {
       cutTable[type].tableIndex= tableIndex;
       tableIndex++;
       if (verbose) for (auto tableRow : cutTable[type].tableRows) cout<<tableRow.cut_.Name()<<endl;
+    }
+    pm.multithreaded_ = true;
+    pm.min_print_ = true; 
+    pm.MakePlots(luminosity);  
+  }
+
+  void makePlots(map<string, RowInformation > & cutTable, map<string, HistInformation> & histInfo, map<string, vector<shared_ptr<Process> > > & sampleProcesses, float luminosity, PlotMaker & pm, bool verbose)
+  {
+    int tableIndex = 0;
+    for (auto cutRow : cutTable)
+    {
+      // type = mc, data, signal
+      string const & type = cutRow.first;
+      pm.Push<Table>(type, cutTable[type].tableRows, sampleProcesses[type], true, false);
+      cutTable[type].tableIndex= tableIndex;
+      tableIndex++;
+      if (verbose) for (auto tableRow : cutTable[type].tableRows) cout<<tableRow.cut_.Name()<<endl;
+    }
+    for (auto single_hist_info : histInfo)
+    {
+      // type = mc, data, signal
+      string const & type = single_hist_info.first;
+      std::vector<PlotOpt> plot_opts = {*(histInfo[type].plot_opt_)};
+      pm.Push<Hist1D>(*(histInfo[type].axis_), *(histInfo[type].cut_), 
+          sampleProcesses[type], plot_opts);
+      histInfo[type].figure_index = tableIndex;
+      tableIndex++;
+      //if (verbose) for (auto tableRow : cutTable[type].tableRows) cout<<tableRow.cut_.Name()<<endl;
     }
     pm.multithreaded_ = true;
     pm.min_print_ = true; 

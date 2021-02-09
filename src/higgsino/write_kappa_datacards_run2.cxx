@@ -11,24 +11,26 @@
 #include <dirent.h>
 #include <utility>
 
+#include "TH1.h"
 #include "TSystem.h"
 #include "TString.h"
 #include "TMath.h"
 #include "TError.h" // Controls error level reporting
 #include "TVector2.h"
 
-#include "core/utilities.hpp"
 #include "core/baby.hpp"
-#include "core/process.hpp"
-#include "core/named_func.hpp"
-#include "core/plot_maker.hpp"
-#include "core/table.hpp"
-#include "core/palette.hpp"
 #include "core/config_parser.hpp"
 #include "core/functions.hpp"
+#include "core/hist1d.hpp"
+#include "core/named_func.hpp"
+#include "core/palette.hpp"
+#include "core/plot_maker.hpp"
+#include "core/process.hpp"
+#include "core/table.hpp"
+#include "core/utilities.hpp"
 #include "higgsino/hig_functions.hpp"
-#include "higgsino/write_kappa_datacards.hpp"
 #include "higgsino/hig_utilities.hpp"
+#include "higgsino/write_kappa_datacards.hpp"
 
 using namespace std;
 namespace 
@@ -125,8 +127,8 @@ int main(int argc, char *argv[])
   
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Functions::w_pileup;
-  NamedFunc weight = Higfuncs::final_weight;
-  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
+  //NamedFunc weight = Higfuncs::final_weight;
+  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
 
   if (higgsino_model=="N1N2") weight *= HigUtilities::w_CNToN1N2;
   string baseline = "!low_dphi_met && nvlep==0 && ntk==0";
@@ -242,21 +244,23 @@ int main(int argc, char *argv[])
       vector<NamedFunc>({weight*"sys_udsghig[0]/w_bhig", weight*"sys_udsghig[1]/w_bhig"})));
   systematics_vector.push_back(make_pair(string("fs_udsgtag"),
       vector<NamedFunc>({weight*"sys_fs_udsghig[0]/w_bhig", weight*"sys_fs_udsghig[1]/w_bhig"})));
-  //systematics_vector.push_back(make_pair(string("pu"),
-  //    vector<NamedFunc>({weight*"sys_pu[0]", weight*"sys_pu[1]"})));
   systematics_vector.push_back(make_pair(string("prefire"),
       vector<NamedFunc>({weight*"sys_prefire[0]/w_prefire", weight*"sys_prefire[1]/w_prefire"})));
   systematics_vector.push_back(make_pair(string("isr"),
       vector<NamedFunc>({weight*"sys_isr[0]/w_isr", weight*"sys_isr[1]/w_isr"})));
+  systematics_vector.push_back(make_pair(string("fs_met"),
+      vector<NamedFunc>({})));
+  systematics_vector.push_back(make_pair(string("PUsig"),
+      vector<NamedFunc>({weight*"(npv<=20)", weight*"(npv>=21)"})));
   //TODO: add the following systematics? (from RA4, Old HH+MET, and HH+MET AN)
-  //fs met swap
-  //JECs
-  //renorm & factorization scales
-  //JER
   //PU weights
+  //fs_btag
+  //renorm & factorization scales
+  //JECS and JER
 
   // cuts[mc,data,signal] = RowInformation(labels, tableRows, yields)
   map<string, HigUtilities::RowInformation > cutTable;
+  map<string, HigUtilities::HistInformation > histInfo;
   //HigUtilities::addBinCuts(sampleBins, baseline, weight, "data", cutTable["data"]);
   HigUtilities::addBinCuts(sampleBins, baseline, weight, "signal", cutTable["signal"]);
   HigUtilities::addBinCuts(sampleBins, baseline, weight, "signalGenMet", HigUtilities::nom2genmet, cutTable["signal"]);
@@ -271,12 +275,15 @@ int main(int argc, char *argv[])
                                cutTable["signal"]);
     }
   }
+  HigWriteDataCards::make_npv_plots("signal", histInfo);
+  if (unblind) HigWriteDataCards::make_npv_plots("data", histInfo);
+  else HigWriteDataCards::make_npv_plots("mc", histInfo);
 
   PlotMaker pm;
   // Luminosity used for labeling for table
   // Luminosity used for scaling for hist1d
   bool verbose = false;
-  HigUtilities::makePlots(cutTable, sampleProcesses, luminosity, pm, verbose);
+  HigUtilities::makePlots(cutTable, histInfo, sampleProcesses, luminosity, pm, verbose);
 
   // fill mYields
   // mYields[process_tag_sampleBinLabel] = GammaParams, TableRow
@@ -295,6 +302,10 @@ int main(int argc, char *argv[])
           "signalAverageGenMet_"+sys_name, mYields);
     }
   }
+  
+  map<string, TH1D> h_sig_npv;
+  TH1D* h_data_npv;
+  HigWriteDataCards::fill_npv_hists(pm, histInfo, sampleProcesses, h_sig_npv, &h_data_npv);
 
   // Calculate kappas from mc
   // kappas[xsigX_ysigY_metA_drmaxB]
@@ -324,11 +335,11 @@ int main(int argc, char *argv[])
     if (do_met_average) {
       HigWriteDataCards::setDataCardSignalBackground(process->name_, "signalAverageGenMet", mYields, sampleBins, tableValues);
       HigWriteDataCards::setDataCardSignalStatistics(process->name_, "signalAverageGenMet", mYields, sampleBins, tableValues);
-      HigWriteDataCards::setDataCardSignalSystematics(process->name_, "signalAverageGenMet", mYields, sampleBins, tableValues, systematics_vector);
+      HigWriteDataCards::setDataCardSignalSystematics(process->name_, "signalAverageGenMet", mYields, sampleBins, tableValues, systematics_vector, h_sig_npv, h_data_npv);
     } else {
       HigWriteDataCards::setDataCardSignalBackground(process->name_, "signal", mYields, sampleBins, tableValues);
       HigWriteDataCards::setDataCardSignalStatistics(process->name_, "signal", mYields, sampleBins, tableValues);      
-      HigWriteDataCards::setDataCardSignalSystematics(process->name_, "signal", mYields, sampleBins, tableValues, systematics_vector);
+      HigWriteDataCards::setDataCardSignalSystematics(process->name_, "signal", mYields, sampleBins, tableValues, systematics_vector, h_sig_npv, h_data_npv);
     }
     HigWriteDataCards::setDataCardControlSystematics(controlSystematics, sampleBins, tableValues);
     HigWriteDataCards::writeTableValues(tableValues,cardFile);
@@ -343,6 +354,9 @@ int main(int argc, char *argv[])
     //writeDataCardUncertainties()
     //writeDataCardParam()
   }
+
+  delete h_data_npv;
+  HigWriteDataCards::delete_hist_info(histInfo);
 
   time(&endtime); 
   cout<<endl<<"Took "<<difftime(endtime, begtime)<<" seconds"<<endl<<endl;
@@ -442,6 +456,55 @@ namespace HigWriteDataCards{
     }
   }
 
+  void make_npv_plots(string tag, map<string, HigUtilities::HistInformation> & hist_info) {
+    //add npv plot with no cuts past higloose+filters
+    PlotOpt plot_opt("txt/plot_styles.txt", "CMSPaper");
+    plot_opt = plot_opt.Title(PlotOptTypes::TitleType::info)
+      .Bottom(PlotOptTypes::BottomType::off)
+      .Overflow(PlotOptTypes::OverflowType::none)
+      .YAxis(PlotOptTypes::YAxisType::linear)
+      .Stack(PlotOptTypes::StackType::lumi_shapes).LegendColumns(3);
+    //if (tag=="mc") plot_opt = plot_opt.Stack(StackType::signal_overlay);
+    HigUtilities::HistInformation this_hist_info;
+    this_hist_info.axis_ = new Axis(100, -0.5, 99.5, "npv", "N_{pv}", {});
+    this_hist_info.cut_ = new NamedFunc("1");
+    this_hist_info.plot_opt_ = new PlotOpt(plot_opt);
+    this_hist_info.figure_index = -1;
+    hist_info[tag] = this_hist_info;
+  }
+
+  void fill_npv_hists(PlotMaker& pm, map<string, HigUtilities::HistInformation> & hist_info, map<string, vector<shared_ptr<Process>>> & sample_processes, map<string, TH1D> &h_mc_npv, TH1D **h_data_npv) {
+    Hist1D * sig_h1d = static_cast<Hist1D*>(pm.Figures()[hist_info["signal"].figure_index].get());
+    for (auto & process : sample_processes["signal"]) {
+      Hist1D::SingleHist1D* sig_sh1d = static_cast<Hist1D::SingleHist1D*>(sig_h1d->GetComponent(process.get()));
+      h_mc_npv[process->name_] = sig_sh1d->scaled_hist_;
+      //h_mc_npv[process->name_].Scale(1.0/h_mc_npv[process->name_].Integral());
+    }
+
+    TH1D* h_ret_npv = new TH1D("h_ret_npv","(Pseudo)data N_{pv}", 100, -0.5, 99.5);
+
+    string signal_name = "mc";
+    if (unblind) {
+      signal_name = "data";
+    }
+    Hist1D * data_h1d = static_cast<Hist1D*>(pm.Figures()[hist_info[signal_name].figure_index].get());
+    for (auto & process : sample_processes[signal_name]) {
+      Hist1D::SingleHist1D* data_sh1d = static_cast<Hist1D::SingleHist1D*>(data_h1d->GetComponent(process.get()));
+      h_ret_npv->Add(&(data_sh1d->scaled_hist_));
+    }
+    //h_ret_npv->Scale(1.0/h_ret_npv->Integral());
+    (*h_data_npv) = h_ret_npv;
+  }
+
+  void delete_hist_info(map<string, HigUtilities::HistInformation> & hist_info) {
+    for (auto single_hist_info : hist_info) {
+      string const & type = single_hist_info.first;
+      delete hist_info[type].axis_;
+      delete hist_info[type].cut_;
+      delete hist_info[type].plot_opt_;
+    }
+  }
+
   void writeDataCardHeader(vector<pair<string, string> > sampleBins, ofstream & cardFile)
   {
     cardFile<<"imax "<<sampleBins.size()<<"  number of channels\n";
@@ -537,31 +600,95 @@ namespace HigWriteDataCards{
 
   void setDataCardSignalSystematics(string const & processName, string const & signalAverageGenMetTag, 
       map<string, pair<GammaParams, TableRow> > & mYields, vector<pair<string, string> > sampleBins, 
-      vector<vector<string> > & tableValues, vector<pair<string, vector<NamedFunc>>> systematics_vector)
+      vector<vector<string> > & tableValues, vector<pair<string, vector<NamedFunc>>> systematics_vector,
+      map<string, TH1D> h_sig_npv, TH1D* h_data_npv)
   {
 
     vector<string> row(2+2*sampleBins.size());
+
+    //get information from pileup histograms for pileup systematic
+    TH1D this_h_sig_npv = h_sig_npv[processName];
+    float avr_npv_highpu = 0.0;
+    float total_entries_highpu = 0.0;
+    float avr_npv_lowpu = 0.0;
+    float total_entries_lowpu = 0.0;
+    for (int npv_bin = 0; npv_bin < 20; npv_bin++) {
+      avr_npv_lowpu += this_h_sig_npv.GetBinContent(npv_bin+1)*static_cast<float>(npv_bin);
+      total_entries_lowpu += this_h_sig_npv.GetBinContent(npv_bin+1);
+    }
+    for (int npv_bin = 0; npv_bin < this_h_sig_npv.GetNbinsX(); npv_bin++) {
+      avr_npv_highpu += this_h_sig_npv.GetBinContent(npv_bin+1)*static_cast<float>(npv_bin);
+      total_entries_highpu += this_h_sig_npv.GetBinContent(npv_bin+1);
+    }
+    avr_npv_lowpu = avr_npv_lowpu/total_entries_lowpu;
+    avr_npv_highpu = avr_npv_highpu/total_entries_highpu;
+    float total_entries_sig = this_h_sig_npv.Integral();
+    float total_entries_dat = h_data_npv->Integral();
 
     for (pair<string, vector<NamedFunc>> sys : systematics_vector) {
       setRow(row,"-");
       row[0] = sys.first;
       row[1] = "lnN";
       for (unsigned int bin_idx = 0; bin_idx < (sampleBins.size()); bin_idx++) {
-        string label = processName + "_" + signalAverageGenMetTag + "_" + sampleBins[bin_idx].first;
-        float nominal_value = mYields.at(label).first.Yield();
-        if (nominal_value == 0) {
-          row[2+2*bin_idx] = "1.00";
+        if (sys.first == "fs_met") {
+          //reco MET vs gen MET systematic
+          string reclabel = processName + "_signal_" + sampleBins[bin_idx].first;
+          string genlabel = processName + "_signalGenMet_" + sampleBins[bin_idx].first;
+          string avrlabel = processName + "_signalAverageGenMet_" + sampleBins[bin_idx].first;
+          float recmet_value = mYields.at(reclabel).first.Yield();
+          float avrmet_value = mYields.at(avrlabel).first.Yield();
+          float genmet_value = mYields.at(genlabel).first.Yield();
+          //arbitrary convention for sign
+          row[2+2*bin_idx] = to_string((recmet_value-genmet_value)/2.0/avrmet_value+1.0);
+        }
+        else if (sys.first == "PUsig") {
+          //this systematic only uses reco met
+          string label_prefix = processName + "_signal_";
+          string label_suffix = "_" + sampleBins[bin_idx].first;
+          float lowpu_cut_yield = mYields.at(label_prefix+sys.first+"0"+label_suffix).first.Yield();
+          float highpu_cut_yield = mYields.at(label_prefix+sys.first+"1"+label_suffix).first.Yield();
+          float lowpu_eff = lowpu_cut_yield/total_entries_lowpu;
+          float highpu_eff = highpu_cut_yield/total_entries_highpu;
+          float m = (highpu_eff-lowpu_eff)/(avr_npv_highpu-avr_npv_lowpu);
+          float b = (lowpu_eff*avr_npv_highpu-highpu_eff*avr_npv_lowpu)/(avr_npv_highpu-avr_npv_lowpu);
+          float eff_data = 0, eff_mc = 0;
+          for (int npv_bin = 0; npv_bin < h_data_npv->GetNbinsX(); npv_bin++) {
+            //compare linear fit
+            float fx = m*static_cast<float>(npv_bin)+b;
+            eff_data += fx*h_data_npv->GetBinContent(npv_bin+1);
+            eff_mc += fx*this_h_sig_npv.GetBinContent(npv_bin+1);
+          }
+          eff_data = eff_data/total_entries_dat;
+          eff_mc = eff_mc/total_entries_sig;
+          row[2+2*bin_idx] = to_string((eff_data-eff_mc)/eff_mc+1.0);
         }
         else {
-          float max_variation = 0.0;
-          for (unsigned wgt_idx = 0; wgt_idx < sys.second.size(); wgt_idx++) {
-            label = processName + "_" + signalAverageGenMetTag + "_" + sys.first + to_string(wgt_idx) + "_" + sampleBins[bin_idx].first;
-            float variation_value = mYields.at(label).first.Yield();
-            float variation = fabs(variation_value-nominal_value)/nominal_value;
-            if (variation > max_variation)
-              max_variation = variation;
+          //normal up/down systematic
+          string label = processName + "_" + signalAverageGenMetTag + "_" + sampleBins[bin_idx].first;
+          float nominal_value = mYields.at(label).first.Yield();
+          if (nominal_value == 0) {
+            //no signal, poor stats
+            row[2+2*bin_idx] = "2.00";
           }
-          row[2+2*bin_idx] = to_string(max_variation+1.0);
+          else {
+            float max_variation = 0.0;
+            float variation_sign = 1.0;
+            bool up_variation = true;
+            for (unsigned wgt_idx = 0; wgt_idx < sys.second.size(); wgt_idx++) {
+              label = processName + "_" + signalAverageGenMetTag + "_" + sys.first + to_string(wgt_idx) + "_" + sampleBins[bin_idx].first;
+              float variation_value = mYields.at(label).first.Yield();
+              //float variation = fabs(variation_value-nominal_value)/nominal_value;
+              float variation = variation_value/nominal_value-1.0;
+              //take reference sign from the first variation
+              if (up_variation == true) {
+                if (variation < 0) variation_sign = -1.0;
+              }
+              up_variation = false;
+              if (fabs(variation) > max_variation)
+                max_variation = fabs(variation);
+            }
+            row[2+2*bin_idx] = to_string(variation_sign*max_variation+1.0);
+          }
         }
       }
       tableValues.push_back(row);

@@ -11,10 +11,12 @@
 
 #include "TString.h"
 
+#include "core/axis.hpp"
 #include "core/named_func.hpp"
 #include "core/named_func.hpp"
 #include "core/process.hpp"
 #include "core/plot_maker.hpp"
+#include "core/plot_opt.hpp"
 #include "core/table.hpp"
 #include "core/table_row.hpp"
 #include "core/gamma_params.hpp"
@@ -27,6 +29,23 @@ namespace HigUtilities {
     std::vector<TableRow> tableRows;
     // Index used by PlotMaker. Set in makePlots()
     int tableIndex;
+  };
+
+  class HistInformation {
+    public:
+    //standard histogram parameters
+    Axis *axis_;
+    NamedFunc *cut_;
+    PlotOpt *plot_opt_;
+    // Index used by PlotMaker. Set in makePlots()
+    int figure_index;
+
+    //HistInformation(Axis axis, NamedFunc cut, PlotOpt plot_opt);
+    //HistInformation();
+    //HistInformation(HistInformation &&) = default;
+    //HistInformation(const HistInformation &) = default;
+    //HistInformation& operator=(HistInformation &&) = default;
+    //~HistInformation();
   };
 
   int stringToVectorString(std::string const& inString, std::vector<std::string>& outputVector, std::string const & delimiter);
@@ -71,6 +90,7 @@ namespace HigUtilities {
   // Luminosity used for labeling for table
   // Luminosity used for scaling for hist1d
   void makePlots(std::map<std::string, RowInformation > & cutTable, std::map<std::string, std::vector<std::shared_ptr<Process> > > & sampleProcesses, float luminosity, PlotMaker & pm, bool verbose=false);
+  void makePlots(std::map<std::string, RowInformation > & cutTable, std::map<std::string, HistInformation> & histInfo, std::map<std::string, std::vector<std::shared_ptr<Process> > > & sampleProcesses, float luminosity, PlotMaker & pm, bool verbose=false);
 
   void addToMapYields(std::string const & label, GammaParams & yield, TableRow & yieldMeta, std::map<std::string, std::pair<GammaParams, TableRow> > & mYields);
   void fillDataYields(PlotMaker & pm, RowInformation & dataRow, std::map<std::string, std::pair<GammaParams, TableRow> > & mYields, bool verbose=false);
