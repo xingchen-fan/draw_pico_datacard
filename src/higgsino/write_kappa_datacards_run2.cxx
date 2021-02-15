@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Functions::w_pileup;
   //NamedFunc weight = Higfuncs::final_weight;
-  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
+  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Higfuncs::w_pileup_nosignal;
 
   if (higgsino_model=="N1N2") weight *= HigUtilities::w_CNToN1N2;
   string baseline = "!low_dphi_met && nvlep==0 && ntk==0";
@@ -620,8 +620,10 @@ namespace HigWriteDataCards{
       avr_npv_highpu += this_h_sig_npv.GetBinContent(npv_bin+1)*static_cast<float>(npv_bin);
       total_entries_highpu += this_h_sig_npv.GetBinContent(npv_bin+1);
     }
-    avr_npv_lowpu = avr_npv_lowpu/total_entries_lowpu;
-    avr_npv_highpu = avr_npv_highpu/total_entries_highpu;
+    if (total_entries_lowpu > 0)
+      avr_npv_lowpu = avr_npv_lowpu/total_entries_lowpu;
+    if (total_entries_highpu > 0)
+      avr_npv_highpu = avr_npv_highpu/total_entries_highpu;
     float total_entries_sig = this_h_sig_npv.Integral();
     float total_entries_dat = h_data_npv->Integral();
 
@@ -638,8 +640,16 @@ namespace HigWriteDataCards{
           float recmet_value = mYields.at(reclabel).first.Yield();
           float avrmet_value = mYields.at(avrlabel).first.Yield();
           float genmet_value = mYields.at(genlabel).first.Yield();
-          //arbitrary convention for sign
-          row[2+2*bin_idx] = to_string((recmet_value-genmet_value)/2.0/avrmet_value+1.0);
+          float syst_value = 2.0;
+          if (avrmet_value != 0)
+            syst_value = (recmet_value-genmet_value)/2.0/avrmet_value;
+          //if (fabs(syst_value) > 0.5 && syst_value != 2.0) 
+          //  std::cout << "DEBUG: large fs met systematic. RECO value: "
+          //       << recmet_value << ", GEN value: " << genmet_value << std::endl;
+          if (syst_value > 1.0) syst_value = 1.0;
+          if (syst_value < -1.0) syst_value = -1.0;
+          //convention for sign
+          row[2+2*bin_idx] = to_string(syst_value+1.0);
         }
         else if (sys.first == "PUsig") {
           //this systematic only uses reco met
@@ -660,7 +670,10 @@ namespace HigWriteDataCards{
           }
           eff_data = eff_data/total_entries_dat;
           eff_mc = eff_mc/total_entries_sig;
-          row[2+2*bin_idx] = to_string((eff_data-eff_mc)/eff_mc+1.0);
+          float syst_value = (eff_data-eff_mc)/eff_mc;
+          if (std::isnan(syst_value) || std::isinf(syst_value) || syst_value > 1.0) syst_value = 1.0;
+          if (syst_value < -1.0) syst_value = -1.0;
+          row[2+2*bin_idx] = to_string(syst_value+1.0);
         }
         else {
           //normal up/down systematic
@@ -687,6 +700,7 @@ namespace HigWriteDataCards{
               if (fabs(variation) > max_variation)
                 max_variation = fabs(variation);
             }
+            if (max_variation > 1.0) max_variation = 1.0;
             row[2+2*bin_idx] = to_string(variation_sign*max_variation+1.0);
           }
         }

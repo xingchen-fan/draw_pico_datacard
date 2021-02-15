@@ -101,6 +101,7 @@ namespace Higfuncs{
   extern const NamedFunc w_years;
   extern const NamedFunc final_weight;
   extern const NamedFunc final_weight_notrgeff;
+  extern const NamedFunc w_pileup_nosignal;
 
   //triggers
   extern const NamedFunc jet_trigger;

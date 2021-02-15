@@ -1561,6 +1561,12 @@ const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
 const NamedFunc final_weight = "weight"*eff_higtrig_run2*w_years*Functions::w_pileup;
 const NamedFunc final_weight_notrgeff = "weight"*w_years*Functions::w_pileup;
 
+
+const NamedFunc w_pileup_nosignal("w_pileup_nosignal",[](const Baby &b) -> NamedFunc::ScalarType{
+  if ((b.type()/1000) == 106)  return 1.0;
+  return Functions::w_pileup.GetScalar(b);
+});
+
 const NamedFunc jet_trigger = "HLT_PFJet500";
 
 const NamedFunc met_trigger("met_trigger", [](const Baby &b) -> NamedFunc::ScalarType{
