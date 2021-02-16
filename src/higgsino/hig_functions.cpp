@@ -394,6 +394,30 @@ const NamedFunc wgt_syst_lumi_down("wgt_syst_lumi_down",[](const Baby &b) -> Nam
     return 0.975;
 });
 
+const NamedFunc wgt_syst_ttbarpt("wgt_syst_ttbarpt",[](const Baby &b) -> NamedFunc::ScalarType{
+    if (b.type()/1000 == 0) {
+      //ttbar
+      float w_pt = 1.0;
+      for (unsigned jet_idx = 0; jet_idx < b.jet_pt()->size(); jet_idx++) {
+        if (b.jet_isgood()->at(jet_idx)) {
+          if (b.jet_pt()->at(jet_idx)>=30&&b.jet_pt()->at(jet_idx)<50) w_pt *= 1.05593;
+          else if (b.jet_pt()->at(jet_idx)>=50&&b.jet_pt()->at(jet_idx)<75) w_pt *= 1.02439;
+          else if (b.jet_pt()->at(jet_idx)>=75&&b.jet_pt()->at(jet_idx)<100) w_pt *= 0.979963;
+          else if (b.jet_pt()->at(jet_idx)>=100&&b.jet_pt()->at(jet_idx)<125) w_pt *= 0.951215;
+          else if (b.jet_pt()->at(jet_idx)>=125&&b.jet_pt()->at(jet_idx)<150) w_pt *= 0.888456;
+          else if (b.jet_pt()->at(jet_idx)>=150&&b.jet_pt()->at(jet_idx)<175) w_pt *= 0.844284;
+          else if (b.jet_pt()->at(jet_idx)>=175&&b.jet_pt()->at(jet_idx)<200) w_pt *= 0.798519;
+          else if (b.jet_pt()->at(jet_idx)>=200&&b.jet_pt()->at(jet_idx)<250) w_pt *= 0.769474;
+          else if (b.jet_pt()->at(jet_idx)>=250&&b.jet_pt()->at(jet_idx)<300) w_pt *= 0.775017;
+          else if (b.jet_pt()->at(jet_idx)>=300&&b.jet_pt()->at(jet_idx)<400) w_pt *= 0.769898;
+          else w_pt *= 0.615104;
+        }
+      }
+      return w_pt;
+    }
+    return 1.0;
+});
+
 //// Definition of analysis trigger
 // NamedFunc::ScalarType trig_hig_decision(const Baby &b){
 //    bool mettrig = b.trig()->at(13)||b.trig()->at(33)||b.trig()->at(14)||b.trig()->at(15)

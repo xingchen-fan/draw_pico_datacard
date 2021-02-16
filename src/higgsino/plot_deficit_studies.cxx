@@ -10,7 +10,10 @@
 #include <getopt.h>
 
 #include "TError.h"
+#include "TCanvas.h"
 #include "TColor.h"
+#include "TH2.h"
+#include "TMath.h"
 #include "TVector2.h"
 
 #include "core/baby.hpp"
@@ -72,6 +75,7 @@ int main(int argc, char *argv[]){
   vector<PlotOpt> plt_log = {log_norm};
   vector<PlotOpt> plt_shapes = {lin_shapes};
   vector<PlotOpt> plt_shapes_info = {lin_shapes_info};
+  vector<PlotOpt> plt_lin_nonorm_noratio = {lin_norm};
   if (unblind) {
     plt_lin = {lin_norm_data};
     plt_log = {log_norm_data};
@@ -98,10 +102,12 @@ int main(int argc, char *argv[]){
   string ttbar_data_skim_folder = "data/merged_higdata_higlep1T/";
   //string ttbar_data_skim_folder = "data/skim_higlep1T/";
 
-  string sig_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
+  string sig_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/";
   //string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
   //string sig_base_folder = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado/";
-  string ttbar_sig_skim_folder = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep1T/";
+  //string ttbar_sig_skim_folder = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep1T/";
+  //string sig_skim_folder = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_preselect/";
+  string sig_skim_folder = "SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/";
 
   //years = {2016, 2017, 2018};
   //years = {2016};
@@ -201,6 +207,22 @@ int main(int argc, char *argv[]){
   nonorm_procs.push_back(Process::MakeShared<Baby_pico>("Data", Process::Type::background, kBlack,
                   attach_folder(data_base_folder, years, ttbar_data_skim_folder, {"*.root"}),triggers_data));
 
+  vector<shared_ptr<Process> > data_allyears_procs;
+  data_allyears_procs.push_back(Process::MakeShared<Baby_pico>("Data 2016", Process::Type::background, kBlue,
+                  attach_folder(data_base_folder, {2016}, ttbar_data_skim_folder, {"*.root"}),triggers_data));
+  data_allyears_procs.push_back(Process::MakeShared<Baby_pico>("Data 2017", Process::Type::background, kGreen,
+                  attach_folder(data_base_folder, {2017}, ttbar_data_skim_folder, {"*.root"}),triggers_data));
+  data_allyears_procs.push_back(Process::MakeShared<Baby_pico>("Data 2018", Process::Type::background, kRed,
+                  attach_folder(data_base_folder, {2018}, ttbar_data_skim_folder, {"*.root"}),triggers_data));
+
+  vector<shared_ptr<Process> > mc_allyears_procs;
+  mc_allyears_procs.push_back(Process::MakeShared<Baby_pico>("MC 2016", Process::Type::background, kBlue,
+                  attach_folder(mc_base_folder, {2016}, ttbar_mc_skim_folder, mctags["tt"]),"stitch"));
+  mc_allyears_procs.push_back(Process::MakeShared<Baby_pico>("MC 2017", Process::Type::background, kGreen,
+                  attach_folder(mc_base_folder, {2017}, ttbar_mc_skim_folder, mctags["tt"]),"stitch"));
+  mc_allyears_procs.push_back(Process::MakeShared<Baby_pico>("MC 2018", Process::Type::background, kRed,
+                  attach_folder(mc_base_folder, {2017}, ttbar_mc_skim_folder, mctags["tt"]),"stitch"));
+
   vector<shared_ptr<Process> > ttbar_procs_nodata;
   ttbar_procs_nodata.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X (#tau_{had}>0)", Process::Type::background,colors("tt_htau"),
                   attach_folder(mc_base_folder, years, ttbar_mc_skim_folder, mctags["tt"]),"stitch&&ntrutauh>0"));
@@ -221,79 +243,17 @@ int main(int argc, char *argv[]){
   ttbar_procs_data.push_back(Process::MakeShared<Baby_pico>("Data", Process::Type::background, kBlack,
                   attach_folder(data_base_folder, years, ttbar_data_skim_folder, {"*.root"}), triggers_data));
 
-  //// Set signal mc
-  //vector<string> signal_mass = {"200", "450", "700", "950"}; 
-  //vector<int> sig_colors = {kGreen+1, kRed, kBlue, kOrange}; // need signal_mass.size() >= sig_colors.size()
-  //for (unsigned isig(0); isig<signal_mass.size(); isig++){
-  //  procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+signal_mass[isig]+",1)", Process::Type::signal, 
-  //    sig_colors[isig], attach_folder(sig_base_folder, years, sig_skim_folder, {"*TChiHH_mChi-"+signal_mass[isig]+"_mLSP-0*.root"}), "1"));
-  //}
-
-  // Set processes according to btag
-  // Getting colors
-  // TColor * color;; float red, green, blue;
-  // color = gROOT->GetColor(kAzure+1); color->GetRGB(red,green,blue); cout<<red*255<<" "<<green*255<<" "<<blue*255<<endl;
-  vector<shared_ptr<Process> > ttbar_procs_btag;
-  ttbar_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. (2b)", Process::Type::background,colors("2b"),
-                  attach_folder(mc_base_folder, years, ttbar_mc_skim_folder, mctags["all"]),"stitch&&(nbt==2&&nbm==2)"));
-  ttbar_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. (3b)", Process::Type::background,colors("3b"),
-                  attach_folder(mc_base_folder, years, ttbar_mc_skim_folder, mctags["all"]),"stitch&&(nbt>=2&&nbm==3&&nbl==3)"));
-  ttbar_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. (4b)", Process::Type::background,colors("4b"),
-                  attach_folder(mc_base_folder, years, ttbar_mc_skim_folder, mctags["all"]),"stitch&&(nbt>=2&&nbm>=3&&nbl>=4)"));
-
-  // Set processes according to true number of b
-  vector<shared_ptr<Process> > ttbar_procs_trueB;
-  ttbar_procs_trueB.push_back(Process::MakeShared<Baby_pico>
-    ("0 B-hadron",       Process::Type::background, colors("true_0b"), attach_folder(mc_base_folder, years, ttbar_mc_skim_folder, mctags["all"]), "stitch" && Functions::ntrub<1));
-  ttbar_procs_trueB.push_back(Process::MakeShared<Baby_pico>
-    ("1 B-hadron",       Process::Type::background, colors("true_1b"), attach_folder(mc_base_folder, years, ttbar_mc_skim_folder, mctags["all"]), "stitch" && Functions::ntrub==1));
-  ttbar_procs_trueB.push_back(Process::MakeShared<Baby_pico>
-    ("2 B-hadrons",      Process::Type::background, colors("true_2b"), attach_folder(mc_base_folder, years, ttbar_mc_skim_folder, mctags["all"]), "stitch" && Functions::ntrub==2));
-  ttbar_procs_trueB.push_back(Process::MakeShared<Baby_pico>
-    ("3 B-hadrons",      Process::Type::background, colors("true_3b"), attach_folder(mc_base_folder, years, ttbar_mc_skim_folder, mctags["all"]),  "stitch"&& Functions::ntrub==3));
-  ttbar_procs_trueB.push_back(Process::MakeShared<Baby_pico>
-    ("4 B-hadrons", Process::Type::background, colors("true_4b"), attach_folder(mc_base_folder, years, ttbar_mc_skim_folder, mctags["all"]), "stitch" && Functions::ntrub==4));
-
-  vector<shared_ptr<Process> > ttbar_procs_nisr;
-  ttbar_procs_nisr.push_back(Process::MakeShared<Baby_pico>("N_{ISR} = 0", Process::Type::background,colors("nisr_0"),
-                  attach_folder(mc_base_folder, years, ttbar_mc_skim_folder, mctags["all"]),"stitch&&nisr==0"));
-  ttbar_procs_nisr.push_back(Process::MakeShared<Baby_pico>("N_{ISR} = 1", Process::Type::background,colors("nisr_1"),
-                  attach_folder(mc_base_folder, years, ttbar_mc_skim_folder, mctags["all"]),"stitch&&nisr==1"));
-  ttbar_procs_nisr.push_back(Process::MakeShared<Baby_pico>("N_{ISR} = 2", Process::Type::background,colors("nisr_2"),
-                  attach_folder(mc_base_folder, years, ttbar_mc_skim_folder, mctags["all"]),"stitch&&nisr==2"));
-
-  vector<shared_ptr<Process> > ttbar_data_procs_btag;
-  if (unblind) {
-    ttbar_data_procs_btag.push_back(Process::MakeShared<Baby_pico>("2b Data", Process::Type::background, colors("0b"),
-                    attach_folder(data_base_folder, years, ttbar_data_skim_folder, {"*.root"}),
-                    "(nbt==2&&nbm==2)" && triggers_data
-                    ));
-    ttbar_data_procs_btag.push_back(Process::MakeShared<Baby_pico>("3b Data", Process::Type::data, kBlack,
-                    attach_folder(data_base_folder, years, ttbar_data_skim_folder, {"*.root"}),
-                    "(nbt>=2&&nbm==3&&nbl==3)" && triggers_data
-                    ));
-    ttbar_data_procs_btag.push_back(Process::MakeShared<Baby_pico>("4b Data", Process::Type::data, kGreen,
-                    attach_folder(data_base_folder, years, ttbar_data_skim_folder, {"*.root"}),
-                    "(nbt>=2&&nbm>=3&&nbl>=4)" && triggers_data
-                    ));
-  } else {
-    ttbar_data_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. (2b)", Process::Type::background,colors("2b"),
-                    attach_folder(mc_base_folder, years, ttbar_mc_skim_folder, mctags["all"]),"stitch&&(nbt==2&&nbm==2)"));
-    ttbar_data_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. (3b)", Process::Type::background,colors("3b"),
-                    attach_folder(mc_base_folder, years, ttbar_mc_skim_folder, mctags["all"]),"stitch&&(nbt>=2&&nbm==3&&nbl==3)"));
-    ttbar_data_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. (4b)", Process::Type::background,colors("4b"),
-                    attach_folder(mc_base_folder, years, ttbar_mc_skim_folder, mctags["all"]),"stitch&&(nbt>=2&&nbm>=3&&nbl>=4)"));
+  // Set signal mc
+  vector<shared_ptr<Process>> sig_procs;
+  vector<string> signal_mass = {"200", "450", "700", "950"}; 
+  vector<int> sig_colors = {kGreen+1, kRed, kBlue, kOrange}; // need signal_mass.size() >= sig_colors.size()
+  for (unsigned isig(0); isig<signal_mass.size(); isig++){
+    sig_procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+signal_mass[isig]+",1)", Process::Type::signal, 
+      sig_colors[isig], attach_folder(sig_base_folder, years, sig_skim_folder, {"*TChiHH_mChi-"+signal_mass[isig]+"_mLSP-0*.root"}), "1"));
   }
-
-  vector<shared_ptr<Process> > ttbar_mc_procs_btag;
-  ttbar_mc_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. MC (2b)", Process::Type::background,colors("2b"),
-                  attach_folder(mc_base_folder, years, ttbar_mc_skim_folder, mctags["all"]),"stitch&&(nbt==2&&nbm==2)"));
-  ttbar_mc_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. MC (3b)", Process::Type::background,colors("3b"),
-                  attach_folder(mc_base_folder, years, ttbar_mc_skim_folder, mctags["all"]),"stitch&&(nbt>=2&&nbm==3&&nbl==3)"));
-  ttbar_mc_procs_btag.push_back(Process::MakeShared<Baby_pico>("All bkg. MC (4b)", Process::Type::background,colors("4b"),
-                  attach_folder(mc_base_folder, years, ttbar_mc_skim_folder, mctags["all"]),"stitch&&(nbt>=2&&nbm>=3&&nbl>=4)"));
   
   NamedFunc onelep_baseline = base_filters && (Higfuncs::lead_signal_lepton_pt>30) && "nlep==1&&mt<=100&&njet>=4&&njet<=5&&hig_cand_drmax[0]<2.2&&hig_cand_dm[0]<40&&hig_cand_am[0]<200&&nbt>=2";
+  NamedFunc baseline = base_filters && "nlep==0&&ntk==0&&met>150&&njet>=4&&njet<=5&&low_dphi_met&&(met/met_calo<2)&&(met/mht<2)&&hig_cand_drmax[0]<2.2&&hig_cand_dm[0]<40&&hig_cand_am[0]<200&&nbt>=2";
 
   const NamedFunc dphi_min("dphi_min",[](const Baby &b) -> NamedFunc::ScalarType {
     double min_dphi = 3.1415;
@@ -306,178 +266,313 @@ int main(int argc, char *argv[]){
     return min_dphi;
   });
 
+  const NamedFunc deltar_h1("deltar_h1",[](const Baby &b) -> NamedFunc::ScalarType {
+    double eta1 = 0, eta2 = 0, phi1 = 0, phi2 = 0;
+    int jet_h1_idx = 0;
+    for (unsigned int jet_idx = 0; jet_idx < b.jet_pt()->size(); jet_idx++) {
+      if (b.jet_h1d()->at(jet_idx)) {
+        if (jet_h1_idx == 0) {
+          eta1 = b.jet_eta()->at(jet_idx);
+          phi1 = b.jet_phi()->at(jet_idx);
+          jet_h1_idx++;
+        }
+        else {
+          eta2 = b.jet_eta()->at(jet_idx);
+          phi2 = b.jet_phi()->at(jet_idx);
+          break;
+        }
+      }
+    }
+    float dphi = fabs(phi2-phi1);
+    if (dphi>3.14) dphi = 2*3.1415-dphi;
+    return TMath::Sqrt((eta2-eta1)*(eta2-eta1)+dphi*dphi);
+  });
+
+  const NamedFunc deltar_h2("deltar_h2",[](const Baby &b) -> NamedFunc::ScalarType {
+    double eta1 = 0, eta2 = 0, phi1 = 0, phi2 = 0;
+    int jet_h1_idx = 0;
+    for (unsigned int jet_idx = 0; jet_idx < b.jet_pt()->size(); jet_idx++) {
+      if (b.jet_h2d()->at(jet_idx)) {
+        if (jet_h1_idx == 0) {
+          eta1 = b.jet_eta()->at(jet_idx);
+          phi1 = b.jet_phi()->at(jet_idx);
+          jet_h1_idx++;
+        }
+        else {
+          eta2 = b.jet_eta()->at(jet_idx);
+          phi2 = b.jet_phi()->at(jet_idx);
+          break;
+        }
+      }
+    }
+    float dphi = fabs(phi2-phi1);
+    if (dphi>3.14) dphi = 2*3.1415-dphi;
+    return TMath::Sqrt((eta2-eta1)*(eta2-eta1)+dphi*dphi);
+  });
+
   PlotMaker pm;
   unsigned int pm_idx = 0;
   unsigned int pt_scale_hist_idx = 0;
+  unsigned int data_twodim_num_idx = 0;
+  unsigned int data_twodim_den_idx = 0;
 
-  //checking defecit/excess in drmax-met space
+  //checking deficit/excess in drmax-met space
   pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     onelep_baseline,
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__am_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__am_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     onelep_baseline && "hig_cand_drmax[0]<1.1",
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__am_lowdrmax_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__am_lowdrmax_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     onelep_baseline && "hig_cand_drmax[0]<1.1&&met<125",
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__am_lowdrmaxlowmet_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__am_lowdrmaxlowmet_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     onelep_baseline && "hig_cand_drmax[0]<1.1&&met>125&&met<175",
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__am_lowdrmaxmidmet_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__am_lowdrmaxmidmet_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     onelep_baseline && "hig_cand_drmax[0]<1.1&&met>175",
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__am_lowdrmaxhimet_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__am_lowdrmaxhimet_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     onelep_baseline && "hig_cand_drmax[0]>1.1&&met<125",
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__am_hidrmaxlowmet_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__am_hidrmaxlowmet_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     onelep_baseline && "hig_cand_drmax[0]>1.1&&met>125&&met<175",
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__am_hidrmaxmidmet_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__am_hidrmaxmidmet_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     onelep_baseline && "hig_cand_drmax[0]>1.1&&met>175",
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__am_hidrmaxhimet_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__am_hidrmaxhimet_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   //conclusion: no met dependence
+  
+  //plots for why is SR different
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    onelep_baseline && "met<100",
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__am_met0to100_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  pm_idx++;
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    onelep_baseline && "met>100&&met<150",
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__am_met100to150_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  pm_idx++;
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    onelep_baseline && "met>150&&met<200",
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__am_met150to200_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  pm_idx++;
+  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    onelep_baseline && "met>200",
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__am_met200toInf_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  pm_idx++;
+  pm.Push<Hist1D>(Axis(10, 0, 400, "jet_pt", "Jet p_{T} [GeV]", {}),
+    onelep_baseline && "met<100",
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__jetpt_met0to100_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  pm_idx++;
+  pm.Push<Hist1D>(Axis(10, 0, 400, "jet_pt", "Jet p_{T} [GeV]", {}),
+    onelep_baseline && "met>100&&met<150",
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__jetpt_met100to150_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  pm_idx++;
+  pm.Push<Hist1D>(Axis(10, 0, 400, "jet_pt", "Jet p_{T} [GeV]", {}),
+    onelep_baseline && "met>150&&met<200",
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__jetpt_met150to200_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  pm_idx++;
+  pm.Push<Hist1D>(Axis(10, 0, 400, "jet_pt", "Jet p_{T} [GeV]", {}),
+    onelep_baseline && "met>200",
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__jetpt_met200toInf_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  pm_idx++;
 
-  //omit low amm region
+  //no norm plots
   pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     onelep_baseline && "hig_cand_drmax[0]<1.1",
-    nonorm_procs, plt_lin_nonorm).Weight(weight).Tag("FixName:defecit__am_nonorm_lowdrmax_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    nonorm_procs, plt_lin_nonorm).Weight(weight).Tag("FixName:deficit__am_nonorm_lowdrmax_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     onelep_baseline,
-    nonorm_procs, plt_lin_nonorm).Weight(weight).Tag("FixName:defecit__am_nonorm_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    nonorm_procs, plt_lin_nonorm).Weight(weight).Tag("FixName:deficit__am_nonorm_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
-  //conclusion: excess in low <mbb> not defecit in high
+  //conclusion: excess in low <mbb> not deficit in high
   
   //low level plots
   pm.Push<Hist1D>(Axis(25, 0, 600, "jet_pt", "Jet p_{T} [GeV]", {}),
     onelep_baseline && "hig_cand_am[0]<110",
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__jetpt_lowam_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__jetpt_lowam_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist1D>(Axis(25, 0, 600, "jet_pt", "Jet p_{T} [GeV]", {}),
     onelep_baseline && "hig_cand_am[0]>110",
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__jetpt_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__jetpt_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist2D>(Axis(25, -2.5, 2.5, "jet_eta", "Jet #eta", {}),
     Axis(25, -3.14, 3.14, "jet_phi", "Jet #phi", {}),
     onelep_baseline,
-    ttbar_procs_nodata, twodim_plotopts).Weight(weight).Tag("FixName:defecit__jetetaphi_mc_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs_nodata, twodim_plotopts).Weight(weight).Tag("FixName:deficit__jetetaphi_mc_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist2D>(Axis(25, -2.5, 2.5, "jet_eta", "Jet #eta", {}),
     Axis(25, -3.14, 3.14, "jet_phi", "Jet #phi", {}),
     onelep_baseline,
-    ttbar_procs_data, twodim_plotopts).Weight(weight).Tag("FixName:defecit__jetetaphi_data_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs_data, twodim_plotopts).Weight(weight).Tag("FixName:deficit__jetetaphi_data_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  data_twodim_den_idx = pm_idx;
   pm_idx++;
   pm.Push<Hist2D>(Axis(25, -2.5, 2.5, "jet_eta", "Jet #eta", {}),
     Axis(25, -3.14, 3.14, "jet_phi", "Jet #phi", {}),
     onelep_baseline && "hig_cand_am[0]>110",
-    ttbar_procs_nodata, twodim_plotopts).Weight(weight).Tag("FixName:defecit__jetetaphi_mc_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs_nodata, twodim_plotopts).Weight(weight).Tag("FixName:deficit__jetetaphi_mc_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist2D>(Axis(25, -2.5, 2.5, "jet_eta", "Jet #eta", {}),
     Axis(25, -3.14, 3.14, "jet_phi", "Jet #phi", {}),
     onelep_baseline && "hig_cand_am[0]>110",
-    ttbar_procs_data, twodim_plotopts).Weight(weight).Tag("FixName:defecit__jetetaphi_data_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs_data, twodim_plotopts).Weight(weight).Tag("FixName:deficit__jetetaphi_data_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  data_twodim_num_idx = pm_idx;
   pm_idx++;
   pm.Push<Hist2D>(Axis(25, -2.5, 2.5, "jet_eta", "Jet #eta", {}),
     Axis(25, -3.14, 3.14, "jet_phi", "Jet #phi", {}),
     onelep_baseline && "jet_pt[0]>200",
-    ttbar_procs_nodata, twodim_plotopts).Weight(weight).Tag("FixName:defecit__jetetaphi_mc_highjetpt_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs_nodata, twodim_plotopts).Weight(weight).Tag("FixName:deficit__jetetaphi_mc_highjetpt_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist2D>(Axis(25, -2.5, 2.5, "jet_eta", "Jet #eta", {}),
     Axis(25, -3.14, 3.14, "jet_phi", "Jet #phi", {}),
     onelep_baseline && "jet_pt[0]>200",
-    ttbar_procs_data, twodim_plotopts).Weight(weight).Tag("FixName:defecit__jetetaphi_data_highjetpt_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs_data, twodim_plotopts).Weight(weight).Tag("FixName:deficit__jetetaphi_data_highjetpt_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist2D>(Axis(25, -2.5, 2.5, "jet_eta", "Jet #eta", {}),
     Axis(25, -3.14, 3.14, "jet_phi", "Jet #phi", {}),
     onelep_baseline && "hig_cand_am[0]>110&&jet_pt[0]>200",
-    ttbar_procs_nodata, twodim_plotopts).Weight(weight).Tag("FixName:defecit__jetetaphi_mc_higamhighjetpt_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs_nodata, twodim_plotopts).Weight(weight).Tag("FixName:deficit__jetetaphi_mc_higamhighjetpt_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist2D>(Axis(25, -2.5, 2.5, "jet_eta", "Jet #eta", {}),
     Axis(25, -3.14, 3.14, "jet_phi", "Jet #phi", {}),
     onelep_baseline && "hig_cand_am[0]>110&&jet_pt[0]>200",
-    ttbar_procs_data, twodim_plotopts).Weight(weight).Tag("FixName:defecit__jetetaphi_data_highamhighjetpt_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs_data, twodim_plotopts).Weight(weight).Tag("FixName:deficit__jetetaphi_data_highamhighjetpt_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   //no obvious detector failures
   
   //plots split by mbb
   pm.Push<Hist1D>(Axis(25, 0, 3.0, "hig_cand_drmax[0]", "#Delta R_{max}", {1.1,2.2}),
     onelep_baseline && "hig_cand_am[0]>110",
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__drmax_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__drmax_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist1D>(Axis(25, 0, 3.0, "hig_cand_drmax[0]", "#Delta R_{max}", {1.1,2.2}),
     onelep_baseline && "hig_cand_am[0]<110",
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__drmax_lowam_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__drmax_lowam_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist1D>(Axis(25, 0, 40.0, "hig_cand_dm[0]", "#Delta m", {}),
     onelep_baseline && "hig_cand_am[0]>110",
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__dm_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__dm_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist1D>(Axis(25, 0, 40.0, "hig_cand_dm[0]", "#Delta m", {}),
     onelep_baseline && "hig_cand_am[0]<110",
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__dm_lowam_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__dm_lowam_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist1D>(Axis(25, 0, 600.0, "ht", "H_{T} [GeV]", {}),
     onelep_baseline && "hig_cand_am[0]>110",
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__ht_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__ht_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist1D>(Axis(25, 0, 600.0, "ht", "H_{T} [GeV]", {}),
     onelep_baseline && "hig_cand_am[0]<110",
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__ht_lowam_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__ht_lowam_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist1D>(Axis(25, 0, 400, "met", "p_{T}^{miss} [GeV]", {}),
     onelep_baseline && "hig_cand_am[0]>110",
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__met_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__met_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist1D>(Axis(25, 0, 400, "met", "p_{T}^{miss} [GeV]", {}),
     onelep_baseline && "hig_cand_am[0]<110",
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__met_lowam_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__met_lowam_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist1D>(Axis(3, 1.5, 4.5, Higfuncs::jetid_nb, "N_{b}", {}),
     onelep_baseline && "hig_cand_am[0]>110",
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__nb_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__nb_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist1D>(Axis(3, 1.5, 4.5, Higfuncs::jetid_nb, "N_{b}", {}),
     onelep_baseline && "hig_cand_am[0]<110",
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__nb_lowam_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__nb_lowam_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist1D>(Axis(2, -0.5, 1.5, "nmu", "N_{#mu}", {}),
     onelep_baseline && "hig_cand_am[0]>110",
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__nmu_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__nmu_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist1D>(Axis(2, -0.5, 1.5, "nmu", "N_{#mu}", {}),
     onelep_baseline && "hig_cand_am[0]<110",
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__nmu_lowam_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__nmu_lowam_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist1D>(Axis(2, 3.5, 5.5, "njet", "N_{j}", {}),
     onelep_baseline && "hig_cand_am[0]>110",
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__nj_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__nj_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist1D>(Axis(2, 3.5, 5.5, "njet", "N_{j}", {}),
     onelep_baseline && "hig_cand_am[0]<110",
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__nj_lowam_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__nj_lowam_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist1D>(Axis(25, 0, 3.14, dphi_min, "#Delta #phi_{min}", {}),
     onelep_baseline && "hig_cand_am[0]>110",
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__dphimet_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__dphimet_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
   pm.Push<Hist1D>(Axis(25, 0, 3.14, dphi_min, "#Delta #phi_{min}", {}),
     onelep_baseline && "hig_cand_am[0]<110",
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__dphimet_lowam_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__dphimet_lowam_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm_idx++;
+  pm.Push<Hist1D>(Axis(25, 0, 2.2, deltar_h1, "#Delta R_{H1}", {}),
+    onelep_baseline && "hig_cand_am[0]>110",
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__deltarh1_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  pm_idx++;
+  pm.Push<Hist1D>(Axis(25, 0, 2.2, deltar_h1, "#Delta R_{H1}", {}),
+    onelep_baseline && "hig_cand_am[0]<110",
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__deltarh1_lowam_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  pm_idx++;
+  pm.Push<Hist1D>(Axis(25, 0, 2.2, deltar_h2, "#Delta R_{H2}", {}),
+    onelep_baseline && "hig_cand_am[0]>110",
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__deltarh2_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  pm_idx++;
+  pm.Push<Hist1D>(Axis(25, 0, 2.2, deltar_h2, "#Delta R_{H2}", {}),
+    onelep_baseline && "hig_cand_am[0]<110",
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__deltarh2_lowam_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  pm_idx++;
+  //conclusion: no obvious other effects
+
+  //cross-years plots
+  pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    onelep_baseline && "hig_cand_drmax[0]<1.1",
+    data_allyears_procs, plt_lin_nonorm).Weight(weight).Tag("FixName:deficit__am_datayears_lowdrmax_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  pm_idx++;
+  pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    onelep_baseline,
+    data_allyears_procs, plt_lin_nonorm).Weight(weight).Tag("FixName:deficit__am_datayears_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  pm_idx++;
+  pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    onelep_baseline && "hig_cand_drmax[0]<1.1",
+    mc_allyears_procs, plt_lin_nonorm).Weight(weight).Tag("FixName:deficit__am_mcyears_lowdrmax_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  pm_idx++;
+  pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    onelep_baseline,
+    mc_allyears_procs, plt_lin_nonorm).Weight(weight).Tag("FixName:deficit__am_mcyears_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  pm_idx++;
+  pm.Push<Hist1D>(Axis(25, 30, 600, "jet_pt", "jet p_{T} [GeV]", {}),
+    onelep_baseline && "hig_cand_am[0]>110",
+    data_allyears_procs, plt_lin_nonorm).Weight(weight).Tag("FixName:deficit__jetpt_datayears_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  pm_idx++;
+  pm.Push<Hist1D>(Axis(25, 30, 600, "jet_pt", "jet p_{T} [GeV]", {}),
+    onelep_baseline,
+    data_allyears_procs, plt_lin_nonorm).Weight(weight).Tag("FixName:deficit__jetpt_datayears_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  pm_idx++;
+  pm.Push<Hist1D>(Axis(25, 30, 600, "jet_pt", "jet p_{T} [GeV]", {}),
+    onelep_baseline && "hig_cand_am[0]>110",
+    mc_allyears_procs, plt_lin_nonorm).Weight(weight).Tag("FixName:deficit__jetpt_mcyears_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  pm_idx++;
+  pm.Push<Hist1D>(Axis(25, 30, 600, "jet_pt", "jet p_{T} [GeV]", {}),
+    onelep_baseline,
+    mc_allyears_procs, plt_lin_nonorm).Weight(weight).Tag("FixName:deficit__jetpt_mcyears_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  pm_idx++;
+  //conclusion: 2017/18 softer than 2016 data, 2017/18 MC harder than 2016 MC
   
   pm.Push<Hist1D>(Axis(PT_BINS, "jet_pt", "Jet p_{T} [GeV]", {}),
     onelep_baseline,
-    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:defecit__scalejetpt_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight).Tag("FixName:deficit__scalejetpt_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pt_scale_hist_idx = pm_idx;
   pm_idx++;
+
 
   pm.multithreaded_ = !single_thread;
   pm.min_print_ = true;
@@ -485,7 +580,17 @@ int main(int argc, char *argv[]){
 
   std::vector<double> pt_sfs = get_pt_sfs(pm, pt_scale_hist_idx);
 
+  Hist2D *h2d_dataden = static_cast<Hist2D*>(pm.Figures()[data_twodim_den_idx].get());
+  Hist2D *h2d_datanum = static_cast<Hist2D*>(pm.Figures()[data_twodim_num_idx].get());
+  TH2D th2d_dataden = h2d_dataden->GetBkgHist(true);
+  TH2D th2d_datanum = h2d_datanum->GetBkgHist(true);
+  th2d_datanum.Divide(&th2d_dataden);
+  TCanvas twodim_can("twodim_can");
+  th2d_datanum.Draw("colz");
+  twodim_can.SaveAs(("plots/deficit_dataratio_"+year_string+".pdf").c_str());
+
   const NamedFunc w_pt("w_pt",[pt_sfs](const Baby &b) -> NamedFunc::ScalarType {
+    //incorrect overall scaling: use only for shapes
     double w_pt_ = 1.0;
     if (b.SampleType()<0) return 1.0; //data
     for (unsigned int jet_idx = 0; jet_idx < b.jet_pt()->size(); jet_idx++) {
@@ -503,25 +608,91 @@ int main(int argc, char *argv[]){
     return w_pt_;
   });
 
+  const NamedFunc w_pt_sig("w_pt_sig",[pt_sfs](const Baby &b) -> NamedFunc::ScalarType {
+    //correct overall scaling
+    double w_pt_ = 1.0;
+    if (b.SampleType()<0) return 1.0; //data
+    for (unsigned int jet_idx = 0; jet_idx < b.jet_pt()->size(); jet_idx++) {
+      if (b.jet_isgood()->at(jet_idx)) {
+        for (unsigned int pt_bin = 0; pt_bin < PT_BINS.size()-1; pt_bin++) {
+          double max_value = PT_BINS[pt_bin+1];
+          if (pt_bin == PT_BINS.size()-2) max_value = 9999.0;
+          if (b.jet_pt()->at(jet_idx)>=PT_BINS[pt_bin] && b.jet_pt()->at(jet_idx) < max_value) {
+            w_pt_ = w_pt_*pt_sfs[pt_bin];
+            break;
+          }
+        }
+      }
+    }
+    if (b.mprod()==200) w_pt_=w_pt_*25763.0/23732.0;
+    if (b.mprod()==450) w_pt_=w_pt_*1000.0/720.0;
+    if (b.mprod()==700) w_pt_=w_pt_*134.0/79.0;
+    if (b.mprod()==950) w_pt_=w_pt_*26.0/13.0;
+    return w_pt_;
+  });
+
   PlotMaker pm2;
+  //1l CR pt and <m> after reweighting
   pm2.Push<Hist1D>(Axis(PT_BINS, "jet_pt", "Jet p_{T} [GeV]", {}),
     onelep_baseline,
-    ttbar_procs, plt_lin).Weight(weight*w_pt).Tag("FixName:defecit__jetptscale_wpt_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight*w_pt).Tag("FixName:deficit__jetptscale_wpt_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm2.Push<Hist1D>(Axis(25, 0, 600, "jet_pt", "Jet p_{T} [GeV]", {}),
     onelep_baseline,
-    ttbar_procs, plt_lin).Weight(weight*w_pt).Tag("FixName:defecit__jetpt_wpt_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight*w_pt).Tag("FixName:deficit__jetpt_wpt_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm2.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     onelep_baseline,
-    ttbar_procs, plt_lin).Weight(weight*w_pt).Tag("FixName:defecit__am_wpt_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight*w_pt).Tag("FixName:deficit__am_wpt_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
   pm2.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     onelep_baseline && "hig_cand_drmax[0]<1.1",
-    ttbar_procs, plt_lin).Weight(weight*w_pt).Tag("FixName:defecit__am_wpt_lowdrmax_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+    ttbar_procs, plt_lin).Weight(weight*w_pt).Tag("FixName:deficit__am_wpt_lowdrmax_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+
+  //some signal points before and after reweighting
+  pm2.Push<Hist1D>(Axis(20, 0, 1000, "met", "p_{T}^{miss} [GeV]", {100, 140}),
+    "1",
+    sig_procs, plt_lin_nonorm_noratio).Weight(weight).Tag("FixName:deficit__am_sig_nosel_"+year_string).LuminosityTag(total_luminosity_string);
+  pm2.Push<Hist1D>(Axis(20, 0, 1000, "met", "p_{T}^{miss} [GeV]", {100, 140}),
+    "1",
+    sig_procs, plt_lin_nonorm_noratio).Weight(weight*w_pt).Tag("FixName:deficit__am_sig_wpt_nosel_"+year_string).LuminosityTag(total_luminosity_string);
+  //
+  pm2.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    baseline,
+    sig_procs, plt_lin_nonorm_noratio).Weight(weight).Tag("FixName:deficit__am_sig_"+year_string).LuminosityTag(total_luminosity_string);
+  pm2.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    baseline&&"nbm>=3",
+    sig_procs, plt_lin_nonorm_noratio).Weight(weight).Tag("FixName:deficit__am_sig34b_"+year_string).LuminosityTag(total_luminosity_string);
+  pm2.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    baseline,
+    sig_procs, plt_lin_nonorm_noratio).Weight(weight*w_pt_sig).Tag("FixName:deficit__am_wpt_sig_"+year_string).LuminosityTag(total_luminosity_string);
+  pm2.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+    baseline&&"nbm>=3",
+    sig_procs, plt_lin_nonorm_noratio).Weight(weight*w_pt_sig).Tag("FixName:deficit__am_wpt_sig34b_"+year_string).LuminosityTag(total_luminosity_string);
+
+  //delta r after reweighting
+  pm2.Push<Hist1D>(Axis(25, 0, 2.2, deltar_h1, "#Delta R_{H1}", {}),
+    onelep_baseline && "hig_cand_am[0]>110",
+    ttbar_procs, plt_lin).Weight(weight*w_pt).Tag("FixName:deficit__deltarh1_wpt_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  pm2.Push<Hist1D>(Axis(25, 0, 2.2, deltar_h1, "#Delta R_{H1}", {}),
+    onelep_baseline && "hig_cand_am[0]<110",
+    ttbar_procs, plt_lin).Weight(weight*w_pt).Tag("FixName:deficit__deltarh1_wpt_lowam_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  pm2.Push<Hist1D>(Axis(25, 0, 2.2, deltar_h2, "#Delta R_{H2}", {}),
+    onelep_baseline && "hig_cand_am[0]>110",
+    ttbar_procs, plt_lin).Weight(weight*w_pt).Tag("FixName:deficit__deltarh2_wpt_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  pm2.Push<Hist1D>(Axis(25, 0, 2.2, deltar_h2, "#Delta R_{H2}", {}),
+    onelep_baseline && "hig_cand_am[0]<110",
+    ttbar_procs, plt_lin).Weight(weight*w_pt).Tag("FixName:deficit__deltarh2_wpt_lowam_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  pm2.Push<Hist1D>(Axis(25, 0, 3.0, "hig_cand_drmax[0]", "#Delta R_{max}", {1.1,2.2}),
+    onelep_baseline && "hig_cand_am[0]>110",
+    ttbar_procs, plt_lin).Weight(weight*w_pt).Tag("FixName:deficit__drmax_wpt_higham_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+  pm2.Push<Hist1D>(Axis(25, 0, 3.0, "hig_cand_drmax[0]", "#Delta R_{max}", {1.1,2.2}),
+    onelep_baseline && "hig_cand_am[0]<110",
+    ttbar_procs, plt_lin).Weight(weight*w_pt).Tag("FixName:deficit__drmax_wpt_lowam_1lcr_"+year_string).LuminosityTag(total_luminosity_string);
+
   pm2.multithreaded_ = !single_thread;
   pm2.min_print_ = true;
   pm2.MakePlots(1.);
 
   time(&endtime); 
-  cout<<endl<<"Took "<<difftime(endtime, begtime)<<" seconds"<<endl<<endl;
+  cout<<endl<<"Took "<<difftime(endtime, begtime)<<" seconds."<<endl<<endl;
 }
 
 std::vector<double> get_pt_sfs(PlotMaker &pm, unsigned int pm_index) {

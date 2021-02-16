@@ -49,6 +49,7 @@ namespace Higfuncs{
   extern const NamedFunc wgt_syst_lowptleptrig;
   extern const NamedFunc wgt_syst_lumi_up;
   extern const NamedFunc wgt_syst_lumi_down;
+  extern const NamedFunc wgt_syst_ttbarpt;
 
   // analysis trigger and its efficiency
   //NamedFunc::ScalarType trig_hig_decision(const Baby &b);

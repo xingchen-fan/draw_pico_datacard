@@ -92,11 +92,11 @@ int main(int argc, char *argv[])
   //samplePaths["signal_2018"] = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/2018/SMS-TChiHH_2D/merged_higmc_preselect/";
 
   samplePaths["mc_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/2016/mc/merged_higmc_preselect/";
-  samplePaths["signal_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/2016/SMS-TChiHH_2D/merged_higmc_preselect/";
+  samplePaths["signal_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2016/SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_preselect/";
   samplePaths["mc_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/2017/mc/merged_higmc_preselect/";
-  samplePaths["signal_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/2017/SMS-TChiHH_2D/merged_higmc_preselect/";
+  samplePaths["signal_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2017/SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_preselect/";
   samplePaths["mc_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/2018/mc/merged_higmc_preselect/";
-  samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/2018/SMS-TChiHH_2D/merged_higmc_preselect/";
+  samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2018/SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_preselect/";
 
   // massPoints = { {"1000","1"} }
   vector<pair<string, string> > massPoints;
@@ -229,34 +229,37 @@ int main(int argc, char *argv[])
   
   //vector holding systematic variations as a name and weights. May need to be extended to a class
   vector<pair<string, vector<NamedFunc>>> systematics_vector;
-  systematics_vector.push_back(make_pair(string("lumi"),
+  systematics_vector.push_back(make_pair(string("LumiSyst"),
       vector<NamedFunc>({weight*Higfuncs::wgt_syst_lumi_up, weight*Higfuncs::wgt_syst_lumi_down})));
-  systematics_vector.push_back(make_pair(string("trigeff"),
+  systematics_vector.push_back(make_pair(string("TrigSyst"),
       vector<NamedFunc>({Higfuncs::final_weight_notrgeff*Higfuncs::eff_higtrig_run2_syst_up, 
       Higfuncs::final_weight_notrgeff*Higfuncs::eff_higtrig_run2_syst_down})));
-  systematics_vector.push_back(make_pair(string("fsjetid"),
+  systematics_vector.push_back(make_pair(string("SignalJetID"),
       vector<NamedFunc>({weight*1.01, weight*0.99})));
-  systematics_vector.push_back(make_pair(string("bctag"),
+  systematics_vector.push_back(make_pair(string("SignalBCTag"),
       vector<NamedFunc>({weight*"sys_bchig[0]/w_bhig", weight*"sys_bchig[1]/w_bhig"})));
-  systematics_vector.push_back(make_pair(string("fs_bctag"),
+  systematics_vector.push_back(make_pair(string("SignalBCTagFastSIM"),
       vector<NamedFunc>({weight*"sys_fs_bchig[0]/w_bhig", weight*"sys_fs_bchig[1]/w_bhig"})));
-  systematics_vector.push_back(make_pair(string("udsgtag"),
+  systematics_vector.push_back(make_pair(string("SignalUDSGTag"),
       vector<NamedFunc>({weight*"sys_udsghig[0]/w_bhig", weight*"sys_udsghig[1]/w_bhig"})));
-  systematics_vector.push_back(make_pair(string("fs_udsgtag"),
+  systematics_vector.push_back(make_pair(string("SignalUDSGTagFastSIM"),
       vector<NamedFunc>({weight*"sys_fs_udsghig[0]/w_bhig", weight*"sys_fs_udsghig[1]/w_bhig"})));
-  systematics_vector.push_back(make_pair(string("prefire"),
+  systematics_vector.push_back(make_pair(string("SignalPrefire"),
       vector<NamedFunc>({weight*"sys_prefire[0]/w_prefire", weight*"sys_prefire[1]/w_prefire"})));
-  systematics_vector.push_back(make_pair(string("isr"),
+  systematics_vector.push_back(make_pair(string("ISRSyst"),
       vector<NamedFunc>({weight*"sys_isr[0]/w_isr", weight*"sys_isr[1]/w_isr"})));
-  systematics_vector.push_back(make_pair(string("fs_met"),
+  systematics_vector.push_back(make_pair(string("SignalMETFastSIM"),
       vector<NamedFunc>({})));
-  systematics_vector.push_back(make_pair(string("PUsig"),
+  systematics_vector.push_back(make_pair(string("SignalPU"),
       vector<NamedFunc>({weight*"(npv<=20)", weight*"(npv>=21)"})));
-  //TODO: add the following systematics? (from RA4, Old HH+MET, and HH+MET AN)
-  //PU weights
-  //fs_btag
-  //renorm & factorization scales
-  //JECS and JER
+  systematics_vector.push_back(make_pair(string("SignalScale"),
+      vector<NamedFunc>({weight*"sys_murf[0]", weight*"sys_murf[1]", weight*"sys_murf[2]", 
+      weight*"sys_murf[3]",weight*"sys_murf[5]",weight*"sys_murf[6]",weight*"sys_murf[7]",
+      weight*"sys_murf[8]"})));
+  systematics_vector.push_back(make_pair(string("SignalJEC"),
+      vector<NamedFunc>({weight,weight})));
+  systematics_vector.push_back(make_pair(string("SignalJER"),
+      vector<NamedFunc>({weight,weight})));
 
   // cuts[mc,data,signal] = RowInformation(labels, tableRows, yields)
   map<string, HigUtilities::RowInformation > cutTable;
@@ -267,12 +270,35 @@ int main(int argc, char *argv[])
   HigUtilities::addBinCuts(sampleBins, baseline, weight, "mc", cutTable["mc"]);
   for (pair<string, vector<NamedFunc>> sys : systematics_vector) {
     for (unsigned wgt_idx = 0; wgt_idx < sys.second.size(); wgt_idx++) {
-      string sys_name = sys.first+to_string(wgt_idx);
-      HigUtilities::addBinCuts(sampleBins, baseline, sys.second[wgt_idx], 
-                               "signal_"+sys_name, cutTable["signal"]);
-      HigUtilities::addBinCuts(sampleBins, baseline, sys.second[wgt_idx], 
-                               "signalGenMet_"+sys_name, HigUtilities::nom2genmet,
-                               cutTable["signal"]);
+      //for JEC and JER systematics, switch out analysis variables
+      if (sys.first == "SignalJEC") {
+        string sys_name = sys.first+to_string(wgt_idx);
+        HigUtilities::addBinCuts(HigUtilities::nom2sys_bins(sampleBins,to_string(wgt_idx+2)), 
+                                 HigUtilities::nom2sys_string(baseline,to_string(wgt_idx+2)), weight, 
+                                 "signal_"+sys_name, cutTable["signal"]);
+        HigUtilities::addBinCuts(HigUtilities::nom2sys_bins(sampleBins, to_string(wgt_idx+2)), 
+                                 HigUtilities::nom2sys_string(baseline,to_string(wgt_idx+2)), weight, 
+                                 "signalGenMet_"+sys_name, HigUtilities::nom2genmet,
+                                 cutTable["signal"]);
+      }
+      else if (sys.first == "SignalJER") {
+        string sys_name = sys.first+to_string(wgt_idx);
+        HigUtilities::addBinCuts(HigUtilities::nom2sys_bins(sampleBins,to_string(wgt_idx)), 
+                                 HigUtilities::nom2sys_string(baseline,to_string(wgt_idx)), weight, 
+                                 "signal_"+sys_name, cutTable["signal"]);
+        HigUtilities::addBinCuts(HigUtilities::nom2sys_bins(sampleBins, to_string(wgt_idx)), 
+                                 HigUtilities::nom2sys_string(baseline,to_string(wgt_idx)), weight, 
+                                 "signalGenMet_"+sys_name, HigUtilities::nom2genmet,
+                                 cutTable["signal"]);
+      }
+      else {
+        string sys_name = sys.first+to_string(wgt_idx);
+        HigUtilities::addBinCuts(sampleBins, baseline, sys.second[wgt_idx], 
+                                 "signal_"+sys_name, cutTable["signal"]);
+        HigUtilities::addBinCuts(sampleBins, baseline, sys.second[wgt_idx], 
+                                 "signalGenMet_"+sys_name, HigUtilities::nom2genmet,
+                                 cutTable["signal"]);
+      }
     }
   }
   HigWriteDataCards::make_npv_plots("signal", histInfo);
@@ -632,7 +658,7 @@ namespace HigWriteDataCards{
       row[0] = sys.first;
       row[1] = "lnN";
       for (unsigned int bin_idx = 0; bin_idx < (sampleBins.size()); bin_idx++) {
-        if (sys.first == "fs_met") {
+        if (sys.first == "SignalMETFastSIM") {
           //reco MET vs gen MET systematic
           string reclabel = processName + "_signal_" + sampleBins[bin_idx].first;
           string genlabel = processName + "_signalGenMet_" + sampleBins[bin_idx].first;
@@ -651,7 +677,7 @@ namespace HigWriteDataCards{
           //convention for sign
           row[2+2*bin_idx] = to_string(syst_value+1.0);
         }
-        else if (sys.first == "PUsig") {
+        else if (sys.first == "SignalPU") {
           //this systematic only uses reco met
           string label_prefix = processName + "_signal_";
           string label_suffix = "_" + sampleBins[bin_idx].first;

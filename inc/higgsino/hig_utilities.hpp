@@ -51,6 +51,8 @@ namespace HigUtilities {
   int stringToVectorString(std::string const& inString, std::vector<std::string>& outputVector, std::string const & delimiter);
   int vectorStringToString(std::vector<std::string> const & inVector, std::string &outString, std::string const & delimiter);
   std::string removeSpaces(std::string inString);
+  std::string nom2sys_string(std::string nom_string, std::string sys_idx);
+  std::vector<std::pair<std::string, std::string>> nom2sys_bins(std::vector<std::pair<std::string, std::string>> sample_bins, std::string sys_idx);
 
   extern const NamedFunc pass_2016;
   extern const NamedFunc pass_run2;
@@ -61,6 +63,7 @@ namespace HigUtilities {
   extern const NamedFunc w_CNToN1N2;
 
   TString nom2sys_bin(TString ibin, size_t shift_index);
+
   TString nom2genmet(TString ibin);
 
   std::string getBaseFolder(std::string in_base_folder = "/net/cms29");
