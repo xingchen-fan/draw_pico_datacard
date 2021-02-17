@@ -230,12 +230,12 @@ int main(int argc, char *argv[])
   //vector holding systematic variations as a name and weights. May need to be extended to a class
   vector<pair<string, vector<NamedFunc>>> systematics_vector;
   systematics_vector.push_back(make_pair(string("LumiSyst"),
-      vector<NamedFunc>({weight*Higfuncs::wgt_syst_lumi_up, weight*Higfuncs::wgt_syst_lumi_down})));
+      vector<NamedFunc>({})));
   systematics_vector.push_back(make_pair(string("TrigSyst"),
       vector<NamedFunc>({Higfuncs::final_weight_notrgeff*Higfuncs::eff_higtrig_run2_syst_up, 
       Higfuncs::final_weight_notrgeff*Higfuncs::eff_higtrig_run2_syst_down})));
   systematics_vector.push_back(make_pair(string("SignalJetID"),
-      vector<NamedFunc>({weight*1.01, weight*0.99})));
+      vector<NamedFunc>({})));
   systematics_vector.push_back(make_pair(string("SignalBCTag"),
       vector<NamedFunc>({weight*"sys_bchig[0]/w_bhig", weight*"sys_bchig[1]/w_bhig"})));
   systematics_vector.push_back(make_pair(string("SignalBCTagFastSIM"),
@@ -658,7 +658,13 @@ namespace HigWriteDataCards{
       row[0] = sys.first;
       row[1] = "lnN";
       for (unsigned int bin_idx = 0; bin_idx < (sampleBins.size()); bin_idx++) {
-        if (sys.first == "SignalMETFastSIM") {
+        if (sys.first == "LumiSyst") {
+          row[2+2*bin_idx] = "1.0243";
+        }
+        else if (sys.first == "SignalJetID") {
+          row[2+2*bin_idx] = "1.01";
+        }
+        else if (sys.first == "SignalMETFastSIM") {
           //reco MET vs gen MET systematic
           string reclabel = processName + "_signal_" + sampleBins[bin_idx].first;
           string genlabel = processName + "_signalGenMet_" + sampleBins[bin_idx].first;
@@ -673,7 +679,7 @@ namespace HigWriteDataCards{
           //  std::cout << "DEBUG: large fs met systematic. RECO value: "
           //       << recmet_value << ", GEN value: " << genmet_value << std::endl;
           if (syst_value > 1.0) syst_value = 1.0;
-          if (syst_value < -1.0) syst_value = -1.0;
+          if (syst_value <= -1.0) syst_value = -0.99;
           //convention for sign
           row[2+2*bin_idx] = to_string(syst_value+1.0);
         }
@@ -698,41 +704,57 @@ namespace HigWriteDataCards{
           eff_mc = eff_mc/total_entries_sig;
           float syst_value = (eff_data-eff_mc)/eff_mc;
           if (std::isnan(syst_value) || std::isinf(syst_value) || syst_value > 1.0) syst_value = 1.0;
-          if (syst_value < -1.0) syst_value = -1.0;
+          if (syst_value <= -1.0) syst_value = -0.99;
           row[2+2*bin_idx] = to_string(syst_value+1.0);
+        }
+        else if (sys.first == "SignalScale") {
+          //renormalization and factorization scale systematic
+          string label = processName + "_" + signalAverageGenMetTag + "_" + sampleBins[bin_idx].first;
+          float nominal_value = mYields.at(label).first.Yield();
+          if (nominal_value == 0) {
+            //no signal, poor stats
+            row[2+2*bin_idx] = "2.00/2.00";
+          }
+          else {
+            float max_variation_up = 0.0;
+            float max_variation_down = 0.0;
+            for (unsigned wgt_idx = 0; wgt_idx < sys.second.size(); wgt_idx++) {
+              label = processName + "_" + signalAverageGenMetTag + "_" + sys.first + to_string(wgt_idx) + "_" + sampleBins[bin_idx].first;
+              float variation_value = mYields.at(label).first.Yield();
+              float variation = variation_value/nominal_value-1.0;
+              if (variation > max_variation_up) max_variation_up = variation;
+              if (variation < max_variation_down) max_variation_down = variation;
+            }
+            if (max_variation_up > 1.0) max_variation_up = 1.0;
+            if (max_variation_down <= -1.0) max_variation_down = -0.99;
+            row[2+2*bin_idx] = to_string(max_variation_down+1.0)+"/"+to_string(max_variation_up+1.0);
+          }
         }
         else {
           //normal up/down systematic
           string label = processName + "_" + signalAverageGenMetTag + "_" + sampleBins[bin_idx].first;
           float nominal_value = mYields.at(label).first.Yield();
           if (nominal_value == 0) {
-            //no signal, poor stats
-            row[2+2*bin_idx] = "2.00";
+            //no signal, poor stats - make all variations up??
+            row[2+2*bin_idx] = "2.00/2.00";
           }
           else {
-            float max_variation = 0.0;
-            float variation_sign = 1.0;
-            bool up_variation = true;
-            for (unsigned wgt_idx = 0; wgt_idx < sys.second.size(); wgt_idx++) {
-              label = processName + "_" + signalAverageGenMetTag + "_" + sys.first + to_string(wgt_idx) + "_" + sampleBins[bin_idx].first;
-              float variation_value = mYields.at(label).first.Yield();
-              //float variation = fabs(variation_value-nominal_value)/nominal_value;
-              float variation = variation_value/nominal_value-1.0;
-              //take reference sign from the first variation
-              if (up_variation == true) {
-                if (variation < 0) variation_sign = -1.0;
-              }
-              up_variation = false;
-              if (fabs(variation) > max_variation)
-                max_variation = fabs(variation);
-            }
-            if (max_variation > 1.0) max_variation = 1.0;
-            row[2+2*bin_idx] = to_string(variation_sign*max_variation+1.0);
+            label = processName + "_" + signalAverageGenMetTag + "_" + sys.first + "0_" + sampleBins[bin_idx].first;
+            float value_up = mYields.at(label).first.Yield();
+            label = processName + "_" + signalAverageGenMetTag + "_" + sys.first + "1_" + sampleBins[bin_idx].first;
+            float value_down = mYields.at(label).first.Yield();
+            float syst_up = (value_up-nominal_value)/nominal_value;
+            float syst_down = (value_down-nominal_value)/nominal_value;
+            if (syst_up > 1.0) syst_up = 1.0;
+            if (syst_up <= -1.0) syst_up = -0.99;
+            if (syst_down > 1.0) syst_down = 1.0;
+            if (syst_down <= -1.0) syst_down = -0.99;
+            row[2+2*bin_idx] = to_string(syst_down+1.0)+"/"+to_string(syst_up+1.0);
           }
-        }
-      }
+        } //sys name
+      } //bin loop
       tableValues.push_back(row);
-    }
+    } //systematic loop
 
     setRow(row,"");
     tableValues.push_back(row);
