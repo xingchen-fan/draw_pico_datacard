@@ -415,6 +415,14 @@ int main(int argc, char *argv[]){
     return TMath::Sqrt(met_x*met_x+met_y*met_y);
   });
 
+  const NamedFunc met("met", [](const Baby &b) -> NamedFunc::ScalarType{
+      return b.met();
+  });
+
+  const NamedFunc ht("ht", [](const Baby &b) -> NamedFunc::ScalarType{
+      return b.ht();
+  });
+
   const NamedFunc pfmet_minus_calomet = "met-met_calo";
 
   NamedFunc sr_baseline = Higfuncs::pass_filters && "met/met_calo<2&&met/mht<2&&met>150&&nvlep==0&&ntk==0" &&
@@ -535,27 +543,17 @@ int main(int argc, char *argv[]){
   //  met_trigger_onlymu,
   //  mc_all_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_1el_1mu_inclqcd_nj4nb2metquality_onlymu_"+options.year_string).LuminosityTag(total_luminosity_string);
 
-  pm.Push<EfficiencyPlot>(Axis(25, 20, 100, lepton_pt, "lepton p_{T} [GeV]", {}),
-    Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met,
-    met_trigger_onlymu,
-    mc_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_1el_1mu_leppt_"+options.year_string).LuminosityTag(total_luminosity_string);
+  //unbinned lepton pt plots
+  //pm.Push<EfficiencyPlot>(Axis(25, 20, 100, lepton_pt, "lepton p_{T} [GeV]", {}),
+  //  Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met,
+  //  met_trigger_onlymu,
+  //  mc_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_1el_1mu_leppt_"+options.year_string).LuminosityTag(total_luminosity_string);
   //pm.Push<EfficiencyPlot>(Axis(25, 20, 100, lepton_pt, "lepton p_{T} [GeV]", {}),
   //  Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met,
   //  met_trigger_onlymu,
   //  data_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_data_1el_1mu_leppt_"+options.year_string).LuminosityTag(total_luminosity_string);
-  //pm.Push<EfficiencyPlot>(Axis(25, 20, 100, lepton_pt, "lepton p_{T} [GeV]", {}),
-  //  Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met,
-  //  Higfuncs::met_trigger,
-  //  mc_nomu_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_1el_leppt_"+options.year_string).LuminosityTag(total_luminosity_string);
-  //pm.Push<EfficiencyPlot>(Axis(25, 20, 100, lepton_pt, "lepton p_{T} [GeV]", {}),
-  //  Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met,
-  //  Higfuncs::met_trigger,
-  //  data_el_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_data_1el_leppt_"+options.year_string).LuminosityTag(total_luminosity_string);
   
-  //pm.Push<EfficiencyPlot>(Axis(30, 0, 1.5, lepton_pt_over_ht, "lepton p_{T}/H_{T}", {}),
-  //  Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met,
-  //  met_trigger_onlymu,
-  //  mc_all_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_1el_1mu_lepptratio_"+options.year_string).LuminosityTag(total_luminosity_string);
+  //plots of lepton pt/HT
   //pm.Push<EfficiencyPlot>(Axis(30, 0, 1.5, lepton_pt_over_ht, "lepton p_{T}/H_{T}", {}),
   //  Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met,
   //  met_trigger_onlymu,
@@ -573,14 +571,27 @@ int main(int argc, char *argv[]){
   //  met_trigger_onlymu,
   //  data_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_data_1el_1mu_lepptratio_"+options.year_string).LuminosityTag(total_luminosity_string);
 
-  //pm.Push<EfficiencyPlot>(Axis(25, 20, 100, lepton_pt, "lepton p_{T} [GeV]", {}),
-  //  Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met && "ht>500&&ht<700",
-  //  met_trigger_onlymu,
-  //  mc_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_1el_1mu_leppt_fixmet_"+options.year_string).LuminosityTag(total_luminosity_string);
-  //pm.Push<EfficiencyPlot>(Axis(25, 20, 100, lepton_pt, "lepton p_{T} [GeV]", {}),
-  //  Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met && "ht>0&&ht<250",
-  //  met_trigger_onlymu,
-  //  data_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_data_1el_1mu_leppt_ht0to250_"+options.year_string).LuminosityTag(total_luminosity_string);
+  //mc and data lep pt plots binned in met and ht
+  const std::vector<double> ht_bins = {0,400,600,800,9999};
+  const std::vector<double> met_bins = {150,175,200,225,250,9999};
+  for (unsigned int ht_bin_idx = 0; ht_bin_idx < (ht_bins.size()-1); ht_bin_idx++) {
+    for (unsigned int met_bin_idx = 0; met_bin_idx < (met_bins.size()-1); met_bin_idx++) {
+      pm.Push<EfficiencyPlot>(Axis(25, 0, 100, lepton_pt, "lepton p_{T} [GeV]", {}),
+        Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met &&
+        (ht > ht_bins[ht_bin_idx]) && (ht < ht_bins[ht_bin_idx+1]) &&
+        (met > met_bins[met_bin_idx]) && (met < met_bins[met_bin_idx+1]),
+        met_trigger_onlymu,
+        data_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_data_1el_1mu_leppt_htbin"+std::to_string(ht_bin_idx)+"_metbin"+std::to_string(met_bin_idx)+"_"+options.year_string).LuminosityTag(total_luminosity_string);
+      pm.Push<EfficiencyPlot>(Axis(25, 0, 100, lepton_pt, "lepton p_{T} [GeV]", {}),
+        Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met &&
+        (ht > ht_bins[ht_bin_idx]) && (ht < ht_bins[ht_bin_idx+1]) &&
+        (met > met_bins[met_bin_idx]) && (met < met_bins[met_bin_idx+1]),
+        met_trigger_onlymu,
+        mc_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_1el_1mu_leppt_htbin"+std::to_string(ht_bin_idx)+"_metbin"+std::to_string(met_bin_idx)+"_"+options.year_string).LuminosityTag(total_luminosity_string);
+    }
+  }
+
+  ////data plots of trig eff vs lep pt, binned in HT
   //pm.Push<EfficiencyPlot>(Axis(25, 20, 100, lepton_pt, "lepton p_{T} [GeV]", {}),
   //  Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met && "ht>250&&ht<350",
   //  met_trigger_onlymu,
@@ -606,39 +617,37 @@ int main(int argc, char *argv[]){
   //  met_trigger_onlymu,
   //  data_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_data_1el_1mu_leppt_ht1000toInf_"+options.year_string).LuminosityTag(total_luminosity_string);
 
-  pm.Push<EfficiencyPlot>(Axis(25, 150, 200, "met", "p_{T}^{miss} [GeV]", {}),
-    Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met,
-    met_trigger_onlymu,
-    mc_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_1el_1mu_leppt_ht0toInf_"+options.year_string).LuminosityTag(total_luminosity_string);
-  pm.Push<EfficiencyPlot>(Axis(25, 0, 100, lepton_pt, "lepton p_{T} [GeV]", {}),
-    Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met && "ht>0&&ht<250",
-    met_trigger_onlymu,
-    mc_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_1el_1mu_leppt_ht0to250_"+options.year_string).LuminosityTag(total_luminosity_string);
-  pm.Push<EfficiencyPlot>(Axis(25, 0, 100, lepton_pt, "lepton p_{T} [GeV]", {}),
-    Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met && "ht>250&&ht<350",
-    met_trigger_onlymu,
-    mc_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_1el_1mu_leppt_ht250to350_"+options.year_string).LuminosityTag(total_luminosity_string);
-  pm.Push<EfficiencyPlot>(Axis(25, 0, 100, lepton_pt, "lepton p_{T} [GeV]", {}),
-    Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met && "ht>350&&ht<450",
-    met_trigger_onlymu,
-    mc_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_1el_1mu_leppt_ht350to450_"+options.year_string).LuminosityTag(total_luminosity_string);
-  pm.Push<EfficiencyPlot>(Axis(25, 0, 100, lepton_pt, "lepton p_{T} [GeV]", {}),
-    Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met && "ht>450&&ht<600",
-    met_trigger_onlymu,
-    mc_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_1el_1mu_leppt_ht450to600_"+options.year_string).LuminosityTag(total_luminosity_string);
-  pm.Push<EfficiencyPlot>(Axis(25, 0, 100, lepton_pt, "lepton p_{T} [GeV]", {}),
-    Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met && "ht>600&&ht<800",
-    met_trigger_onlymu,
-    mc_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_1el_1mu_leppt_ht600to800_"+options.year_string).LuminosityTag(total_luminosity_string);
-  pm.Push<EfficiencyPlot>(Axis(25, 0, 100, lepton_pt, "lepton p_{T} [GeV]", {}),
-    Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met && "ht>800&&ht<1000",
-    met_trigger_onlymu,
-    mc_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_1el_1mu_leppt_ht800to1000_"+options.year_string).LuminosityTag(total_luminosity_string);
-  pm.Push<EfficiencyPlot>(Axis(25, 0, 100, lepton_pt, "lepton p_{T} [GeV]", {}),
-    Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met && "ht>1000",
-    met_trigger_onlymu,
-    mc_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_1el_1mu_leppt_ht1000toInf_"+options.year_string).LuminosityTag(total_luminosity_string);
+  ////MC plots of trig eff vs lep pt
+  //pm.Push<EfficiencyPlot>(Axis(25, 0, 100, lepton_pt, "lepton p_{T} [GeV]", {}),
+  //  Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met && "ht>0&&ht<250",
+  //  met_trigger_onlymu,
+  //  mc_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_1el_1mu_leppt_ht0to250_"+options.year_string).LuminosityTag(total_luminosity_string);
+  //pm.Push<EfficiencyPlot>(Axis(25, 0, 100, lepton_pt, "lepton p_{T} [GeV]", {}),
+  //  Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met && "ht>250&&ht<350",
+  //  met_trigger_onlymu,
+  //  mc_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_1el_1mu_leppt_ht250to350_"+options.year_string).LuminosityTag(total_luminosity_string);
+  //pm.Push<EfficiencyPlot>(Axis(25, 0, 100, lepton_pt, "lepton p_{T} [GeV]", {}),
+  //  Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met && "ht>350&&ht<450",
+  //  met_trigger_onlymu,
+  //  mc_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_1el_1mu_leppt_ht350to450_"+options.year_string).LuminosityTag(total_luminosity_string);
+  //pm.Push<EfficiencyPlot>(Axis(25, 0, 100, lepton_pt, "lepton p_{T} [GeV]", {}),
+  //  Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met && "ht>450&&ht<600",
+  //  met_trigger_onlymu,
+  //  mc_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_1el_1mu_leppt_ht450to600_"+options.year_string).LuminosityTag(total_luminosity_string);
+  //pm.Push<EfficiencyPlot>(Axis(25, 0, 100, lepton_pt, "lepton p_{T} [GeV]", {}),
+  //  Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met && "ht>600&&ht<800",
+  //  met_trigger_onlymu,
+  //  mc_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_1el_1mu_leppt_ht600to800_"+options.year_string).LuminosityTag(total_luminosity_string);
+  //pm.Push<EfficiencyPlot>(Axis(25, 0, 100, lepton_pt, "lepton p_{T} [GeV]", {}),
+  //  Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met && "ht>800&&ht<1000",
+  //  met_trigger_onlymu,
+  //  mc_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_1el_1mu_leppt_ht800to1000_"+options.year_string).LuminosityTag(total_luminosity_string);
+  //pm.Push<EfficiencyPlot>(Axis(25, 0, 100, lepton_pt, "lepton p_{T} [GeV]", {}),
+  //  Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met && "ht>1000",
+  //  met_trigger_onlymu,
+  //  mc_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_1el_1mu_leppt_ht1000toInf_"+options.year_string).LuminosityTag(total_luminosity_string);
   
+  //plots for composition and studies on L1 caloMET
   //pm.Push<EfficiencyPlot>(Axis(50, 150, 450, "met_calo", "Calo p_{T}^{miss} [GeV]", {}),
   //  Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met,
   //  met_trigger_onlymu,
@@ -651,10 +660,6 @@ int main(int argc, char *argv[]){
   //  Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met,
   //  met_trigger_onlymu,
   //  mc_unskimmed_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_0el_1el_1mu_ext_"+options.year_string).LuminosityTag(total_luminosity_string);
-  //pm.Push<EfficiencyPlot>(Axis(50, 50, 450, muon_subtracted_met, "No #mu p_{T}^{miss} [GeV]", {}),
-  //  Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met,
-  //  met_trigger_onlymu,
-  //  data_unskimmed_procs).Weight(weight_notrig).Tag("FixName:triggerstudies_data_1el_1mu_nomumet_ext_"+options.year_string).LuminosityTag(total_luminosity_string);
   //pm.Push<Hist1D>(Axis(26, 20, 150, Higfuncs::lead_signal_lepton_pt, "Lepton p_{T} [GeV]", {}),
   //  Higfuncs::pass_filters && (Higfuncs::jetid_njet>=3) && !Higfuncs::jetid_low_dphi_met && "nel==1",
   //  mc_procs_procs, plt_lin).Weight(weight_notrig).Tag("FixName:triggerstudies_mc_mupt_comp_"+options.year_string).LuminosityTag(total_luminosity_string);

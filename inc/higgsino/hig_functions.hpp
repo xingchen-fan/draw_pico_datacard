@@ -47,12 +47,17 @@ namespace Higfuncs{
   // note this returns the weight scaling, not a variation
   extern const NamedFunc wgt_syst_comp;
   extern const NamedFunc wgt_syst_lowptleptrig;
+  extern const NamedFunc wgt_syst_lumi_up;
+  extern const NamedFunc wgt_syst_lumi_down;
+  extern const NamedFunc wgt_syst_ttbarpt;
 
   // analysis trigger and its efficiency
   //NamedFunc::ScalarType trig_hig_decision(const Baby &b);
   //extern const NamedFunc trig_hig;
   extern const NamedFunc eff_higtrig;
   extern const NamedFunc eff_higtrig_run2;
+  extern const NamedFunc eff_higtrig_run2_syst_up;
+  extern const NamedFunc eff_higtrig_run2_syst_down;
   extern const NamedFunc eff_higtrig_run2_v0;
   extern const NamedFunc err_higtrig;
   extern const NamedFunc weight_higd;
@@ -98,6 +103,7 @@ namespace Higfuncs{
   extern const NamedFunc w_years;
   extern const NamedFunc final_weight;
   extern const NamedFunc final_weight_notrgeff;
+  extern const NamedFunc w_pileup_nosignal;
 
   //triggers
   extern const NamedFunc jet_trigger;

@@ -2,8 +2,10 @@
 #include <stdlib.h>
 #include <regex>
 #include "higgsino/hig_utilities.hpp"
+#include "core/hist1d.hpp"
 #include "core/utilities.hpp"
 #include "core/palette.hpp"
+#include "core/plot_opt.hpp"
 
 namespace HigUtilities {
   using std::string;
@@ -17,6 +19,12 @@ namespace HigUtilities {
   using std::shared_ptr;
   using std::max;
   using std::make_pair;
+
+
+  //HistInformation::HistInformation(Axis axis, NamedFunc cut, PlotOpt plot_opt) :
+  //    axis_(axis), cut_(cut), plot_opt_(plot_opt) {
+  //  figure_index = -1;
+  //}
 
   int stringToVectorString(std::string const& inString, std::vector<std::string>& outputVector, std::string const & delimiter)
   {
@@ -63,6 +71,66 @@ namespace HigUtilities {
     inString.erase(std::remove(inString.begin(),inString.end(),' '),inString.end());
     return inString;
   }
+
+  std::string nom2sys_string(std::string nom_string, std::string sys_idx) {
+    std::vector<std::string> target_strings = {"met","ht","njet","nbl","nbm","nbt",
+        "low_dphi_met","hig_cand_am[0]","hig_cand_dm[0]","hig_cand_drmax[0]"};
+    std::vector<std::string> replacement_strings = {"sys_met["+sys_idx+"]",
+        "sys_ht["+sys_idx+"]","sys_njet["+sys_idx+"]","sys_nbl["+sys_idx+"]",
+        "sys_nbm["+sys_idx+"]","sys_nbt["+sys_idx+"]",
+        "sys_low_dphi_met["+sys_idx+"]","sys_hig_cand_am["+sys_idx+"]",
+        "sys_hig_cand_dm["+sys_idx+"]","sys_hig_cand_drmax["+sys_idx+"]"};
+    std::string sys_string = nom_string;
+    //std::cout << "DEBUG: sys_string: " << sys_string << std::endl;
+    for (unsigned repl_idx = 0; repl_idx<target_strings.size(); repl_idx++) {
+      //std::cout << "DEBUG: target_string: " << target_strings[repl_idx] << std::endl;
+      size_t start_pos = sys_string.find(target_strings[repl_idx]); 
+      while (start_pos != std::string::npos) {
+        //int dummy;
+        //std::cout << "DEBUG: start_pos: " << start_pos << std::endl;
+        //std::cin >> dummy;
+        //check for problematic substrings: m[ht], weig[ht], [met]_calo, low_dphi_[met], [met]_tru
+        if (start_pos != 0) {
+          if (target_strings[repl_idx] == "ht" && sys_string.at(start_pos-1)=='m') {
+            start_pos = sys_string.find(target_strings[repl_idx], start_pos+target_strings[repl_idx].size()); 
+            continue;
+          }
+          if (target_strings[repl_idx] == "ht" && sys_string.at(start_pos-1)=='g') {
+            start_pos = sys_string.find(target_strings[repl_idx], start_pos+target_strings[repl_idx].size()); 
+            continue;
+          }
+          if (target_strings[repl_idx] == "met" && sys_string.at(start_pos-1)=='_') {
+            start_pos = sys_string.find(target_strings[repl_idx], start_pos+target_strings[repl_idx].size()); 
+            continue;
+          }
+          if (target_strings[repl_idx] == "met" && sys_string.at(start_pos-1)=='_') {
+            start_pos = sys_string.find(target_strings[repl_idx], start_pos+target_strings[repl_idx].size()); 
+            continue;
+          }
+        }
+        if (start_pos+target_strings[repl_idx].size() < sys_string.size()) {
+          if (target_strings[repl_idx] == "met" && sys_string.at(start_pos+target_strings[repl_idx].size())=='_') {
+            start_pos = sys_string.find(target_strings[repl_idx], start_pos+target_strings[repl_idx].size()); 
+            continue;
+          }
+        }
+        sys_string.replace(start_pos, target_strings[repl_idx].length(),
+            replacement_strings[repl_idx]);
+        start_pos = sys_string.find(target_strings[repl_idx], start_pos+replacement_strings[repl_idx].size()); 
+      }
+    }
+    return sys_string;
+  }
+
+  std::vector<std::pair<std::string, std::string>> nom2sys_bins(
+      std::vector<std::pair<std::string, std::string>> sample_bins, std::string sys_idx) {
+    std::vector<std::pair<std::string, std::string>> sys_bins;
+    for (unsigned bin_idx = 0; bin_idx < sample_bins.size(); bin_idx++) {
+      sys_bins.push_back(std::pair(sample_bins[bin_idx].first, nom2sys_string(sample_bins[bin_idx].second, sys_idx)));
+    }
+    return sys_bins;
+  }
+
 
   // based on pass_run2 with removal of non-existing branches
   const NamedFunc pass_2016("pass_2016", [](const Baby &b) -> NamedFunc::ScalarType{
@@ -265,7 +333,16 @@ namespace HigUtilities {
   TString nom2genmet(TString ibin){
     ibin.ReplaceAll("met", "met_tru");
     //fix unintended replacement...
+    ibin.ReplaceAll("sys_met_tru[0]", "met_tru");
+    ibin.ReplaceAll("sys_met_tru[1]", "met_tru");
+    ibin.ReplaceAll("sys_met_tru[2]", "met_tru");
+    ibin.ReplaceAll("sys_met_tru[3]", "met_tru");
     ibin.ReplaceAll("met_tru/met_tru_calo", "met/met_calo");
+    ibin.ReplaceAll("low_dphi_met_tru", "low_dphi_met");
+    ibin.ReplaceAll("sys_met_tru[0]/met_tru_calo", "sys_met[0]/met_calo");
+    ibin.ReplaceAll("sys_met_tru[1]/met_tru_calo", "sys_met[1]/met_calo");
+    ibin.ReplaceAll("sys_met_tru[2]/met_tru_calo", "sys_met[2]/met_calo");
+    ibin.ReplaceAll("sys_met_tru[3]/met_tru_calo", "sys_met[3]/met_calo");
     ibin.ReplaceAll("low_dphi_met_tru", "low_dphi_met");
     return ibin;
   }
@@ -575,6 +652,34 @@ namespace HigUtilities {
       cutTable[type].tableIndex= tableIndex;
       tableIndex++;
       if (verbose) for (auto tableRow : cutTable[type].tableRows) cout<<tableRow.cut_.Name()<<endl;
+    }
+    pm.multithreaded_ = true;
+    pm.min_print_ = true; 
+    pm.MakePlots(luminosity);  
+  }
+
+  void makePlots(map<string, RowInformation > & cutTable, map<string, HistInformation> & histInfo, map<string, vector<shared_ptr<Process> > > & sampleProcesses, float luminosity, PlotMaker & pm, bool verbose)
+  {
+    int tableIndex = 0;
+    for (auto cutRow : cutTable)
+    {
+      // type = mc, data, signal
+      string const & type = cutRow.first;
+      pm.Push<Table>(type, cutTable[type].tableRows, sampleProcesses[type], true, false);
+      cutTable[type].tableIndex= tableIndex;
+      tableIndex++;
+      if (verbose) for (auto tableRow : cutTable[type].tableRows) cout<<tableRow.cut_.Name()<<endl;
+    }
+    for (auto single_hist_info : histInfo)
+    {
+      // type = mc, data, signal
+      string const & type = single_hist_info.first;
+      std::vector<PlotOpt> plot_opts = {*(histInfo[type].plot_opt_)};
+      pm.Push<Hist1D>(*(histInfo[type].axis_), *(histInfo[type].cut_), 
+          sampleProcesses[type], plot_opts);
+      histInfo[type].figure_index = tableIndex;
+      tableIndex++;
+      //if (verbose) for (auto tableRow : cutTable[type].tableRows) cout<<tableRow.cut_.Name()<<endl;
     }
     pm.multithreaded_ = true;
     pm.min_print_ = true; 

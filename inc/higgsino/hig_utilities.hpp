@@ -11,10 +11,12 @@
 
 #include "TString.h"
 
+#include "core/axis.hpp"
 #include "core/named_func.hpp"
 #include "core/named_func.hpp"
 #include "core/process.hpp"
 #include "core/plot_maker.hpp"
+#include "core/plot_opt.hpp"
 #include "core/table.hpp"
 #include "core/table_row.hpp"
 #include "core/gamma_params.hpp"
@@ -29,9 +31,28 @@ namespace HigUtilities {
     int tableIndex;
   };
 
+  class HistInformation {
+    public:
+    //standard histogram parameters
+    Axis *axis_;
+    NamedFunc *cut_;
+    PlotOpt *plot_opt_;
+    // Index used by PlotMaker. Set in makePlots()
+    int figure_index;
+
+    //HistInformation(Axis axis, NamedFunc cut, PlotOpt plot_opt);
+    //HistInformation();
+    //HistInformation(HistInformation &&) = default;
+    //HistInformation(const HistInformation &) = default;
+    //HistInformation& operator=(HistInformation &&) = default;
+    //~HistInformation();
+  };
+
   int stringToVectorString(std::string const& inString, std::vector<std::string>& outputVector, std::string const & delimiter);
   int vectorStringToString(std::vector<std::string> const & inVector, std::string &outString, std::string const & delimiter);
   std::string removeSpaces(std::string inString);
+  std::string nom2sys_string(std::string nom_string, std::string sys_idx);
+  std::vector<std::pair<std::string, std::string>> nom2sys_bins(std::vector<std::pair<std::string, std::string>> sample_bins, std::string sys_idx);
 
   extern const NamedFunc pass_2016;
   extern const NamedFunc pass_run2;
@@ -42,6 +63,7 @@ namespace HigUtilities {
   extern const NamedFunc w_CNToN1N2;
 
   TString nom2sys_bin(TString ibin, size_t shift_index);
+
   TString nom2genmet(TString ibin);
 
   std::string getBaseFolder(std::string in_base_folder = "/net/cms29");
@@ -71,6 +93,7 @@ namespace HigUtilities {
   // Luminosity used for labeling for table
   // Luminosity used for scaling for hist1d
   void makePlots(std::map<std::string, RowInformation > & cutTable, std::map<std::string, std::vector<std::shared_ptr<Process> > > & sampleProcesses, float luminosity, PlotMaker & pm, bool verbose=false);
+  void makePlots(std::map<std::string, RowInformation > & cutTable, std::map<std::string, HistInformation> & histInfo, std::map<std::string, std::vector<std::shared_ptr<Process> > > & sampleProcesses, float luminosity, PlotMaker & pm, bool verbose=false);
 
   void addToMapYields(std::string const & label, GammaParams & yield, TableRow & yieldMeta, std::map<std::string, std::pair<GammaParams, TableRow> > & mYields);
   void fillDataYields(PlotMaker & pm, RowInformation & dataRow, std::map<std::string, std::pair<GammaParams, TableRow> > & mYields, bool verbose=false);

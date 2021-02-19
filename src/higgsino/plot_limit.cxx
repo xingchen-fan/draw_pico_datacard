@@ -55,7 +55,6 @@ int main(int argc, char *argv[]){
   double maxy=-99., miny=1e99, maxsig = -99., minsig = 1e99;
   vector<double> vxsecup, vxsecdown;
 
-  
   string line_s;
   while(getline(infile, line_s)){
     istringstream iss(line_s);
@@ -110,7 +109,7 @@ int main(int argc, char *argv[]){
      || vmx.size() != vsigobs.size()
      || vmx.size() != vsigexp.size()
      || vmx.size() != vxsec2d.size()) ERROR("Error parsing text file. Model point not fully specified");
-  
+
   // Sorting vectors
   vector<size_t> perm = SortPermutation(vmx);
   vmx      = ApplyPermutation(vmx      , perm);

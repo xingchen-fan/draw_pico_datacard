@@ -275,14 +275,11 @@ void EfficiencyPlot::Print(double luminosity,
   double linear_y_max = 0.0;
   std::unique_ptr<TH1D> total_background_denominator;
   std::unique_ptr<TH1D> total_background_numerator;
-  std::unique_ptr<TGraphAsymmErrors> background_ratio_plot;
   std::vector<std::unique_ptr<TH1D>> signal_numerator_plots;
   std::vector<std::unique_ptr<TH1D>> signal_denominator_plots;
-  std::vector<std::unique_ptr<TGraphAsymmErrors>> signal_ratio_plots;
   std::vector<Color_t> signal_colors;
   std::vector<std::unique_ptr<TH1D>> data_numerator_plots;
   std::vector<std::unique_ptr<TH1D>> data_denominator_plots;
-  std::vector<std::unique_ptr<TGraphAsymmErrors>> data_ratio_plots;
   std::vector<Color_t> data_colors;
 
   //first loop generates ratio plots and finds maximum for scaling
@@ -304,10 +301,10 @@ void EfficiencyPlot::Print(double luminosity,
     total_background_numerator->Write((Name()+"_num").c_str());
     total_background_denominator->Write((Name()+"_den").c_str());
     out_file->Close();
-    background_ratio_plot = std::unique_ptr<TGraphAsymmErrors>(
+    background_ratio_plot_ = std::unique_ptr<TGraphAsymmErrors>(
         new TGraphAsymmErrors(total_background_numerator.get(),total_background_denominator.get(),"cp"));
-    if (background_ratio_plot->GetN() > 0) {
-      double this_ratio_y_max = TMath::MaxElement(background_ratio_plot->GetN(), background_ratio_plot->GetY());
+    if (background_ratio_plot_->GetN() > 0) {
+      double this_ratio_y_max = TMath::MaxElement(background_ratio_plot_->GetN(), background_ratio_plot_->GetY());
       if (this_ratio_y_max > ratio_y_max) ratio_y_max = this_ratio_y_max;
     }
   }
@@ -324,10 +321,10 @@ void EfficiencyPlot::Print(double luminosity,
         std::unique_ptr<TH1D>(static_cast<TH1D*>(numerator_hist->Clone())));
     signal_denominator_plots.push_back(
         std::unique_ptr<TH1D>(static_cast<TH1D*>(denominator_hist->Clone())));
-    signal_ratio_plots.push_back(
+    signal_ratio_plots_.push_back(
         std::unique_ptr<TGraphAsymmErrors>(new TGraphAsymmErrors(numerator_hist,denominator_hist,"cp")));
-    if (signal_ratio_plots.back()->GetN() > 0) {
-      double this_ratio_y_max = TMath::MaxElement(signal_ratio_plots.back()->GetN(), signal_ratio_plots.back()->GetY());
+    if (signal_ratio_plots_.back()->GetN() > 0) {
+      double this_ratio_y_max = TMath::MaxElement(signal_ratio_plots_.back()->GetN(), signal_ratio_plots_.back()->GetY());
       if (this_ratio_y_max > ratio_y_max) ratio_y_max = this_ratio_y_max;
     }
   }
@@ -342,10 +339,10 @@ void EfficiencyPlot::Print(double luminosity,
         std::unique_ptr<TH1D>(static_cast<TH1D*>(numerator_hist->Clone())));
     data_denominator_plots.push_back(
         std::unique_ptr<TH1D>(static_cast<TH1D*>(denominator_hist->Clone())));
-    data_ratio_plots.push_back(
+    data_ratio_plots_.push_back(
         std::unique_ptr<TGraphAsymmErrors>(new TGraphAsymmErrors(numerator_hist,denominator_hist,"cp")));
-    if (data_ratio_plots.back()->GetN() > 0) {
-      double this_ratio_y_max = TMath::MaxElement(data_ratio_plots.back()->GetN(), data_ratio_plots.back()->GetY());
+    if (data_ratio_plots_.back()->GetN() > 0) {
+      double this_ratio_y_max = TMath::MaxElement(data_ratio_plots_.back()->GetN(), data_ratio_plots_.back()->GetY());
       if (this_ratio_y_max > ratio_y_max) ratio_y_max = this_ratio_y_max;
     }
   }
@@ -353,10 +350,10 @@ void EfficiencyPlot::Print(double luminosity,
   //second loop: draw
   std::string draw_options = "AP"; //change after axes are drawn once
   if (backgrounds_.size() > 0) {
-    SetRatioPlotDrawOptions(background_ratio_plot, 0, ratio_y_max);
-    background_ratio_plot->SetMarkerColor(background_color_);
-    background_ratio_plot->SetLineColor(background_color_);
-    background_ratio_plot->Draw(draw_options.c_str());
+    SetRatioPlotDrawOptions(background_ratio_plot_, 0, ratio_y_max);
+    background_ratio_plot_->SetMarkerColor(background_color_);
+    background_ratio_plot_->SetLineColor(background_color_);
+    background_ratio_plot_->Draw(draw_options.c_str());
     draw_options = "P";
     if (draw_histograms_) {
       SetLinearPlotDrawOptions(total_background_denominator, linear_y_max, true);
@@ -368,10 +365,10 @@ void EfficiencyPlot::Print(double luminosity,
     }
   }
   for (unsigned int signal_idx = 0; signal_idx < signals_.size(); signal_idx++) {
-    SetRatioPlotDrawOptions(signal_ratio_plots.at(signal_idx), 0, ratio_y_max);
-    signal_ratio_plots.at(signal_idx)->SetMarkerColor(signal_colors.at(signal_idx));
-    signal_ratio_plots.at(signal_idx)->SetLineColor(signal_colors.at(signal_idx));
-    signal_ratio_plots.at(signal_idx)->Draw(draw_options.c_str());
+    SetRatioPlotDrawOptions(signal_ratio_plots_.at(signal_idx), 0, ratio_y_max);
+    signal_ratio_plots_.at(signal_idx)->SetMarkerColor(signal_colors.at(signal_idx));
+    signal_ratio_plots_.at(signal_idx)->SetLineColor(signal_colors.at(signal_idx));
+    signal_ratio_plots_.at(signal_idx)->Draw(draw_options.c_str());
     draw_options = "P";
     if (draw_histograms_) {
       SetLinearPlotDrawOptions(signal_denominator_plots.at(signal_idx), linear_y_max, true);
@@ -383,10 +380,10 @@ void EfficiencyPlot::Print(double luminosity,
     }
   }
   for (unsigned int data_idx = 0; data_idx < datas_.size(); data_idx++) {
-    SetRatioPlotDrawOptions(data_ratio_plots.at(data_idx), 0, ratio_y_max);
-    data_ratio_plots.at(data_idx)->SetMarkerColor(data_colors.at(data_idx));
-    data_ratio_plots.at(data_idx)->SetLineColor(data_colors.at(data_idx));
-    data_ratio_plots.at(data_idx)->Draw(draw_options.c_str());
+    SetRatioPlotDrawOptions(data_ratio_plots_.at(data_idx), 0, ratio_y_max);
+    data_ratio_plots_.at(data_idx)->SetMarkerColor(data_colors.at(data_idx));
+    data_ratio_plots_.at(data_idx)->SetLineColor(data_colors.at(data_idx));
+    data_ratio_plots_.at(data_idx)->Draw(draw_options.c_str());
     draw_options = "P";
     if (draw_histograms_) {
       SetLinearPlotDrawOptions(data_denominator_plots.at(data_idx), linear_y_max, true);
@@ -399,13 +396,13 @@ void EfficiencyPlot::Print(double luminosity,
   }
   //draw ratio plots once more to get them on top, TODO: fix this
   if (backgrounds_.size() > 0) {
-    background_ratio_plot->Draw(draw_options.c_str());
+    background_ratio_plot_->Draw(draw_options.c_str());
   }
   for (unsigned int signal_idx = 0; signal_idx < signals_.size(); signal_idx++) {
-    signal_ratio_plots.at(signal_idx)->Draw(draw_options.c_str());
+    signal_ratio_plots_.at(signal_idx)->Draw(draw_options.c_str());
   }
   for (unsigned int data_idx = 0; data_idx < datas_.size(); data_idx++) {
-    data_ratio_plots.at(data_idx)->Draw(draw_options.c_str());
+    data_ratio_plots_.at(data_idx)->Draw(draw_options.c_str());
   }
 
   //draw overlay (title) text
@@ -471,13 +468,13 @@ void EfficiencyPlot::Print(double luminosity,
   legend->SetFillStyle(0);
   legend->SetBorderSize(0);
   if (backgrounds_.size() > 0) {
-    legend->AddEntry(background_ratio_plot.get(),"Background","l");
+    legend->AddEntry(background_ratio_plot_.get(),"Background","l");
   }
   for (unsigned int signal_idx = 0; signal_idx < signals_.size(); signal_idx++) {
-    legend->AddEntry(signal_ratio_plots.at(signal_idx).get(),signal_names_.at(signal_idx).c_str(),"l");
+    legend->AddEntry(signal_ratio_plots_.at(signal_idx).get(),signal_names_.at(signal_idx).c_str(),"l");
   }
   for (unsigned int data_idx = 0; data_idx < datas_.size(); data_idx++) {
-    legend->AddEntry(data_ratio_plots.at(data_idx).get(),data_names_.at(data_idx).c_str(),"l");
+    legend->AddEntry(data_ratio_plots_.at(data_idx).get(),data_names_.at(data_idx).c_str(),"l");
   }
   if (number_legend_entries < 12) {
     for (unsigned int extra_entries_idx = number_legend_entries; extra_entries_idx < 12; extra_entries_idx++) {

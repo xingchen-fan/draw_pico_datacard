@@ -322,6 +322,10 @@ int main(int argc, char *argv[]){
     scenarios = vector<string>();
     scenarios.push_back("syst_lowptleptrig");
     weights.emplace("syst_lowptleptrig", nom_wgt*Higfuncs::wgt_syst_lowptleptrig);
+  } else if(alt_scen == "syst_ttpt"){
+    scenarios = vector<string>();
+    scenarios.push_back("syst_ttpt");
+    weights.emplace("syst_ttpt", nom_wgt*Higfuncs::wgt_syst_ttbarpt);
   } else if(alt_scen == "mc_as_data"){
     scenarios = vector<string>{"mc_as_data"}; 
     weights.emplace("mc_as_data", nom_wgt);
