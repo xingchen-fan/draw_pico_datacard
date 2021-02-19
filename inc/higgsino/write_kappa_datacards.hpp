@@ -12,8 +12,10 @@
 
 namespace HigWriteDataCards {
   void calculateKappas(std::map<std::string, std::pair<GammaParams, TableRow> > & mYields, std::map<std::string, std::vector<std::pair<std::string, std::string> > > & dimensionBins, std::map<std::string, double> & kappas, std::map<std::string, double> & kappa_uncertainties);
+  void calculateKappas(std::map<std::string, std::pair<GammaParams, TableRow> > & mYields, std::map<std::string, std::vector<std::pair<std::string, std::string> > > & dimensionBins, std::map<std::string, double> & kappas, std::map<std::string, std::pair<double, double>> & kappa_uncertainties);
   void setControlSystematics(std::map<std::string, std::map< std::string, float> > & controlSystematics);
   void writeDataCardHeader(std::vector<std::pair<std::string, std::string> > sampleBins, std::ofstream & cardFile);
+  void setDataCardObservedBlind(std::map<std::string, std::pair<GammaParams, TableRow> > & mYields, std::vector<std::pair<std::string, std::string> > sampleBins, std::vector<std::vector<std::string> > & tableValues);
   void setDataCardObserved(std::map<std::string, std::pair<GammaParams, TableRow> > & mYields, std::vector<std::pair<std::string, std::string> > sampleBins, std::string const & dataTag, std::vector<std::vector<std::string> > & tableValues);
   void setDataCardSignalBackground(std::string const & processName, std::string const & signalAverageGenMetTag, std::map<std::string, std::pair<GammaParams, TableRow> > & mYields, std::vector<std::pair<std::string, std::string> > sampleBins, std::vector<std::vector<std::string> > & tableValues);
   void setDataCardSignalStatistics(std::string const & processName, std::string const & signalAverageGenMetTag, std::map<std::string, std::pair<GammaParams, TableRow> > & mYields, std::vector<std::pair<std::string, std::string> > sampleBins, std::vector<std::vector<std::string> > & tableValues);
@@ -22,6 +24,7 @@ namespace HigWriteDataCards {
   int countSubstring(const std::string& str, const std::string& sub);
   void setDataCardBackground(std::map<std::string, std::pair<GammaParams, TableRow> > & mYields, std::vector<std::pair<std::string, std::string> > sampleBins, std::string const & mcTag, std::vector<std::vector<std::string> > & tableValues);
   void setDataCardKappa(std::map<std::string, double > & kappas, std::map<std::string, double > & kappa_uncertainties, std::map<std::string, std::vector<std::pair<std::string, std::string> > > & dimensionBins, std::vector<std::vector<std::string> > & tableValues);
+  void setDataCardKappa(std::map<std::string, double > & kappas, std::map<std::string, std::pair<double,double> > & kappa_uncertainties, std::map<std::string, std::vector<std::pair<std::string, std::string> > > & dimensionBins, std::vector<std::vector<std::string> > & tableValues);
   void writeTableValues(std::vector<std::vector<std::string> > & tableValues, std::ofstream & cardFile, bool alignLeft=false);
   void setRow(std::vector<std::string> & row, std::string const & value);
   // dimensionFile should be in "dimensioName dimensionCut" format

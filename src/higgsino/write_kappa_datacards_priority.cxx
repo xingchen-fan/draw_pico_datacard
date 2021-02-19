@@ -41,6 +41,7 @@ namespace
   //float luminosity = 35.9;
   string dimensionFilePath = "";
   bool unblind = false;
+  bool unblind_signalregion = false;
   string tag = "resolved";
   bool do_met_average = true;
   string higgsino_model = "N1N2";
@@ -187,6 +188,91 @@ void addEventNumberData(set<string> eventNumberFilenames, vector<map<Long64_t, s
 
 }
 
+
+const NamedFunc weight_ht_sideband_2016("weight_ht_sideband_2016", [](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.SampleType()<0) return 1.;
+  float weight = 1;
+  if (b.ht()>0 && b.ht()<=50) weight = 0.0;
+  else if (b.ht()>50 && b.ht()<=100) weight = 0.0;
+  else if (b.ht()>100 && b.ht()<=150) weight = 1.492;
+  else if (b.ht()>150 && b.ht()<=200) weight = 1.111;
+  else if (b.ht()>200 && b.ht()<=250) weight = 1.044;
+  else if (b.ht()>250 && b.ht()<=300) weight = 1.019;
+  else if (b.ht()>300 && b.ht()<=350) weight = 0.976;
+  else if (b.ht()>350 && b.ht()<=400) weight = 0.982;
+  else if (b.ht()>400 && b.ht()<=450) weight = 0.889;
+  else if (b.ht()>450 && b.ht()<=500) weight = 0.836;
+  else if (b.ht()>500 && b.ht()<=550) weight = 0.859;
+  else if (b.ht()>550 && b.ht()<=600) weight = 0.723;
+  else if (b.ht()>600 && b.ht()<=650) weight = 0.871;
+  else if (b.ht()>650 && b.ht()<=700) weight = 0.802;
+  else if (b.ht()>700 && b.ht()<=750) weight = 0.747;
+  else if (b.ht()>750 && b.ht()<=800) weight = 0.791;
+  else if (b.ht()>800 && b.ht()<=850) weight = 0.852;
+  else if (b.ht()>850 && b.ht()<=900) weight = 0.802;
+  else if (b.ht()>900 && b.ht()<=950) weight = 1.012;
+  else if (b.ht()>950) weight = 0.971;
+  return weight;
+});
+const NamedFunc weight_ht_sideband_2017("weight_ht_sideband_2017", [](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.SampleType()<0) return 1.;
+  float weight = 1;
+  if (b.ht()>0 && b.ht()<=50) weight = 0.0;
+  else if (b.ht()>50 && b.ht()<=100) weight = 0.0;
+  else if (b.ht()>100 && b.ht()<=150) weight = 1.5;
+  else if (b.ht()>150 && b.ht()<=200) weight = 1.164;
+  else if (b.ht()>200 && b.ht()<=250) weight = 1.098;
+  else if (b.ht()>250 && b.ht()<=300) weight = 1.051;
+  else if (b.ht()>300 && b.ht()<=350) weight = 0.977;
+  else if (b.ht()>350 && b.ht()<=400) weight = 0.897;
+  else if (b.ht()>400 && b.ht()<=450) weight = 0.775;
+  else if (b.ht()>450 && b.ht()<=500) weight = 0.779;
+  else if (b.ht()>500 && b.ht()<=550) weight = 0.741;
+  else if (b.ht()>550 && b.ht()<=600) weight = 0.697;
+  else if (b.ht()>600 && b.ht()<=650) weight = 0.717;
+  else if (b.ht()>650 && b.ht()<=700) weight = 0.657;
+  else if (b.ht()>700 && b.ht()<=750) weight = 0.661;
+  else if (b.ht()>750 && b.ht()<=800) weight = 0.718;
+  else if (b.ht()>800 && b.ht()<=850) weight = 0.603;
+  else if (b.ht()>850 && b.ht()<=900) weight = 0.8;
+  else if (b.ht()>900 && b.ht()<=950) weight = 0.426;
+  else if (b.ht()>950) weight = 0.764;
+  return weight;
+});
+const NamedFunc weight_ht_sideband_2018("weight_ht_sideband_2018", [](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.SampleType()<0) return 1.;
+  float weight = 1;
+  if (b.ht()>0 && b.ht()<=50) weight = 0.0;
+  else if (b.ht()>50 && b.ht()<=100) weight = 0.0;
+  else if (b.ht()>100 && b.ht()<=150) weight = 1.629;
+  else if (b.ht()>150 && b.ht()<=200) weight = 1.251;
+  else if (b.ht()>200 && b.ht()<=250) weight = 1.136;
+  else if (b.ht()>250 && b.ht()<=300) weight = 1.039;
+  else if (b.ht()>300 && b.ht()<=350) weight = 0.956;
+  else if (b.ht()>350 && b.ht()<=400) weight = 0.887;
+  else if (b.ht()>400 && b.ht()<=450) weight = 0.738;
+  else if (b.ht()>450 && b.ht()<=500) weight = 0.704;
+  else if (b.ht()>500 && b.ht()<=550) weight = 0.687;
+  else if (b.ht()>550 && b.ht()<=600) weight = 0.716;
+  else if (b.ht()>600 && b.ht()<=650) weight = 0.686;
+  else if (b.ht()>650 && b.ht()<=700) weight = 0.681;
+  else if (b.ht()>700 && b.ht()<=750) weight = 0.667;
+  else if (b.ht()>750 && b.ht()<=800) weight = 0.61;
+  else if (b.ht()>800 && b.ht()<=850) weight = 0.82;
+  else if (b.ht()>850 && b.ht()<=900) weight = 0.723;
+  else if (b.ht()>900 && b.ht()<=950) weight = 0.47;
+  else if (b.ht()>950) weight = 0.624;
+  return weight;
+});
+const NamedFunc weight_ht_sideband("weight_ht_sideband", [](const Baby &b) -> NamedFunc::ScalarType {
+  float weight = 1.;
+  if (b.SampleType()==2016) weight = weight_ht_sideband_2016.GetScalar(b);
+  else if (b.SampleType()==2017) weight = weight_ht_sideband_2017.GetScalar(b);
+  else if (b.SampleType()==2018) weight = weight_ht_sideband_2018.GetScalar(b);
+  return weight;
+});
+
+
 int main(int argc, char *argv[])
 {
   gErrorIgnoreLevel=6000; // Turns off ROOT errors due to missing branches
@@ -231,10 +317,13 @@ int main(int argc, char *argv[])
 
   samplePaths["mc_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2016/mc/merged_higmc_preselect/";
   samplePaths["signal_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2016/SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_preselect/";
+  samplePaths["data_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2016/data/merged_higdata_preselect/";
   samplePaths["mc_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2017/mc/merged_higmc_preselect/";
   samplePaths["signal_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2017/SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_preselect/";
+  samplePaths["data_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2017/data/merged_higdata_preselect/";
   samplePaths["mc_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/mc/merged_higmc_preselect/";
   samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_preselect/";
+  samplePaths["data_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/data/merged_higdata_preselect/";
 
   //// massPoints = { {"1000","1"} }
   vector<pair<string, string> > massPoints;
@@ -288,12 +377,14 @@ int main(int argc, char *argv[])
   HigUtilities::setMcProcesses(years, samplePaths, filters && "stitch", sampleProcesses);
   // Higfuncs::trig_hig will only work for 2016
   //HigUtilities::setDataProcesses(years, samplePaths, filters&&Higfuncs::trig_hig>0., sampleProcesses);
-  HigUtilities::setDataProcesses(years, samplePaths, filters, sampleProcesses);
+  NamedFunc met_triggers = Higfuncs::met_trigger;
+  if(unblind) HigUtilities::setDataProcesses(years, samplePaths, filters&&met_triggers, sampleProcesses);
   HigUtilities::setSignalProcesses(massPoints, years, samplePaths, filters, sampleProcesses);
   
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Functions::w_pileup;
   NamedFunc weight = Higfuncs::final_weight;
+  //NamedFunc weight = Higfuncs::final_weight*weight_ht_sideband;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
   //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*Higfuncs::w_years;
 
@@ -332,6 +423,12 @@ int main(int argc, char *argv[])
   map<string, vector<pair<string, string> > > dimensionBins;
   if (dimensionFilePath==""){
     if (tag=="resolved") {
+      //// Old
+      //dimensionBins["met"].push_back({"met0", "met>150 && met<=200"});
+      //dimensionBins["met"].push_back({"met1", "met>200 && met<=300"});
+      //dimensionBins["met"].push_back({"met2", "met>300 && met<=450"});
+      //dimensionBins["met"].push_back({"met3", "met>450"});
+
       // Original
       dimensionBins["met"].push_back({"met0", "met>150 && met<=200"});
       dimensionBins["met"].push_back({"met1", "met>200 && met<=300"});
@@ -399,7 +496,7 @@ int main(int argc, char *argv[])
 
   // cuts[mc,data,signal] = RowInformation(labels, tableRows, yields)
   map<string, HigUtilities::RowInformation > cutTable;
-  //HigUtilities::addBinCuts(sampleBins, baseline, weight, "data", cutTable["data"]);
+  if(unblind) HigUtilities::addBinCuts(sampleBins, baseline, weight, "data", cutTable["data"]);
   HigUtilities::addBinCuts(sampleBins, baseline, weight, "signal", cutTable["signal"]);
   HigUtilities::addBinCuts(sampleBins, baseline, weight, "signalGenMet", HigUtilities::nom2genmet, cutTable["signal"]);
   HigUtilities::addBinCuts(sampleBins, baseline, weight, "mc", cutTable["mc"]);
@@ -454,11 +551,11 @@ int main(int argc, char *argv[])
 
   // mYields[process_tag_sampleBinLabel] = GammaParams, TableRow
   map<string, pair<GammaParams, TableRow> > mYields;
-  //HigUtilities::fillDataYields(pm, cutTable["data"], mYields);
+  if(unblind) HigUtilities::fillDataYields(pm, cutTable["data"], mYields, true);
   // Luminosity used for scaling
   HigUtilities::fillMcYields(pm, luminosity, cutTable["mc"], mYields, true);
   // Luminosity used for scaling
-  HigUtilities::fillSignalYieldsProcesses(pm, luminosity, sampleProcesses["signal"], cutTable["signal"], mYields, true);
+  HigUtilities::fillSignalYieldsProcesses(pm, luminosity, sampleProcesses["signal"], cutTable["signal"], mYields, false);
   HigUtilities::fillAverageGenMetYields(sampleProcesses["signal"], sampleBins, "signal", "signalGenMet", "signalAverageGenMet", mYields);
 
   // Calculate kappas from mc
@@ -484,7 +581,8 @@ int main(int argc, char *argv[])
     HigWriteDataCards::writeDataCardHeader(sampleBins,cardFile);
 
     vector<vector<string> > tableValues;
-    if (unblind) HigWriteDataCards::setDataCardObserved(mYields, sampleBins, "data", tableValues);
+    if (unblind && unblind_signalregion) HigWriteDataCards::setDataCardObserved(mYields, sampleBins, "data", tableValues);
+    else if (unblind && !unblind_signalregion) HigWriteDataCards::setDataCardObservedBlind(mYields, sampleBins, tableValues);
     else HigWriteDataCards::setDataCardObserved(mYields, sampleBins, "mc", tableValues);
     if (do_met_average) {
       HigWriteDataCards::setDataCardSignalBackground(process->name_, "signalAverageGenMet", mYields, sampleBins, tableValues);
@@ -496,7 +594,9 @@ int main(int argc, char *argv[])
     HigWriteDataCards::setDataCardControlSystematics(controlSystematics, sampleBins, tableValues);
     HigWriteDataCards::writeTableValues(tableValues,cardFile);
     tableValues.clear();
-    HigWriteDataCards::setDataCardBackground(mYields, sampleBins, "mc", tableValues);
+
+    if (unblind) HigWriteDataCards::setDataCardBackground(mYields, sampleBins, "data", tableValues);
+    else HigWriteDataCards::setDataCardBackground(mYields, sampleBins, "mc", tableValues);
     HigWriteDataCards::writeTableValues(tableValues,cardFile, true);
     tableValues.clear();
     HigWriteDataCards::setDataCardKappa(kappas, kappa_uncertainties, dimensionBins, tableValues);
@@ -636,6 +736,30 @@ namespace HigWriteDataCards{
     tableValues.push_back(row);
   }
 
+  void setDataCardObservedBlind(map<string, pair<GammaParams, TableRow> > & mYields, vector<pair<string, string> > sampleBins, vector<vector<string> > & tableValues){
+    // title + type + nBins * 2
+    vector<string> row(2+2*sampleBins.size());
+    row[0] = "bin";
+    for (unsigned iBin=0;iBin<sampleBins.size();++iBin){
+      row[iBin*2+3] = sampleBins[iBin].first;
+    }
+    tableValues.push_back(row);
+    setRow(row,"");
+  
+    row[0] = "Observation";
+    for (unsigned iBin=0;iBin<sampleBins.size();++iBin){
+      //row[iBin*2+3] = to_string(int(mYields.at(dataTag+"_"+sampleBins[iBin].first).first.Yield())); // Integerize. Round down
+      //row[iBin*2+3] = to_string(int(mYields.at(dataTag+"_"+sampleBins[iBin].first).first.Yield())+1); // Integerize. Round up
+      //row[iBin*2+3] = RoundNumber(mYields.at(dataTag+"_"+sampleBins[iBin].first).first.Yield(), 0, 1).Data(); // Integerize. Round
+      row[iBin*2+3] = to_string(mYields.at("data_"+sampleBins[iBin].first).first.Yield());
+      if (iBin%6==4 || iBin%6==5) row[iBin*2+3] = to_string(mYields.at("mc_"+sampleBins[iBin].first).first.Yield());
+    }
+    tableValues.push_back(row);
+    setRow(row,"");
+  
+    tableValues.push_back(row);
+  }
+
   void setDataCardSignalBackground(string const & processName, string const & signalAverageGenMetTag, map<string, pair<GammaParams, TableRow> > & mYields, vector<pair<string, string> > sampleBins, vector<vector<string> > & tableValues){
     // title + type + nBins * 2
     vector<string> row(2+2*sampleBins.size());
@@ -753,15 +877,35 @@ namespace HigWriteDataCards{
       row[3] = "bkg";
       if (countSubstring(sampleBins[rBin].first,"sig") != 2) 
       {
+        float mcYield = mYields.at(mcTag+"_"+sampleBins[rBin].first).first.Yield();
         //row[4] = to_string(int(mYields.at(mcTag+"_"+sampleBins[rBin].first).first.Yield())); //Integerize. Round down
         //row[4] = to_string(int(mYields.at(mcTag+"_"+sampleBins[rBin].first).first.Yield())+1); //Integerize. Round up
         //row[4] = RoundNumber(mYields.at(mcTag+"_"+sampleBins[rBin].first).first.Yield(), 0, 1).Data(); //Integerize. Round
-        row[4] = to_string(mYields.at(mcTag+"_"+sampleBins[rBin].first).first.Yield());
+        row[4] = to_string(mcYield);
         // Infinity defined in https://root.cern.ch/doc/master/RooNumber_8cxx_source.html
-        row[5] = "[0,1.0e30]";
+        row[5] = "[0,"+to_string(mcYield*10)+"]";
       }
       else 
       {
+        //row[4] = "(@0*@1/@2)";
+        //vector<string> xydimension;
+        //HigUtilities::stringToVectorString(sampleBins[rBin].first, xydimension, "_");
+        //vector<string> aNameVector = xydimension;
+        //aNameVector[0] = "xbkg";
+        //aNameVector[1] = "ybkg";
+        //string aName;
+        //HigUtilities::vectorStringToString(aNameVector, aName, "_");
+        //vector<string> bNameVector = xydimension;
+        //bNameVector[1] = "ybkg";
+        //string bName;
+        //HigUtilities::vectorStringToString(bNameVector, bName, "_");
+        //vector<string> cNameVector = xydimension;
+        //cNameVector[0] = "xbkg";
+        //string cName;
+        //HigUtilities::vectorStringToString(cNameVector, cName, "_");
+        ////cout<<aName<<" "<<bName<<" "<<cName<<endl;
+        //row[5] = "rp_"+cName+",rp_"+bName+",rp_"+aName;
+
         row[4] = "(@0*@1/@2)*@3";
         vector<string> xydimension;
         HigUtilities::stringToVectorString(sampleBins[rBin].first, xydimension, "_");
@@ -858,7 +1002,6 @@ namespace HigWriteDataCards{
 
   void GetOptions(int argc, char *argv[])
   {
-    string blah;
     while(true){
       static struct option long_options[] = {
         {"output_folder", required_argument, 0, 'o'},
@@ -868,6 +1011,7 @@ namespace HigWriteDataCards{
         {"dimension", required_argument, 0, 'd'},
         {"tag", required_argument, 0, 't'},
         {"unblind", no_argument, 0, 'u'},
+        {"unblind_signalregion", no_argument, 0, 0},
         {"recomet", no_argument, 0, 0},
         {"higgsino_model", required_argument, 0, 'm'},
         {"priority", required_argument, 0, 'r'},
@@ -878,7 +1022,7 @@ namespace HigWriteDataCards{
       int option_index;
       opt = getopt_long(argc, argv, "o:p:g:y:l:d:t:m:r:nu12", long_options, &option_index);
       if( opt == -1) break;
-  
+
       string optname;
       switch(opt){
         case 'o': outFolder = optarg; break;
@@ -910,6 +1054,8 @@ namespace HigWriteDataCards{
           optname = long_options[option_index].name;
           if(optname == "recomet"){
             do_met_average = false;
+          }else if(optname == "unblind_signalregion"){
+            unblind_signalregion = true;
           }else{
             printf("Bad option! Found option name %s\n", optname.c_str());
           }
