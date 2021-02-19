@@ -611,7 +611,7 @@ double Significance(double Nobs, double Nbkg, double Eup_bkg, double Edown_bkg){
 // powers[Nobs] defines kappa = Product_obs{ Sum_sam{yields[sam][obs]*weights[sam][obs]}^powers[obs] }
 double calcKappa(vector<vector<float> > &entries, vector<vector<float> > &weights,
                  vector<float> &powers, float &mSigma, float &pSigma, bool do_data,
-                 bool verbose, double syst, bool do_plot, int nrep, int nSigma){
+                 bool verbose, double syst, bool do_plot, int nrep, float nSigma){
   TRandom3 rand(1234);
   int nbadk(0);
   vector<float> fKappas;
@@ -623,7 +623,7 @@ double calcKappa(vector<vector<float> > &entries, vector<vector<float> > &weight
     for(unsigned obs(0); obs < powers.size(); obs++) {
       float observed(0.);
       for(unsigned sam(0); sam < entries[obs].size(); sam++) {
-        // With a flat prior, the expected average of the Poisson with N observed is Gamma(N+1,1)
+        // With a flat prior, the expected average of the Poisson with N observed is (Gamma(N+1,1) == Poisson(N))
         // Rounding the expected yield for data stats
         if(do_data) observed += entries[obs][sam]*weights[obs][sam];
         else observed += gsl_ran_gamma(entries[obs][sam]+1,1,rand)*weights[obs][sam];
@@ -651,6 +651,7 @@ double calcKappa(vector<vector<float> > &entries, vector<vector<float> > &weight
   mean /= static_cast<double>(ntot);
 
   sort(fKappas.begin(), fKappas.end());
+  // integrated gaussian
   double gSigma = intGaus(0,1,0,nSigma);
   int iMedian((nrep-nbadk+1)/2-1);
   int imSigma(iMedian-static_cast<int>(gSigma*ntot)), ipSigma(iMedian+static_cast<int>(gSigma*ntot));
