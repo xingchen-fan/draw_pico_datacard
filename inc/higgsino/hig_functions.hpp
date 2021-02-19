@@ -88,6 +88,7 @@ namespace Higfuncs{
   extern const NamedFunc pass_hemveto;
   extern const NamedFunc hem_weight;
   extern const NamedFunc pass_filters;
+  extern const NamedFunc old_final_pass_filters;
   extern const NamedFunc final_pass_filters;
   extern const NamedFunc final_ttbar_pass_filters;
   extern const NamedFunc final_zll_pass_filters;

@@ -208,8 +208,8 @@ const NamedFunc wgt_syst_ttx("wgt_syst_ttx",[](const Baby &b) -> NamedFunc::Scal
         if ((*b.hig_cand_drmax())[0]<=1.1) return 0.13; // low dr
         else return 0.02; // high dr
       } else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) {// 4b
-        if ((*b.hig_cand_drmax())[0]<=1.1) return 0.16; // low dr 
-        else return 0.07; // high dr
+        if ((*b.hig_cand_drmax())[0]<=1.1) return 0.18; // low dr 
+        else return 0.10; // high dr
       }
     }
   }
@@ -233,7 +233,7 @@ const NamedFunc wgt_syst_qcd("wgt_syst_qcd",[](const Baby &b) -> NamedFunc::Scal
   if ( (b.type()>=7000 && b.type()<8000)) { // qcd
     if ((*b.hig_cand_am())[0]<=100 || ((*b.hig_cand_am())[0]>140 && (*b.hig_cand_am())[0]<=200))
       if (b.nbt()>=2 && b.nbm()>=3) { // high b
-        if ((*b.hig_cand_drmax())[0]<=1.1) return 0.11; // low dr
+        if ((*b.hig_cand_drmax())[0]<=1.1) return 0.7; // low dr
         else return 0.09; // high dr
       }
   }
@@ -1450,10 +1450,22 @@ const NamedFunc pass_filters("pass_filters", [](const Baby &b) -> NamedFunc::Sca
   return true;
 });
 
-const NamedFunc final_pass_filters = pass_filters&& "met/mht<2 && met/met_calo<2&&weight<1.5&&pass_jets";
-const NamedFunc final_ttbar_pass_filters = pass_filters&& "met/met_calo<5&&weight<1.5&&pass_jets";
-const NamedFunc final_zll_pass_filters = pass_filters&& "met/met_calo<5&&weight<1.5&&pass_jets";
-const NamedFunc final_qcd_pass_filters = pass_filters&& "met/mht<2 && met/met_calo<2&&pass_jets";
+const NamedFunc old_pass_filters("old_pass_filters", [](const Baby &b) -> NamedFunc::ScalarType{
+  if (!b.pass_goodv() || !b.pass_hbhe() || !b.pass_hbheiso() || !b.pass_ecaldeadcell() || !b.pass_badpfmu() || !b.pass_muon_jet()) return false;
+  if (b.type()/1000 == 0 && !b.pass_eebadsc()) return false; //only apply eebadsc fiter for data
+  if ((b.type()/1000 != 106)  && !b.pass_cschalo_tight()) return false; //not for fastsim
+  if ((b.type()/1000 == 106)  && !b.pass_jets()) return false; //back to only for fastsim
+  //if (!b.pass_jets()) return false; //was modified
+  if ((abs(b.SampleType())==2017 || abs(b.SampleType())==2018) && !Higfuncs::pass_ecalnoisejet.GetScalar(b)) return false; 
+  if (!Higfuncs::pass_hemveto.GetScalar(b)) return false;
+  return true;
+});
+
+const NamedFunc old_final_pass_filters = old_pass_filters&& "met/met_calo<5";
+const NamedFunc final_pass_filters = pass_filters&& "met/mht<2 && met/met_calo<2&&weight<1.5";
+const NamedFunc final_ttbar_pass_filters = pass_filters&& "met/met_calo<5&&weight<1.5";
+const NamedFunc final_zll_pass_filters = pass_filters&& "met/met_calo<5&&weight<1.5";
+const NamedFunc final_qcd_pass_filters = pass_filters&& "met/mht<2 && met/met_calo<2";
 
 const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
   if (b.SampleType()<0) return 1.;
