@@ -600,7 +600,7 @@ namespace HigUtilities {
     {
       string const & label = dataRow.labels[ipar];
       addToMapYields(label, yields[ipar], dataRow.tableRows[ipar], mYields);
-      if (verbose) cout<<label<<": "<<mYields.at(label).first.Yield()<<endl;
+      if (verbose) cout<<"[data] "<<label<<": "<<mYields.at(label).first.Yield()<<endl;
       //cout<<label<<": "<<mYields.at(label).first.Yield()<<" "<<mYields.at(label).second.cut_.Name()<<" "<<mYields.at(label).second.weight_.Name()<<endl;
     }
   }
@@ -614,7 +614,7 @@ namespace HigUtilities {
     {
       string const & label = mcRow.labels[ipar];
       addToMapYields(label, yields[ipar], mcRow.tableRows[ipar], mYields);
-      if (verbose) cout<<label<<": "<<mYields.at(label).first.Yield()<<endl;
+      if (verbose) cout<<"[mc] "<<label<<": "<<mYields.at(label).first.Yield()<<endl;
       //cout<<label<<": "<<mYields.at(label).first.Yield()<<" "<<mYields.at(label).second.cut_.Name()<<" "<<mYields.at(label).second.weight_.Name()<<endl;
     }
   }
@@ -631,7 +631,7 @@ namespace HigUtilities {
         string const & label = process->name_ + "_" +signalRow.labels[ipar];
         addToMapYields(label, yields[ipar], signalRow.tableRows[ipar], mYields);
         if (verbose) {
-          cout<<label<<": "<<mYields.at(label).first.Yield()<<endl;
+          cout<<"[sig] "<<label<<": "<<mYields.at(label).first.Yield()<<endl;
         }
         //cout<<label<<": "<<mYields.at(label).first.Yield()<<" "<<mYields.at(label).second.cut_.Name()<<" "<<mYields.at(label).second.weight_.Name()<<endl;
       }
