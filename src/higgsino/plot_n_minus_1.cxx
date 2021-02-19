@@ -36,6 +36,7 @@ using namespace Higfuncs;
 namespace{
   bool single_thread = false;
   bool unblind = false;
+  bool unblind_signalregion = false;
   // sample can be search, ttbar, zll, qcd
   string sample_name = "search";
   // year can be 2016, 2017, 2018 or 2016,2017,2018 or run2
@@ -79,6 +80,30 @@ const NamedFunc goodJet0_eta("goodJet0_eta", [](const Baby &b) -> NamedFunc::Vec
   return jet_eta;
 });
 
+const NamedFunc weight_ht("weight_ht", [](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.SampleType()<0) return 1.;
+  float weight = 1;
+  if (b.ht()>100 && b.ht()<=150) weight = 1.424;
+  else if (b.ht()>150 && b.ht()<=200) weight = 1.115;
+  else if (b.ht()>200 && b.ht()<=250) weight = 1.030;
+  else if (b.ht()>250 && b.ht()<=300) weight = 1.016;
+  else if (b.ht()>300 && b.ht()<=350) weight = 0.994;
+  else if (b.ht()>350 && b.ht()<=400) weight = 1.037;
+  else if (b.ht()>400 && b.ht()<=450) weight = 0.901;
+  else if (b.ht()>450 && b.ht()<=500) weight = 0.919;
+  else if (b.ht()>500 && b.ht()<=550) weight = 0.914;
+  else if (b.ht()>550 && b.ht()<=600) weight = 0.874;
+  else if (b.ht()>600 && b.ht()<=650) weight = 0.812;
+  else if (b.ht()>650 && b.ht()<=700) weight = 0.954;
+  else if (b.ht()>700 && b.ht()<=750) weight = 0.825;
+  else if (b.ht()>750 && b.ht()<=800) weight = 0.911;
+  else if (b.ht()>800 && b.ht()<=850) weight = 0.700;
+  else if (b.ht()>850 && b.ht()<=900) weight = 0.860;
+  else if (b.ht()>900 && b.ht()<=950) weight = 0.705;
+  else if (b.ht()>950) weight = 0.874;
+  return weight;
+});
+
 int main(int argc, char *argv[]){
   // ./run/higgsino/plot_n_minus_1.exe --sample search --year 2016
   gErrorIgnoreLevel = 6000;
@@ -92,12 +117,15 @@ int main(int argc, char *argv[]){
   lin_norm_info.Title(TitleType::info)   
     .Bottom(BottomType::off)
     .YAxis(YAxisType::linear)
+    //.LegendColumns(3);
     .Stack(StackType::data_norm).LegendColumns(3);
   PlotOpt log_norm_info = lin_norm_info().YAxis(YAxisType::log);
   PlotOpt log_norm = lin_norm_info().YAxis(YAxisType::log).Title(TitleType::info).LogMinimum(.2);
   PlotOpt log_norm_data = lin_norm_info().YAxis(YAxisType::log).Title(TitleType::info).LogMinimum(.2).Bottom(BottomType::ratio);
   PlotOpt lin_norm = lin_norm_info().YAxis(YAxisType::linear).Title(TitleType::info);
+  PlotOpt lin_norm_print = lin_norm_info().YAxis(YAxisType::linear).Title(TitleType::info).PrintVals(true);
   PlotOpt lin_norm_data = lin_norm_info().YAxis(YAxisType::linear).Title(TitleType::info).Bottom(BottomType::ratio);
+  PlotOpt lin_norm_data_print = lin_norm_info().YAxis(YAxisType::linear).Title(TitleType::info).Bottom(BottomType::ratio).PrintVals(true);
   PlotOpt lin_shapes = lin_norm().Stack(StackType::shapes).Bottom(BottomType::ratio);
   PlotOpt lin_shapes_info = lin_shapes().Title(TitleType::info).Bottom(BottomType::off);
   PlotOpt style("txt/plot_styles.txt", "Scatter");
@@ -105,10 +133,12 @@ int main(int argc, char *argv[]){
 
   vector<PlotOpt> plt_norm_info = {lin_norm_info, log_norm_info};
   vector<PlotOpt> plt_lin = {lin_norm};
+  vector<PlotOpt> plt_lin_print = {lin_norm_print};
   vector<PlotOpt> plt_log = {log_norm};
   vector<PlotOpt> plt_shapes = {lin_shapes};
   vector<PlotOpt> plt_shapes_info = {lin_shapes_info};
   if (unblind) plt_lin = {lin_norm_data};
+  if (unblind) plt_lin_print = {lin_norm_data_print};
   if (unblind) plt_log = {log_norm_data};
 
   string higgsino_version = "";
@@ -117,14 +147,15 @@ int main(int argc, char *argv[]){
   // Set options
   //string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
   //string mc_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo";
-  string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_klamath";
+  string mc_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath";
   // preselect:
   //   ((nbt>=2 && njet>=4 && njet<=5)||(Sum$(fjet_pt>300 && fjet_msoftdrop>50)>1))
   //   nvlep==0 && ntk==0 && !low_dphi_met && met>150 && 
   // higloose: 
   //   (nbt>=2 || nbdft>=2 || Sum$(fjet_pt>300 && fjet_msoftdrop>50)>0)&&
   //   met>150 && nvlep==0
-  string search_mc_skim_folder = "mc/merged_higmc_higloose/";
+  //string search_mc_skim_folder = "mc/merged_higmc_higloose/";
+  string search_mc_skim_folder = "mc/merged_higmc_preselect/";
   // higlep1T:
   //   (Sum$(fjet_pt>300 && fjet_msoftdrop>50)>1 || ((nbt>=2 || nbdft>=2) && njet>=4 && njet<=5)) &&
   //   nlep==1 && 
@@ -142,8 +173,9 @@ int main(int argc, char *argv[]){
 
   //string data_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
   //string data_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
-  string data_base_folder = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_klamath/";
-  string search_data_skim_folder = "data/merged_higdata_higloose/";
+  string data_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
+  //string search_data_skim_folder = "data/merged_higdata_higloose/";
+  string search_data_skim_folder = "data/merged_higdata_preselect/";
   string ttbar_data_skim_folder = "data/merged_higdata_higlep1T/";
   //string ttbar_data_skim_folder = "data/skim_higlep1T/";
   string zll_data_skim_folder = "data/merged_higdata_higlep2T/";
@@ -152,11 +184,12 @@ int main(int argc, char *argv[]){
 
   //string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
   //string sig_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
-  string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_klamath/";
-  string search_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higloose/";
-  string ttbar_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higlep1T/";
-  string zll_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higlep2T/";
-  string qcd_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higqcd/";
+  string sig_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
+  //string search_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higloose/";
+  string search_sig_skim_folder = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_preselect/";
+  string ttbar_sig_skim_folder = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep1T/";
+  string zll_sig_skim_folder = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep2T/";
+  string qcd_sig_skim_folder = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higqcd/";
 
   //years = {2016, 2017, 2018};
   set<int> years;
@@ -169,6 +202,7 @@ int main(int argc, char *argv[]){
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig*Higfuncs::w_year;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_year*Functions::w_pileup;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_year;
+  //NamedFunc weight = Higfuncs::final_weight*weight_ht;
   NamedFunc weight = Higfuncs::final_weight;
 
   // Set MC 
@@ -233,10 +267,11 @@ int main(int argc, char *argv[]){
   //else if (sample_name == "qcd") triggers_data = jet_triggers;
   else  triggers_data = met_triggers;
 
-  //NamedFunc base_resolved = 
-  //                       "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
-  //                       "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
-  //                       "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))";
+  NamedFunc base_resolved = 
+                         "met/mht<2 && met/met_calo<2&&weight<1.5&&"
+                         "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
+                         "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
+                         "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))";
   //NamedFunc ttbar_resolved_cuts = 
   //                       "nlep==1&&lep_pt[0]>30&&mt<=100&&njet>=4&&njet<=5&&"
   //                       "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
@@ -329,9 +364,9 @@ int main(int argc, char *argv[]){
   //vector<int> sig_colors = {kGreen+1, kRed, kBlue, kOrange}; // need sigm.size() >= sig_colors.size()
   vector<int> sig_colors = {kSpring, kPink, kAzure, kOrange}; // need sigm.size() >= sig_colors.size()
   for (unsigned isig(0); isig<sigm.size(); isig++){
-    //procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigm[isig]+",1)", Process::Type::signal, 
-    //  sig_colors[isig], attach_folder(sig_base_folder, years, sig_skim_folder, {"*TChiHH_mChi-"+sigm[isig]+"_mLSP-0*.root"}), 
-    //  "stitch"));
+    procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigm[isig]+",1)", Process::Type::signal, 
+      sig_colors[isig], attach_folder(sig_base_folder, years, sig_skim_folder, {"*TChiHH_mChi-"+sigm[isig]+"_mLSP-0*.root"}), 
+      "stitch"));
   }
 
   vector<shared_ptr<Process> > procs_data;
@@ -395,7 +430,17 @@ int main(int argc, char *argv[]){
   axis_dict.insert("jet_pt[3]",Axis(16, 0, 480., "jet_pt[3]", "p_{T} jet [3] [GeV]", {}));
   axis_dict.insert("jet_pt[4]",Axis(16, 0, 480., "jet_pt[4]", "p_{T} jet [4] [GeV]", {}));
   axis_dict.insert("jet_phi",Axis(31, -3.14, 3.14, "jet_phi", "jet phi [rad]", {}));
+  axis_dict.insert("jet_phi[0]",Axis(31, -3.14, 3.14, "jet_phi[0]", "jet [0] phi [rad]", {}));
+  axis_dict.insert("jet_phi[1]",Axis(31, -3.14, 3.14, "jet_phi[1]", "jet [1] phi [rad]", {}));
+  axis_dict.insert("jet_phi[2]",Axis(31, -3.14, 3.14, "jet_phi[2]", "jet [2] phi [rad]", {}));
+  axis_dict.insert("jet_phi[3]",Axis(31, -3.14, 3.14, "jet_phi[3]", "jet [3] phi [rad]", {}));
+  axis_dict.insert("jet_phi[4]",Axis(31, -3.14, 3.14, "jet_phi[4]", "jet [4] phi [rad]", {}));
   axis_dict.insert("jet_eta",Axis(50, -5, 5, "jet_eta", "jet eta", {}));
+  axis_dict.insert("jet_eta[0]",Axis(50, -5, 5, "jet_eta[0]", "jet [0] eta", {}));
+  axis_dict.insert("jet_eta[1]",Axis(50, -5, 5, "jet_eta[1]", "jet [1] eta", {}));
+  axis_dict.insert("jet_eta[2]",Axis(50, -5, 5, "jet_eta[2]", "jet [2] eta", {}));
+  axis_dict.insert("jet_eta[3]",Axis(50, -5, 5, "jet_eta[3]", "jet [3] eta", {}));
+  axis_dict.insert("jet_eta[4]",Axis(50, -5, 5, "jet_eta[4]", "jet [4] eta", {}));
   axis_dict.insert("goodJet_phi",Axis(31, -3.14, 3.14, goodJet_phi, "jet phi [rad]", {}));
   axis_dict.insert("goodJet_eta",Axis(50, -5, 5, goodJet_eta, "jet eta", {}));
   axis_dict.insert("goodJet0_eta",Axis(50, -5, 5, goodJet0_eta, "jet_{0} eta", {}));
@@ -442,14 +487,24 @@ int main(int argc, char *argv[]){
   }
   if (sample_name=="ttbar") {
     target_variables.insert("met");
+    //target_variables.insert("jet_pt[0]");
+    //target_variables.insert("jet_pt[1]");
+    //target_variables.insert("jet_pt[2]");
+    //target_variables.insert("jet_pt[3]");
+    //target_variables.insert("jet_pt[4]");
+    //target_variables.insert("jet_eta[0]");
+    //target_variables.insert("jet_eta[1]");
+    //target_variables.insert("jet_eta[2]");
+    //target_variables.insert("jet_eta[3]");
+    //target_variables.insert("jet_eta[4]");
+    //target_variables.insert("jet_phi[0]");
+    //target_variables.insert("jet_phi[1]");
+    //target_variables.insert("jet_phi[2]");
+    //target_variables.insert("jet_phi[3]");
+    //target_variables.insert("jet_phi[4]");
   }
   if (plot_additional_variables) {
     //target_variables.insert("npu_tru_mean");
-    target_variables.insert("jet_pt[0]");
-    target_variables.insert("jet_pt[1]");
-    target_variables.insert("jet_pt[2]");
-    target_variables.insert("jet_pt[3]");
-    target_variables.insert("jet_pt[4]");
     target_variables.insert("h1b1_pt");
     target_variables.insert("h1b2_pt");
     target_variables.insert("h2b1_pt");
@@ -465,11 +520,16 @@ int main(int argc, char *argv[]){
     target_variables.insert("mht_filter");
   }
 
+  //NamedFunc basic_cut = "njet>=4&&njet<=5&&(nbt==2&&nbm==2)&&hig_cand_am[0]>120";
+  NamedFunc basic_cut = "1";
 
   // Loop over variables
   for (auto const & target_var : target_variables) {
+
     // Make n-1 cut for target_var
-    NamedFunc n_minus_1_cut = "1";
+    NamedFunc n_minus_1_cut = basic_cut;
+    if (sample_name=="search" && unblind && !unblind_signalregion) n_minus_1_cut = "njet>=4&&njet<=5&&!(((nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))&&(hig_cand_am[0]>100&&hig_cand_am[0]<=140))";
+    //n_minus_1_cut = n_minus_1_cut && base_resolved;
     for (auto const & cut_item : map_resolved_cuts) {
       // Remove plotting variable
       if (cut_item.key() == target_var) continue;
@@ -502,13 +562,17 @@ int main(int argc, char *argv[]){
       pm.Push<Hist1D>(axis_dict[target_var+"_ttbar"],
         base_filters&&n_minus_1_cut,
         procs, plt_log).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_"+target_var+"_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
-    } else if (target_var == "jet_pt[4]") {
+    } else if (target_var == "jet_pt[4]"||target_var == "jet_phi[4]"||target_var == "jet_eta[4]") {
       pm.Push<Hist1D>(axis_dict[target_var],
         base_filters&&n_minus_1_cut&&"njet>=5",
         procs, plt_lin).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_"+target_var+"_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
-    }
+    } else if (target_var == "ht") {
+      // print weights
+      pm.Push<Hist1D>(axis_dict[target_var],
+        base_filters&&n_minus_1_cut,
+        procs, plt_lin_print).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_"+target_var+"_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
     // For log plots
-    else if (std::find(log_plots.begin(), log_plots.end(), target_var) != log_plots.end()) {
+    } else if (std::find(log_plots.begin(), log_plots.end(), target_var) != log_plots.end()) {
       pm.Push<Hist1D>(axis_dict[target_var],
         base_filters&&n_minus_1_cut,
         procs, plt_log).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_"+target_var+"_"+CopyReplaceAll(year_string, ",","_")+"_log").LuminosityTag(total_luminosity_string);
@@ -520,7 +584,7 @@ int main(int argc, char *argv[]){
     }
   }
 
-  NamedFunc resolved_cuts = "1";
+  NamedFunc resolved_cuts = basic_cut;
   for (auto & item : map_resolved_cuts) {
     resolved_cuts = resolved_cuts && item.value();
   }
@@ -556,18 +620,28 @@ int main(int argc, char *argv[]){
   //// ht vs phi
   //pm.Push<Hist2D>(axis_dict["ht"], axis_dict["jet_phi"],
   //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ht_vs_jetPhi__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
-  // Draw 2D jet eta vs phi 
-  pm.Push<Hist2D>(axis_dict["goodJet_phi"], axis_dict["goodJet_eta"],
-    base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_goodJetEta_vs_goodJetPhi__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
-  // ht vs eta
-  pm.Push<Hist2D>(axis_dict["ht"], axis_dict["goodJet0_eta"],
-    base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ht_vs_goodJetEta__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+  //// Draw 2D jet eta vs phi 
+  //pm.Push<Hist2D>(axis_dict["goodJet_phi"], axis_dict["goodJet_eta"],
+  //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_goodJetEta_vs_goodJetPhi__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+  //// ht vs eta
+  //pm.Push<Hist2D>(axis_dict["ht"], axis_dict["goodJet0_eta"],
+  //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ht_vs_goodJetEta__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
   //// ht vs phi
   //pm.Push<Hist2D>(axis_dict["ht"], axis_dict["goodJet_phi"],
   //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ht_vs_goodJetPhi__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
   //// ht vs njet
   //pm.Push<Hist2D>(axis_dict["ht"], axis_dict["njet"],
   //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_ht_vs_njet__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+  //pm.Push<Hist2D>(axis_dict["jet_phi[0]"], axis_dict["jet_eta[0]"],
+  //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_jet0Eta_vs_jetPhi__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+  //pm.Push<Hist2D>(axis_dict["jet_phi[1]"], axis_dict["jet_eta[1]"],
+  //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_jet1Eta_vs_jetPhi__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+  //pm.Push<Hist2D>(axis_dict["jet_phi[2]"], axis_dict["jet_eta[2]"],
+  //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_jet2Eta_vs_jetPhi__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+  //pm.Push<Hist2D>(axis_dict["jet_phi[3]"], axis_dict["jet_eta[3]"],
+  //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_jet3Eta_vs_jetPhi__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
+  //pm.Push<Hist2D>(axis_dict["jet_phi[4]"], axis_dict["jet_eta[4]"],
+  //  base_filters&&resolved_cuts, procs_data, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_jet4Eta_vs_jetPhi__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
 
   //// met vs eta
   //pm.Push<Hist2D>(axis_dict["met"], axis_dict["goodJet_eta"],
@@ -624,6 +698,7 @@ void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
       {"single_thread", no_argument, 0, 's'},
+      {"unblind_signalregion", no_argument, 0, 0},
       {"unblind", no_argument, 0, 0},
       {"sample", required_argument, 0, 0},
       {"year", required_argument, 0, 0},
@@ -650,6 +725,8 @@ void GetOptions(int argc, char *argv[]){
         year_string = optarg;
       } else if (optname == "unblind") {
         unblind = true;
+      } else if (optname == "unblind_signalregion") {
+        unblind_signalregion = true;
       } else if (optname == "lepton_type") {
         lepton_type = optarg;
       } else{

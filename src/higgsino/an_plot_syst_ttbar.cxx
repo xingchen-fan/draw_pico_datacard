@@ -68,19 +68,22 @@ int main(int argc, char *argv[]){
   string higgsino_version = "";
 
   // Set options
-  string mc_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
+  string mc_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
+  //string mc_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/";
   //string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
   //string mc_base_folder = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado";
   string mc_skim_folder = "mc/merged_higmc_higloose/";
   string ttbar_mc_skim_folder = "mc/merged_higmc_higlep1T/";
 
-  string data_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
+  string data_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
+  //string data_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/";
   //string data_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
   string data_skim_folder = "data/merged_higdata_higloose/";
   string ttbar_data_skim_folder = "data/merged_higdata_higlep1T/";
   //string ttbar_data_skim_folder = "data/skim_higlep1T/";
 
-  string sig_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
+  string sig_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
+  //string sig_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/";
   //string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/";
   //string sig_base_folder = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado/";
   string ttbar_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higlep1T/";
@@ -493,12 +496,12 @@ int main(int argc, char *argv[]){
     "hig_cand_drmax[0]>=1.1&&nisr==2",
     ttbar_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__ttbar_amjj_btag__highdrmax_nisr_2").LuminosityTag(total_luminosity_string);
 
-  // kappa plot
-  if (unblind) {
-    system(("./run/higgsino/plot_kappas.exe --sample ttbar --scen data --unblind --year "+year_string).c_str());
-  } else {
-    system(("./run/higgsino/plot_kappas.exe --sample ttbar --scen mc_as_data --year "+year_string).c_str());
-  }
+  //// kappa plot
+  //if (unblind) {
+  //  system(("./run/higgsino/plot_kappas.exe --sample ttbar --scen data --unblind --year "+year_string).c_str());
+  //} else {
+  //  system(("./run/higgsino/plot_kappas.exe --sample ttbar --scen mc_as_data --year "+year_string).c_str());
+  //}
 
   // According to true b
   // 2b, (met 0, 75, 150, 200, 300), low drmax 

@@ -31,6 +31,7 @@ namespace{
   string tag = "2D";
   //string model_ = "T1tttt";
   string model_ = "CN";
+  bool unblind = false;
 }
 
 int main(int argc, char *argv[]){
@@ -314,8 +315,6 @@ void MakeLimitPlot(vector<double> vmx,
   c.SetLeftMargin(0.12);
   c.SetLogz();
   glim.Draw("colz");
-
-  bool unblind = false;
 
   TGraph cup = DrawContours(gup, 2, 2, 5, num_smooth_);
   TGraph cdown = DrawContours(gdown, 2, 2, 5, num_smooth_);
@@ -625,6 +624,7 @@ void GetOptions(int argc, char *argv[]){
       {"num_smooth", required_argument, 0, 's'},
       {"model", required_argument, 0, 'm'},
       {"tag", required_argument, 0, 't'},
+      {"unblind", no_argument, 0, 0},
       {"file", required_argument, 0, 'f'},
       {0, 0, 0, 0}
     };
@@ -652,6 +652,8 @@ void GetOptions(int argc, char *argv[]){
       optname = long_options[option_index].name;
       if(optname == ""){
         printf("Bad option! Found option name %s\n", optname.c_str());
+      } else if (optname == "unblind") {
+        unblind = true;
       }else{
         printf("Bad option! Found option name %s\n", optname.c_str());
       }
