@@ -40,6 +40,9 @@ namespace{
   // year can be 2016, 2017, 2018 or 2016,2017,2018
   string year_string = "2016";
   bool unblind = false;
+  bool single_thread = false;
+  bool no_signal = false;
+  bool no_mc = false;
 }
 
 string regSearch(string inString, string const & regExPattern) {
@@ -188,8 +191,8 @@ void addProcess(string const & processName, Process::Type type, int color, Named
   // higloose: 
   //   (nbt>=2 || nbdft>=2 || Sum$(fjet_pt>300 && fjet_msoftdrop>50)>0)&&
   //   met>150 && nvlep==0
-  //folderDict.insert("search_mc_skim_folder", "mc/merged_higmc_higloose/");
-  folderDict.insert("search_mc_skim_folder", "mc/skim_met150/");
+  folderDict.insert("search_mc_skim_folder", "mc/merged_higmc_higloose/");
+  //folderDict.insert("search_mc_skim_folder", "mc/skim_met150/");
   // higlep1T:
   //   (Sum$(fjet_pt>300 && fjet_msoftdrop>50)>1 || ((nbt>=2 || nbdft>=2) && njet>=4 && njet<=5)) &&
   //   nlep==1 && 
@@ -208,18 +211,18 @@ void addProcess(string const & processName, Process::Type type, int color, Named
   folderDict.insert("qcd_mc_skim_folder", "mc/merged_higmc_higqcd/");
 
   folderDict.insert("data_production_folder", dataProductionFolder);
-  //folderDict.insert("search_data_skim_folder","data/merged_higdata_higloose/");
-  folderDict.insert("search_data_skim_folder","data/skim_met150/");
+  folderDict.insert("search_data_skim_folder","data/merged_higdata_higloose/");
+  //folderDict.insert("search_data_skim_folder","data/skim_met150/");
   folderDict.insert("ttbar_data_skim_folder","data/merged_higdata_higlep1T/");
   folderDict.insert("zll_data_skim_folder","data/merged_higdata_higlep2T/");
   folderDict.insert("qcd_data_skim_folder","data/merged_higdata_higqcd/");
 
   folderDict.insert("signal_production_folder", signalProductionFolder);
-  //folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higloose/");
-  folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_2D/skim_met150/");
-  folderDict.insert("ttbar_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higlep1T/");
-  folderDict.insert("zll_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higlep2T/");
-  folderDict.insert("qcd_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higqcd/");
+  folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higloose/");
+  //folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_2D/skim_met150/");
+  folderDict.insert("ttbar_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep1T/");
+  folderDict.insert("zll_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep2T/");
+  folderDict.insert("qcd_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higqcd/");
 
   // Set paths
   set<string> pathNames;
@@ -283,7 +286,7 @@ void addDataProcess(string const & processName_postfix, NamedFunc const & additi
     else if (sample == "qcd") triggers_data = met_triggers;
     else  triggers_data = met_triggers;
 
-    addProcess("Data"+processName_postfix, Process::Type::data, kBlack, triggers_data && additionalCut,
+    addProcess("DATA"+processName_postfix, Process::Type::data, kBlack, triggers_data && additionalCut,
       nanoAodFolder, production, "data", "", sample, year_string,
       procs);
 }
@@ -305,7 +308,8 @@ int main(int argc, char *argv[]){
   string higgsino_version = "";
 
   //string production_a = "higgsino_humboldt"+higgsino_version; string nanoAodFolder_a = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv5";
-  string production_a = "higgsino_inyo"; 
+  //string production_a = "higgsino_inyo"; 
+  string production_a = "higgsino_klamath"; 
   string nanoAodFolder_a = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7";
   string sample_a = sample_name;
   string year_string_a = year_string;
@@ -352,14 +356,16 @@ int main(int argc, char *argv[]){
   else resolved_cuts = search_resolved_cuts;
 
   vector<shared_ptr<Process> > procs;
-  addAllMcProcesses("", base_filters&&resolved_cuts,
+  if (!no_mc) {addAllMcProcesses("", base_filters&&resolved_cuts,
     nanoAodFolder_a, production_a, 
     sample_a, year_string_a,
     procs);
-  addMultipleSignalProcesses("", base_filters&&resolved_cuts,
+  }
+  if (!no_signal) {addMultipleSignalProcesses("", base_filters&&resolved_cuts,
     nanoAodFolder_a, production_a, 
     sample_a, year_string_a,
     procs);
+  }
   if (unblind) {
     addDataProcess("", base_filters&&resolved_cuts,
       nanoAodFolder_a, production_a, 
@@ -367,43 +373,67 @@ int main(int argc, char *argv[]){
       procs);
   }
 
+  set<int> years;
+  HigUtilities::parseYears(year_string, years);
   vector<shared_ptr<Process> > procs_all;
-  addProcess("MC_2016", Process::Type::background, 1, base_filters&&resolved_cuts,
-    nanoAodFolder_a, production_a, "mc", "all", sample_a, "2016",
-    procs_all);
-  addProcess("TChiHH1D_2016", Process::Type::signal, 1, base_filters&&resolved_cuts,
-    nanoAodFolder_a, production_a, "signal", "1D", sample_a, "2016",
-    procs_all);
-  addProcess("TChiHH2D_2016", Process::Type::signal, 1, base_filters&&resolved_cuts,
-    nanoAodFolder_a, production_a, "signal", "2D", sample_a, "2016",
-    procs_all);
-
-  addProcess("MC_2017", Process::Type::background, 1, base_filters&&resolved_cuts,
-    nanoAodFolder_a, production_a, "mc", "all", sample_a, "2017",
-    procs_all);
-  addProcess("TChiHH1D_2017", Process::Type::signal, 1, base_filters&&resolved_cuts,
-    nanoAodFolder_a, production_a, "signal", "1D", sample_a, "2017",
-    procs_all);
-  addProcess("TChiHH2D_2017", Process::Type::signal, 1, base_filters&&resolved_cuts,
-    nanoAodFolder_a, production_a, "signal", "2D", sample_a, "2017",
-    procs_all);
-
-  addProcess("MC_2018", Process::Type::background, 1, base_filters&&resolved_cuts,
-    nanoAodFolder_a, production_a, "mc", "all", sample_a, "2018",
-    procs_all);
-  addProcess("TChiHH1D_2018", Process::Type::signal, 1, base_filters&&resolved_cuts,
-    nanoAodFolder_a, production_a, "signal", "1D", sample_a, "2018",
-    procs_all);
-  addProcess("TChiHH2D_2018", Process::Type::signal, 1, base_filters&&resolved_cuts,
-    nanoAodFolder_a, production_a, "signal", "2D", sample_a, "2018",
-    procs_all);
-
-  if (unblind) {
-    addDataProcess("DATA", base_filters&&resolved_cuts,
-      nanoAodFolder_a, production_a, 
-      sample_a, year_string_a,
-      procs_all);
+  if (years.count(2016)==1) {
+    if (!no_mc) {addProcess("MC_2016", Process::Type::background, 1, base_filters&&resolved_cuts,
+        nanoAodFolder_a, production_a, "mc", "all", sample_a, "2016",
+        procs_all);
+    }
+    if (!no_signal) {addProcess("TChiHH1D_2016", Process::Type::signal, 1, base_filters&&resolved_cuts,
+        nanoAodFolder_a, production_a, "signal", "1D", sample_a, "2016",
+        procs_all);
+      addProcess("TChiHH2D_2016", Process::Type::signal, 1, base_filters&&resolved_cuts,
+        nanoAodFolder_a, production_a, "signal", "2D", sample_a, "2016",
+        procs_all);
+    }
+    if (unblind) {
+      addDataProcess("_2016", base_filters&&resolved_cuts,
+        nanoAodFolder_a, production_a, 
+        sample_a, "2016",
+        procs_all);
+    }
   }
+  if (years.count(2017)==1) {
+    if (!no_mc) {addProcess("MC_2017", Process::Type::background, 1, base_filters&&resolved_cuts,
+      nanoAodFolder_a, production_a, "mc", "all", sample_a, "2017",
+      procs_all);
+    }
+    if (!no_signal) {addProcess("TChiHH1D_2017", Process::Type::signal, 1, base_filters&&resolved_cuts,
+        nanoAodFolder_a, production_a, "signal", "1D", sample_a, "2017",
+        procs_all);
+      addProcess("TChiHH2D_2017", Process::Type::signal, 1, base_filters&&resolved_cuts,
+        nanoAodFolder_a, production_a, "signal", "2D", sample_a, "2017",
+        procs_all);
+    }
+    if (unblind) {
+      addDataProcess("_2017", base_filters&&resolved_cuts,
+        nanoAodFolder_a, production_a, 
+        sample_a, "2017",
+        procs_all);
+    }
+  }
+  if (years.count(2018)==1) {
+    if (!no_mc) {addProcess("MC_2018", Process::Type::background, 1, base_filters&&resolved_cuts,
+      nanoAodFolder_a, production_a, "mc", "all", sample_a, "2018",
+      procs_all);
+    }
+    if (!no_signal) {addProcess("TChiHH1D_2018", Process::Type::signal, 1, base_filters&&resolved_cuts,
+        nanoAodFolder_a, production_a, "signal", "1D", sample_a, "2018",
+        procs_all);
+      addProcess("TChiHH2D_2018", Process::Type::signal, 1, base_filters&&resolved_cuts,
+        nanoAodFolder_a, production_a, "signal", "2D", sample_a, "2018",
+        procs_all);
+    }
+    if (unblind) {
+      addDataProcess("_2018", base_filters&&resolved_cuts,
+        nanoAodFolder_a, production_a, 
+        sample_a, "2018",
+        procs_all);
+    }
+  }
+
 
   //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*Higfuncs::w_years;
   //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*Higfuncs::w_years;
@@ -485,110 +515,124 @@ int main(int argc, char *argv[]){
 
   //        Define and fill tables
   //------------------------------------
-  PlotMaker pm;
-  vector<TableRow> tablerows;
-  unsigned nbins(0);
-  for (auto &imet: vc_met) {
-    for (auto &idrmax: vc_drmax) {
-      // Label
-      tablerows.push_back(TableRow("$"+CodeToLatex((imet+"&&"+idrmax).Data())+"$"));
-      for (auto &iabcd: res_abcd) {
-        // Cut for row
-        NamedFunc res_reg_ = imet+"&&"+idrmax+"&&"+iabcd;
-        // Add row to table
-        tablerows.push_back(TableRow("$"+CodeToLatex(iabcd)+"$", res_reg_, 0,0, weight));
-        nbins++;
+  { // To be able to destruct pm so that files are written to system before going to next step.
+    PlotMaker pm;
+    vector<TableRow> tablerows;
+    unsigned nbins(0);
+    for (auto &imet: vc_met) {
+      for (auto &idrmax: vc_drmax) {
+        // Label
+        tablerows.push_back(TableRow("$"+CodeToLatex((imet+"&&"+idrmax).Data())+"$"));
+        for (auto &iabcd: res_abcd) {
+          // Cut for row
+          NamedFunc res_reg_ = imet+"&&"+idrmax+"&&"+iabcd;
+          // Add row to table
+          tablerows.push_back(TableRow("$"+CodeToLatex(iabcd)+"$", res_reg_, 0,0, weight));
+          nbins++;
+        }
       }
     }
-  }
-  TString tabname = "table_"; tabname += "resolved";
+    TString tabname = "table_"; tabname += "resolved";
 
-  bool print_uncertainty = true;
-  pm.Push<Table>("FixName:table_"+sample_a+"_regions", tablerows, procs, 0, 1, 0, 1, 0, print_uncertainty).LuminosityTag(total_luminosity_string);
+    bool print_uncertainty = true;
+    pm.Push<Table>("FixName:table_"+sample_a+"_regions", tablerows, procs, 0, 1, 0, 1, 0, print_uncertainty).LuminosityTag(total_luminosity_string);
 
-  // signal region
-  NamedFunc signalRegion = "hig_cand_am[0]>100 && hig_cand_am[0]<140 && nbm>=3";
-  //pm.Push<EventScan>("resolved_list_SR", base_filters&&search_resolved_cuts&&signalRegion,vector<NamedFunc>{"SampleType","run","lumiblock","event"}, procs_all, 10, true);
-  //pm.Push<EventScan>("resolved_list_CR", base_filters&&search_resolved_cuts&&!signalRegion,vector<NamedFunc>{"SampleType", "run","lumiblock","event"}, procs_all, 10, true);
-  //pm.Push<EventScan>("resolved_list_SR", base_filters&&search_resolved_cuts&&signalRegion&&eventNumberVeto,vector<NamedFunc>{"SampleType","run","lumiblock","event"}, procs_all, 10, true);
-  //pm.Push<EventScan>("resolved_list_CR", base_filters&&search_resolved_cuts&&!signalRegion&&eventNumberVeto,vector<NamedFunc>{"SampleType", "run","lumiblock","event"}, procs_all, 10, true);
+    // signal region
+    NamedFunc signalRegion = "hig_cand_am[0]>100 && hig_cand_am[0]<140 && nbm>=3";
 
-  // Load event veto data
-  //set<string> vetoEventListNames = {"processed_resolved_list_CR_SCAN_MC.txt", "processed_resolved_list_SR_SCAN_MC.txt",
-  //                                  "processed_resolved_list_CR_SCAN_TChiHH.txt", "processed_resolved_list_SR_SCAN_TChiHH.txt"};
-  //set<string> vetoEventListNames = {"processed_resolved_list_CR_SCAN_MC.txt", "processed_resolved_list_SR_SCAN_MC.txt"};
-  set<string> vetoEventListNames = {};
-  //eventVetoData[0][event] = {[sampleType, year, run, lumiblock]}
-  vector<map<Long64_t, set<tuple<string, int, int, int> > > > * eventVetoData = new vector<map<Long64_t, set<tuple<string, int, int, int> > > >(1, map<Long64_t, set<tuple<string, int, int, int> > > ());
-  for (string const & vetoEventListName : vetoEventListNames) {
-    ifstream vetoEventList(vetoEventListName);
-    string line;
-    while (getline(vetoEventList, line)) {
-      if(line[0]=='#') continue;
-      vector<string> lineSplit;
-      HigUtilities::stringToVectorString(line, lineSplit, ",");
-      string const & sampleType = lineSplit[0];
-      int year = stoi(lineSplit[1]);
-      int run = stoi(lineSplit[2]);
-      int lumiblock = stoi(lineSplit[3]);
-      Long64_t event = stoll(lineSplit[4]);
-      // Insert data
-      if ((*eventVetoData)[0].count(event) == 0) {
-        (*eventVetoData)[0][event] = {{sampleType, year, run, lumiblock}};
-      } else {
-        if ((*eventVetoData)[0][event].count({sampleType, year, run, lumiblock}) != 0) cout<<"Duplicate: "<<sampleType<<" "<<year<<" "<<run<<" "<<lumiblock<<" "<<event<<endl;
-        (*eventVetoData)[0][event].insert({sampleType, year, run, lumiblock});
+    // old method
+    //pm.Push<EventScan>("resolved_list_SR", base_filters&&search_resolved_cuts&&signalRegion,vector<NamedFunc>{"SampleType","run","lumiblock","event"}, procs_all, 10, true);
+    //pm.Push<EventScan>("resolved_list_CR", base_filters&&search_resolved_cuts&&!signalRegion,vector<NamedFunc>{"SampleType", "run","lumiblock","event"}, procs_all, 10, true);
+    //pm.Push<EventScan>("resolved_list_SR", base_filters&&search_resolved_cuts&&signalRegion&&eventNumberVeto,vector<NamedFunc>{"SampleType","run","lumiblock","event"}, procs_all, 10, true);
+    //pm.Push<EventScan>("resolved_list_CR", base_filters&&search_resolved_cuts&&!signalRegion&&eventNumberVeto,vector<NamedFunc>{"SampleType", "run","lumiblock","event"}, procs_all, 10, true);
+
+    // Load event veto data
+    //set<string> vetoEventListNames = {"processed_resolved_list_CR_SCAN_MC.txt", "processed_resolved_list_SR_SCAN_MC.txt",
+    //                                  "processed_resolved_list_CR_SCAN_TChiHH.txt", "processed_resolved_list_SR_SCAN_TChiHH.txt"};
+    //set<string> vetoEventListNames = {"processed_resolved_list_CR_SCAN_MC.txt", "processed_resolved_list_SR_SCAN_MC.txt"};
+    set<string> vetoEventListNames = {};
+    //eventVetoData[0][event] = {[sampleType, year, run, lumiblock]}
+    vector<map<Long64_t, set<tuple<string, int, int, int> > > > * eventVetoData = new vector<map<Long64_t, set<tuple<string, int, int, int> > > >(1, map<Long64_t, set<tuple<string, int, int, int> > > ());
+    for (string const & vetoEventListName : vetoEventListNames) {
+      ifstream vetoEventList(vetoEventListName);
+      string line;
+      while (getline(vetoEventList, line)) {
+        if(line[0]=='#') continue;
+        vector<string> lineSplit;
+        HigUtilities::stringToVectorString(line, lineSplit, ",");
+        string const & sampleType = lineSplit[0];
+        int year = stoi(lineSplit[1]);
+        int run = stoi(lineSplit[2]);
+        int lumiblock = stoi(lineSplit[3]);
+        Long64_t event = stoll(lineSplit[4]);
+        // Insert data
+        if ((*eventVetoData)[0].count(event) == 0) {
+          (*eventVetoData)[0][event] = {{sampleType, year, run, lumiblock}};
+        } else {
+          if ((*eventVetoData)[0][event].count({sampleType, year, run, lumiblock}) != 0) cout<<"Duplicate: "<<sampleType<<" "<<year<<" "<<run<<" "<<lumiblock<<" "<<event<<endl;
+          (*eventVetoData)[0][event].insert({sampleType, year, run, lumiblock});
+        }
       }
+      vetoEventList.close();
     }
-    vetoEventList.close();
-  }
 
-  // Old method
-  //vector<set<tuple<string, int, int, int, Long64_t> > > * eventVetoData = new vector<set<tuple<string, int, int, int, Long64_t> > >(1, set<tuple<string, int, int, int, Long64_t> >());
-  //set<string> vetoEventListNames = {"processed_resolved_list_CR_SCAN_MC.txt", "processed_resolved_list_SR_SCAN_MC.txt",
-  //                                  "processed_resolved_list_CR_SCAN_TChiHH.txt", "processed_resolved_list_SR_SCAN_TChiHH.txt"};
-  ////(*eventVetoData)[0].insert({"hmm", 2016, 1, 11, 111});
-  //for (string const & vetoEventListName : vetoEventListNames) {
-  //  ifstream vetoEventList(vetoEventListName);
-  //  string line;
-  //  while (getline(vetoEventList, line)) {
-  //    if(line[0]=='#') continue;
-  //    vector<string> lineSplit;
-  //    HigUtilities::stringToVectorString(line, lineSplit, ",");
-  //    string const & sampleType = lineSplit[0];
-  //    int year = stoi(lineSplit[1]);
-  //    int run = stoi(lineSplit[2]);
-  //    int lumiblock = stoi(lineSplit[3]);
-  //    Long64_t event = stoll(lineSplit[4]);
-  //    (*eventVetoData)[0].insert({sampleType,year,run,lumiblock, event});
-  //  }
-  //  vetoEventList.close();
-  //}
+    // Old method
+    //vector<set<tuple<string, int, int, int, Long64_t> > > * eventVetoData = new vector<set<tuple<string, int, int, int, Long64_t> > >(1, set<tuple<string, int, int, int, Long64_t> >());
+    //set<string> vetoEventListNames = {"processed_resolved_list_CR_SCAN_MC.txt", "processed_resolved_list_SR_SCAN_MC.txt",
+    //                                  "processed_resolved_list_CR_SCAN_TChiHH.txt", "processed_resolved_list_SR_SCAN_TChiHH.txt"};
+    ////(*eventVetoData)[0].insert({"hmm", 2016, 1, 11, 111});
+    //for (string const & vetoEventListName : vetoEventListNames) {
+    //  ifstream vetoEventList(vetoEventListName);
+    //  string line;
+    //  while (getline(vetoEventList, line)) {
+    //    if(line[0]=='#') continue;
+    //    vector<string> lineSplit;
+    //    HigUtilities::stringToVectorString(line, lineSplit, ",");
+    //    string const & sampleType = lineSplit[0];
+    //    int year = stoi(lineSplit[1]);
+    //    int run = stoi(lineSplit[2]);
+    //    int lumiblock = stoi(lineSplit[3]);
+    //    Long64_t event = stoll(lineSplit[4]);
+    //    (*eventVetoData)[0].insert({sampleType,year,run,lumiblock, event});
+    //  }
+    //  vetoEventList.close();
+    //}
 
-  pm.SetEventVetoData(static_cast<void * >(eventVetoData));
+    pm.SetEventVetoData(static_cast<void * >(eventVetoData));
 
-  pm.min_print_ = true;
+    pm.min_print_ = true;
+    pm.multithreaded_ = !single_thread;
 
-  ////pm.Push<EventScan>("resolved_list_SR", base_filters&&search_resolved_cuts&&signalRegion,vector<NamedFunc>{"SampleType","run","lumiblock","event", "met"}, procs_all, 10, true);
-  ////pm.Push<EventScan>("resolved_list_CR", base_filters&&search_resolved_cuts&&!signalRegion,vector<NamedFunc>{"SampleType", "run","lumiblock","event", "met"}, procs_all, 10, true);
-  //pm.Push<EventScan>("resolved_list_SR_met300", "met>300"&&base_filters&&search_resolved_cuts&&signalRegion,vector<NamedFunc>{"SampleType","run","lumiblock","event", "met"}, procs_all, 10, true);
-  //pm.Push<EventScan>("resolved_list_CR_met300", "met>300"&&base_filters&&search_resolved_cuts&&!signalRegion,vector<NamedFunc>{"SampleType", "run","lumiblock","event", "met"}, procs_all, 10, true);
-  //pm.MakePlots(1.);
+    ////pm.Push<EventScan>("resolved_list_SR", base_filters&&search_resolved_cuts&&signalRegion,vector<NamedFunc>{"SampleType","run","lumiblock","event", "met"}, procs_all, 10, true);
+    ////pm.Push<EventScan>("resolved_list_CR", base_filters&&search_resolved_cuts&&!signalRegion,vector<NamedFunc>{"SampleType", "run","lumiblock","event", "met"}, procs_all, 10, true);
+    ////pm.Push<EventScan>("resolved_list_SR_met300", "met>300"&&base_filters&&search_resolved_cuts&&signalRegion,vector<NamedFunc>{"SampleType","run","lumiblock","event", "met"}, procs_all, 10, true);
+    ////pm.Push<EventScan>("resolved_list_CR_met300", "met>300"&&base_filters&&search_resolved_cuts&&!signalRegion,vector<NamedFunc>{"SampleType", "run","lumiblock","event", "met"}, procs_all, 10, true);
+    //pm.Push<EventScan>("resolved_list_SR_met300", "met>300"&&base_filters&&search_resolved_cuts&&signalRegion,vector<NamedFunc>{"SampleType","run","lumiblock","event", "met"}, procs_all, 10, true);
+    //pm.Push<EventScan>("resolved_list_CR_met300", "met>300"&&base_filters&&search_resolved_cuts&&!signalRegion,vector<NamedFunc>{"SampleType", "run","lumiblock","event", "met"}, procs_all, 10, true);
+    pm.Push<EventScan>("resolved_list_SR_met300", "met>300"&&base_filters&&search_resolved_cuts,vector<NamedFunc>{"SampleType","run","lumiblock","event", "met"}, procs_all, 10, true);
+    pm.Push<EventScan>("resolved_list_CR_met300", "met>300"&&base_filters&&search_resolved_cuts,vector<NamedFunc>{"SampleType", "run","lumiblock","event", "met"}, procs_all, 10, true);
+    pm.MakePlots(1.);
+  } // destruct pm so that files are written to system before going to next step.
 
   bool processEventList = true;
   if (processEventList) {
     // Make new event list with processed_ prefix.
     set<string> eventListNames = {
-                                  "resolved_list_CR_met300_SCAN_MC_2016.txt","resolved_list_SR_met300_SCAN_MC_2016.txt",
-                                  "resolved_list_CR_met300_SCAN_MC_2017.txt","resolved_list_SR_met300_SCAN_MC_2017.txt",
-                                  "resolved_list_CR_met300_SCAN_MC_2018.txt","resolved_list_SR_met300_SCAN_MC_2018.txt",
-                                  "resolved_list_CR_met300_SCAN_TChiHH1D_2016.txt", "resolved_list_SR_met300_SCAN_TChiHH1D_2016.txt",
-                                  "resolved_list_CR_met300_SCAN_TChiHH1D_2017.txt", "resolved_list_SR_met300_SCAN_TChiHH1D_2017.txt",
-                                  "resolved_list_CR_met300_SCAN_TChiHH1D_2018.txt", "resolved_list_SR_met300_SCAN_TChiHH1D_2018.txt",
-                                  "resolved_list_CR_met300_SCAN_TChiHH2D_2016.txt", "resolved_list_SR_met300_SCAN_TChiHH2D_2016.txt",
-                                  "resolved_list_CR_met300_SCAN_TChiHH2D_2017.txt", "resolved_list_SR_met300_SCAN_TChiHH2D_2017.txt",
-                                  "resolved_list_CR_met300_SCAN_TChiHH2D_2018.txt", "resolved_list_SR_met300_SCAN_TChiHH2D_2018.txt",
+                                  "resolved_list_CR_met300_SCAN_DATA_2016.txt","resolved_list_SR_met300_SCAN_DATA_2016.txt",
+                                  "resolved_list_CR_met300_SCAN_DATA_2017.txt","resolved_list_SR_met300_SCAN_DATA_2017.txt",
+                                  "resolved_list_CR_met300_SCAN_DATA_2018.txt","resolved_list_SR_met300_SCAN_DATA_2018.txt",
                                   };
+    //set<string> eventListNames = {
+    //                              "resolved_list_CR_met300_SCAN_MC_2016.txt","resolved_list_SR_met300_SCAN_MC_2016.txt",
+    //                              "resolved_list_CR_met300_SCAN_MC_2017.txt","resolved_list_SR_met300_SCAN_MC_2017.txt",
+    //                              "resolved_list_CR_met300_SCAN_MC_2018.txt","resolved_list_SR_met300_SCAN_MC_2018.txt",
+    //                              "resolved_list_CR_met300_SCAN_TChiHH1D_2016.txt", "resolved_list_SR_met300_SCAN_TChiHH1D_2016.txt",
+    //                              "resolved_list_CR_met300_SCAN_TChiHH1D_2017.txt", "resolved_list_SR_met300_SCAN_TChiHH1D_2017.txt",
+    //                              "resolved_list_CR_met300_SCAN_TChiHH1D_2018.txt", "resolved_list_SR_met300_SCAN_TChiHH1D_2018.txt",
+    //                              "resolved_list_CR_met300_SCAN_TChiHH2D_2016.txt", "resolved_list_SR_met300_SCAN_TChiHH2D_2016.txt",
+    //                              "resolved_list_CR_met300_SCAN_TChiHH2D_2017.txt", "resolved_list_SR_met300_SCAN_TChiHH2D_2017.txt",
+    //                              "resolved_list_CR_met300_SCAN_TChiHH2D_2018.txt", "resolved_list_SR_met300_SCAN_TChiHH2D_2018.txt",
+    //                              };
     //set<string> eventListNames = {"resolved_list_CR_met300_SCAN_MC.txt","resolved_list_SR_met300_SCAN_MC.txt",
     //                              "resolved_list_CR_met300_SCAN_TChiHH1D.txt", "resolved_list_SR_met300_SCAN_TChiHH1D.txt",
     //                              "resolved_list_CR_met300_SCAN_TChiHH2D.txt", "resolved_list_SR_met300_SCAN_TChiHH2D.txt",
@@ -632,27 +676,40 @@ int main(int argc, char *argv[]){
 void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
-      {"sample", required_argument, 0, 0},
-      {"year", required_argument, 0, 0},
-      {"unblind", no_argument, 0, 0},
+      {"single_thread", no_argument, 0, 0},
+      {"sample", required_argument, 0, 's'},
+      {"year", required_argument, 0, 'y'},
+      {"unblind", no_argument, 0, 'u'},
+      {"no_signal", no_argument, 0, 0},
+      {"no_mc", no_argument, 0, 0},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "nl:t:", long_options, &option_index);
+    // put : for required_argument
+    opt = getopt_long(argc, argv, "s:y:u", long_options, &option_index);
     if(opt == -1) break;
 
     string optname;
     switch(opt){
+    case 's':
+      sample_name = optarg;
+      break;
+    case 'y':
+      year_string = optarg;
+      break;
+    case 'u':
+      unblind = true;
+      break;
     case 0:
       optname = long_options[option_index].name;
-      if(optname == "sample"){
-        sample_name = optarg;
-      } else if (optname == "year") {
-        year_string = optarg;
-      } else if (optname == "unblind") {
-        unblind = true;
+      if(optname == "single_thread"){
+        single_thread = true;
+      } else if (optname == "no_signal") {
+        no_signal = true;
+      } else if (optname == "no_mc") {
+        no_mc = true;
       } else {
         printf("Bad option! Found option name %s\n", optname.c_str());
         exit(1);
