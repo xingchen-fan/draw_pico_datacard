@@ -12,6 +12,7 @@
 #include <iomanip>  // setw
 #include <chrono>
 #include <string>
+#include <algorithm>
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -25,6 +26,8 @@
 #include "TLine.h"
 #include "TLatex.h"
 #include "TLegend.h"
+#include "THStack.h"
+#include "TStyle.h"
 
 #include "core/utilities.hpp"
 #include "core/baby.hpp"
@@ -61,10 +64,11 @@ using std::get;
 
 namespace{
   bool split_bkg = true;
-  bool do_signal = false;
+  bool do_signal = true;
   bool do_zbi = false;
   bool do_incl_met = true;
   bool do_bin_drmax = true;
+  bool do_old_bin = false;
   bool debug = false;
   bool do_highnb = false;
   bool do_midnb = false;
@@ -89,9 +93,12 @@ struct abcd_def{
 
 TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
                    vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &preds, 
-                   vector<vector<float> > yieldsPlane, vector<shared_ptr<Process> > &proc_sigs);
+                   vector<vector<float> > yieldsPlane, vector<shared_ptr<Process> > &proc_sigs, float total_luminosity);
 void plotKappa(abcd_def &abcd, vector<vector<vector<float> > >  &kappas, 
                vector<vector<vector<float> > >  &kappas_mm, vector<vector<vector<float> > >  &kmcdat, float total_luminosity);
+void plotTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
+                   vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &preds, 
+                   vector<vector<float> > yieldsPlane, vector<shared_ptr<Process> > &proc_sigs, float total_luminosity);
 vector<vector<float> > findPreds(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
                                  vector<vector<vector<float> > > &kappas, 
                                  vector<vector<vector<float> > > &kappas_mm, 
@@ -186,15 +193,22 @@ int main(int argc, char *argv[]){
   //NamedFunc baseline = baseline_s && "stitch && pass && weight<1.5";
   //baseline = baseline && Functions::hem_veto;
   NamedFunc baseline = baseline_s; 
+  //if (sample=="search") baseline = baseline && Higfuncs::old_final_pass_filters;
   if (sample=="search") baseline = baseline && Higfuncs::final_pass_filters;
   else if (sample=="ttbar") baseline = baseline && Higfuncs::final_ttbar_pass_filters && Higfuncs::lead_signal_lepton_pt>30;
   else if (sample=="zll") baseline = baseline && Higfuncs::final_zll_pass_filters;
   else if (sample=="qcd") baseline = baseline && Higfuncs::final_qcd_pass_filters;
 
+  if (sample=="search") do_incl_met = false;
+  else do_incl_met = true;
+
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Defining processes //////////////////////////////////////////  
   // define signal processes
-  vector<string> sigMasses({"175", "400", "850"});
+  vector<string> sigMasses;
+  if (do_old_bin) sigMasses = {"225", "400", "700"};
+  else sigMasses = {"175", "500", "950"};
+  //sigMasses = {"700", "725", "750"};
   vector<shared_ptr<Process> > proc_sigs;
   for (unsigned isig(0); isig<sigMasses.size(); isig++)
     proc_sigs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigMasses[isig]+",1)", Process::Type::signal, 1, 
@@ -221,8 +235,6 @@ int main(int argc, char *argv[]){
     }
   }
   NamedFunc base_data = baseline; 
-  //NamedFunc lepton_triggers = "(HLT_IsoMu24 || HLT_IsoMu27 || HLT_Mu50 || HLT_Ele27_WPTight_Gsf || HLT_Ele35_WPTight_Gsf || HLT_Ele115_CaloIdVT_GsfTrkIdT)";
-  //NamedFunc met_triggers = "(HLT_PFMET110_PFMHT110_IDTight || HLT_PFMETNoMu110_PFMHTNoMu110_IDTight || HLT_PFMET120_PFMHT120_IDTight || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight || HLT_PFMET120_PFMHT120_IDTight_PFHT60 || HLT_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60)";
   NamedFunc lepton_triggers = Higfuncs::el_trigger || Higfuncs::mu_trigger;
   NamedFunc met_triggers = Higfuncs::met_trigger;
   if (trigger_version == 0) {
@@ -326,10 +338,17 @@ int main(int argc, char *argv[]){
   string metdef = "met";
   if (sample=="zll") metdef = "ll_pt[0]";
   if (sample=="search" || sample=="qcd"){
-    metcuts.push_back(metdef+">150&&"+metdef+"<=200");
-    metcuts.push_back(metdef+">200&&"+metdef+"<=300");
-    metcuts.push_back(metdef+">300&&"+metdef+"<=400");
-    metcuts.push_back(metdef+">400");
+    if (do_old_bin) {
+      metcuts.push_back(metdef+">150&&"+metdef+"<=200");
+      metcuts.push_back(metdef+">200&&"+metdef+"<=300");
+      metcuts.push_back(metdef+">300&&"+metdef+"<=450");
+      metcuts.push_back(metdef+">450");
+    } else {
+      metcuts.push_back(metdef+">150&&"+metdef+"<=200");
+      metcuts.push_back(metdef+">200&&"+metdef+"<=300");
+      metcuts.push_back(metdef+">300&&"+metdef+"<=400");
+      metcuts.push_back(metdef+">400");
+    }
   } else if (sample=="zll") {
     metcuts.push_back(metdef+">0&&"+metdef+"<=75");
     metcuts.push_back(metdef+">75&&"+metdef+"<=150");
@@ -371,7 +390,7 @@ int main(int argc, char *argv[]){
 
   vector<TString> planecuts;
   for (unsigned imet(0); imet<metcuts.size(); imet++){
-    if (!do_bin_drmax) {
+    if (!do_bin_drmax || do_old_bin) {
       planecuts.push_back(metcuts[imet]);
     } else {
       planecuts.push_back(metcuts[imet] + "&& hig_cand_drmax[0]<=1.1");
@@ -475,12 +494,14 @@ int main(int argc, char *argv[]){
     vector<vector<float> > yieldsPlane = findPreds(abcds[iscen], allyields, kappas, kappas_mm, kmcdat, preds);
 
     if (debug) cout<<"Making tables."<<endl;
-    TString fullname = printTable(abcds[iscen], allyields, kappas, preds, yieldsPlane, proc_sigs);
+    TString fullname = printTable(abcds[iscen], allyields, kappas, preds, yieldsPlane, proc_sigs, total_luminosity);
     tablenames.push_back(fullname);
     
     //// Plotting kappa
     if (debug) cout<<"Making kappa plots."<<endl;
     plotKappa(abcds[iscen], kappas, kappas_mm, kmcdat, total_luminosity);
+
+    if (sample=="search" && alt_scen=="data") plotTable(abcds[iscen], allyields, kappas, preds, yieldsPlane, proc_sigs, total_luminosity);
   } // Loop over ABCD methods
 
   if(alt_scen=="data" || alt_scen=="mc_as_data" || alt_scen=="mc"){
@@ -506,14 +527,16 @@ int main(int argc, char *argv[]){
 // if split_bkg: [2/4] Other, [3/5] tt1l, [4/6] tt2l
 TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
                    vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &preds, 
-                   vector<vector<float> > yieldsPlane, vector<shared_ptr<Process> > &proc_sigs){
+                   vector<vector<float> > yieldsPlane, vector<shared_ptr<Process> > &proc_sigs, float total_luminosity){
   //cout<<endl<<"Printing table (significance estimation can take a bit)"<<endl;
   //// Table general parameters
   yieldsPlane.clear();
   TString ump = " & ";
 
   //// Setting output file name
-  TString lumi_s = RoundNumber(lumi, 0);
+  //TString lumi_s = RoundNumber(lumi, 0);
+  //if (lumi_s=="1") lumi_s = "137";
+  TString lumi_s = RoundNumber(total_luminosity, 0);
   if (lumi_s=="1") lumi_s = "137";
   TString outname = "tables/table_pred_"+sample+"_lumi"+lumi_s+(do_highnb?"_highnb":"")+(do_midnb?"_midnb":""); 
   outname += "_"+abcd.scenario+".tex";
@@ -527,7 +550,7 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
   if(split_bkg) {out << "|ccc"; Ncol +=3;}
   out << "|cc"; Ncol +=2; //for kappa and tot bkg
   out << "|c"; Ncol += 1;
-  if (unblind) {
+  if (unblind || alt_scen == "data") {
     out << "c "<<(do_zbi?"c":""); // for predicted and observed
     Ncol += 1 + (do_zbi?1:0);
   }
@@ -543,7 +566,7 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
   if(split_bkg) out << " & Other & V$+$jets & $t\\bar{t}$ ";
   out << "& $\\kappa$ & MC bkg.";
   out << " & Pred. ";
-  if (unblind) out << "& Obs. "<<(do_zbi?"& Signi.":"");
+  if (unblind || alt_scen == "data") out << "& Obs. "<<(do_zbi?"& Signi.":"");
   if(do_signal) {
     for(size_t ind=0; ind<Nsig; ind++) {
       TString signame = proc_sigs[ind]->name_.c_str();
@@ -584,9 +607,9 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
         }
         //// Printing kappa
         out<<ump;
-        if(iabcd==3) out  << "$"    << RoundNumber(kappas[iplane][ibin][0], digits_table)
-                          << "^{+"  << RoundNumber(kappas[iplane][ibin][1], digits_table)
-                          << "}_{-" << RoundNumber(kappas[iplane][ibin][2], digits_table) <<"}$ ";
+        if(iabcd==3) out  << "$"    << RoundNumber(kappas[iplane][ibin][0], digits_table+1)
+                          << "^{+"  << RoundNumber(kappas[iplane][ibin][1], digits_table+1)
+                          << "}_{-" << RoundNumber(kappas[iplane][ibin][2], digits_table+1) <<"}$ ";
         //// Printing MC Bkg yields
         out << ump << RoundNumber(allyields[1][index].Yield(), digits_table);
         //// Printing background predictions
@@ -594,10 +617,12 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
         if(iabcd==3) out << "$"    << RoundNumber(preds[iplane][ibin][0], digits_table)
                          << "^{+"  << RoundNumber(preds[iplane][ibin][1], digits_table)
                          << "}_{-" << RoundNumber(preds[iplane][ibin][2], digits_table) <<"}$ ";
-        if (unblind) {
+        if (unblind || alt_scen == "data") {
           //// Printing observed events in data and Obs/MC ratio
           out << ump;
-          if(iabcd==3) out << RoundNumber(allyields[0][index].Yield(), 0);
+          if(iabcd==3) { // signal region
+            if (unblind) out << RoundNumber(allyields[0][index].Yield(), 0);
+          }
           else out << RoundNumber(allyields[0][index].Yield(), 0);
           //// Printing Zbi significance
           if(do_zbi) { // "$"+RoundNumber(Significance( ),1)+"\\sigma$"
@@ -790,6 +815,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
         // For data uncertainty
         TString unc_ = RoundNumber(kap_mmUp*100,0, kap_mm)>RoundNumber(kap_mmDown*100,0, kap_mm) ? RoundNumber(kap_mmUp*100,0, kap_mm) : RoundNumber(kap_mmDown*100,0, kap_mm);
         text = "#sigma_{st}^{dat}="+unc_+"%";
+        cout<<"bin["<<ibin<<"] plane["<<iplane<<"] unc kappa: "<<unc_+"%"<<endl;
       } else {
         TString unc_ = RoundNumber(kapUp*100,0, kap)>RoundNumber(kapDown*100,0, kap) ? RoundNumber(kapUp*100,0, kap) : RoundNumber(kapDown*100,0, kap);
         // text = "#sigma_{stat}=^{+"+RoundNumber(kapUp*100,0, 1)+"%}_{-"+RoundNumber(kapDown*100,0, 1)+"%}";
@@ -922,6 +948,261 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
 
 }
 
+TH1D * getTH1DFromAllyields(size_t yieldIndex, vector<vector<GammaParams> > &allyields, abcd_def &abcd, int planeType = -1, bool blindSignalRegion=false) {
+  // planeType = -1: all, 1: low-drmax, 2: high-drmax
+  int nUnrolledBins;
+  if (planeType==-1) nUnrolledBins = abcd.planecuts.size()*(2+2*abcd.bincuts.size());
+  else nUnrolledBins = abcd.planecuts.size()*(2+2*abcd.bincuts.size())/2;
+  string unrolledHistName = "unrolledHist"+string(RoundNumber(yieldIndex,1).Data());
+  TH1D * unrolledHist = new TH1D(unrolledHistName.c_str(), unrolledHistName.c_str(), nUnrolledBins, -0.5, nUnrolledBins-0.5);
+  vector<TString> binNames({"SBD, crb", "SBD, xb", "HIG, crb", "HIG, xb"});
+  int iUnrollBin = 1;
+  // plane is drmax-met binning
+  for(size_t iplane=0; iplane < abcd.planecuts.size(); iplane++) {
+    if (planeType == 1 && iplane%2 == 1) continue;
+    if (planeType == 2 && iplane%2 == 0) continue;
+    //cout<<"iplane: "<<iplane<<endl;
+    // ibin is 3b, 4b binning
+    for(size_t ibin=0; ibin < abcd.bincuts.size(); ibin++){
+      // 0: 2b_SDB, 1: 2b_SDB, 2: 2b_HIG, 3: xb_HIG
+      for(auto iabcd:{0,2,1,3}){
+        if (ibin>0 && iabcd%2==0) continue; // don't loop the 2b regions again
+        size_t index = iplane*abcd.bincuts.size()*4+ibin*4+iabcd;
+        // Get binName
+        TString binName = binNames[iabcd];
+        if (!do_highnb && (sample=="zll" || sample=="qcd")) {
+          if(do_midnb) binName.ReplaceAll("xb", "2b").ReplaceAll("crb", "1b");
+          else binName.ReplaceAll("xb", "1b").ReplaceAll("crb", "0b");
+        } else {
+          if(ibin==0) binName.ReplaceAll("xb", "3b");
+          else binName.ReplaceAll("xb", "4b");
+          binName.ReplaceAll("crb", "2b");
+        }
+        // Get Yields
+        //cout<<"binName: "<<binName<<" "<<RoundNumber(allyields[yieldIndex][index].Yield(),1)<<endl;
+        if (blindSignalRegion && iabcd==3) {
+          // Do not unblind
+        } else {
+          unrolledHist->SetBinContent(iUnrollBin, allyields[yieldIndex][index].Yield());
+          unrolledHist->SetBinError(iUnrollBin, allyields[yieldIndex][index].Uncertainty());
+        }
+        iUnrollBin++;
+      }
+    }
+  }
+  //TCanvas cTest("cTest", "cTest", 500, 500);
+  //unrolledHist->Draw();
+  //cTest.SaveAs("cTest.pdf");
+  return unrolledHist;
+}
+
+TGraphAsymmErrors * getTGraphAsymmErrorsFromPreds(vector<vector<vector<float> > > & preds, abcd_def &abcd, int planeType = -1) {
+  string unrolledPredHistName = "unrolledPredHist";
+  //TH1D * unrolledPredHist = new TH1D(unrolledPredHistName.c_str(), unrolledPredHistName.c_str(), nUnrolledBins, -0.5, nUnrolledBins-0.5);
+  int iUnrollBin = 0;
+  vector<Double_t> xpoints;
+  vector<Double_t> ypoints;
+  vector<Double_t> xerror_low;
+  vector<Double_t> xerror_high;
+  vector<Double_t> yerror_low;
+  vector<Double_t> yerror_high;
+  for(size_t iplane=0; iplane < abcd.planecuts.size(); iplane++) {
+    if (planeType == 1 && iplane%2 == 1) continue;
+    if (planeType == 2 && iplane%2 == 0) continue;
+    for(size_t ibin=0; ibin < abcd.bincuts.size(); ibin++){
+      // 0: 2b_SDB, 1: 2b_SDB, 2: 2b_HIG, 3: xb_HIG
+      for(auto iabcd:{0,2,1,3}){
+        if (ibin>0 && iabcd%2==0) continue; // don't loop the 2b regions again
+        if (iabcd==3) {
+          //cout<<"iPlane: "<<iplane<<" iBin: "<<ibin<<" iabcd: "<<iabcd<<" iUnrollBin: "<<iUnrollBin<<" preds: "<<preds[iplane][ibin][0]<<" "<<preds[iplane][ibin][1]<<" "<<preds[iplane][ibin][2]<<endl;
+          double errorHigh = preds[iplane][ibin][1];
+          double errorLow = preds[iplane][ibin][2];
+          double prediction = preds[iplane][ibin][0];
+          xpoints.push_back(iUnrollBin);
+          ypoints.push_back(prediction);
+          xerror_low.push_back(0);
+          xerror_high.push_back(0);
+          yerror_low.push_back(errorLow);
+          yerror_high.push_back(errorHigh);
+        }
+        iUnrollBin++;
+      }
+    }
+  }
+  TGraphAsymmErrors * unrolledPredHist = new TGraphAsymmErrors(xpoints.size(), &xpoints[0], &ypoints[0], &xerror_low[0], &xerror_high[0], &yerror_low[0], &yerror_high[0]);
+  return unrolledPredHist;
+}
+
+void changeToPoissonUncertainty(TH1D * hist) {
+  int nBins = hist->GetNbinsX();
+  for (int iBin = 1; iBin < nBins+1; iBin++) {
+    //double oldUncertainty = hist->GetBinError(iBin);
+    double yield = hist->GetBinContent(iBin);
+    hist->SetBinError(iBin, sqrt(yield));
+  }
+}
+
+void changeHistToMinimum(TH1D * hist, double min) {
+  int nBins = hist->GetNbinsX();
+  for (int iBin = 1; iBin < nBins+1; iBin++) {
+    //double oldUncertainty = hist->GetBinError(iBin);
+    double yield = hist->GetBinContent(iBin);
+    if (yield < min) hist->SetBinContent(iBin, min);
+  }
+}
+
+void changePredToMinimum(TGraphAsymmErrors * graph, double min) {
+  int nPoints = graph->GetN();
+  for (int iPoint = 0; iPoint < nPoints; iPoint++) {
+    //double oldUncertainty = hist->GetBinError(iBin);
+    Double_t xPoint, yPoint;
+    graph->GetPoint(iPoint, xPoint, yPoint);
+    Double_t yerror_low = graph->GetErrorYlow(iPoint);
+    Double_t yerror_high = graph->GetErrorYhigh(iPoint);
+    if (yPoint < min) {
+      graph->SetPoint(iPoint, xPoint, min);
+      Double_t new_yerror_low = yPoint-yerror_low - min;
+      if (new_yerror_low<0) new_yerror_low = 0;
+      Double_t new_yerror_high = yPoint+yerror_high - min;
+      if (new_yerror_high<0) new_yerror_high = 0;
+      graph->SetPointError(iPoint, 0, 0, new_yerror_low, new_yerror_high);
+    }
+  }
+}
+
+void plotTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
+                   vector<vector<vector<float> > > &kappas __attribute__((unused)), vector<vector<vector<float> > > &preds, 
+                   vector<vector<float> > __attribute__((unused)) yieldsPlane, vector<shared_ptr<Process> > __attribute__((unused)) &proc_sigs, float __attribute__((unused)) total_luminosity){
+  // allyields [0] is data, [1] is bkg, [2] is sig1, [3] is sig2, [4] is sig3, [5] is other, [6] is vjet, [7] is ttx
+  TH1D * bkgHistLow = getTH1DFromAllyields(/*yieldIndex*/1, allyields, abcd, /*planeType*/1);
+  changeToPoissonUncertainty(bkgHistLow);
+
+  TH1D * otherHistLow = getTH1DFromAllyields(/*yieldIndex*/5, allyields, abcd, /*planeType*/1);
+  TH1D * vjetHistLow = getTH1DFromAllyields(/*yieldIndex*/6, allyields, abcd, /*planeType*/1);
+  TH1D * ttxHistLow = getTH1DFromAllyields(/*yieldIndex*/7, allyields, abcd, /*planeType*/1);
+  THStack * bkgStackHistLow = new THStack("bkgStackLow", "Low #Delta R_{max}");
+  otherHistLow->SetFillColor(kGray);
+  bkgStackHistLow->Add(otherHistLow);
+  vjetHistLow->SetFillColor(kOrange-4);
+  bkgStackHistLow->Add(vjetHistLow);
+  ttxHistLow->SetFillColor(kBlue-4);
+  bkgStackHistLow->Add(ttxHistLow);
+  bkgStackHistLow->SetMinimum(0.1);
+
+  TH1D * sig2HistLow = getTH1DFromAllyields(/*yieldIndex*/3, allyields, abcd, /*planeType*/1);
+  sig2HistLow->SetLineColor(kPink-4);
+  sig2HistLow->SetLineWidth(2);
+
+  TGraphAsymmErrors * predHistLow = getTGraphAsymmErrorsFromPreds(preds, abcd, /*planeType*/1);
+  predHistLow->SetMarkerStyle(21);
+  //predHistLow->SetMarkerSize(2);
+  predHistLow->SetMarkerColor(kRed);
+  predHistLow->SetLineColor(kRed);
+  predHistLow->SetLineWidth(3);
+  changePredToMinimum(predHistLow, 0.04);
+
+  //TH1D * dataHistLow = getTH1DFromAllyields(/*yieldIndex*/0, allyields, abcd, /*planeType*/1, /*blindSignalRegion*/true);
+  TH1D * dataHistLow = getTH1DFromAllyields(/*yieldIndex*/0, allyields, abcd, /*planeType*/1, /*blindSignalRegion*/!unblind);
+  dataHistLow->SetMarkerStyle(kFullCircle);
+  changeHistToMinimum(dataHistLow, 0.04);
+
+  ////
+  TH1D * bkgHistHigh = getTH1DFromAllyields(/*yieldIndex*/1, allyields, abcd, /*planeType*/2);
+  changeToPoissonUncertainty(bkgHistHigh);
+
+  TH1D * otherHistHigh = getTH1DFromAllyields(/*yieldIndex*/5, allyields, abcd, /*planeType*/2);
+  TH1D * vjetHistHigh = getTH1DFromAllyields(/*yieldIndex*/6, allyields, abcd, /*planeType*/2);
+  TH1D * ttxHistHigh = getTH1DFromAllyields(/*yieldIndex*/7, allyields, abcd, /*planeType*/2);
+  THStack * bkgStackHistHigh = new THStack("bkgStackHigh", "High #Delta R_{max}");
+  otherHistHigh->SetFillColor(kGray);
+  bkgStackHistHigh->Add(otherHistHigh);
+  vjetHistHigh->SetFillColor(kOrange-4);
+  bkgStackHistHigh->Add(vjetHistHigh);
+  ttxHistHigh->SetFillColor(kBlue-4);
+  bkgStackHistHigh->Add(ttxHistHigh);
+  bkgStackHistHigh->SetMinimum(0.1);
+
+  TH1D * sig2HistHigh = getTH1DFromAllyields(/*yieldIndex*/3, allyields, abcd, /*planeType*/2);
+  sig2HistHigh->SetLineColor(kPink-4);
+  sig2HistHigh->SetLineWidth(2);
+
+  TGraphAsymmErrors * predHistHigh = getTGraphAsymmErrorsFromPreds(preds, abcd, /*planeType*/2);
+  predHistHigh->SetMarkerStyle(21);
+  //predHistHigh->SetMarkerSize(2);
+  predHistHigh->SetMarkerColor(kRed);
+  predHistHigh->SetLineColor(kRed);
+  predHistHigh->SetLineWidth(3);
+  changePredToMinimum(predHistHigh, 0.04);
+
+  //TH1D * dataHistHigh = getTH1DFromAllyields(/*yieldIndex*/0, allyields, abcd, /*planeType*/2, /*blindSignalRegion*/true);
+  TH1D * dataHistHigh = getTH1DFromAllyields(/*yieldIndex*/0, allyields, abcd, /*planeType*/2, /*blindSignalRegion*/!unblind);
+  dataHistHigh->SetMarkerStyle(kFullCircle);
+  changeHistToMinimum(dataHistHigh, 0.04);
+
+
+  //TH1D * sig1Hist = getTH1DFromAllyields(/*yieldIndex*/2, allyields, abcd, /*planeType*/1);
+  //sig1Hist->SetLineColor(kRed);
+  //sig1Hist->SetLineWidth(2);
+  //TH1D * sig2Hist = getTH1DFromAllyields(/*yieldIndex*/3, allyields, abcd, /*planeType*/1);
+  //sig2Hist->SetLineColor(kGreen);
+  //sig2Hist->SetLineWidth(2);
+  //TH1D * sig3Hist = getTH1DFromAllyields(/*yieldIndex*/4, allyields, abcd, /*planeType*/1);
+  //sig3Hist->SetLineColor(kBlue);
+  //sig3Hist->SetLineWidth(2);
+  //gStyle->SetErrorX(0);
+
+  TCanvas cTest("cTest", "cTest", 500, 500);
+  TPad *pad1 = new TPad("top", "top", 0.0, 0.5, 1.0, 1.0);
+  TPad *pad2 = new TPad("bot", "bot", 0.0, 0.0, 1.0, 0.5);
+  pad1->Draw();
+  pad2->Draw();
+  pad1->cd();
+  bkgStackHistLow->Draw("hist");
+  bkgHistLow->SetFillColor(kBlack);
+  bkgHistLow->SetFillStyle(3013);
+  bkgHistLow->Draw("same E2");
+  cTest.Update();
+  for (unsigned iPlane = 0; iPlane < 4; iPlane++) {
+    float binIndex = iPlane*6;
+    TLine * line = new TLine(binIndex-0.5,0,binIndex-0.5,pad1->GetUymax());
+    line->SetLineWidth(3);
+    line->Draw("same");
+  }
+  gPad->SetLogy();
+  //sig1Hist->Draw("same hist");
+  //sig2HistLow->Draw("same hist");
+  //sig3Hist->Draw("same hist");
+  //predHistLow->Draw("same e0 x0");
+  predHistLow->Draw("same p");
+  dataHistLow->Draw("same hist p");
+
+  pad2->cd();
+  bkgStackHistHigh->Draw("hist");
+  bkgHistHigh->SetFillColor(kBlack);
+  bkgHistHigh->SetFillStyle(3013);
+  bkgHistHigh->Draw("same E2");
+  cTest.Update();
+  for (unsigned iPlane = 0; iPlane < 4; iPlane++) {
+    float binIndex = iPlane*6;
+    TLine * line = new TLine(binIndex-0.5,0,binIndex-0.5,pad2->GetUymax());
+    line->SetLineWidth(3);
+    line->Draw("same");
+  }
+  gPad->SetLogy();
+  //sig2HistHigh->Draw("same hist");
+  //predHistHigh->Draw("same e0 x0");
+  predHistHigh->Draw("same p");
+  dataHistHigh->Draw("same hist p");
+  //TH1D * ratioHist = static_cast<TH1D*>(dataHist->Clone("data_over_mc"));
+  //ratioHist->Divide(bkgHist);
+  //ratioHist->SetMaximum(2);
+  //ratioHist->SetMinimum(0);
+  //ratioHist->Draw("pe");
+  cTest.SaveAs("cTest.pdf");
+  cout<<"open cTest.pdf"<<endl;
+  return;
+}
+
 //// Calculating kappa and Total bkg prediction
 // allyields: [0] data, [1] bkg, [2] T1tttt(NC), [3] T1tttt(C)
 vector<vector<float> > findPreds(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
@@ -982,7 +1263,7 @@ vector<vector<float> > findPreds(abcd_def &abcd, vector<vector<GammaParams> > &a
       for(size_t iabcd=0; iabcd < 4; iabcd++){
         size_t index = iplane*abcd.bincuts.size()*4 +ibin*4 + iabcd;
         // Renormalizing MC to data
-        // allyields[1][index] *= dataMC;
+        allyields[1][index] *= dataMC;
 
         // Yields for predictions
         entries.push_back(vector<float>());
@@ -1010,10 +1291,22 @@ vector<vector<float> > findPreds(abcd_def &abcd, vector<vector<GammaParams> > &a
       if (debug) cout<<"iplane: "<<iplane<<endl;
       // Throwing toys to find predictions and uncertainties
       val = calcKappa(entries, weights, pow_totpred, valdown, valup);
+      if (debug) {
+        cout<<"Prediction"<<endl;
+        for (unsigned index = 0; index < 7; ++index) cout<<"entries["<<index<<"]: "<<entries[index][0]<<" ";
+        cout<<endl;
+        for (unsigned index = 0; index < 7; ++index) cout<<"weights["<<index<<"]: "<<weights[index][0]<<" ";
+        cout<<endl;
+        cout<<"val: "<<val<<" "<<valdown<<" "<<valup<<endl;
+      }
+      //bool do_data=false; bool verbose=false; double syst=-1; bool do_plot=true; int nrep=100000; int nSigma=1;
+      //val = calcKappa(entries, weights, pow_totpred, valdown, valup, do_data, verbose, syst, do_plot, nrep, nSigma);
       if(valdown<0) valdown = 0;
       preds[iplane].push_back(vector<float>({val, valup, valdown}));
       // Throwing toys to find kappas and uncertainties
       val = calcKappa(kentries, kweights, pow_kappa, valdown, valup);
+      //bool do_data=false; bool verbose=false; double syst=-1; bool do_plot=true; int nrep=100000; int nSigma=1;
+      //val = calcKappa(kentries, kweights, pow_kappa, valdown, valup, do_data, verbose, syst, do_plot, nrep, nSigma);
       if(valdown<0) valdown = 0;
       kappas[iplane].push_back(vector<float>({val, valup, valdown}));
       if (debug) {
@@ -1050,6 +1343,8 @@ void GetOptions(int argc, char *argv[]){
       {"scen", required_argument, 0, 0},       // mc, data, mc_as_data, ...
       {"midnb", no_argument, 0, 0},           // Check zll and qcd CRs for 2b
       {"highnb", no_argument, 0, 0},          // Check QCD CR at 3b and 4b
+      {"incl_drmax", no_argument, 0, 0},          
+      {"old_bin", no_argument, 0, 0},          
       {"year", required_argument, 0, 0},
       {0, 0, 0, 0}
     };
@@ -1083,6 +1378,10 @@ void GetOptions(int argc, char *argv[]){
         do_midnb = true;
       }else if(optname == "year"){
         year_string = optarg;
+      }else if(optname == "incl_drmax"){
+        do_bin_drmax = false;
+      }else if(optname == "old_bin"){
+        do_old_bin = true;
       }else{
         printf("Bad option! Found option name %s\n", optname.c_str());
         exit(1);
