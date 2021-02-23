@@ -641,23 +641,23 @@ namespace HigWriteDataCards{
 
   void setControlSystematics(map<string, map<string, float> > & controlSystematics) {
     controlSystematics["xsig0_ybkg_met0_drmax0"]["ttbar"] = 1.12; 
-    controlSystematics["xsig1_ybkg_met0_drmax0"]["ttbar"] = 1.15;
+    controlSystematics["xsig1_ybkg_met0_drmax0"]["ttbar"] = 1.17;
     controlSystematics["xsig0_ybkg_met0_drmax1"]["ttbar"] = 1.02;
-    controlSystematics["xsig1_ybkg_met0_drmax1"]["ttbar"] = 1.06;
+    controlSystematics["xsig1_ybkg_met0_drmax1"]["ttbar"] = 1.09;
     controlSystematics["xsig0_ybkg_met1_drmax0"]["ttbar"] = 1.10;
-    controlSystematics["xsig1_ybkg_met1_drmax0"]["ttbar"] = 1.14;
+    controlSystematics["xsig1_ybkg_met1_drmax0"]["ttbar"] = 1.16;
     controlSystematics["xsig0_ybkg_met1_drmax1"]["ttbar"] = 1.02;
-    controlSystematics["xsig1_ybkg_met1_drmax1"]["ttbar"] = 1.06;
+    controlSystematics["xsig1_ybkg_met1_drmax1"]["ttbar"] = 1.09;
     controlSystematics["xsig0_ybkg_met2_drmax0"]["ttbar"] = 1.06;
-    controlSystematics["xsig1_ybkg_met2_drmax0"]["ttbar"] = 1.11;
+    controlSystematics["xsig1_ybkg_met2_drmax0"]["ttbar"] = 1.12;
     controlSystematics["xsig0_ybkg_met2_drmax1"]["ttbar"] = 1.01;
-    controlSystematics["xsig1_ybkg_met2_drmax1"]["ttbar"] = 1.05;
+    controlSystematics["xsig1_ybkg_met2_drmax1"]["ttbar"] = 1.08;
     controlSystematics["xsig0_ybkg_met3_drmax0"]["ttbar"] = 1.06;
-    controlSystematics["xsig1_ybkg_met3_drmax0"]["ttbar"] = 1.09;
+    controlSystematics["xsig1_ybkg_met3_drmax0"]["ttbar"] = 1.08;
     controlSystematics["xsig0_ybkg_met3_drmax1"]["ttbar"] = 1.01;
-    controlSystematics["xsig1_ybkg_met3_drmax1"]["ttbar"] = 1.05;
+    controlSystematics["xsig1_ybkg_met3_drmax1"]["ttbar"] = 1.08;
 
-    controlSystematics["xsig0_ybkg_met0_drmax0"]["vjets"] = 1.02; 
+    controlSystematics["xsig0_ybkg_met0_drmax0"]["vjets"] = 1.01; 
     controlSystematics["xsig1_ybkg_met0_drmax0"]["vjets"] = 1.01;
     controlSystematics["xsig0_ybkg_met0_drmax1"]["vjets"] = 1.00;
     controlSystematics["xsig1_ybkg_met0_drmax1"]["vjets"] = 1.00;
@@ -665,14 +665,14 @@ namespace HigWriteDataCards{
     controlSystematics["xsig1_ybkg_met1_drmax0"]["vjets"] = 1.05;
     controlSystematics["xsig0_ybkg_met1_drmax1"]["vjets"] = 1.01;
     controlSystematics["xsig1_ybkg_met1_drmax1"]["vjets"] = 1.00;
-    controlSystematics["xsig0_ybkg_met2_drmax0"]["vjets"] = 1.09;
+    controlSystematics["xsig0_ybkg_met2_drmax0"]["vjets"] = 1.10;
     controlSystematics["xsig1_ybkg_met2_drmax0"]["vjets"] = 1.06;
     controlSystematics["xsig0_ybkg_met2_drmax1"]["vjets"] = 1.01;
     controlSystematics["xsig1_ybkg_met2_drmax1"]["vjets"] = 1.01;
-    controlSystematics["xsig0_ybkg_met3_drmax0"]["vjets"] = 1.07;
-    controlSystematics["xsig1_ybkg_met3_drmax0"]["vjets"] = 1.08;
+    controlSystematics["xsig0_ybkg_met3_drmax0"]["vjets"] = 1.06;
+    controlSystematics["xsig1_ybkg_met3_drmax0"]["vjets"] = 1.10;
     controlSystematics["xsig0_ybkg_met3_drmax1"]["vjets"] = 1.02;
-    controlSystematics["xsig1_ybkg_met3_drmax1"]["vjets"] = 1.00;
+    controlSystematics["xsig1_ybkg_met3_drmax1"]["vjets"] = 1.02;
 
     controlSystematics["xsig0_ybkg_met0_drmax0"]["qcd"] = 1.00; 
     controlSystematics["xsig1_ybkg_met0_drmax0"]["qcd"] = 1.00;
