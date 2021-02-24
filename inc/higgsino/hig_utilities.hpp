@@ -36,6 +36,7 @@ namespace HigUtilities {
     //standard histogram parameters
     Axis *axis_;
     NamedFunc *cut_;
+    NamedFunc *weight_;
     PlotOpt *plot_opt_;
     // Index used by PlotMaker. Set in makePlots()
     int figure_index;

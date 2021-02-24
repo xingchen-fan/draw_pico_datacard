@@ -319,13 +319,13 @@ int main(int argc, char *argv[])
   //samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/2018/SMS-TChiHH_2D/merged_higmc_preselect/";
 
   samplePaths["mc_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2016/mc/merged_higmc_preselect/";
-  samplePaths["signal_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath/2016/SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_preselect/";
+  samplePaths["signal_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2016/SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_preselect/";
   samplePaths["data_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2016/data/merged_higdata_preselect/";
   samplePaths["mc_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2017/mc/merged_higmc_preselect/";
-  samplePaths["signal_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath/2017/SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_preselect/";
+  samplePaths["signal_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2017/SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_preselect/";
   samplePaths["data_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2017/data/merged_higdata_preselect/";
   samplePaths["mc_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/mc/merged_higmc_preselect/";
-  samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath/2018/SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_preselect/";
+  samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2018/SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_preselect/";
   samplePaths["data_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/data/merged_higdata_preselect/";
 
   //// massPoints = { {"1000","1"} }
@@ -386,8 +386,8 @@ int main(int argc, char *argv[])
   
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Functions::w_pileup;
-  //NamedFunc weight = Higfuncs::final_weight;
-  NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Higfuncs::w_pileup_nosignal;
+  NamedFunc weight = Higfuncs::final_weight;
+  //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Higfuncs::w_pileup_nosignal;
   //NamedFunc weight = Higfuncs::final_weight*weight_ht_sideband;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
   //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*Higfuncs::w_years;
@@ -498,13 +498,16 @@ int main(int argc, char *argv[])
   HigWriteDataCards::setControlSystematics(controlSystematics);
   // Consider weight for nonHH somehow..
   
+  NamedFunc weight_notrig = Higfuncs::final_weight_notrgeff;
+  if (higgsino_model=="N1N2") weight_notrig *= HigUtilities::w_CNToN1N2;
+  
   //vector holding systematic variations as a name and weights. May need to be extended to a class
   vector<pair<string, vector<NamedFunc>>> systematics_vector;
   systematics_vector.push_back(make_pair(string("LumiSyst"),
       vector<NamedFunc>({})));
   systematics_vector.push_back(make_pair(string("TrigSyst"),
-      vector<NamedFunc>({Higfuncs::final_weight_notrgeff*Higfuncs::eff_higtrig_run2_syst_up, 
-      Higfuncs::final_weight_notrgeff*Higfuncs::eff_higtrig_run2_syst_down})));
+      vector<NamedFunc>({weight_notrig*Higfuncs::eff_higtrig_run2_syst_up, 
+      weight_notrig*Higfuncs::eff_higtrig_run2_syst_down})));
   systematics_vector.push_back(make_pair(string("SignalJetID"),
       vector<NamedFunc>({})));
   systematics_vector.push_back(make_pair(string("SignalBCTag"),
@@ -572,6 +575,7 @@ int main(int argc, char *argv[])
       }
     }
   }
+
   HigWriteDataCards::make_npv_plots("signal", histInfo);
   if (unblind) HigWriteDataCards::make_npv_plots("data", histInfo);
   else HigWriteDataCards::make_npv_plots("mc", histInfo);
@@ -622,7 +626,7 @@ int main(int argc, char *argv[])
   // Luminosity used for labeling for table
   // Luminosity used for scaling for hist1d
   bool verbose = false;
-  HigUtilities::makePlots(cutTable, sampleProcesses, luminosity, pm, verbose);
+  HigUtilities::makePlots(cutTable, histInfo, sampleProcesses, luminosity, pm, verbose);
 
   // fill mYields
   // mYields[process_tag_sampleBinLabel] = GammaParams, TableRow
@@ -807,6 +811,8 @@ namespace HigWriteDataCards{
     HigUtilities::HistInformation this_hist_info;
     this_hist_info.axis_ = new Axis(100, -0.5, 99.5, "npv", "N_{pv}", {});
     this_hist_info.cut_ = new NamedFunc("1");
+    this_hist_info.weight_ = new NamedFunc("weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Higfuncs::w_pileup_nosignal);
+    //this_hist_info.weight_ = new NamedFunc(Higfuncs::final_weight);
     this_hist_info.plot_opt_ = new PlotOpt(plot_opt);
     this_hist_info.figure_index = -1;
     hist_info[tag] = this_hist_info;
@@ -840,6 +846,7 @@ namespace HigWriteDataCards{
       string const & type = single_hist_info.first;
       delete hist_info[type].axis_;
       delete hist_info[type].cut_;
+      delete hist_info[type].weight_;
       delete hist_info[type].plot_opt_;
     }
   }
@@ -1071,7 +1078,7 @@ namespace HigWriteDataCards{
           //normal up/down systematic
           string label = processName + "_" + signalAverageGenMetTag + "_" + sampleBins[bin_idx].first;
           float nominal_value = mYields.at(label).first.Yield();
-          if (nominal_value == 0) {
+          if (nominal_value == 0 || std::isnan(nominal_value) || std::isinf(nominal_value)) {
             //no signal, poor stats - make all variations up??
             row[2+2*bin_idx] = "2.00/2.00";
           }
@@ -1082,9 +1089,9 @@ namespace HigWriteDataCards{
             float value_down = mYields.at(label).first.Yield();
             float syst_up = (value_up-nominal_value)/nominal_value;
             float syst_down = (value_down-nominal_value)/nominal_value;
-            if (syst_up > 1.0) syst_up = 1.0;
+            if (syst_up > 1.0 || std::isnan(syst_up) || std::isinf(syst_up)) syst_up = 1.0;
             if (syst_up <= -1.0) syst_up = -0.99;
-            if (syst_down > 1.0) syst_down = 1.0;
+            if (syst_down > 1.0 || std::isnan(syst_down) || std::isinf(syst_down)) syst_down = 1.0;
             if (syst_down <= -1.0) syst_down = -0.99;
             row[2+2*bin_idx] = to_string(syst_down+1.0)+"/"+to_string(syst_up+1.0);
           }

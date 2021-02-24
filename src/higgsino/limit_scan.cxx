@@ -321,6 +321,7 @@ void MakeLimitPlot(vector<double> vmx,
   TGraph cexp = DrawContours(gexp, 2, 1, 5, num_smooth_, 1.);
   TGraph cobsup, cobsdown, cobs;
   if (unblind) {
+    std::cout << "DEBUG: unblinding" << std::endl;
     cobsup = DrawContours(gobsup, 1, 2, 5, num_smooth_);
     cobsdown = DrawContours(gobsdown, 1, 2, 5, num_smooth_);
     cobs = DrawContours(gobs, 1, 1, 5, num_smooth_, 1.);
