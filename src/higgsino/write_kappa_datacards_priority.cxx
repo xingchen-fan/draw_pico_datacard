@@ -287,7 +287,7 @@ int main(int argc, char *argv[])
   if(Contains(hostName, "cms") || Contains(hostName, "compute-")) baseFolder = "/net/cms29";
   //baseFolder = "";
 
-  cout<<"INFO:: Systematics are ON. Make sure to run on appropriate babies, i.e. unskimmed or skim_sys_abcd!!"<<endl;
+  cout<<"INFO:: Systematics are ON. Make sure to run on appropriate babies, i.e. unskimmed or skim_higsys!!"<<endl;
   gSystem->mkdir(outFolder.c_str(), kTRUE);
 
   set<int> years;
@@ -319,13 +319,13 @@ int main(int argc, char *argv[])
   //samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/2018/SMS-TChiHH_2D/merged_higmc_preselect/";
 
   samplePaths["mc_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2016/mc/merged_higmc_preselect/";
-  samplePaths["signal_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2016/SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_preselect/";
+  samplePaths["signal_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2016/SMS-TChiHH_2D_fastSimJmeCorrection/skim_higsys/";
   samplePaths["data_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2016/data/merged_higdata_preselect/";
   samplePaths["mc_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2017/mc/merged_higmc_preselect/";
-  samplePaths["signal_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2017/SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_preselect/";
+  samplePaths["signal_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2017/SMS-TChiHH_2D_fastSimJmeCorrection/skim_higsys/";
   samplePaths["data_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2017/data/merged_higdata_preselect/";
   samplePaths["mc_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/mc/merged_higmc_preselect/";
-  samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2018/SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_preselect/";
+  samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2018/SMS-TChiHH_2D_fastSimJmeCorrection/skim_higsys/";
   samplePaths["data_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/data/merged_higdata_preselect/";
 
   //// massPoints = { {"1000","1"} }
@@ -371,6 +371,23 @@ int main(int argc, char *argv[])
     }
   }
 
+  const NamedFunc zero_excess("zero_excess", [](const Baby &b) -> NamedFunc::ScalarType{
+    //remove "excess" events in 3b low drmax met 300-400
+    if (b.SampleType()>0) return 1.;
+    if (b.njet() >= 4 && b.njet() <= 5 && b.nlep()==0 ) {
+      if (b.ntk() == 0 && b.met() > 300 && b.met() < 400) {
+        if (!b.low_dphi_met() && b.hig_cand_dm()->at(0) < 40 && b.hig_cand_drmax()->at(0)<1.1) {
+          if (b.nbt() >=2 && b.nbm() >= 3 && b.hig_cand_am()->at(0)>100) {
+            if (b.hig_cand_am()->at(0)<140) {
+              return 0.;
+            }
+          }
+        }
+      }
+    }
+    return 1.;
+  });
+
   //NamedFunc filters = HigUtilities::pass_2016;
   //NamedFunc filters = Functions::hem_veto && "pass && met/mht<2 && met/met_calo<2";
   NamedFunc filters = Higfuncs::final_pass_filters;
@@ -386,13 +403,18 @@ int main(int argc, char *argv[])
   
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Functions::w_pileup;
+  //NamedFunc weight = Higfuncs::final_weight;
   NamedFunc weight = Higfuncs::final_weight;
+  NamedFunc weight_genmet = "weight"*Higfuncs::eff_higtrig_mettru*Higfuncs::w_years*Functions::w_pileup;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Higfuncs::w_pileup_nosignal;
   //NamedFunc weight = Higfuncs::final_weight*weight_ht_sideband;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
   //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*Higfuncs::w_years;
 
-  if (higgsino_model=="N1N2") weight *= HigUtilities::w_CNToN1N2;
+  if (higgsino_model=="N1N2") {
+    weight *= HigUtilities::w_CNToN1N2;
+    weight_genmet *= HigUtilities::w_CNToN1N2;
+  }
   string baseline = "!low_dphi_met && nvlep==0 && ntk==0";
   string higtrim = "hig_cand_drmax[0]<=2.2 && hig_cand_dm[0] <= 40 && hig_cand_am[0]<=200 && met/mht<2 && met/met_calo<2&& weight<1.5";
   if (tag=="resolved") baseline += "&& njet>=4 && njet<=5 && nbt>=2 && "+higtrim;
@@ -535,14 +557,48 @@ int main(int argc, char *argv[])
   systematics_vector.push_back(make_pair(string("SignalJER"),
       vector<NamedFunc>({weight,weight})));
 
+  vector<pair<string, vector<NamedFunc>>> systematics_vector_genmet;
+  systematics_vector_genmet.push_back(make_pair(string("LumiSyst"),
+      vector<NamedFunc>({})));
+  systematics_vector_genmet.push_back(make_pair(string("TrigSyst"),
+      vector<NamedFunc>({weight_notrig*Higfuncs::eff_higtrig_run2_syst_up_mettru, 
+      weight_notrig*Higfuncs::eff_higtrig_run2_syst_down_mettru})));
+  systematics_vector_genmet.push_back(make_pair(string("SignalJetID"),
+      vector<NamedFunc>({})));
+  systematics_vector_genmet.push_back(make_pair(string("SignalBCTag"),
+      vector<NamedFunc>({weight_genmet*"sys_bchig[0]/w_bhig", weight_genmet*"sys_bchig[1]/w_bhig"})));
+  systematics_vector_genmet.push_back(make_pair(string("SignalBCTagFastSIM"),
+      vector<NamedFunc>({weight_genmet*"sys_fs_bchig[0]/w_bhig", weight_genmet*"sys_fs_bchig[1]/w_bhig"})));
+  systematics_vector_genmet.push_back(make_pair(string("SignalUDSGTag"),
+      vector<NamedFunc>({weight_genmet*"sys_udsghig[0]/w_bhig", weight_genmet*"sys_udsghig[1]/w_bhig"})));
+  systematics_vector_genmet.push_back(make_pair(string("SignalUDSGTagFastSIM"),
+      vector<NamedFunc>({weight_genmet*"sys_fs_udsghig[0]/w_bhig", weight_genmet*"sys_fs_udsghig[1]/w_bhig"})));
+  systematics_vector_genmet.push_back(make_pair(string("SignalPrefire"),
+      vector<NamedFunc>({weight_genmet*"sys_prefire[0]/w_prefire", weight_genmet*"sys_prefire[1]/w_prefire"})));
+  systematics_vector_genmet.push_back(make_pair(string("ISRSyst"),
+      vector<NamedFunc>({weight_genmet*"sys_isr[0]/w_isr", weight_genmet*"sys_isr[1]/w_isr"})));
+  systematics_vector_genmet.push_back(make_pair(string("SignalMETFastSIM"),
+      vector<NamedFunc>({})));
+  systematics_vector_genmet.push_back(make_pair(string("SignalPU"),
+      vector<NamedFunc>({weight_genmet*"(npv<=20)", weight_genmet*"(npv>=21)"})));
+  systematics_vector_genmet.push_back(make_pair(string("SignalScale"),
+      vector<NamedFunc>({weight_genmet*"sys_murf[0]", weight_genmet*"sys_murf[1]", weight_genmet*"sys_murf[2]", 
+      weight_genmet*"sys_murf[3]",weight_genmet*"sys_murf[5]",weight_genmet*"sys_murf[6]",weight_genmet*"sys_murf[7]",
+      weight_genmet*"sys_murf[8]"})));
+  systematics_vector_genmet.push_back(make_pair(string("SignalJEC"),
+      vector<NamedFunc>({weight_genmet,weight_genmet})));
+  systematics_vector_genmet.push_back(make_pair(string("SignalJER"),
+      vector<NamedFunc>({weight_genmet,weight_genmet})));
+
   // cuts[mc,data,signal] = RowInformation(labels, tableRows, yields)
   map<string, HigUtilities::RowInformation > cutTable;
   map<string, HigUtilities::HistInformation > histInfo;
   if(unblind) HigUtilities::addBinCuts(sampleBins, baseline, weight, "data", cutTable["data"]);
   HigUtilities::addBinCuts(sampleBins, baseline, weight, "signal", cutTable["signal"]);
-  HigUtilities::addBinCuts(sampleBins, baseline, weight, "signalGenMet", HigUtilities::nom2genmet, cutTable["signal"]);
+  HigUtilities::addBinCuts(sampleBins, baseline, weight_genmet, "signalGenMet", HigUtilities::nom2genmet, cutTable["signal"]);
   HigUtilities::addBinCuts(sampleBins, baseline, weight, "mc", cutTable["mc"]);
-  for (pair<string, vector<NamedFunc>> sys : systematics_vector) {
+  for (unsigned sys_idx = 0; sys_idx < systematics_vector.size(); sys_idx++) {
+    pair<string, vector<NamedFunc>> sys = systematics_vector[sys_idx];
     for (unsigned wgt_idx = 0; wgt_idx < sys.second.size(); wgt_idx++) {
       //for JEC and JER systematics, switch out analysis variables
       if (sys.first == "SignalJEC") {
@@ -551,7 +607,7 @@ int main(int argc, char *argv[])
                                  HigUtilities::nom2sys_string(baseline,to_string(wgt_idx+2)), weight, 
                                  "signal_"+sys_name, cutTable["signal"]);
         HigUtilities::addBinCuts(HigUtilities::nom2sys_bins(sampleBins, to_string(wgt_idx+2)), 
-                                 HigUtilities::nom2sys_string(baseline,to_string(wgt_idx+2)), weight, 
+                                 HigUtilities::nom2sys_string(baseline,to_string(wgt_idx+2)), weight_genmet, 
                                  "signalGenMet_"+sys_name, HigUtilities::nom2genmet,
                                  cutTable["signal"]);
       }
@@ -561,7 +617,7 @@ int main(int argc, char *argv[])
                                  HigUtilities::nom2sys_string(baseline,to_string(wgt_idx)), weight, 
                                  "signal_"+sys_name, cutTable["signal"]);
         HigUtilities::addBinCuts(HigUtilities::nom2sys_bins(sampleBins, to_string(wgt_idx)), 
-                                 HigUtilities::nom2sys_string(baseline,to_string(wgt_idx)), weight, 
+                                 HigUtilities::nom2sys_string(baseline,to_string(wgt_idx)), weight_genmet, 
                                  "signalGenMet_"+sys_name, HigUtilities::nom2genmet,
                                  cutTable["signal"]);
       }
@@ -569,7 +625,7 @@ int main(int argc, char *argv[])
         string sys_name = sys.first+to_string(wgt_idx);
         HigUtilities::addBinCuts(sampleBins, baseline, sys.second[wgt_idx], 
                                  "signal_"+sys_name, cutTable["signal"]);
-        HigUtilities::addBinCuts(sampleBins, baseline, sys.second[wgt_idx], 
+        HigUtilities::addBinCuts(sampleBins, baseline, systematics_vector_genmet[sys_idx].second[wgt_idx], 
                                  "signalGenMet_"+sys_name, HigUtilities::nom2genmet,
                                  cutTable["signal"]);
       }
@@ -811,8 +867,8 @@ namespace HigWriteDataCards{
     HigUtilities::HistInformation this_hist_info;
     this_hist_info.axis_ = new Axis(100, -0.5, 99.5, "npv", "N_{pv}", {});
     this_hist_info.cut_ = new NamedFunc("1");
-    this_hist_info.weight_ = new NamedFunc("weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Higfuncs::w_pileup_nosignal);
-    //this_hist_info.weight_ = new NamedFunc(Higfuncs::final_weight);
+    //this_hist_info.weight_ = new NamedFunc("weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Higfuncs::w_pileup_nosignal);
+    this_hist_info.weight_ = new NamedFunc(Higfuncs::final_weight);
     this_hist_info.plot_opt_ = new PlotOpt(plot_opt);
     this_hist_info.figure_index = -1;
     hist_info[tag] = this_hist_info;
