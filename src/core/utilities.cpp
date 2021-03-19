@@ -789,3 +789,11 @@ void parseMasses(const string &prs, int &mglu, int &mlsp){
   mglu = stoi(prs.substr(prs.find("Chi-")+4,prs.find("_mLSP")-prs.find("ino-")-4));
   mlsp = stoi(prs.substr(prs.find("LSP-")+4,prs.find("_Tune")-prs.find("LSP-")-4));
 }
+
+
+void parseMassesGluino(const string &prs, int &mglu, int &mlsp){
+  std::cout << prs.substr(prs.find("ino-")+4,prs.find("_mLSP")-prs.find("ino-")-4) << std::endl;
+  std::cout << prs.substr(prs.find("LSP-")+4,prs.find("_Tune")-prs.find("LSP-")-4) << std::endl;
+  mglu = stoi(prs.substr(prs.find("ino-")+4,prs.find("_mLSP")-prs.find("ino-")-4));
+  mlsp = stoi(prs.substr(prs.find("LSP-")+4,prs.find("_Tune")-prs.find("LSP-")-4));
+}

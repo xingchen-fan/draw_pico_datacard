@@ -283,6 +283,9 @@ int main(int argc, char *argv[])
   time(&begtime);
   HigWriteDataCards::GetOptions(argc, argv);
 
+  //---------------------------------------------------------------------------
+  //                         load appropriate picos
+  //---------------------------------------------------------------------------
   string baseFolder = ""; string hostName = execute("echo $HOSTNAME");
   if(Contains(hostName, "cms") || Contains(hostName, "compute-")) baseFolder = "/net/cms29";
   //baseFolder = "";
@@ -327,6 +330,14 @@ int main(int argc, char *argv[])
   samplePaths["mc_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/mc/merged_higmc_preselect/";
   samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2018/SMS-TChiHH_2D_fastSimJmeCorrection/skim_higsys/";
   samplePaths["data_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/data/merged_higdata_preselect/";
+  if (higgsino_model=="T5HH") {
+    samplePaths["signal_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2016/SMS-T5qqqqZH_fastSimJmeCorrection/skim_higsys/";
+    samplePaths["signal_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2017/SMS-T5qqqqZH_fastSimJmeCorrection/skim_higsys/";
+    samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2018/SMS-T5qqqqZH_fastSimJmeCorrection/skim_higsys/";
+    //samplePaths["signal_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2016/SMS-T5qqqqZH_fastSimJmeCorrection/unskimmed/";
+    //samplePaths["signal_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2017/SMS-T5qqqqZH_fastSimJmeCorrection/unskimmed/";
+    //samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2018/SMS-T5qqqqZH_fastSimJmeCorrection/unskimmed/";
+  }
 
   //// massPoints = { {"1000","1"} }
   vector<pair<string, string> > massPoints;
@@ -358,19 +369,48 @@ int main(int argc, char *argv[])
   } else {
     string signal_folder = samplePaths["signal_2016"];
     set<string> signal_files;
-    if (is1D) {
+    if (higgsino_model=="T5HH") {
+      signal_files = Glob(signal_folder+"/*.root");
+    } else if (is1D) {
       signal_files = Glob(signal_folder+"/*mLSP-0_*.root");
     } else {
       signal_files = Glob(signal_folder+"/*.root");
     }
-    string mLSP, mChi;
+    string mGluino, mLSP, mChi;
     for (string signal_file : signal_files) {
-      HigUtilities::filenameToMassPoint(signal_file, mChi, mLSP);
-      if (!is1D && stoi(mChi)>800) continue; // Ingore points above 800 GeV for 2D
-      massPoints.push_back({mChi, mLSP});
+      if (higgsino_model=="T5HH") {
+        HigUtilities::filenameToMassPoint(signal_file, mGluino, mChi, mLSP);
+        if (stoi(mChi) != (stoi(mGluino)-50)) continue; // Ingore points outside the 2D scan
+        massPoints.push_back({mGluino, mLSP});
+      }
+      else {
+        HigUtilities::filenameToMassPoint(signal_file, mChi, mLSP);
+        if (!is1D && stoi(mChi)>800) continue; // Ingore points above 800 GeV for 2D
+        massPoints.push_back({mChi, mLSP});
+      }
     }
   }
 
+
+  //NamedFunc filters = HigUtilities::pass_2016;
+  //NamedFunc filters = Functions::hem_veto && "pass && met/mht<2 && met/met_calo<2";
+  NamedFunc filters = Higfuncs::final_pass_filters;
+
+  // sampleProcesses[mc, data, signal]
+  map<string, vector<shared_ptr<Process> > > sampleProcesses;
+  HigUtilities::setMcProcesses(years, samplePaths, filters && "stitch", sampleProcesses);
+  // Higfuncs::trig_hig will only work for 2016
+  //HigUtilities::setDataProcesses(years, samplePaths, filters&&Higfuncs::trig_hig>0., sampleProcesses);
+  NamedFunc met_triggers = Higfuncs::met_trigger;
+  if(unblind) HigUtilities::setDataProcesses(years, samplePaths, filters&&met_triggers, sampleProcesses);
+  if (higgsino_model=="T5HH") {
+    HigUtilities::setSignalProcessesT5HH(massPoints, years, samplePaths, filters, sampleProcesses);
+  } else {
+    HigUtilities::setSignalProcesses(massPoints, years, samplePaths, filters, sampleProcesses);
+  }
+
+
+  //named func for studying effect of not having an excess in 3b MET 300-400 (multiply to weight)
   const NamedFunc zero_excess("zero_excess", [](const Baby &b) -> NamedFunc::ScalarType{
     //remove "excess" events in 3b low drmax met 300-400
     if (b.SampleType()>0) return 1.;
@@ -387,20 +427,10 @@ int main(int argc, char *argv[])
     }
     return 1.;
   });
-
-  //NamedFunc filters = HigUtilities::pass_2016;
-  //NamedFunc filters = Functions::hem_veto && "pass && met/mht<2 && met/met_calo<2";
-  NamedFunc filters = Higfuncs::final_pass_filters;
-
-  // sampleProcesses[mc, data, signal]
-  map<string, vector<shared_ptr<Process> > > sampleProcesses;
-  HigUtilities::setMcProcesses(years, samplePaths, filters && "stitch", sampleProcesses);
-  // Higfuncs::trig_hig will only work for 2016
-  //HigUtilities::setDataProcesses(years, samplePaths, filters&&Higfuncs::trig_hig>0., sampleProcesses);
-  NamedFunc met_triggers = Higfuncs::met_trigger;
-  if(unblind) HigUtilities::setDataProcesses(years, samplePaths, filters&&met_triggers, sampleProcesses);
-  HigUtilities::setSignalProcesses(massPoints, years, samplePaths, filters, sampleProcesses);
   
+  //---------------------------------------------------------------------------
+  //                         set weight, selection, bins
+  //---------------------------------------------------------------------------
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Functions::w_pileup;
   //NamedFunc weight = Higfuncs::final_weight;
@@ -514,6 +544,9 @@ int main(int argc, char *argv[])
   HigUtilities::setABCDBinsPriority(xBins, yBins, dimensionBins, sampleBins, priority);
   //sampleBins = {{"test","1"}};
 
+  //---------------------------------------------------------------------------
+  //                         set systematics
+  //---------------------------------------------------------------------------
   // Set systematics somehow..
   // controlSystematics[xsig0_ybkg_met0_drmax0]["ttbar"] = systematic value
   map<string, map<string, float> > controlSystematics;
@@ -590,6 +623,9 @@ int main(int argc, char *argv[])
   systematics_vector_genmet.push_back(make_pair(string("SignalJER"),
       vector<NamedFunc>({weight_genmet,weight_genmet})));
 
+  //---------------------------------------------------------------------------
+  //                           book tables and plots
+  //---------------------------------------------------------------------------
   // cuts[mc,data,signal] = RowInformation(labels, tableRows, yields)
   map<string, HigUtilities::RowInformation > cutTable;
   map<string, HigUtilities::HistInformation > histInfo;

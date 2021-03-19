@@ -139,10 +139,15 @@ int main(int argc, char *argv[]){
   TString chii= "#lower[-0.12]{#tilde{#chi}}#kern[+0.1]{#lower[0.2]{#scale[0.99]{^{0,#kern[+0.2]{#lower[-0.15]{#pm}}}}}}#kern[-4]{#scale[0.99]{_{i}}}";
   TString chij= "#lower[-0.12]{#tilde{#chi}}#kern[+0.1]{#lower[0.2]{#scale[0.99]{^{0,#kern[+0.2]{#lower[0.15]{#mp}}}}}}#kern[-4]{#scale[0.99]{_{j}}}";
   TString chi10= "#lower[-0.12]{#tilde{#chi}}#kern[+0.2]{#lower[0.2]{#scale[0.99]{^{0}}}}#kern[-1.3]{#scale[0.99]{_{1}}}";
+  TString chi20= "#lower[-0.12]{#tilde{#chi}}#kern[+0.2]{#lower[0.2]{#scale[0.99]{^{0}}}}#kern[-1.3]{#scale[0.99]{_{2}}}";
   TString xsoft= "X#lower[-0.2]{#scale[0.85]{_{soft}}}";
   TString mass_ = "m#kern[0.1]{#lower[-0.12]{_{";
   float minh=200, maxh=1250;//, maxXsec = 5e3;
-  if(do_paper) {
+  if (model=="T5HH") {
+    minh = 1000;
+    maxh = 2500;
+  }
+  else if(do_paper) {
     minh = 127;
     // maxXsec = 1e5;
   }
@@ -152,6 +157,7 @@ int main(int argc, char *argv[]){
   histo.GetYaxis()->CenterTitle(true);
   histo.GetXaxis()->SetLabelOffset(0.01);
   histo.SetXTitle("Higgsino mass "+mass_+chi1n+"}}} [GeV]");
+  if (model=="T5HH") histo.SetXTitle("Gluino mass "+mass_+"#tilde{g}}}} [GeV]");
   histo.SetYTitle("#sigma_{excl}^{95% CL}/#sigma_{theory}");
   if (hh4b_bf>.99) histo.SetYTitle("#sigma_{excl}^{95% CL}/#sigma_{theory}*BR");
   histo.Draw();
@@ -188,6 +194,8 @@ int main(int argc, char *argv[]){
   //// Drawing CMS labels and line at 1
   TString ppChiChi = "pp #rightarrow "+chii+"#kern[0.7]{"+chij+"}  #rightarrow "+chi10+"#kern[0.3]{"+chi10+"} + "
     +xsoft+"#rightarrow HH#tilde{G}#tilde{G} + "+xsoft;
+  if (model == "T5HH") ppChiChi = "pp #rightarrow #tilde{g}#kern[0.3]{#tilde{g}}, #tilde{g} #rightarrow "+chi20
+    +"#kern[0.3]{q}#kern[0.3]{#bar{q}}, "+chi20+" #rightarrow H#kern[0.3]{"+chi10+"}";
   double ppSize = 0.055, ppY = 1-opts.TopMargin()-0.03, ppY2 = 1-opts.TopMargin()-0.11;
   double legSize = 0.044;
 
@@ -200,6 +208,8 @@ int main(int argc, char *argv[]){
   int ibox = 0;
   vector<vector<float> > boxes;
   double legX(0.45), legY(1-opts.TopMargin()-0.24), legSingle = 0.053;
+  if (model == "T5HH") legY = 1-opts.TopMargin()-0.12;
+  if (model == "T5HH") legSingle = 0.04;
   double legW = 0.26, legH = legSingle*5;
   TLegend leg(legX-legW, legY-legH, legX, legY);
   leg.SetX1NDC(legX-legW); leg.SetX2NDC(legX); // So that GetX1NDC works in getLegendBoxes
@@ -227,7 +237,7 @@ int main(int argc, char *argv[]){
   label.SetTextAlign(11); label.SetTextSize(ppSize/1.07);
   label.SetTextFont(132);
   label.DrawLatex(legX-legW+0.01, opts.BottomMargin()+0.70, ppChiChi);
-  label.DrawLatex(legX-legW+0.01, opts.BottomMargin()+0.643, mChis);
+  if (!(model == "T5HH")) label.DrawLatex(legX-legW+0.01, opts.BottomMargin()+0.643, mChis);
 
 
   histo.Draw("axis same");
@@ -307,7 +317,7 @@ int main(int argc, char *argv[]){
 
   TGraph gxsec2d(vmx.size(), &(vmx[0]), &(vxsec2d[0]));
   gxsec2d.SetLineWidth(thwidth); gxsec2d.SetLineColor(kBlue); gxsec2d.SetLineStyle(1);
-  gxsec2d.Draw("same");
+  if (!(model=="T5HH")) gxsec2d.Draw("same");
 
   can.SetLogy(true);
 
@@ -335,7 +345,7 @@ int main(int argc, char *argv[]){
   label.SetTextAlign(33); label.SetTextSize(ppSize);
   label.SetTextFont(132);
   label.DrawLatex(1-opts.RightMargin()-0.03, ppY, ppChiChi);
-  label.DrawLatex(1-opts.RightMargin()-0.03, ppY2, mChis);
+  if (!(model == "T5HH")) label.DrawLatex(1-opts.RightMargin()-0.03, ppY2, mChis);
 
   histo.Draw("axis same");
   pname = basename;
@@ -384,7 +394,7 @@ int main(int argc, char *argv[]){
   label.SetTextAlign(33); label.SetTextSize(ppSize);
   label.SetTextFont(132);
   label.DrawLatex(1-opts.RightMargin()-0.03, ppY, ppChiChi);
-  label.DrawLatex(1-opts.RightMargin()-0.03, ppY2, mChis);
+  if (!(model == "T5HH")) label.DrawLatex(1-opts.RightMargin()-0.03, ppY2, mChis);
 
   // pname = basename;
   // pname.ReplaceAll("lumi", "exp_significance");
@@ -421,7 +431,7 @@ int main(int argc, char *argv[]){
   label.SetTextAlign(33); label.SetTextSize(ppSize);
   label.SetTextFont(132);
   label.DrawLatex(1-opts.RightMargin()-0.03, ppY, ppChiChi);
-  label.DrawLatex(1-opts.RightMargin()-0.03, ppY2, mChis);
+  if (!(model == "T5HH")) label.DrawLatex(1-opts.RightMargin()-0.03, ppY2, mChis);
 
   pname = basename;
   pname.ReplaceAll("lumi", "obs_significance");
@@ -462,7 +472,7 @@ int main(int argc, char *argv[]){
   label.SetTextAlign(33); label.SetTextSize(ppSize);
   label.SetTextFont(132);
   label.DrawLatex(1-opts.RightMargin()-0.03, ppY, ppChiChi);
-  label.DrawLatex(1-opts.RightMargin()-0.03, ppY2, mChis);
+  if (!(model == "T5HH")) label.DrawLatex(1-opts.RightMargin()-0.03, ppY2, mChis);
 
   //// Drawing legend
   legX = 1- opts.RightMargin()-0.03, legY = ppY2 - 0.2; legSingle = 0.07;

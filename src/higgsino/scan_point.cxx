@@ -35,11 +35,15 @@ int main(int argc, char *argv[]){
 
   //// Parsing the gluino and LSP masses
   int mchi, mlsp;
-  parseMasses(file_name, mchi, mlsp);
+  if (model=="T5HH") parseMassesGluino(file_name, mchi, mlsp);
+  else parseMasses(file_name, mchi, mlsp);
   double xsec, xsec_unc;
   if (model=="N1N2") xsec::higgsino2DCrossSection(mchi, xsec, xsec_unc);
+  else if (model=="T5HH") xsec::gluinoCrossSection(mchi, xsec, xsec_unc);
   else xsec::higgsinoCrossSection(mchi, xsec, xsec_unc);
-  string glu_lsp("mChi-"+to_string(mchi)+"_mLSP-"+to_string(mlsp));
+  string glu_lsp("");
+  if (model=="T5HH") glu_lsp = ("mGluino-"+to_string(mchi)+"_mLSP-"+to_string(mlsp));
+  else glu_lsp = ("mChi-"+to_string(mchi)+"_mLSP-"+to_string(mlsp));
 
   string workdir = in_dir+"/scan_point_"+model+"_"+glu_lsp+"/";
   gSystem->mkdir(workdir.c_str(), kTRUE);

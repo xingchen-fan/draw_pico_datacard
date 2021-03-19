@@ -430,6 +430,22 @@ namespace HigUtilities {
     mLSP = mLSP_string;
   }
 
+  void filenameToMassPoint(std::string filename, string & mGluino, string & mChi, string & mLSP) {
+    size_t start_mGluino = filename.find("mGluino")+8;
+    size_t end_mGluino = filename.find("_", start_mGluino);
+    string mGluino_string = filename.substr(start_mGluino, (end_mGluino-start_mGluino));
+    size_t start_mChi = filename.find("mChi")+5;
+    size_t end_mChi = filename.find("_", start_mChi);
+    string mChi_string = filename.substr(start_mChi, (end_mChi-start_mChi));
+    size_t start_mLSP = filename.find("mLSP")+5;
+    size_t end_mLSP = filename.find("_", start_mLSP);
+    if (end_mLSP == std::string::npos) end_mLSP = filename.find(".", start_mLSP);
+    string mLSP_string = filename.substr(start_mLSP, (end_mLSP-start_mLSP));
+    mGluino = mGluino_string;
+    mChi = mChi_string;
+    mLSP = mLSP_string;
+  }
+
   std::string setProcessName(std::string const & model, int const & mGluino, int const & mLSP)
   {
     return model+"_"+to_string(mGluino)+"_"+to_string(mLSP);
@@ -438,6 +454,7 @@ namespace HigUtilities {
   std::string setProcessNameLong(std::string const & model, int const & mGluino, int const & mLSP)
   {
     // Tune is added for utilites::parseMasses
+    if (model == "T5HH") model+"_mGluino-"+to_string(mGluino)+"_mLSP-"+to_string(mLSP)+"_Tune";
     return model+"_mChi-"+to_string(mGluino)+"_mLSP-"+to_string(mLSP)+"_Tune";
   }
 
@@ -610,6 +627,25 @@ namespace HigUtilities {
     }
   }
 
+  void setSignalProcessesT5HH(vector<pair<string, string> > massPoints, set<int> years, map<string, string> samplePaths, NamedFunc filters, map<string, vector<shared_ptr<Process> > > & sampleProcesses)
+  {
+    map<string, set<string> > signalPaths;
+    for (auto massPoint : massPoints)
+    {
+     for (auto year : years)
+     {
+       signalPaths[HigUtilities::setProcessName("T5HH",atoi(massPoint.first.c_str()),atoi(massPoint.second.c_str()))].insert(samplePaths["signal_"+to_string(year)]+"*mGluino-"+massPoint.first+"_mChi-"+to_string(stoi(massPoint.first)-50)+"_mLSP-"+massPoint.second+"_*.root");
+       cout << "Adding " << samplePaths["signal_"+to_string(year)]+"*mGluino-"+massPoint.first+"_mChi-"+to_string(stoi(massPoint.first)-50)+"_mLSP-"+massPoint.second+"_*.root" << endl;
+     }
+    }
+  
+    sampleProcesses["signal"] = vector<shared_ptr<Process> > ();
+    for (auto signalPath : signalPaths)
+    {
+      sampleProcesses["signal"].push_back(Process::MakeShared<Baby_pico>(signalPath.first, Process::Type::background, kBlack, signalPath.second, filters));
+    }
+  }
+
   void addBinCuts(vector<pair<string, string> > sampleBins, string baseline, NamedFunc weight, string tag, RowInformation & cutRows)
   {
     for (auto binCut : sampleBins)
@@ -677,7 +713,7 @@ namespace HigUtilities {
       string const & type = single_hist_info.first;
       std::vector<PlotOpt> plot_opts = {*(histInfo[type].plot_opt_)};
       pm.Push<Hist1D>(*(histInfo[type].axis_), *(histInfo[type].cut_), 
-          sampleProcesses[type], plot_opts).Weight(*(histInfo[type].weight_));
+          sampleProcesses[type], plot_opts).Weight(*(histInfo[type].weight_)).DrawPlot(false);
       histInfo[type].figure_index = tableIndex;
       tableIndex++;
       //if (verbose) for (auto tableRow : cutTable[type].tableRows) cout<<tableRow.cut_.Name()<<endl;
