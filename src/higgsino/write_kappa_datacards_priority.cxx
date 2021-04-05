@@ -54,6 +54,7 @@ namespace
   // 4. BSR, RSR, BCR, RCR
   int priority = 1;
   bool is1D = true;
+  int t5hh_range = 0;
 }
 
 const NamedFunc min_jet_dphi("min_jet_dphi", [](const Baby &b) -> NamedFunc::ScalarType{
@@ -331,9 +332,9 @@ int main(int argc, char *argv[])
   samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2018/SMS-TChiHH_2D_fastSimJmeCorrection/skim_higsys/";
   samplePaths["data_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/data/merged_higdata_preselect/";
   if (higgsino_model=="T5HH") {
-    samplePaths["signal_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2016/SMS-T5qqqqZH_fastSimJmeCorrection/skim_higsys/";
-    samplePaths["signal_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2017/SMS-T5qqqqZH_fastSimJmeCorrection/skim_higsys/";
-    samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2018/SMS-T5qqqqZH_fastSimJmeCorrection/skim_higsys/";
+    samplePaths["signal_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2016/SMS-T5qqqqZH_fastSimJmeCorrection/skim_higsys/";
+    samplePaths["signal_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2017/SMS-T5qqqqZH_fastSimJmeCorrection/skim_higsys/";
+    samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/SMS-T5qqqqZH_fastSimJmeCorrection/skim_higsys/";
     //samplePaths["signal_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2016/SMS-T5qqqqZH_fastSimJmeCorrection/unskimmed/";
     //samplePaths["signal_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2017/SMS-T5qqqqZH_fastSimJmeCorrection/unskimmed/";
     //samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2018/SMS-T5qqqqZH_fastSimJmeCorrection/unskimmed/";
@@ -381,6 +382,8 @@ int main(int argc, char *argv[])
       if (higgsino_model=="T5HH") {
         HigUtilities::filenameToMassPoint(signal_file, mGluino, mChi, mLSP);
         if (stoi(mChi) != (stoi(mGluino)-50)) continue; // Ingore points outside the 2D scan
+        if (t5hh_range >= 0 && stoi(mGluino)<t5hh_range) continue; //non-negative t5hh is lower bound
+        if (t5hh_range < 0 && stoi(mGluino)>=(-1*t5hh_range)) continue; //negative t5hh is upper bound
         massPoints.push_back({mGluino, mLSP});
       }
       else {
@@ -580,7 +583,8 @@ int main(int argc, char *argv[])
   systematics_vector.push_back(make_pair(string("SignalMETFastSIM"),
       vector<NamedFunc>({})));
   systematics_vector.push_back(make_pair(string("SignalPU"),
-      vector<NamedFunc>({weight*"(npv<=20)", weight*"(npv>=21)"})));
+      vector<NamedFunc>({weight/Functions::w_pileup*Functions::w_syst_pileup_up,
+      weight/Functions::w_pileup*Functions::w_syst_pileup_down})));
   systematics_vector.push_back(make_pair(string("SignalScale"),
       vector<NamedFunc>({weight*"sys_murf[0]", weight*"sys_murf[1]", weight*"sys_murf[2]", 
       weight*"sys_murf[3]",weight*"sys_murf[5]",weight*"sys_murf[6]",weight*"sys_murf[7]",
@@ -613,7 +617,8 @@ int main(int argc, char *argv[])
   systematics_vector_genmet.push_back(make_pair(string("SignalMETFastSIM"),
       vector<NamedFunc>({})));
   systematics_vector_genmet.push_back(make_pair(string("SignalPU"),
-      vector<NamedFunc>({weight_genmet*"(npv<=20)", weight_genmet*"(npv>=21)"})));
+      vector<NamedFunc>({weight_genmet/Functions::w_pileup*Functions::w_syst_pileup_up, 
+      weight_genmet/Functions::w_pileup*Functions::w_syst_pileup_down})));
   systematics_vector_genmet.push_back(make_pair(string("SignalScale"),
       vector<NamedFunc>({weight_genmet*"sys_murf[0]", weight_genmet*"sys_murf[1]", weight_genmet*"sys_murf[2]", 
       weight_genmet*"sys_murf[3]",weight_genmet*"sys_murf[5]",weight_genmet*"sys_murf[6]",weight_genmet*"sys_murf[7]",
@@ -628,7 +633,6 @@ int main(int argc, char *argv[])
   //---------------------------------------------------------------------------
   // cuts[mc,data,signal] = RowInformation(labels, tableRows, yields)
   map<string, HigUtilities::RowInformation > cutTable;
-  map<string, HigUtilities::HistInformation > histInfo;
   if(unblind) HigUtilities::addBinCuts(sampleBins, baseline, weight, "data", cutTable["data"]);
   HigUtilities::addBinCuts(sampleBins, baseline, weight, "signal", cutTable["signal"]);
   HigUtilities::addBinCuts(sampleBins, baseline, weight_genmet, "signalGenMet", HigUtilities::nom2genmet, cutTable["signal"]);
@@ -667,10 +671,6 @@ int main(int argc, char *argv[])
       }
     }
   }
-
-  HigWriteDataCards::make_npv_plots("signal", histInfo);
-  if (unblind) HigWriteDataCards::make_npv_plots("data", histInfo);
-  else HigWriteDataCards::make_npv_plots("mc", histInfo);
 
   PlotMaker pm;
   set<string> boostedSignalRegion = {
@@ -718,7 +718,7 @@ int main(int argc, char *argv[])
   // Luminosity used for labeling for table
   // Luminosity used for scaling for hist1d
   bool verbose = false;
-  HigUtilities::makePlots(cutTable, histInfo, sampleProcesses, luminosity, pm, verbose);
+  HigUtilities::makePlots(cutTable, sampleProcesses, luminosity, pm, verbose);
 
   // fill mYields
   // mYields[process_tag_sampleBinLabel] = GammaParams, TableRow
@@ -727,7 +727,7 @@ int main(int argc, char *argv[])
   // Luminosity used for scaling
   HigUtilities::fillMcYields(pm, luminosity, cutTable["mc"], mYields, true);
   // Luminosity used for scaling
-  HigUtilities::fillSignalYieldsProcesses(pm, luminosity, sampleProcesses["signal"], cutTable["signal"], mYields, false);
+  HigUtilities::fillSignalYieldsProcesses(pm, luminosity, sampleProcesses["signal"], cutTable["signal"], mYields);
   HigUtilities::fillAverageGenMetYields(sampleProcesses["signal"], sampleBins, "signal", "signalGenMet", "signalAverageGenMet", mYields);
   for (pair<string, vector<NamedFunc>> sys : systematics_vector) {
     for (unsigned wgt_idx = 0; wgt_idx < sys.second.size(); wgt_idx++) {
@@ -737,10 +737,6 @@ int main(int argc, char *argv[])
           "signalAverageGenMet_"+sys_name, mYields);
     }
   }
-  
-  map<string, TH1D> h_sig_npv;
-  TH1D* h_data_npv;
-  HigWriteDataCards::fill_npv_hists(pm, histInfo, sampleProcesses, h_sig_npv, &h_data_npv);
 
   // Calculate kappas from mc
   // kappas[xsigX_ysigY_metA_drmaxB]
@@ -771,11 +767,11 @@ int main(int argc, char *argv[])
     if (do_met_average) {
       HigWriteDataCards::setDataCardSignalBackground(process->name_, "signalAverageGenMet", mYields, sampleBins, tableValues);
       HigWriteDataCards::setDataCardSignalStatistics(process->name_, "signalAverageGenMet", mYields, sampleBins, tableValues);
-      HigWriteDataCards::setDataCardSignalSystematics(process->name_, "signalAverageGenMet", mYields, sampleBins, tableValues, systematics_vector, h_sig_npv, h_data_npv);
+      HigWriteDataCards::setDataCardSignalSystematics(process->name_, "signalAverageGenMet", mYields, sampleBins, tableValues, systematics_vector);
     } else {
       HigWriteDataCards::setDataCardSignalBackground(process->name_, "signal", mYields, sampleBins, tableValues);
       HigWriteDataCards::setDataCardSignalStatistics(process->name_, "signal", mYields, sampleBins, tableValues);      
-      HigWriteDataCards::setDataCardSignalSystematics(process->name_, "signal", mYields, sampleBins, tableValues, systematics_vector, h_sig_npv, h_data_npv);
+      HigWriteDataCards::setDataCardSignalSystematics(process->name_, "signal", mYields, sampleBins, tableValues, systematics_vector);
     }
     HigWriteDataCards::setDataCardControlSystematics(controlSystematics, sampleBins, tableValues);
     HigWriteDataCards::writeTableValues(tableValues,cardFile);
@@ -1062,32 +1058,10 @@ namespace HigWriteDataCards{
 
   void setDataCardSignalSystematics(string const & processName, string const & signalAverageGenMetTag, 
       map<string, pair<GammaParams, TableRow> > & mYields, vector<pair<string, string> > sampleBins, 
-      vector<vector<string> > & tableValues, vector<pair<string, vector<NamedFunc>>> systematics_vector,
-      map<string, TH1D> h_sig_npv, TH1D* h_data_npv)
+      vector<vector<string> > & tableValues, vector<pair<string, vector<NamedFunc>>> systematics_vector)
   {
 
     vector<string> row(2+2*sampleBins.size());
-
-    //get information from pileup histograms for pileup systematic
-    TH1D this_h_sig_npv = h_sig_npv[processName];
-    float avr_npv_highpu = 0.0;
-    float total_entries_highpu = 0.0;
-    float avr_npv_lowpu = 0.0;
-    float total_entries_lowpu = 0.0;
-    for (int npv_bin = 0; npv_bin < 20; npv_bin++) {
-      avr_npv_lowpu += this_h_sig_npv.GetBinContent(npv_bin+1)*static_cast<float>(npv_bin);
-      total_entries_lowpu += this_h_sig_npv.GetBinContent(npv_bin+1);
-    }
-    for (int npv_bin = 0; npv_bin < this_h_sig_npv.GetNbinsX(); npv_bin++) {
-      avr_npv_highpu += this_h_sig_npv.GetBinContent(npv_bin+1)*static_cast<float>(npv_bin);
-      total_entries_highpu += this_h_sig_npv.GetBinContent(npv_bin+1);
-    }
-    if (total_entries_lowpu > 0)
-      avr_npv_lowpu = avr_npv_lowpu/total_entries_lowpu;
-    if (total_entries_highpu > 0)
-      avr_npv_highpu = avr_npv_highpu/total_entries_highpu;
-    float total_entries_sig = this_h_sig_npv.Integral();
-    float total_entries_dat = h_data_npv->Integral();
 
     for (pair<string, vector<NamedFunc>> sys : systematics_vector) {
       setRow(row,"-");
@@ -1117,30 +1091,6 @@ namespace HigWriteDataCards{
           if (syst_value > 1.0) syst_value = 1.0;
           if (syst_value <= -1.0) syst_value = -0.99;
           //convention for sign
-          row[2+2*bin_idx] = to_string(syst_value+1.0);
-        }
-        else if (sys.first == "SignalPU") {
-          //this systematic only uses reco met
-          string label_prefix = processName + "_signal_";
-          string label_suffix = "_" + sampleBins[bin_idx].first;
-          float lowpu_cut_yield = mYields.at(label_prefix+sys.first+"0"+label_suffix).first.Yield();
-          float highpu_cut_yield = mYields.at(label_prefix+sys.first+"1"+label_suffix).first.Yield();
-          float lowpu_eff = lowpu_cut_yield/total_entries_lowpu;
-          float highpu_eff = highpu_cut_yield/total_entries_highpu;
-          float m = (highpu_eff-lowpu_eff)/(avr_npv_highpu-avr_npv_lowpu);
-          float b = (lowpu_eff*avr_npv_highpu-highpu_eff*avr_npv_lowpu)/(avr_npv_highpu-avr_npv_lowpu);
-          float eff_data = 0, eff_mc = 0;
-          for (int npv_bin = 0; npv_bin < h_data_npv->GetNbinsX(); npv_bin++) {
-            //compare linear fit
-            float fx = m*static_cast<float>(npv_bin)+b;
-            eff_data += fx*h_data_npv->GetBinContent(npv_bin+1);
-            eff_mc += fx*this_h_sig_npv.GetBinContent(npv_bin+1);
-          }
-          eff_data = eff_data/total_entries_dat;
-          eff_mc = eff_mc/total_entries_sig;
-          float syst_value = (eff_data-eff_mc)/eff_mc;
-          if (std::isnan(syst_value) || std::isinf(syst_value) || syst_value > 1.0) syst_value = 1.0;
-          if (syst_value <= -1.0) syst_value = -0.99;
           row[2+2*bin_idx] = to_string(syst_value+1.0);
         }
         else if (sys.first == "SignalScale") {
@@ -1389,12 +1339,13 @@ namespace HigWriteDataCards{
         {"recomet", no_argument, 0, 0},
         {"higgsino_model", required_argument, 0, 'm'},
         {"priority", required_argument, 0, 'r'},
+        {"t5hhrange", required_argument, 0, 's'},
         {0, 0, 0, 0}
       };
   
       char opt = -1;
       int option_index;
-      opt = getopt_long(argc, argv, "o:p:g:y:l:d:t:m:r:nu12", long_options, &option_index);
+      opt = getopt_long(argc, argv, "o:p:g:y:l:d:t:m:r:s:nu12", long_options, &option_index);
       if( opt == -1) break;
 
       string optname;
@@ -1407,6 +1358,7 @@ namespace HigWriteDataCards{
         case 't': tag = optarg; break;
         case 'm': higgsino_model = optarg; break;
         case 'r': priority = atoi(optarg); break;
+        case 's': t5hh_range = atoi(optarg); break;
         case 'd': 
           dimensionFilePath = optarg; 
           if (!FileExists(dimensionFilePath)) 

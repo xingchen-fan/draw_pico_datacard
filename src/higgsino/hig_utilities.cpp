@@ -454,7 +454,7 @@ namespace HigUtilities {
   std::string setProcessNameLong(std::string const & model, int const & mGluino, int const & mLSP)
   {
     // Tune is added for utilites::parseMasses
-    if (model == "T5HH") model+"_mGluino-"+to_string(mGluino)+"_mLSP-"+to_string(mLSP)+"_Tune";
+    if (model == "T5HH") return model+"_mGluino-"+to_string(mGluino)+"_mLSP-"+to_string(mLSP)+"_Tune";
     return model+"_mChi-"+to_string(mGluino)+"_mLSP-"+to_string(mLSP)+"_Tune";
   }
 

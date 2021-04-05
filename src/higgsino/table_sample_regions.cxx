@@ -42,6 +42,7 @@ namespace{
   bool unblind = false;
   bool single_thread = false;
   bool no_signal = false;
+  bool no_t5hh = true;
   bool no_mc = false;
 }
 
@@ -111,6 +112,20 @@ const NamedFunc eventNumberVeto("eventNumberVeto", [](const Baby &b) -> NamedFun
   return !found;
 });
 
+//requires all MC Higgs to decay to bb
+const NamedFunc htobb("htobb", [](const Baby &b) -> NamedFunc::ScalarType{
+  //if ((b.type() % 1000 != 107) && (b.type() % 1000 != 106)) return true; //non SUSY model
+  //int num_bs = 0;
+  for (unsigned int mc_idx(0); mc_idx < b.mc_id()->size(); mc_idx++) {
+    //if (abs(b.mc_id()->at(mc_idx)) == 5 && b.mc_mom()->at(mc_idx) == 25)
+    //  num_bs++;
+    if (abs(b.mc_id()->at(mc_idx)) != 5 && b.mc_mom()->at(mc_idx) == 25)
+      return false;
+  }
+  //if (num_bs == 4) return true;
+  return true;
+});
+
 string getLuminosityString(string const & year_string) {
   set<int> years;
   HigUtilities::parseYears(year_string, years);
@@ -176,6 +191,7 @@ void addProcess(string const & processName, Process::Type type, int color, Named
     else if (fileTag=="2D") fileNames = {"*TChiHH*HToBB_2D_Tune*.root"};
     else fileNames = {"*TChiHH_mChi-"+massPoints[0]+"_mLSP-"+massPoints[1]+"_*.root"};
   }
+  else if (dataType=="t5hh") fileNames = set<string>({fileTag});
   else fileNames = mctags[fileTag];
 
   // Set folders
@@ -183,6 +199,7 @@ void addProcess(string const & processName, Process::Type type, int color, Named
   string mcProductionFolder = nanoAodFolder+"/"+production;
   string dataProductionFolder = nanoAodFolder+"/"+production;
   string signalProductionFolder = nanoAodFolder+"/"+production;
+  string t5hhProductionFolder = nanoAodFolder+"/"+production;
   folderDict.insert("mc_production_folder", mcProductionFolder);
   // preselect:
   //   ((nbt>=2 && njet>=4 && njet<=5)||(Sum$(fjet_pt>300 && fjet_msoftdrop>50)>1))
@@ -223,6 +240,16 @@ void addProcess(string const & processName, Process::Type type, int color, Named
   folderDict.insert("ttbar_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep1T/");
   folderDict.insert("zll_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep2T/");
   folderDict.insert("qcd_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higqcd/");
+
+  folderDict.insert("t5hh_production_folder", t5hhProductionFolder);
+  folderDict.insert("search_t5hh_skim_folder", "SMS-T5qqqqZH_FullSim/merged_higmc_higloose/");
+  folderDict.insert("ttbar_t5hh_skim_folder", "SMS-T5qqqqZH_FullSim/merged_higmc_higlep1T/");
+  folderDict.insert("zll_t5hh_skim_folder", "SMS-T5qqqqZH_FullSim/merged_higmc_higlep2T/");
+  folderDict.insert("qcd_t5hh_skim_folder", "SMS-T5qqqqZH_FullSim/merged_higmc_higqcd/");
+  //folderDict.insert("search_t5hh_skim_folder", "SMS-T5qqqqZH_fastSimJmeCorrection/merged_higmc_higloose/");
+  //folderDict.insert("ttbar_t5hh_skim_folder", "SMS-T5qqqqZH_fastSimJmeCorrection/merged_higmc_higlep1T/");
+  //folderDict.insert("zll_t5hh_skim_folder", "SMS-T5qqqqZH_fastSimJmeCorrection/merged_higmc_higlep2T/");
+  //folderDict.insert("qcd_t5hh_skim_folder", "SMS-T5qqqqZH_fastSimJmeCorrection/merged_higmc_higqcd/");
 
   // Set paths
   set<string> pathNames;
@@ -268,6 +295,17 @@ void addMultipleSignalProcesses(string const & processName_postfix, NamedFunc co
     addProcess("TChiHH("+sigm[isig]+",0) "+processName_postfix, Process::Type::signal, 1, additionalCut,
       nanoAodFolder, production, "signal", sigm[isig]+"_0", sample_name, year_string,
       procs);
+  }
+  if (!no_t5hh) {
+    vector<string> sigm_t5hh = {"*mGluino-1000_mChi-950_mLSP-1_*.root","*mGluino-1600_mChi-1550_mLSP-1_*.root","*mGluino-2000_mChi-1950_mLSP-1_*.root"};
+    vector<string> model_names = {"T5HH(1000_0)","T5HH(1600_0)","T5HH(2000_0)"};
+    //vector<string> sigm_t5hh = {"*mGluino-1200_mChi-1150_mLSP-400_*.root","*mGluino-1600_mChi-1550_mLSP-1_*.root","*mGluino-2000_mChi-1950_mLSP-1_*.root"};
+    //vector<string> model_names = {"T5HH(1200_400)","T5HH(1600_0)","T5HH(2000_0)"};
+    for (unsigned isig(0); isig<sigm_t5hh.size(); isig++){
+      addProcess(model_names[isig]+processName_postfix, Process::Type::signal, 1, additionalCut&&htobb,
+        nanoAodFolder, production, "t5hh", sigm_t5hh[isig], sample_name, year_string,
+        procs);
+    }
   }
 }
 
@@ -681,6 +719,7 @@ void GetOptions(int argc, char *argv[]){
       {"year", required_argument, 0, 'y'},
       {"unblind", no_argument, 0, 'u'},
       {"no_signal", no_argument, 0, 0},
+      {"t5hh", no_argument, 0, 0},
       {"no_mc", no_argument, 0, 0},
       {0, 0, 0, 0}
     };
@@ -710,6 +749,8 @@ void GetOptions(int argc, char *argv[]){
         no_signal = true;
       } else if (optname == "no_mc") {
         no_mc = true;
+      } else if (optname == "t5hh") {
+        no_t5hh = false;
       } else {
         printf("Bad option! Found option name %s\n", optname.c_str());
         exit(1);

@@ -40,9 +40,13 @@ def printWeights(profile_mc_url, profile_data_url, tag=""):
     wgt = [profile_data.GetBinContent(i+1) for i in range(profile_data.GetNbinsX())]
     if profile_data_name=="pileup": 
         print ("Nominal weights:")
-        for j,iwgt in enumerate(wgt):
-            print "NPV: "+'{:>3d}'.format(j+1),
-            print (" Weight: "+'{:>10.3e}'.format(iwgt))
+    elif profile_data_name=="pileup_plus": 
+        print ("Upward variation weights:")
+    elif profile_data_name=="pileup_minus": 
+        print ("Downward variation weights:")
+    for j,iwgt in enumerate(wgt):
+        print "NPV: "+'{:>3d}'.format(j+1),
+        print (" Weight: "+'{:>10.3e}'.format(iwgt))
 
     print ("------> Vector for weight_tools:")
     print "w_pu_"+profile_data_name,
