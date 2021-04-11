@@ -110,6 +110,11 @@ TString HoursMinSec(float fseconds);
 TString AddCommas(double num);
 TString RoundNumber(double num, int decimals, double denom=1.);
 
+namespace utilities{
+  float calculate_pvalue(float observed, float prediction, float prediction_up_diff, float prediction_down_diff);
+  float to_pvalue(float significance);
+  float to_significance(float pvalue);
+}
 double Significance(double Nobs, double Nbkg, double Eup_bkg, double Edown_bkg=-1.);
 double gsl_ran_gamma (const double a, const double b, TRandom3 &rand);
 double intGaus(double mean, double sigma, double minX, double maxX);
