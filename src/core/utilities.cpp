@@ -564,6 +564,46 @@ double deltaPhi(double phi1, double phi2){
   return dphi>PI ? 2.*PI-dphi : dphi;
 }
 
+float utilities::calculate_pvalue(float observed, float prediction, float prediction_up_diff, float prediction_down_diff) {
+  double precision = 0.03; // Desired precision on the p-value
+  double Nmin = 1/pow(precision,2), Nmax = 5e7; // Nmax controls max sigmas achievable (5e7->5.5 sigma)
+  TRandom3 random(1234);
+
+  double Nbelow=0, Nabove=0, Nequal=0;
+
+  if (observed==0) return 1;
+
+  while ( (std::min(Nbelow, Nabove)+Nequal)<Nmin && (Nbelow+Nabove+Nequal)<Nmax) {
+    // Fluctuate mean
+    double theta = random.Gaus(0,1);
+    double kappa_up = 1+prediction_up_diff/prediction;
+    double kappa_down = 1+prediction_down_diff/prediction;
+    float fluctuated_mean;
+    //// combine method
+    if (prediction==0) fluctuated_mean = fabs(theta)*prediction_up_diff; //2-sided Gaussian uncertainty
+    else if (theta>=0) fluctuated_mean = prediction * pow(kappa_up, theta);
+    //else fluctuated_mean = prediction * pow(kappa_down, theta);
+    else if(prediction_down_diff<0.8*prediction) fluctuated_mean = prediction * pow(kappa_down, theta);
+    else { // Make fluctuation be a Gaussian fluctuation(larger) which saves time.
+      fluctuated_mean = max(0., prediction + theta*prediction_down_diff);
+    }
+
+    float observed_toy = random.Poisson(fluctuated_mean); // shifts mean to high
+
+    // Calculate test statistic
+    if (observed_toy>=observed) Nabove++;
+    else Nbelow++;
+
+  }
+
+  if(Nabove==0) return 1./Nmax;
+  else if (Nbelow==0) return 1-1./Nmax;
+  return (Nabove)/(Nabove+Nbelow);
+}
+float utilities::to_pvalue(float significance) {return 0.5-TMath::Erf(double(significance/sqrt(2)))/2;}
+float utilities::to_significance(float pvalue) {return ROOT::Math::normal_quantile_c(pvalue, 1);}
+
+// Below is an old method, use utilities::to_significance(utilities::calculate_pvalue()) instead.
 // Finds significance of observation Nbkg, for an expected background Nbkg+Eup_bkg-Edown_bkg
 // The mean of the Poisson is Nbkg convolved with the asymmetric lognormal(Eup_bkg, Edown_bkg)
 double Significance(double Nobs, double Nbkg, double Eup_bkg, double Edown_bkg){
@@ -571,6 +611,7 @@ double Significance(double Nobs, double Nbkg, double Eup_bkg, double Edown_bkg){
   double Nmin = 1/pow(precision,2), Nmax = 5e7; // Nmax controls max sigmas achievable (5e7->5.5 sigma)
   double Nbelow=0, Nabove=0, Nequal=0;
   if(Edown_bkg<0) Edown_bkg = Eup_bkg; // If down uncertainty not specified, symmetric lognormal
+  if (Nbkg==0) Edown_bkg = 0;
   if(Edown_bkg>Nbkg) {
     cout<<"Down uncertainty ("<<Edown_bkg<<") has to be smaller than Nbkg ("<<Nbkg<<")"<<endl;
     return -999.;
@@ -592,6 +633,8 @@ double Significance(double Nobs, double Nbkg, double Eup_bkg, double Edown_bkg){
     else if(valPois==Nobs) Nequal++;
     else Nbelow++;
   }
+
+  //cout<<"Nobs: "<<Nobs<<" Nbkg: "<<Nbkg<<" Eup_bkg: "<<Eup_bkg<<" Edown_bkg: "<<Edown_bkg<<" Nabove: "<<Nabove<<" Nequal: "<<Nequal<<" Nbelow: "<<Nbelow<<endl;
 
   if(Nabove+Nequal==0){
     cout<<"No toys above or at Nobs="<<Nobs<<" for Nbkg "<<Nbkg<<"+"<<Eup_bkg<<"-"<<Edown_bkg<<". Returning "
