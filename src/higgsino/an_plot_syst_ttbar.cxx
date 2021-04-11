@@ -39,7 +39,7 @@ namespace{
   // string_options is split by comma. ex) option1,option2 
   // Use HigUtilities::is_in_string_options(string_options, "option2") to check if in string_options.
   string string_options = "makePies,plot_data_vs_mc,plot_isr,plot_kappa";
-  // plot_planes,plot_bins,plot_isrTrueb,plot_bCorrelation
+  // Other options: plot_planes,plot_bins,plot_isrTrueb,plot_bCorrelation
 }
 
 void combine_bins(vector<pair<string, NamedFunc> > & combined_bins, vector<pair<string, NamedFunc> > const & bins_a,  vector<pair<string, NamedFunc> > const & bins_b) {

@@ -730,7 +730,7 @@ void GetOptions(int argc, char *argv[]){
   while(true){
     static struct option long_options[] = {
       {"single_thread", no_argument, 0, 's'},
-      {"unblind_signalregion", no_argument, 0, 0},
+      {"unblind_signalregion", no_argument, 0, 'a'},
       {"unblind", no_argument, 0, 'u'},
       {"sample", required_argument, 0, 0},
       {"year", required_argument, 0, 'y'},
@@ -753,6 +753,9 @@ void GetOptions(int argc, char *argv[]){
     case 'u':
       unblind = true;
       break;
+    case 'a':
+      unblind_signalregion = true;
+      break;
     case 'y':
       year_string = optarg;
       break;
@@ -763,8 +766,6 @@ void GetOptions(int argc, char *argv[]){
       optname = long_options[option_index].name;
       if(optname == "sample"){
         sample_name = optarg;
-      } else if (optname == "unblind_signalregion") {
-        unblind_signalregion = true;
       } else if (optname == "lepton_type") {
         lepton_type = optarg;
       } else{
