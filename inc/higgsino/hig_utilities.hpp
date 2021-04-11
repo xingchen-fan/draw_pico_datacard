@@ -50,6 +50,8 @@ namespace HigUtilities {
 
   int stringToVectorString(std::string const& inString, std::vector<std::string>& outputVector, std::string const & delimiter);
   int vectorStringToString(std::vector<std::string> const & inVector, std::string &outString, std::string const & delimiter);
+  // Splits string_option by comma
+  bool is_in_string_options(std::string const & string_options, std::string const & option);
   std::string removeSpaces(std::string inString);
   std::string nom2sys_string(std::string nom_string, std::string sys_idx);
   std::vector<std::pair<std::string, std::string>> nom2sys_bins(std::vector<std::pair<std::string, std::string>> sample_bins, std::string sys_idx);

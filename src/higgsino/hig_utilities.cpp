@@ -53,6 +53,11 @@ namespace HigUtilities {
     }
     return 0;
   }
+  bool is_in_string_options(std::string const & string_options, std::string const & option) {
+    std::vector<std::string> result;
+    stringToVectorString(string_options, result, ",");
+    return result.end() != std::find(result.begin(), result.end(), option);
+  }
   
   int vectorStringToString(std::vector<std::string> const & inVector, std::string &outString, std::string const & delimiter){
     if (inVector.size()==0) {
