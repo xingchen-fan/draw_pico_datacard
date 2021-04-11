@@ -39,6 +39,7 @@ using namespace Higfuncs;
 namespace{
   bool single_thread = false;
   string year_string = "2016";
+  bool do_met_plots = true;
   bool do_kinematic_plots = true;
   bool do_nminusone_plots = true;
   bool do_cutflow = true;
@@ -345,12 +346,14 @@ int main(int argc, char *argv[]){
   // 2b3b4b 
 
   //pm.Push<Table>("FixName:selection__search_pies__2b3b4b_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved, 0, 0, weight)}), search_procs, true, true, true);
-  //pm.Push<Hist1D>(Axis(14, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}),
-  //  base_filters&&search_resolved,
-  //  search_signal_procs, plt_log_shapes_info).Weight(weight_notrgeff).Tag("FixName:selection__search_met_signal").LuminosityTag(total_luminosity_string);
-  //pm.Push<Hist1D>(Axis(14, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}),
-  //  base_filters&&search_resolved,
-  //  search_procs, plt_log).Weight(weight).Tag("FixName:selection__search_met").LuminosityTag(total_luminosity_string);
+  if (do_met_plots) {
+    pm.Push<Hist1D>(Axis(14, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}),
+      base_filters&&search_resolved,
+      search_signal_procs, plt_log_shapes_info).Weight(weight_notrgeff).Tag("FixName:selection__search_met_signal").LuminosityTag(total_luminosity_string);
+    pm.Push<Hist1D>(Axis(14, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}),
+      base_filters&&search_resolved,
+      search_procs, plt_log).Weight(weight).Tag("FixName:selection__search_met").LuminosityTag(total_luminosity_string);
+  }
 
   if (do_kinematic_plots) {
     //kinematic variables nb type and shape plots
@@ -427,7 +430,7 @@ int main(int argc, char *argv[]){
         if (plot_type_idx == 2 && require_nb4==1) {
           //right now only make linear nb=4 plots
 
-          pm.Push<Hist1D>(Axis(40, 150, 800, "met", "MET [GeV]", {200, 300, 450}),
+          pm.Push<Hist1D>(Axis(40, 150, 800, "met", "MET [GeV]", {200, 300, 400}),
             sr_baseline && nb_cut,
             search_procs, plt_type).Weight(mixed_model_weight).Tag("FixName:selection__nminus1_met_"+nb_desc+plt_type_string+"_"+year_string).LuminosityTag(total_luminosity_string);
 
@@ -559,47 +562,48 @@ int main(int argc, char *argv[]){
 
   //generate pie-charts
 
-  ////// 2b (met: 150, 200, 300, 400) low drmax
-  //pm.Push<Table>("FixName:selection__search_pies__2b_met150_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>150 &&met<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //pm.Push<Table>("FixName:selection__search_pies__2b_met200_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>200 &&met<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //pm.Push<Table>("FixName:selection__search_pies__2b_met300_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>300 &&met<=400 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //pm.Push<Table>("FixName:selection__search_pies__2b_met400_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>400            &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //// 3b (met: 150, 200, 300, 400) low drmax
-  //pm.Push<Table>("FixName:selection__search_pies__3b_met150_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>150 &&met<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //pm.Push<Table>("FixName:selection__search_pies__3b_met200_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>200 &&met<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //pm.Push<Table>("FixName:selection__search_pies__3b_met300_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>300 &&met<=400 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //pm.Push<Table>("FixName:selection__search_pies__3b_met400_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>400            &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //// 4b (met: 150, 200, 300, 400) low drmax
-  //pm.Push<Table>("FixName:selection__search_pies__4b_met150_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>150 &&met<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //pm.Push<Table>("FixName:selection__search_pies__4b_met200_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>200 &&met<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //pm.Push<Table>("FixName:selection__search_pies__4b_met300_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>300 &&met<=400 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //pm.Push<Table>("FixName:selection__search_pies__4b_met400_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>400            &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //// 2b (met: 150, 200, 300, 400) high drmax
-  //pm.Push<Table>("FixName:selection__search_pies__2b_met150_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>150 &&met<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //pm.Push<Table>("FixName:selection__search_pies__2b_met200_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>200 &&met<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //pm.Push<Table>("FixName:selection__search_pies__2b_met300_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>300 &&met<=400 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //pm.Push<Table>("FixName:selection__search_pies__2b_met400_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>400            &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //// 3b (met: 150, 200, 300, 400) high drmax
-  //pm.Push<Table>("FixName:selection__search_pies__3b_met150_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>150 &&met<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //pm.Push<Table>("FixName:selection__search_pies__3b_met200_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>200 &&met<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //pm.Push<Table>("FixName:selection__search_pies__3b_met300_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>300 &&met<=400 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //pm.Push<Table>("FixName:selection__search_pies__3b_met400_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>400            &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //// 4b (met: 150, 200, 300, 400) high drmax
-  //pm.Push<Table>("FixName:selection__search_pies__4b_met150_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>150 &&met<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //pm.Push<Table>("FixName:selection__search_pies__4b_met200_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>200 &&met<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //pm.Push<Table>("FixName:selection__search_pies__4b_met300_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>300 &&met<=400 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //pm.Push<Table>("FixName:selection__search_pies__4b_met400_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>400            &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
-
-  //// 2b3b4b (met: 150, 200, 300, 400) low drmax
-  //pm.Push<Table>("FixName:selection__search_pies__2b3b4b_met150_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"nbt>=2&&met>150 &&met<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //pm.Push<Table>("FixName:selection__search_pies__2b3b4b_met200_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"nbt>=2&&met>200 &&met<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //pm.Push<Table>("FixName:selection__search_pies__2b3b4b_met300_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"nbt>=2&&met>300 &&met<=400 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //pm.Push<Table>("FixName:selection__search_pies__2b3b4b_met400_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"nbt>=2&&met>400            &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //// 2b3b4b (met: 150, 200, 300, 400) high drmax
-  //pm.Push<Table>("FixName:selection__search_pies__2b3b4b_met150_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"nbt>=2&&met>150 &&met<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //pm.Push<Table>("FixName:selection__search_pies__2b3b4b_met200_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"nbt>=2&&met>200 &&met<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //pm.Push<Table>("FixName:selection__search_pies__2b3b4b_met300_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"nbt>=2&&met>300 &&met<=400 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
-  //pm.Push<Table>("FixName:selection__search_pies__2b3b4b_met400_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"nbt>=2&&met>400            &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+  if (do_piecharts) {
+    //// 2b (met: 150, 200, 300, 400) low drmax
+    pm.Push<Table>("FixName:selection__search_pies__2b_met150_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>150 &&met<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+    pm.Push<Table>("FixName:selection__search_pies__2b_met200_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>200 &&met<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+    pm.Push<Table>("FixName:selection__search_pies__2b_met300_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>300 &&met<=400 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+    pm.Push<Table>("FixName:selection__search_pies__2b_met400_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>400            &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+    // 3b (met: 150, 200, 300, 400) low drmax
+    pm.Push<Table>("FixName:selection__search_pies__3b_met150_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>150 &&met<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+    pm.Push<Table>("FixName:selection__search_pies__3b_met200_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>200 &&met<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+    pm.Push<Table>("FixName:selection__search_pies__3b_met300_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>300 &&met<=400 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+    pm.Push<Table>("FixName:selection__search_pies__3b_met400_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>400            &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+    // 4b (met: 150, 200, 300, 400) low drmax
+    pm.Push<Table>("FixName:selection__search_pies__4b_met150_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>150 &&met<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+    pm.Push<Table>("FixName:selection__search_pies__4b_met200_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>200 &&met<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+    pm.Push<Table>("FixName:selection__search_pies__4b_met300_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>300 &&met<=400 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+    pm.Push<Table>("FixName:selection__search_pies__4b_met400_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>400            &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+    // 2b (met: 150, 200, 300, 400) high drmax
+    pm.Push<Table>("FixName:selection__search_pies__2b_met150_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>150 &&met<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+    pm.Push<Table>("FixName:selection__search_pies__2b_met200_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>200 &&met<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+    pm.Push<Table>("FixName:selection__search_pies__2b_met300_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>300 &&met<=400 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+    pm.Push<Table>("FixName:selection__search_pies__2b_met400_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt==2&&nbm==2)&&met>400            &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+    // 3b (met: 150, 200, 300, 400) high drmax
+    pm.Push<Table>("FixName:selection__search_pies__3b_met150_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>150 &&met<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+    pm.Push<Table>("FixName:selection__search_pies__3b_met200_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>200 &&met<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+    pm.Push<Table>("FixName:selection__search_pies__3b_met300_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>300 &&met<=400 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+    pm.Push<Table>("FixName:selection__search_pies__3b_met400_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm==3&&nbl==3)&&met>400            &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+    // 4b (met: 150, 200, 300, 400) high drmax
+    pm.Push<Table>("FixName:selection__search_pies__4b_met150_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>150 &&met<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+    pm.Push<Table>("FixName:selection__search_pies__4b_met200_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>200 &&met<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+    pm.Push<Table>("FixName:selection__search_pies__4b_met300_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>300 &&met<=400 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+    pm.Push<Table>("FixName:selection__search_pies__4b_met400_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)&&met>400            &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+    // 2b3b4b (met: 150, 200, 300, 400) low drmax
+    pm.Push<Table>("FixName:selection__search_pies__2b3b4b_met150_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"nbt>=2&&met>150 &&met<=200 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+    pm.Push<Table>("FixName:selection__search_pies__2b3b4b_met200_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"nbt>=2&&met>200 &&met<=250 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+    pm.Push<Table>("FixName:selection__search_pies__2b3b4b_met300_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"nbt>=2&&met>300 &&met<=400 &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+    pm.Push<Table>("FixName:selection__search_pies__2b3b4b_met400_lowdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"nbt>=2&&met>400            &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), search_procs, true, true, true);
+    // 2b3b4b (met: 150, 200, 300, 400) high drmax
+    pm.Push<Table>("FixName:selection__search_pies__2b3b4b_met150_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"nbt>=2&&met>150 &&met<=200 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+    pm.Push<Table>("FixName:selection__search_pies__2b3b4b_met200_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"nbt>=2&&met>200 &&met<=250 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+    pm.Push<Table>("FixName:selection__search_pies__2b3b4b_met300_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"nbt>=2&&met>300 &&met<=400 &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+    pm.Push<Table>("FixName:selection__search_pies__2b3b4b_met400_highdrmax_"+year_string  , vector<TableRow> ({TableRow("", base_filters&&search_resolved&&"nbt>=2&&met>400            &&hig_cand_drmax[0]>1.1", 0, 0, weight)}), search_procs, true, true, true);
+  }
 
   if (do_srambb_plots) {
     //SR <m> plots
@@ -646,6 +650,7 @@ void GetOptions(int argc, char *argv[]){
       {"nocutflow", no_argument, 0, 0},
       {"nopiecharts", no_argument, 0, 0},
       {"nosram", no_argument, 0, 0},
+      {"nomet", no_argument, 0, 0},
       {0, 0, 0, 0}
     };
 
@@ -666,6 +671,8 @@ void GetOptions(int argc, char *argv[]){
         year_string = optarg;
       } else if (optname == "unblind") {
         unblind = true;
+      } else if (optname == "nomet") {
+        do_met_plots = false;
       } else if (optname == "nokinematic") {
         do_kinematic_plots = false;
       } else if (optname == "nonminusone") {

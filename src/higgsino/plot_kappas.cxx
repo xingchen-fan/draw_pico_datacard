@@ -314,10 +314,14 @@ int main(int argc, char *argv[]){
     scenarios = vector<string>();
     scenarios.push_back("syst_comp");
     weights.emplace("syst_comp", nom_wgt*Higfuncs::wgt_syst_comp);
-  } else if(alt_scen == "syst_trg_eff"){
+  } else if(alt_scen == "syst_trg_up"){
     scenarios = vector<string>();
-    scenarios.push_back("syst_trg_eff");
-    weights.emplace("syst_trg_eff", wgt_syst_trg_eff);
+    scenarios.push_back("syst_trg_up");
+    weights.emplace("syst_trg_up", nom_wgt/Higfuncs::eff_higtrig_run2*Higfuncs::eff_higtrig_run2_syst_up);
+  } else if(alt_scen == "syst_trg_down"){
+    scenarios = vector<string>();
+    scenarios.push_back("syst_trg_down");
+    weights.emplace("syst_trg_down", nom_wgt/Higfuncs::eff_higtrig_run2*Higfuncs::eff_higtrig_run2_syst_down);
   } else if(alt_scen == "syst_lowptleptrig"){
     scenarios = vector<string>();
     scenarios.push_back("syst_lowptleptrig");
