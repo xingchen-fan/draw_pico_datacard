@@ -46,7 +46,9 @@ namespace{
   bool no_mc = false;
   // string_options is split by comma. ex) option1,option2 
   // Use HigUtilities::is_in_string_options(string_options, "option2") to check if in string_options.
-  // Options: split_mc_in_detail,veto_events_with_list,make_event_list,make_event_list_for_excess
+  // Options: split_mc_in_detail,
+  // Options: veto_events_with_list,
+  // Options: make_event_list,make_event_list_for_excess
   // Options: process_event_list_data,process_event_list_mc,process_event_list_signal
   string string_options = "";
 }
@@ -334,7 +336,7 @@ void addMultipleSignalProcesses(string const & processName_postfix, NamedFunc co
   }
   if (!no_t5hh) {
     vector<string> sigm_t5hh = {"*mGluino-1000_mChi-950_mLSP-1_*.root","*mGluino-1600_mChi-1550_mLSP-1_*.root","*mGluino-2000_mChi-1950_mLSP-1_*.root"};
-    vector<string> model_names = {"T5HH(1000_0)","T5HH(1600_0)","T5HH(2000_0)"};
+    vector<string> model_names = {"T5HH(1000,0)","T5HH(1600,0)","T5HH(2000,0)"};
     //vector<string> sigm_t5hh = {"*mGluino-1200_mChi-1150_mLSP-400_*.root","*mGluino-1600_mChi-1550_mLSP-1_*.root","*mGluino-2000_mChi-1950_mLSP-1_*.root"};
     //vector<string> model_names = {"T5HH(1200_400)","T5HH(1600_0)","T5HH(2000_0)"};
     for (unsigned isig(0); isig<sigm_t5hh.size(); isig++){
@@ -360,7 +362,7 @@ void addDataProcess(string const & processName_postfix, NamedFunc const & additi
     else if (sample == "qcd") triggers_data = met_triggers;
     else  triggers_data = met_triggers;
 
-    addProcess("DATA"+processName_postfix, Process::Type::data, kBlack, triggers_data && additionalCut,
+    addProcess("Data"+processName_postfix, Process::Type::data, kBlack, triggers_data && additionalCut,
       nanoAodFolder, production, "data", "", sample, year_string,
       procs);
 }
@@ -377,10 +379,6 @@ int main(int argc, char *argv[]){
   // fileTag: (tt, single_t, zjets, wjets, qcd, other, all), (all), (200_1, 600_1, 950_1, ...)
   // sample: search/ttbar/zll/qcd
   // year_string: 2016/2017/2018/run2
-  //string production_a = "higgsino_eldorado"; string nanoAodFolder_a = "/net/cms29/cms29r0/pico/NanoAODv5";
-  //string higgsino_version = "v3";
-  string higgsino_version = "";
-
   string production_a = "higgsino_klamath"; 
   string nanoAodFolder_a = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7";
   string sample_a = sample_name;

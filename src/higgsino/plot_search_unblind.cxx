@@ -517,8 +517,6 @@ int main(int argc, char *argv[]){
   NamedFunc extra_cut = "1";
   NamedFunc signalReject = "njet>=4&&njet<=5&&!(((nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))&&(hig_cand_am[0]>100&&hig_cand_am[0]<=140))";
   if (unblind && !unblind_signalregion) extra_cut = signalReject;
-  
-
   bool plot_in_btags = HigUtilities::is_in_string_options(string_options, "plot_in_btags");
   if (plot_in_btags) {
     // drmax; 2b, no-drmax cut [search]
