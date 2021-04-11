@@ -7,6 +7,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include <ctime>
 #include <iomanip>  // setw
@@ -50,6 +51,7 @@
 
 using std::ifstream;
 using std::ofstream;
+using std::stringstream;
 using std::string;
 using std::vector;
 using std::cout;
@@ -65,7 +67,7 @@ using std::get;
 namespace{
   bool split_bkg = true;
   bool do_signal = true;
-  bool do_zbi = false;
+  bool do_zbi = true;
   bool do_incl_met = true;
   bool do_bin_drmax = true;
   bool do_old_bin = false;
@@ -73,7 +75,7 @@ namespace{
   bool do_highnb = false;
   bool do_midnb = false;
   bool unblind = false;
-  int digits_table = 1;
+  int digits_table = 2;
   TString sample = "search";
   string alt_scen = "mc_as_data"; //e.g. "mc", "data", "mc_as_data" or any systematic defined in sys_weights.cfg or in the defining scenarios section below
   float lumi=1.;
@@ -83,6 +85,10 @@ namespace{
   vector<vector<float>> syst_values;
   string sys_wgts_file = "txt/sys_weights.cfg";
   string year_string = "2016,2017,2018";
+  // string_options is split by comma. ex) option1,option2 
+  // Use HigUtilities::is_in_string_options(string_options, "option2") to check if in string_options.
+  // Options: use_old_trigger,split_ttbar_met,save_entries_weights_to_file,print_entries_weights
+  string string_options = "";
 }
 
 struct abcd_def{
@@ -103,7 +109,8 @@ vector<vector<float> > findPreds(abcd_def &abcd, vector<vector<GammaParams> > &a
                                  vector<vector<vector<float> > > &kappas, 
                                  vector<vector<vector<float> > > &kappas_mm, 
                                  vector<vector<vector<float> > > &kmcdat, 
-                                 vector<vector<vector<float> > > &preds);
+                                 vector<vector<vector<float> > > &preds, bool saveData=false);
+
 
 void GetOptions(int argc, char *argv[]);
 
@@ -136,20 +143,9 @@ int main(int argc, char *argv[]){
 
   string higgsino_version = "";
   // trigger_version: 0: old, 1: new
-  int trigger_version = 1;
+  int trigger_version = !HigUtilities::is_in_string_options(string_options, "use_old_trigger");
 
-  //string base_dir(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_eldorado/");
-  //string base_dir("/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/");
-  //string base_dir(string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt"+higgsino_version+"/");
-  //string base_dir(string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/");
   string base_dir(string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/");
-  //string base_dir("/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado");
-  //string mc_skim_dir("mc/merged_higmc_higloose/"), data_skim_dir("data/merged_higdata_higloose/"), sig_skim_dir("SMS-TChiHH_2D/merged_higmc_higloose/");
-  //if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "data/merged_higdata_higlep1T/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higlep1T/";} 
-  ////if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "data/skim_higlep1T/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higlep1T/";} 
-  //else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "data/merged_higdata_higlep2T/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higlep2T/";} 
-  ////else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "data/skim_higlep2T/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higlep2T/";} 
-  //else if (sample=="qcd") {mc_skim_dir = "mc/merged_higmc_higqcd/";  data_skim_dir = "data/merged_higdata_higqcd/"; sig_skim_dir = "SMS-TChiHH_2D/merged_higmc_higqcd/";} 
   string mc_skim_dir("mc/merged_higmc_higloose/"), data_skim_dir("data/merged_higdata_higloose/"), sig_skim_dir("SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higloose/");
   if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "data/merged_higdata_higlep1T/"; sig_skim_dir = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep1T/";} 
   else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "data/merged_higdata_higlep2T/"; sig_skim_dir = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep2T/";} 
@@ -184,16 +180,11 @@ int main(int argc, char *argv[]){
   TString c_hig_trim = "hig_cand_drmax[0]<2.2  && hig_cand_dm[0]<40 && hig_cand_am[0]<200";
   string baseline_s = "njet>=4 && njet<=5";
   if (sample=="search") baseline_s += " && nvlep==0 && ntk==0 && !low_dphi_met &&"+c_hig_trim;
-  //if (sample=="search") baseline_s += " && nvlep==0 && ntk>=1 && !low_dphi_met &&"+c_hig_trim;
   else if (sample=="ttbar") baseline_s += " && nlep==1 && mt<100 &&"+c_hig_trim;
   else if (sample=="zll") baseline_s += " && nlep==2 && met<50 &&"+c_hig_trim;
   else if (sample=="qcd") baseline_s += " && nvlep==0 && ntk==0 && low_dphi_met &&"+c_hig_trim;
 
-  //NamedFunc baseline = baseline_s && "stitch && pass && met/mht<2 && met/met_calo<2";
-  //NamedFunc baseline = baseline_s && "stitch && pass && weight<1.5";
-  //baseline = baseline && Functions::hem_veto;
   NamedFunc baseline = baseline_s; 
-  //if (sample=="search") baseline = baseline && Higfuncs::old_final_pass_filters;
   if (sample=="search") baseline = baseline && Higfuncs::final_pass_filters;
   else if (sample=="ttbar") baseline = baseline && Higfuncs::final_ttbar_pass_filters && Higfuncs::lead_signal_lepton_pt>30;
   else if (sample=="zll") baseline = baseline && Higfuncs::final_zll_pass_filters;
@@ -208,7 +199,6 @@ int main(int argc, char *argv[]){
   vector<string> sigMasses;
   if (do_old_bin) sigMasses = {"225", "400", "700"};
   else sigMasses = {"175", "500", "950"};
-  //sigMasses = {"700", "725", "750"};
   vector<shared_ptr<Process> > proc_sigs;
   for (unsigned isig(0); isig<sigMasses.size(); isig++)
     proc_sigs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigMasses[isig]+",1)", Process::Type::signal, 1, 
@@ -264,12 +254,6 @@ int main(int argc, char *argv[]){
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Defining scenarios  //////////////////////////////////////////
-  // NamedFunc nom_wgt = "w_lumi*w_isr"*HigUtilities::w_CNToN1N2*Higfuncs::w_years*Higfuncs::eff_higtrig;//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
-  //NamedFunc nom_wgt = "w_lumi*w_isr"*Higfuncs::w_years*Higfuncs::eff_higtrig;//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
-  //NamedFunc nom_wgt = "weight"*Higfuncs::w_years*Higfuncs::eff_higtrig_run2;//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
-  //NamedFunc nom_wgt = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Functions::w_pileup;
-  //NamedFunc nom_wgt = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
-  //NamedFunc nom_wgt = Higfuncs::final_weight;
   NamedFunc nom_wgt = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Functions::w_pileup;
   NamedFunc wgt_syst_trg_eff = "weight"*Higfuncs::w_years*Functions::w_pileup;
   if (trigger_version == 0) nom_wgt = "weight"*Higfuncs::eff_higtrig_run2_v0*Higfuncs::w_years*Functions::w_pileup;
@@ -277,7 +261,6 @@ int main(int argc, char *argv[]){
   vector<string> scenarios;
   map<string, NamedFunc> weights;
   weights.emplace("nominal", nom_wgt);
-  //weights.emplace("nominal", wgt_syst_trg_eff);
   if(alt_scen == "data"){
     scenarios = vector<string>{"data"};
   } else if(alt_scen == "bctag"){ 
@@ -338,6 +321,7 @@ int main(int argc, char *argv[]){
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Defining binning    //////////////////////////////////////////
+  bool split_ttbar_met = HigUtilities::is_in_string_options(string_options, "split_ttbar_met");
   vector<TString> metcuts;
   string metdef = "met";
   if (sample=="zll") metdef = "ll_pt[0]";
@@ -360,21 +344,26 @@ int main(int argc, char *argv[]){
     metcuts.push_back(metdef+">200&&"+metdef+"<=300");
     metcuts.push_back(metdef+">300");
   } else if (sample=="ttbar") {
-    metcuts.push_back(metdef+">0&&"+metdef+"<=75");
-    metcuts.push_back(metdef+">75&&"+metdef+"<=150");
-    //metcuts.push_back(metdef+">150");
-
-    //metcuts.push_back(metdef+">150&&"+metdef+"<=200");
-    //metcuts.push_back(metdef+">200"+metdef+"<=300");
-    //metcuts.push_back(metdef+">300");
-
-    metcuts.push_back(metdef+">150&&"+metdef+"<=200");
-    metcuts.push_back(metdef+">200");
+    if (split_ttbar_met) {
+      metcuts.push_back(metdef+">0&&"+metdef+"<=75");
+      metcuts.push_back(metdef+">75&&"+metdef+"<=150");
+      metcuts.push_back(metdef+">150&&"+metdef+"<=200");
+      metcuts.push_back(metdef+">200&&"+metdef+"<=300");
+      metcuts.push_back(metdef+">300");
+    } else {
+      metcuts.push_back(metdef+">0&&"+metdef+"<=75");
+      metcuts.push_back(metdef+">75&&"+metdef+"<=150");
+      metcuts.push_back(metdef+">150");
+    }
   }
   if (do_incl_met) {
     if (sample=="qcd" || sample=="search") { // add an inclusive bin
       metcuts.push_back(metdef+">150");
-    } else if (sample=="ttbar" || sample=="zll"){
+    } else if (sample=="ttbar" ) {
+      if (!split_ttbar_met) {
+        metcuts.push_back(metdef+">0");
+      }
+    } else if (sample=="zll"){
       metcuts.push_back(metdef+">0");
     }
   }
@@ -495,7 +484,8 @@ int main(int argc, char *argv[]){
     //// Calculating kappa and Total bkg prediction
     vector<vector<vector<float> > > kappas, kappas_mm, kmcdat, preds;
     if (debug) cout<<"Finding predictions"<<endl;
-    vector<vector<float> > yieldsPlane = findPreds(abcds[iscen], allyields, kappas, kappas_mm, kmcdat, preds);
+    bool save_entries_weights_to_file = HigUtilities::is_in_string_options(string_options, "save_entries_weights_to_file");
+    vector<vector<float> > yieldsPlane = findPreds(abcds[iscen], allyields, kappas, kappas_mm, kmcdat, preds, /*saveData*/ save_entries_weights_to_file);
 
     if (debug) cout<<"Making tables."<<endl;
     TString fullname = printTable(abcds[iscen], allyields, kappas, preds, yieldsPlane, proc_sigs, total_luminosity);
@@ -506,6 +496,7 @@ int main(int argc, char *argv[]){
     plotKappa(abcds[iscen], kappas, kappas_mm, kmcdat, total_luminosity);
 
     if (sample=="search" && alt_scen=="data") plotTable(abcds[iscen], allyields, kappas, preds, yieldsPlane, proc_sigs, total_luminosity);
+
   } // Loop over ABCD methods
 
   if(alt_scen=="data" || alt_scen=="mc_as_data" || alt_scen=="mc"){
@@ -538,8 +529,6 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
   TString ump = " & ";
 
   //// Setting output file name
-  //TString lumi_s = RoundNumber(lumi, 0);
-  //if (lumi_s=="1") lumi_s = "137";
   TString lumi_s = RoundNumber(total_luminosity, 0);
   if (lumi_s=="1") lumi_s = "137";
   TString outname = "tables/table_pred_"+sample+"_lumi"+lumi_s+(do_highnb?"_highnb":"")+(do_midnb?"_midnb":""); 
@@ -605,17 +594,17 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
         //// Printing Other, tt1l, tt2l
         if(split_bkg){
           size_t offset = (do_signal?Nsig:0);
-          out << ump <<RoundNumber(allyields[offset+2][index].Yield(), digits_table)
-              << ump <<RoundNumber(allyields[offset+3][index].Yield(), digits_table)
-              << ump <<RoundNumber(allyields[offset+4][index].Yield(), digits_table);
+          out << ump <<RoundNumber(allyields[offset+2][index].Yield(), digits_table) << "$\\pm$" << RoundNumber(allyields[offset+2][index].Uncertainty(), digits_table)
+              << ump <<RoundNumber(allyields[offset+3][index].Yield(), digits_table) << "$\\pm$" << RoundNumber(allyields[offset+3][index].Uncertainty(), digits_table)
+              << ump <<RoundNumber(allyields[offset+4][index].Yield(), digits_table) << "$\\pm$" << RoundNumber(allyields[offset+4][index].Uncertainty(), digits_table);
         }
         //// Printing kappa
         out<<ump;
-        if(iabcd==3) out  << "$"    << RoundNumber(kappas[iplane][ibin][0], digits_table+1)
-                          << "^{+"  << RoundNumber(kappas[iplane][ibin][1], digits_table+1)
-                          << "}_{-" << RoundNumber(kappas[iplane][ibin][2], digits_table+1) <<"}$ ";
+        if(iabcd==3) out  << "$"    << RoundNumber(kappas[iplane][ibin][0], digits_table)
+                          << "^{+"  << RoundNumber(kappas[iplane][ibin][1], digits_table)
+                          << "}_{-" << RoundNumber(kappas[iplane][ibin][2], digits_table) <<"}$ ";
         //// Printing MC Bkg yields
-        out << ump << RoundNumber(allyields[1][index].Yield(), digits_table);
+        out << ump << RoundNumber(allyields[1][index].Yield(), digits_table) << "$\\pm$" << RoundNumber(allyields[1][index].Uncertainty(), digits_table);
         //// Printing background predictions
         out << ump;
         if(iabcd==3) out << "$"    << RoundNumber(preds[iplane][ibin][0], digits_table)
@@ -1105,7 +1094,6 @@ void plotTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
   predHistLow->SetLineWidth(3);
   changePredToMinimum(predHistLow, 0.04);
 
-  //TH1D * dataHistLow = getTH1DFromAllyields(/*yieldIndex*/0, allyields, abcd, /*planeType*/1, /*blindSignalRegion*/true);
   TH1D * dataHistLow = getTH1DFromAllyields(/*yieldIndex*/0, allyields, abcd, /*planeType*/1, /*blindSignalRegion*/!unblind);
   dataHistLow->SetMarkerStyle(kFullCircle);
   changeHistToMinimum(dataHistLow, 0.04);
@@ -1138,7 +1126,6 @@ void plotTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
   predHistHigh->SetLineWidth(3);
   changePredToMinimum(predHistHigh, 0.04);
 
-  //TH1D * dataHistHigh = getTH1DFromAllyields(/*yieldIndex*/0, allyields, abcd, /*planeType*/2, /*blindSignalRegion*/true);
   TH1D * dataHistHigh = getTH1DFromAllyields(/*yieldIndex*/0, allyields, abcd, /*planeType*/2, /*blindSignalRegion*/!unblind);
   dataHistHigh->SetMarkerStyle(kFullCircle);
   changeHistToMinimum(dataHistHigh, 0.04);
@@ -1202,8 +1189,8 @@ void plotTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
   //ratioHist->SetMaximum(2);
   //ratioHist->SetMinimum(0);
   //ratioHist->Draw("pe");
-  cTest.SaveAs("cTest.pdf");
-  cout<<"open cTest.pdf"<<endl;
+  cTest.SaveAs("plots/unrolled_regions.pdf");
+  cout<<"open plots/unrolled_regions.pdf"<<endl;
   return;
 }
 
@@ -1211,12 +1198,29 @@ void plotTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
 // allyields: [0] data, [1] bkg, [2] T1tttt(NC), [3] T1tttt(C)
 vector<vector<float> > findPreds(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
                vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &kappas_mm, 
-               vector<vector<vector<float> > > &kmcdat, vector<vector<vector<float> > > &preds){
+               vector<vector<vector<float> > > &kmcdat, vector<vector<vector<float> > > &preds, bool saveData){
+
+  stringstream dataOutput;
+
   // Powers for kappa:   ({R1, R2, D3, R4})
   vector<float> pow_kappa({ 1, -1, -1,  1});
   // Powers for TotBkg pred:({R1, R2, D3,  R1, R2, D3, D4})
   vector<float> pow_totpred( {-1,  1,  1,   1, -1, -1,  1});
   vector<float> pow_datapred( {-1,  1,  1});
+
+  //// total normalization
+  //GammaParams Ndata_all, Nmc_all;
+  //for(size_t iplane=0; iplane < abcd.planecuts.size(); iplane++) {
+  //  //// Counting yields in plane so that we can normalize the total yield in the ABCD in MC to that in the data
+  //  for(size_t ibin=0; ibin < abcd.bincuts.size(); ibin++){
+  //    for(size_t iabcd=0; iabcd < 4; iabcd++){
+  //      size_t index = iplane*abcd.bincuts.size()*4 +ibin*4 + iabcd;
+  //      Ndata_all += allyields[0][index];
+  //      Nmc_all += allyields[1][index];
+  //    } // Loop over ABCD cuts
+  //  } // Loop over bin cuts
+  //}
+  //float dataMC_all = Ndata_all.Yield()/Nmc_all.Yield();
 
   float val(1.), valup(1.), valdown(1.);
   vector<vector<float> > yieldsPlane;
@@ -1232,10 +1236,9 @@ vector<vector<float> > findPreds(abcd_def &abcd, vector<vector<GammaParams> > &a
     } // Loop over bin cuts
     //cout<<"Plane "<<iplane<<": MC is "<<NmcPlane<<", data is "<<NdataPlane<<endl;
     float Nobs = NdataPlane.Yield(), Nmc = NmcPlane.Yield();
-    float dataMC = Nobs/Nmc;
+    float dataMC = Nobs/Nmc; // Different for each bin
     float edataMC = sqrt(pow(sqrt(Nobs)/Nmc,2) + pow(Nobs*NmcPlane.Uncertainty()/Nmc/Nmc,2));
     yieldsPlane.push_back({dataMC, edataMC});
-    
 
     kappas.push_back(vector<vector<float> >());
     kmcdat.push_back(vector<vector<float> >());
@@ -1266,8 +1269,23 @@ vector<vector<float> > findPreds(abcd_def &abcd, vector<vector<GammaParams> > &a
       //// Pushing MC yields for predictions and kappas
       for(size_t iabcd=0; iabcd < 4; iabcd++){
         size_t index = iplane*abcd.bincuts.size()*4 +ibin*4 + iabcd;
-        // Renormalizing MC to data
-        allyields[1][index] *= dataMC;
+        //// Renormalizing MC to data
+        //allyields[1][index] *= dataMC;
+        //if(split_bkg) {
+        //  size_t offset = (do_signal?Nsig:0);
+        //  allyields[offset+1][index] *= dataMC;
+        //  allyields[offset+2][index] *= dataMC;
+        //  allyields[offset+3][index] *= dataMC;
+        //}
+        //cout<<"dataMC: "<<dataMC<<" allyields[1]["<<index<<"]: "<<allyields[1][index]<<endl;
+        //// Renormalizing MC to data using global normalization
+        //allyields[1][index] *= dataMC_all;
+        //if(split_bkg) {
+        //  size_t offset = (do_signal?Nsig:0);
+        //  allyields[offset+1][index] *= dataMC_all;
+        //  allyields[offset+2][index] *= dataMC_all;
+        //  allyields[offset+3][index] *= dataMC_all;
+        //}
 
         // Yields for predictions
         entries.push_back(vector<float>());
@@ -1291,11 +1309,12 @@ vector<vector<float> > findPreds(abcd_def &abcd, vector<vector<GammaParams> > &a
         kkweights.back().push_back(1.);
 
       } // Loop over ABCD cuts
-      bool debug = true;
-      if (debug) cout<<"iplane: "<<iplane<<endl;
+      bool print_entries_weights = HigUtilities::is_in_string_options(string_options, "print_entries_weights");
+      if (print_entries_weights) cout<<"iplane: "<<iplane<<endl;
+      dataOutput << "iplane: "<<iplane<<" ibin: "<<ibin<<endl;
       // Throwing toys to find predictions and uncertainties
       val = calcKappa(entries, weights, pow_totpred, valdown, valup);
-      if (debug) {
+      if (print_entries_weights) {
         cout<<"Prediction"<<endl;
         for (unsigned index = 0; index < 7; ++index) cout<<"entries["<<index<<"]: "<<entries[index][0]<<" ";
         cout<<endl;
@@ -1313,26 +1332,37 @@ vector<vector<float> > findPreds(abcd_def &abcd, vector<vector<GammaParams> > &a
       //val = calcKappa(kentries, kweights, pow_kappa, valdown, valup, do_data, verbose, syst, do_plot, nrep, nSigma);
       if(valdown<0) valdown = 0;
       kappas[iplane].push_back(vector<float>({val, valup, valdown}));
-      if (debug) {
+      if (print_entries_weights) {
         cout<<"MC        : "<<kentries[0][0]<<" "<<kentries[1][0]<<" "<<kentries[2][0]<<" "<<kentries[3][0]<<endl;
         cout<<"MC weight : "<<kweights[0][0]<<" "<<kweights[1][0]<<" "<<kweights[2][0]<<" "<<kweights[3][0]<<endl;
         cout<<"MC kappa  : "<<val<<" "<<valup<<" "<<valdown<<endl;
       }
+      dataOutput << "MC eff. entries: "<<kentries[0][0]<<" "<<kentries[1][0]<<" "<<kentries[2][0]<<" "<<kentries[3][0]<<endl;
+      dataOutput << "MC eff. weights: "<<kweights[0][0]<<" "<<kweights[1][0]<<" "<<kweights[2][0]<<" "<<kweights[3][0]<<endl;
       // Throwing toys to find kappas and uncertainties
       val = calcKappa(kentries_mm, kweights_mm, pow_kappa, valdown, valup);
       if(valdown<0) valdown = 0;
       kappas_mm[iplane].push_back(vector<float>({val, valup, valdown}));
-      if (debug) {
+      if (print_entries_weights) {
         cout<<"Data        : "<<kentries_mm[0][0]<<" "<<kentries_mm[1][0]<<" "<<kentries_mm[2][0]<<" "<<kentries_mm[3][0]<<endl;
         cout<<"Data weight : "<<kweights_mm[0][0]<<" "<<kweights_mm[1][0]<<" "<<kweights_mm[2][0]<<" "<<kweights_mm[3][0]<<endl;
         cout<<"Data kappa  : "<<val<<" "<<valup<<" "<<valdown<<endl;
       }
+      dataOutput << "Data entries: "<<kentries_mm[0][0]<<" "<<kentries_mm[1][0]<<" "<<kentries_mm[2][0]<<" "<<kentries_mm[3][0]<<endl;
+      dataOutput << "Data weights: "<<kweights_mm[0][0]<<" "<<kweights_mm[1][0]<<" "<<kweights_mm[2][0]<<" "<<kweights_mm[3][0]<<endl;
       // Throwing toys to find kappas and uncertainties
       val = calcKappa(kkentries, kkweights, pow_kappa, valdown, valup);
       if(valdown<0) valdown = 0;
       kmcdat[iplane].push_back(vector<float>({val, valup, valdown}));
     } // Loop over bin cuts
   } // Loop over plane cuts
+
+  if (saveData) {
+    string data_filename = "counts_in_bins.txt";
+    ofstream data_file(data_filename);
+    data_file<<dataOutput.rdbuf()<<endl;
+    data_file.close();
+  }
 
   return yieldsPlane;
 } // findPreds
@@ -1349,13 +1379,14 @@ void GetOptions(int argc, char *argv[]){
       {"highnb", no_argument, 0, 0},          // Check QCD CR at 3b and 4b
       {"incl_drmax", no_argument, 0, 0},          
       {"old_bin", no_argument, 0, 0},          
-      {"year", required_argument, 0, 0},
+      {"year", required_argument, 0, 'y'},
+      {"string_options", required_argument, 0, 'o'},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "s:kdqu", long_options, &option_index);
+    opt = getopt_long(argc, argv, "s:kdquo:y:", long_options, &option_index);
     if(opt == -1) break;
 
     string optname;
@@ -1372,6 +1403,12 @@ void GetOptions(int argc, char *argv[]){
     case 'u':
       unblind = true;
       break;
+    case 'y':
+      year_string = optarg;
+      break;
+    case 'o':
+      string_options = optarg;
+      break;
     case 0:
       optname = long_options[option_index].name;
       if(optname == "scen"){
@@ -1380,8 +1417,6 @@ void GetOptions(int argc, char *argv[]){
         do_highnb = true;
       }else if(optname == "midnb"){
         do_midnb = true;
-      }else if(optname == "year"){
-        year_string = optarg;
       }else if(optname == "incl_drmax"){
         do_bin_drmax = false;
       }else if(optname == "old_bin"){
