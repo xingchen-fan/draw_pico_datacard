@@ -620,8 +620,10 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
           //// Printing Zbi significance
           if(do_zbi) { // "$"+RoundNumber(Significance( ),1)+"\\sigma$"
             out << ump;
-            if(iabcd==3) out << "$"+RoundNumber(Significance(allyields[0][index].Yield(), preds[iplane][ibin][0], 
-                                                  preds[iplane][ibin][1], preds[iplane][ibin][2]),1)+"\\sigma$";
+            //if(iabcd==3) out << "$"+RoundNumber(Significance(allyields[0][index].Yield(), preds[iplane][ibin][0], 
+            //                                      preds[iplane][ibin][1], preds[iplane][ibin][2]),1)+"\\sigma$";
+            if(iabcd==3) out << "$"+RoundNumber(utilities::to_significance(utilities::calculate_pvalue(allyields[0][index].Yield(), preds[iplane][ibin][0], 
+                                                  preds[iplane][ibin][1], preds[iplane][ibin][2])),1)+"\\sigma$";
           }
         }
         //// Printing signal yields
@@ -631,7 +633,8 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
             if(do_zbi){
               out << ump;
               if(iabcd==3) {
-                float signif = Significance(preds[iplane][ibin][0]+allyields[2+ind][index].Yield(),preds[iplane][ibin][0], preds[iplane][ibin][1], preds[iplane][ibin][2]);
+                //float signif = Significance(preds[iplane][ibin][0]+allyields[2+ind][index].Yield(),preds[iplane][ibin][0], preds[iplane][ibin][1], preds[iplane][ibin][2]);
+                float signif = utilities::to_significance(utilities::calculate_pvalue(preds[iplane][ibin][0]+allyields[2+ind][index].Yield(),preds[iplane][ibin][0], preds[iplane][ibin][1], preds[iplane][ibin][2]));
                 if (allyields[2+ind][index].Yield()>0.45 && signif>0.45) {
                   out<<"$"+RoundNumber(signif,1)+"\\sigma$";
                 } else {
