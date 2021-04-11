@@ -56,6 +56,20 @@ const NamedFunc min_jet_dphi("min_jet_dphi", [](const Baby &b) -> NamedFunc::Sca
   return min_dphi;
 });
 
+//requires all MC Higgs to decay to bb
+const NamedFunc htobb("htobb", [](const Baby &b) -> NamedFunc::ScalarType{
+  //if ((b.type() % 1000 != 107) && (b.type() % 1000 != 106)) return true; //non SUSY model
+  //int num_bs = 0;
+  for (unsigned int mc_idx(0); mc_idx < b.mc_id()->size(); mc_idx++) {
+    //if (abs(b.mc_id()->at(mc_idx)) == 5 && b.mc_mom()->at(mc_idx) == 25)
+    //  num_bs++;
+    if (abs(b.mc_id()->at(mc_idx)) != 5 && b.mc_mom()->at(mc_idx) == 25)
+      return false;
+  }
+  //if (num_bs == 4) return true;
+  return true;
+});
+
 int main(int argc, char *argv[])
 {
   gErrorIgnoreLevel=6000; // Turns off ROOT errors due to missing branches
@@ -251,7 +265,8 @@ int main(int argc, char *argv[])
   systematics_vector.push_back(make_pair(string("SignalMETFastSIM"),
       vector<NamedFunc>({})));
   systematics_vector.push_back(make_pair(string("SignalPU"),
-      vector<NamedFunc>({weight*"(npv<=20)", weight*"(npv>=21)"})));
+      vector<NamedFunc>({weight/Functions::w_pileup*Functions::w_syst_pileup_up,
+      weight/Functions::w_pileup*Functions::w_syst_pileup_down})));
   systematics_vector.push_back(make_pair(string("SignalScale"),
       vector<NamedFunc>({weight*"sys_murf[0]", weight*"sys_murf[1]", weight*"sys_murf[2]", 
       weight*"sys_murf[3]",weight*"sys_murf[5]",weight*"sys_murf[6]",weight*"sys_murf[7]",
@@ -329,10 +344,6 @@ int main(int argc, char *argv[])
     }
   }
   
-  map<string, TH1D> h_sig_npv;
-  TH1D* h_data_npv;
-  HigWriteDataCards::fill_npv_hists(pm, histInfo, sampleProcesses, h_sig_npv, &h_data_npv);
-
   // Calculate kappas from mc
   // kappas[xsigX_ysigY_metA_drmaxB]
   map<string, double> kappas;
@@ -361,11 +372,11 @@ int main(int argc, char *argv[])
     if (do_met_average) {
       HigWriteDataCards::setDataCardSignalBackground(process->name_, "signalAverageGenMet", mYields, sampleBins, tableValues);
       HigWriteDataCards::setDataCardSignalStatistics(process->name_, "signalAverageGenMet", mYields, sampleBins, tableValues);
-      HigWriteDataCards::setDataCardSignalSystematics(process->name_, "signalAverageGenMet", mYields, sampleBins, tableValues, systematics_vector, h_sig_npv, h_data_npv);
+      HigWriteDataCards::setDataCardSignalSystematics(process->name_, "signalAverageGenMet", mYields, sampleBins, tableValues, systematics_vector);
     } else {
       HigWriteDataCards::setDataCardSignalBackground(process->name_, "signal", mYields, sampleBins, tableValues);
       HigWriteDataCards::setDataCardSignalStatistics(process->name_, "signal", mYields, sampleBins, tableValues);      
-      HigWriteDataCards::setDataCardSignalSystematics(process->name_, "signal", mYields, sampleBins, tableValues, systematics_vector, h_sig_npv, h_data_npv);
+      HigWriteDataCards::setDataCardSignalSystematics(process->name_, "signal", mYields, sampleBins, tableValues, systematics_vector);
     }
     HigWriteDataCards::setDataCardControlSystematics(controlSystematics, sampleBins, tableValues);
     HigWriteDataCards::writeTableValues(tableValues,cardFile);
@@ -380,9 +391,6 @@ int main(int argc, char *argv[])
     //writeDataCardUncertainties()
     //writeDataCardParam()
   }
-
-  delete h_data_npv;
-  HigWriteDataCards::delete_hist_info(histInfo);
 
   time(&endtime); 
   cout<<endl<<"Took "<<difftime(endtime, begtime)<<" seconds"<<endl<<endl;
@@ -626,32 +634,10 @@ namespace HigWriteDataCards{
 
   void setDataCardSignalSystematics(string const & processName, string const & signalAverageGenMetTag, 
       map<string, pair<GammaParams, TableRow> > & mYields, vector<pair<string, string> > sampleBins, 
-      vector<vector<string> > & tableValues, vector<pair<string, vector<NamedFunc>>> systematics_vector,
-      map<string, TH1D> h_sig_npv, TH1D* h_data_npv)
+      vector<vector<string> > & tableValues, vector<pair<string, vector<NamedFunc>>> systematics_vector)
   {
 
     vector<string> row(2+2*sampleBins.size());
-
-    //get information from pileup histograms for pileup systematic
-    TH1D this_h_sig_npv = h_sig_npv[processName];
-    float avr_npv_highpu = 0.0;
-    float total_entries_highpu = 0.0;
-    float avr_npv_lowpu = 0.0;
-    float total_entries_lowpu = 0.0;
-    for (int npv_bin = 0; npv_bin < 20; npv_bin++) {
-      avr_npv_lowpu += this_h_sig_npv.GetBinContent(npv_bin+1)*static_cast<float>(npv_bin);
-      total_entries_lowpu += this_h_sig_npv.GetBinContent(npv_bin+1);
-    }
-    for (int npv_bin = 0; npv_bin < this_h_sig_npv.GetNbinsX(); npv_bin++) {
-      avr_npv_highpu += this_h_sig_npv.GetBinContent(npv_bin+1)*static_cast<float>(npv_bin);
-      total_entries_highpu += this_h_sig_npv.GetBinContent(npv_bin+1);
-    }
-    if (total_entries_lowpu > 0)
-      avr_npv_lowpu = avr_npv_lowpu/total_entries_lowpu;
-    if (total_entries_highpu > 0)
-      avr_npv_highpu = avr_npv_highpu/total_entries_highpu;
-    float total_entries_sig = this_h_sig_npv.Integral();
-    float total_entries_dat = h_data_npv->Integral();
 
     for (pair<string, vector<NamedFunc>> sys : systematics_vector) {
       setRow(row,"-");
@@ -681,30 +667,6 @@ namespace HigWriteDataCards{
           if (syst_value > 1.0) syst_value = 1.0;
           if (syst_value <= -1.0) syst_value = -0.99;
           //convention for sign
-          row[2+2*bin_idx] = to_string(syst_value+1.0);
-        }
-        else if (sys.first == "SignalPU") {
-          //this systematic only uses reco met
-          string label_prefix = processName + "_signal_";
-          string label_suffix = "_" + sampleBins[bin_idx].first;
-          float lowpu_cut_yield = mYields.at(label_prefix+sys.first+"0"+label_suffix).first.Yield();
-          float highpu_cut_yield = mYields.at(label_prefix+sys.first+"1"+label_suffix).first.Yield();
-          float lowpu_eff = lowpu_cut_yield/total_entries_lowpu;
-          float highpu_eff = highpu_cut_yield/total_entries_highpu;
-          float m = (highpu_eff-lowpu_eff)/(avr_npv_highpu-avr_npv_lowpu);
-          float b = (lowpu_eff*avr_npv_highpu-highpu_eff*avr_npv_lowpu)/(avr_npv_highpu-avr_npv_lowpu);
-          float eff_data = 0, eff_mc = 0;
-          for (int npv_bin = 0; npv_bin < h_data_npv->GetNbinsX(); npv_bin++) {
-            //compare linear fit
-            float fx = m*static_cast<float>(npv_bin)+b;
-            eff_data += fx*h_data_npv->GetBinContent(npv_bin+1);
-            eff_mc += fx*this_h_sig_npv.GetBinContent(npv_bin+1);
-          }
-          eff_data = eff_data/total_entries_dat;
-          eff_mc = eff_mc/total_entries_sig;
-          float syst_value = (eff_data-eff_mc)/eff_mc;
-          if (std::isnan(syst_value) || std::isinf(syst_value) || syst_value > 1.0) syst_value = 1.0;
-          if (syst_value <= -1.0) syst_value = -0.99;
           row[2+2*bin_idx] = to_string(syst_value+1.0);
         }
         else if (sys.first == "SignalScale") {

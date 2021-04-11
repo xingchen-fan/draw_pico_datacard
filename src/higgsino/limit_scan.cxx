@@ -83,12 +83,14 @@ void ReadPoints(vector<double> &vmx,
     double xsec, exsec;
     //xsec::higgsinoCrossSection(mglu, xsec, exsec);
     xsec::higgsino2DCrossSection(mglu, xsec, exsec);
+    if(Contains(model_, "T5HH")) xsec::gluinoCrossSection(mglu, xsec, exsec);
     // int factor(50), mlsp(pmy);
     // if((mglu%factor!=0 || mlsp%factor!=0) && mglu-mlsp!=225 && mlsp!=1450) continue;
     // if(mglu-mlsp==225 && mglu%factor!=0) continue;
     vmx.push_back(pmx);
     vmy.push_back(pmy);
     if(Contains(model_, "CN") || Contains(model_, "N1N2")) vxsec.push_back(xsec);
+    else if(Contains(model_, "T5HH")) vxsec.push_back(xsec);
     else vxsec.push_back(pxsec);
     vobs.push_back(pobs);
     vobsup.push_back(pobs/(1+pxsecunc));
@@ -281,6 +283,7 @@ void MakeLimitPlot(vector<double> vmx,
   TGraph2D gdown("", "Expected -1#sigma Limit", vdown.size(), &vmx.at(0), &vmy.at(0), &vdown.at(0));
 
   glim.SetMinimum(0.00001);
+  if (model_ == "T5HH") glim.SetMinimum(0.001);
   glim.SetMaximum(2);
 
   glim.SetNpx((2600.-800.)/12.5);
@@ -321,6 +324,7 @@ void MakeLimitPlot(vector<double> vmx,
   TGraph cexp = DrawContours(gexp, 2, 1, 5, num_smooth_, 1.);
   TGraph cobsup, cobsdown, cobs;
   if (unblind) {
+    std::cout << "DEBUG: unblinding" << std::endl;
     cobsup = DrawContours(gobsup, 1, 2, 5, num_smooth_);
     cobsdown = DrawContours(gobsdown, 1, 2, 5, num_smooth_);
     cobs = DrawContours(gobs, 1, 1, 5, num_smooth_, 1.);
@@ -345,8 +349,12 @@ void MakeLimitPlot(vector<double> vmx,
 
   gPad->Update();
   glim.GetZaxis()->SetTitleOffset(1.3);
-  glim.GetXaxis()->SetRangeUser(0,800);
-  glim.GetYaxis()->SetRangeUser(0,700);
+  glim.GetXaxis()->SetRangeUser(0,700);
+  glim.GetYaxis()->SetRangeUser(0,800);
+  if (model_=="T5HH") {
+    glim.GetXaxis()->SetRangeUser(1000,2600);
+    glim.GetYaxis()->SetRangeUser(0,1600);
+  }
 
   c.Print(("plots/"+filebase+"_"+tag+".pdf").c_str());
   cout<<"open "<<"plots/"+filebase+"_"+tag+".pdf"<<endl;
@@ -392,6 +400,9 @@ void GetParticleNames(string &xparticle, string &yparticle){
   }else if(model_=="T6ttWW"){
     xparticle = "sbottom";
     yparticle = "chargino";
+  } else if(model_=="T5HH"){
+    xparticle = "#tilde{g}";
+    yparticle = "#lower[-0.12]{#tilde{#chi}}#lower[0.2]{#scale[0.85]{^{0}}}#kern[-1.3]{#scale[0.85]{_{1}}}";
   }else{
     DBG(("Unknown model: "+model_));
     xparticle = "#tilde{g}";
@@ -416,6 +427,12 @@ TLatex GetModelLabel(double x, double y){
     TString xsoft= "X#lower[-0.2]{#scale[0.85]{_{soft}}}";
     //label = "pp #rightarrow "+chii+"#kern[0.7]{"+chij+"}  #rightarrow "+chi10+"#kern[0.3]{"+chi10+"} + "
     label = "pp #rightarrow "+chi30+"#kern[0.3]{"+chi20+"} #rightarrow HH#kern[0.3]{"+chi10+"}#kern[0.3]{"+chi10+"}";
+  }else if(model_=="T5HH") {
+    TString chi10= "#lower[-0.12]{#tilde{#chi}}#kern[+0.2]{#lower[0.2]{#scale[0.99]{^{0}}}}#kern[-1.3]{#scale[0.99]{_{1}}}";
+    TString chi20= "#lower[-0.12]{#tilde{#chi}}#kern[+0.2]{#lower[0.2]{#scale[0.99]{^{0}}}}#kern[-1.3]{#scale[0.99]{_{2}}}";
+    TString xsoft= "X#lower[-0.2]{#scale[0.85]{_{soft}}}";
+    //label = "pp #rightarrow "+chii+"#kern[0.7]{"+chij+"}  #rightarrow "+chi10+"#kern[0.3]{"+chi10+"} + "
+    label = "pp #rightarrow #tilde{g}#kern[0.3]{#tilde{g}}, #tilde{g} #rightarrow"+chi20+"#kern[0.3]{q}#kern[0.3]{#bar{q}}, "+chi20+" #rightarrow H#kern[0.3]{"+chi10+"}";
   }else{
     DBG(("Unknown model: "+model_));
     label = "";

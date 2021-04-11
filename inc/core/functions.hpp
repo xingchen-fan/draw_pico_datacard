@@ -16,6 +16,8 @@ namespace Functions{
   extern const NamedFunc SampleType;
   extern const NamedFunc ntrub;
   extern const NamedFunc w_pileup;
+  extern const NamedFunc w_syst_pileup_up;
+  extern const NamedFunc w_syst_pileup_down;
 
   bool IsGoodJet(const Baby &b, std::size_t ijet);
 

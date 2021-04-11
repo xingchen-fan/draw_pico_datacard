@@ -78,6 +78,7 @@ public:
   Hist1D & YAxisZoom(const double &yaxis_zoom);
   Hist1D & RatioTitle(const std::string &numerator,
                       const std::string &denominator);
+  Hist1D & DrawPlot(const bool &draw_plot);
 
   Axis xaxis_;//!<Specification of content: plotted variable, binning, etc.
   NamedFunc cut_;//!<Event selection
@@ -90,6 +91,7 @@ public:
   std::string ratio_numerator_;//!<Label for numerator in ratio plot
   std::string ratio_denominator_;//!<Label for denominator in ratio plot
   std::vector<PlotOpt> plot_options_;//!<Styles with which to draw plot
+  bool draw_plot_;//!<controls whether or not plot is drawn when figure->print is called
 
 private:
   std::vector<std::unique_ptr<SingleHist1D> > backgrounds_;//!<Background components of the figure

@@ -294,6 +294,7 @@ Hist1D::Hist1D(const Axis &xaxis, const NamedFunc &cut,
   ratio_numerator_(""),
   ratio_denominator_(""),
   plot_options_(plot_options),
+  draw_plot_(true),
   backgrounds_(),
   signals_(),
   datas_(),
@@ -349,6 +350,7 @@ Hist1D::Hist1D(const Axis &xaxis, const NamedFunc &cut,
 */
 void Hist1D::Print(double luminosity,
                    const string &subdir){
+  if (!draw_plot_) return;
   luminosity_ = luminosity;
   for(const auto &opt: plot_options_){
     this_opt_ = opt;
@@ -593,6 +595,11 @@ Hist1D & Hist1D::RatioTitle(const string &numerator,
                             const string &denominator){
   ratio_numerator_ = numerator;
   ratio_denominator_ = denominator;
+  return *this;
+}
+
+Hist1D & Hist1D::DrawPlot(const bool &draw_plot) {
+  draw_plot_ = draw_plot;
   return *this;
 }
 

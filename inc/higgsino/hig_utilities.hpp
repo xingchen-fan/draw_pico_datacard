@@ -36,6 +36,7 @@ namespace HigUtilities {
     //standard histogram parameters
     Axis *axis_;
     NamedFunc *cut_;
+    NamedFunc *weight_;
     PlotOpt *plot_opt_;
     // Index used by PlotMaker. Set in makePlots()
     int figure_index;
@@ -75,6 +76,7 @@ namespace HigUtilities {
   void parseYears(std::string years_string, std::set<int> & years);
   void findMassPoints(std::string signal_folder, std::vector<std::pair<std::string, std::string> > & mass_points);
   void filenameToMassPoint(std::string filename, std::string & mChi, std::string & mLSP);
+  void filenameToMassPoint(std::string filename, std::string & mGluino, std::string & mChi, std::string & mLSP);
 
   std::string setProcessName(std::string const & model, int const & mGluino, int const & mLSP);
   std::string setProcessNameLong(std::string const & model, int const & mGluino, int const & mLSP);
@@ -88,6 +90,7 @@ namespace HigUtilities {
   void setMcProcesses(std::set<int> years, std::map<std::string, std::string> samplePaths, NamedFunc filters, std::map<std::string, std::vector<std::shared_ptr<Process> > > & sampleProcesses);
   void setDataProcesses(std::set<int> years, std::map<std::string, std::string> samplePaths, NamedFunc filters, std::map<std::string, std::vector<std::shared_ptr<Process> > > & sampleProcesses);
   void setSignalProcesses(std::vector<std::pair<std::string, std::string> > massPoints, std::set<int> years, std::map<std::string, std::string> samplePaths, NamedFunc filters, std::map<std::string, std::vector<std::shared_ptr<Process> > > & sampleProcesses);
+  void setSignalProcessesT5HH(std::vector<std::pair<std::string, std::string> > massPoints, std::set<int> years, std::map<std::string, std::string> samplePaths, NamedFunc filters, std::map<std::string, std::vector<std::shared_ptr<Process> > > & sampleProcesses);
 
   void addBinCuts(std::vector<std::pair<std::string, std::string> > sampleBins, std::string baseline, NamedFunc weight, std::string tag, RowInformation & cutRows);
   void addBinCuts(std::vector<std::pair<std::string, std::string> > sampleBins, std::string baseline, NamedFunc weight, std::string tag, TString (*replaceFunc)(TString) ,RowInformation & cutRows);
