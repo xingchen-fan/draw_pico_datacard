@@ -929,8 +929,11 @@ namespace xsec{
   }
   
   void gluinoCrossSection(int glu_mass, double &xsec, double &xsec_unc) {
-    xsec = 0.5825*0.5825;
-    xsec_unc = 0.5825*0.5825;
+    //xsec = 0.5825*0.5825;
+    //xsec_unc = 0.5825*0.5825;
+    //temp fix for fullSIM, will make better later
+    xsec = 1.0;
+    xsec_unc = 1.0;
     if (glu_mass == 500) { xsec *= 33.8; xsec_unc *= 0.07869822485207102; return;}
     else if (glu_mass == 505) { xsec *= 31.9; xsec_unc *= 0.07899686520376176; return;}
     else if (glu_mass == 510) { xsec *= 30.1; xsec_unc *= 0.07906976744186046; return;}

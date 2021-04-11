@@ -56,6 +56,20 @@ const NamedFunc min_jet_dphi("min_jet_dphi", [](const Baby &b) -> NamedFunc::Sca
   return min_dphi;
 });
 
+//requires all MC Higgs to decay to bb
+const NamedFunc htobb("htobb", [](const Baby &b) -> NamedFunc::ScalarType{
+  //if ((b.type() % 1000 != 107) && (b.type() % 1000 != 106)) return true; //non SUSY model
+  //int num_bs = 0;
+  for (unsigned int mc_idx(0); mc_idx < b.mc_id()->size(); mc_idx++) {
+    //if (abs(b.mc_id()->at(mc_idx)) == 5 && b.mc_mom()->at(mc_idx) == 25)
+    //  num_bs++;
+    if (abs(b.mc_id()->at(mc_idx)) != 5 && b.mc_mom()->at(mc_idx) == 25)
+      return false;
+  }
+  //if (num_bs == 4) return true;
+  return true;
+});
+
 int main(int argc, char *argv[])
 {
   gErrorIgnoreLevel=6000; // Turns off ROOT errors due to missing branches

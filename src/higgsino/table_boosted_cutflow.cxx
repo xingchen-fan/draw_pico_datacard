@@ -197,22 +197,22 @@ int main(int argc, char *argv[]){
   // Set mc processes
   ////search_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X", Process::Type::background,colors("tt_1l"),
   ////                attach_folder(mc_base_folder, years, mc_skim_folder, mctags["tt"]),"stitch"));
-  //search_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X (#tau_{had}>0)", Process::Type::background,colors("tt_htau"),
-  //                attach_folder(mc_base_folder, years, mc_skim_folder, mctags["tt"]),"stitch&&ntrutauh>0"));
-  //search_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X (#tau_{had}=0)", Process::Type::background,colors("tt_1l"),
-  //                attach_folder(mc_base_folder, years, mc_skim_folder, mctags["tt"]),"stitch&&ntrutauh==0"));
+  search_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X (#tau_{had}>0)", Process::Type::background,colors("tt_htau"),
+                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["tt"]),"stitch&&ntrutauh>0"));
+  search_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X (#tau_{had}=0)", Process::Type::background,colors("tt_1l"),
+                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["tt"]),"stitch&&ntrutauh==0"));
   ////search_procs.push_back(Process::MakeShared<Baby_pico>("V+jets", Process::Type::background, kOrange+1,
   ////                attach_folder(mc_base_folder, years, mc_skim_folder,mctags["vjets"]),"stitch"));
-  //search_procs.push_back(Process::MakeShared<Baby_pico>("Z+jets", Process::Type::background, kOrange+1,
-  //                attach_folder(mc_base_folder, years, mc_skim_folder,mctags["zjets"]),"stitch"));
-  //search_procs.push_back(Process::MakeShared<Baby_pico>("W+jets", Process::Type::background, kGreen+1,
-  //                attach_folder(mc_base_folder, years, mc_skim_folder,mctags["wjets"]),"stitch"));
-  //search_procs.push_back(Process::MakeShared<Baby_pico>("Single t", Process::Type::background,colors("single_t"),
-  //                attach_folder(mc_base_folder, years, mc_skim_folder, mctags["single_t"]),"stitch"));
-  //search_procs.push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background, colors("other"),
-  //                attach_folder(mc_base_folder, years, mc_skim_folder, mctags["qcd"]),"stitch")); 
-  //search_procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGray+2,
-  //                attach_folder(mc_base_folder, years, mc_skim_folder, mctags["other"]),"stitch"));
+  search_procs.push_back(Process::MakeShared<Baby_pico>("Z+jets", Process::Type::background, kOrange+1,
+                  attach_folder(mc_base_folder, years, mc_skim_folder,mctags["zjets"]),"stitch"));
+  search_procs.push_back(Process::MakeShared<Baby_pico>("W+jets", Process::Type::background, kGreen+1,
+                  attach_folder(mc_base_folder, years, mc_skim_folder,mctags["wjets"]),"stitch"));
+  search_procs.push_back(Process::MakeShared<Baby_pico>("Single t", Process::Type::background,colors("single_t"),
+                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["single_t"]),"stitch"));
+  search_procs.push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background, colors("other"),
+                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["qcd"]),"stitch")); 
+  search_procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGray+2,
+                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["other"]),"stitch"));
 
   cutflow_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X", Process::Type::background,colors("tt_htau"),
                   attach_folder(mc_base_folder, years, mc_skim_folder, mctags["tt"]),"stitch"));
@@ -438,24 +438,28 @@ int main(int argc, char *argv[]){
 
   PlotMaker pm;
 
-  pm.Push<Table>("boo_cutflow_"+year_string, vector<TableRow>{
-  TableRow("$p_\\text{T}^\\text{miss}\\text{ and }H_\\text{T}^\\text{miss}>200\\text{ GeV}$, $N_{j}\\geq 1$, $N_{tk}=N_{l}=0$, high $\\Delta \\phi$", 
-    htobb && "njet>=1&&met>200&&mht>200&&ntk==0&&nvlep==0&&!low_dphi_met",0,0,Higfuncs::final_weight),
-  TableRow("filters", 
-    Higfuncs::pass_filters && htobb && "njet>=1&&met>200&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met",0,0,Higfuncs::final_weight),
-  TableRow("$p_\\text{T}^\\text{miss}>300$~GeV, $H_{T}>600$~GeV", 
-    Higfuncs::pass_filters && htobb && "njet>=1&&met>300&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met&&ht>600",0,0,Higfuncs::final_weight),
-  TableRow("$N_{Ak8j}\\geq 2$", 
-    Higfuncs::pass_filters && htobb && "njet>=1&&met>300&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met&&ht>600" && (nfatjet>=2),0,0,Higfuncs::final_weight),
-  TableRow("$p_{TAk8j1,2}>300$~GeV", 
-    Higfuncs::pass_filters && htobb && "njet>=1&&met>300&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met&&ht>600" && (nfatjet>=2) && fatjet_ptcut,0,0,Higfuncs::final_weight),
-  TableRow("$m_{sdAk8j1,2}\\in [60,260]$~GeV", 
-    Higfuncs::pass_filters && htobb && "njet>=1&&met>300&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met&&ht>600" && (nfatjet>=2) && fatjet_ptcut && fatjet_masscut_loose,0,0,Higfuncs::final_weight),
-  TableRow("$m_{sdAk8j1,2}\\in [95,145]$~GeV", 
-    Higfuncs::pass_filters && htobb && "njet>=1&&met>300&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met&&ht>600" && (nfatjet>=2) && fatjet_ptcut && fatjet_masscut_tight,0,0,Higfuncs::final_weight),
-  TableRow("$D_{bbAk8j1,2}>0.7$", 
-    Higfuncs::pass_filters && htobb && "njet>=1&&met>300&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met&&ht>600" && (nfatjet>=2) && fatjet_ptcut && fatjet_masscut_tight && fatjet_htagcut,0,0,Higfuncs::final_weight)
-  },cutflow_procs,false,true,false,true,false,true).LuminosityTag(total_luminosity_string);
+  //pm.Push<Table>("boo_cutflow_"+year_string, vector<TableRow>{
+  //TableRow("$p_\\text{T}^\\text{miss}\\text{ and }H_\\text{T}^\\text{miss}>200\\text{ GeV}$, $N_{j}\\geq 1$, $N_{tk}=N_{l}=0$, high $\\Delta \\phi$", 
+  //  htobb && "njet>=1&&met>200&&mht>200&&ntk==0&&nvlep==0&&!low_dphi_met",0,0,Higfuncs::final_weight),
+  //TableRow("filters", 
+  //  Higfuncs::pass_filters && htobb && "njet>=1&&met>200&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met",0,0,Higfuncs::final_weight),
+  //TableRow("$p_\\text{T}^\\text{miss}>300$~GeV, $H_{T}>600$~GeV", 
+  //  Higfuncs::pass_filters && htobb && "njet>=1&&met>300&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met&&ht>600",0,0,Higfuncs::final_weight),
+  //TableRow("$N_{Ak8j}\\geq 2$", 
+  //  Higfuncs::pass_filters && htobb && "njet>=1&&met>300&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met&&ht>600" && (nfatjet>=2),0,0,Higfuncs::final_weight),
+  //TableRow("$p_{TAk8j1,2}>300$~GeV", 
+  //  Higfuncs::pass_filters && htobb && "njet>=1&&met>300&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met&&ht>600" && (nfatjet>=2) && fatjet_ptcut,0,0,Higfuncs::final_weight),
+  //TableRow("$m_{sdAk8j1,2}\\in [60,260]$~GeV", 
+  //  Higfuncs::pass_filters && htobb && "njet>=1&&met>300&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met&&ht>600" && (nfatjet>=2) && fatjet_ptcut && fatjet_masscut_loose,0,0,Higfuncs::final_weight),
+  //TableRow("$m_{sdAk8j1,2}\\in [95,145]$~GeV", 
+  //  Higfuncs::pass_filters && htobb && "njet>=1&&met>300&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met&&ht>600" && (nfatjet>=2) && fatjet_ptcut && fatjet_masscut_tight,0,0,Higfuncs::final_weight),
+  //TableRow("$D_{bbAk8j1,2}>0.7$", 
+  //  Higfuncs::pass_filters && htobb && "njet>=1&&met>300&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met&&ht>600" && (nfatjet>=2) && fatjet_ptcut && fatjet_masscut_tight && fatjet_htagcut,0,0,Higfuncs::final_weight)
+  //},cutflow_procs,false,true,false,true,false,true).LuminosityTag(total_luminosity_string);
+
+  pm.Push<Table>("FixName:boo_baseline_pie"  , vector<TableRow> ({TableRow("", 
+      Higfuncs::pass_filters && "njet>=1&&met>300&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met&&ht>600" && (nfatjet>=2) && fatjet_ptcut && fatjet_masscut_loose,0,0,Higfuncs::final_weight)
+      }), search_procs, true, true, true);
 
   pm.multithreaded_ = !single_thread;
   pm.min_print_ = true;

@@ -55,6 +55,7 @@ namespace
   int priority = 1;
   bool is1D = true;
   int t5hh_range = 0;
+  bool do_fullsim = false;
 }
 
 const NamedFunc min_jet_dphi("min_jet_dphi", [](const Baby &b) -> NamedFunc::ScalarType{
@@ -276,6 +277,19 @@ const NamedFunc weight_ht_sideband("weight_ht_sideband", [](const Baby &b) -> Na
   return weight;
 });
 
+//requires all MC Higgs to decay to bb
+const NamedFunc htobb("htobb", [](const Baby &b) -> NamedFunc::ScalarType{
+  //if ((b.type() % 1000 != 107) && (b.type() % 1000 != 106)) return true; //non SUSY model
+  //int num_bs = 0;
+  for (unsigned int mc_idx(0); mc_idx < b.mc_id()->size(); mc_idx++) {
+    //if (abs(b.mc_id()->at(mc_idx)) == 5 && b.mc_mom()->at(mc_idx) == 25)
+    //  num_bs++;
+    if (abs(b.mc_id()->at(mc_idx)) != 5 && b.mc_mom()->at(mc_idx) == 25)
+      return false;
+  }
+  //if (num_bs == 4) return true;
+  return true;
+});
 
 int main(int argc, char *argv[])
 {
@@ -332,9 +346,16 @@ int main(int argc, char *argv[])
   samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2018/SMS-TChiHH_2D_fastSimJmeCorrection/skim_higsys/";
   samplePaths["data_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/data/merged_higdata_preselect/";
   if (higgsino_model=="T5HH") {
-    samplePaths["signal_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2016/SMS-T5qqqqZH_fastSimJmeCorrection/skim_higsys/";
-    samplePaths["signal_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2017/SMS-T5qqqqZH_fastSimJmeCorrection/skim_higsys/";
-    samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/SMS-T5qqqqZH_fastSimJmeCorrection/skim_higsys/";
+    if (do_fullsim) {
+      samplePaths["signal_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2016/SMS-T5qqqqZH_FullSimJmeVariations/skim_higsys/";
+      samplePaths["signal_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2017/SMS-T5qqqqZH_FullSimJmeVariations/skim_higsys/";
+      samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/SMS-T5qqqqZH_FullSimJmeVariations/skim_higsys/";
+    }
+    else {
+      samplePaths["signal_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2016/SMS-T5qqqqZH_fastSimJmeCorrection/skim_higsys/";
+      samplePaths["signal_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2017/SMS-T5qqqqZH_fastSimJmeCorrection/skim_higsys/";
+      samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/SMS-T5qqqqZH_fastSimJmeCorrection/skim_higsys/";
+    }
     //samplePaths["signal_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2016/SMS-T5qqqqZH_fastSimJmeCorrection/unskimmed/";
     //samplePaths["signal_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2017/SMS-T5qqqqZH_fastSimJmeCorrection/unskimmed/";
     //samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2018/SMS-T5qqqqZH_fastSimJmeCorrection/unskimmed/";
@@ -407,7 +428,7 @@ int main(int argc, char *argv[])
   NamedFunc met_triggers = Higfuncs::met_trigger;
   if(unblind) HigUtilities::setDataProcesses(years, samplePaths, filters&&met_triggers, sampleProcesses);
   if (higgsino_model=="T5HH") {
-    HigUtilities::setSignalProcessesT5HH(massPoints, years, samplePaths, filters, sampleProcesses);
+    HigUtilities::setSignalProcessesT5HH(massPoints, years, samplePaths, filters&&htobb, sampleProcesses);
   } else {
     HigUtilities::setSignalProcesses(massPoints, years, samplePaths, filters, sampleProcesses);
   }
@@ -1340,12 +1361,13 @@ namespace HigWriteDataCards{
         {"higgsino_model", required_argument, 0, 'm'},
         {"priority", required_argument, 0, 'r'},
         {"t5hhrange", required_argument, 0, 's'},
+        {"fullsim", no_argument, 0, 'f'},
         {0, 0, 0, 0}
       };
   
       char opt = -1;
       int option_index;
-      opt = getopt_long(argc, argv, "o:p:g:y:l:d:t:m:r:s:nu12", long_options, &option_index);
+      opt = getopt_long(argc, argv, "o:p:g:y:l:d:t:m:r:s:f:nu12", long_options, &option_index);
       if( opt == -1) break;
 
       string optname;
@@ -1359,6 +1381,7 @@ namespace HigWriteDataCards{
         case 'm': higgsino_model = optarg; break;
         case 'r': priority = atoi(optarg); break;
         case 's': t5hh_range = atoi(optarg); break;
+        case 'f': do_fullsim = true; break;
         case 'd': 
           dimensionFilePath = optarg; 
           if (!FileExists(dimensionFilePath)) 
