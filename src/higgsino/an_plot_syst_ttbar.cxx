@@ -39,7 +39,7 @@ namespace{
   // string_options is split by comma. ex) option1,option2 
   // Use HigUtilities::is_in_string_options(string_options, "option2") to check if in string_options.
   string string_options = "makePies,plot_data_vs_mc,plot_isr,plot_kappa";
-  // Other options: plot_planes,plot_bins,plot_isrTrueb,plot_bCorrelation
+  // Other options: plot_planes,plot_btags,plot_isrTrueb,plot_bCorrelation
 }
 
 void combine_bins(vector<pair<string, NamedFunc> > & combined_bins, vector<pair<string, NamedFunc> > const & bins_a,  vector<pair<string, NamedFunc> > const & bins_b) {
@@ -633,8 +633,8 @@ int main(int argc, char *argv[]){
     }
   }
 
-  bool plot_bins = HigUtilities::is_in_string_options(string_options, "plot_bins");
-  if (plot_bins && unblind) {
+  bool plot_btags = HigUtilities::is_in_string_options(string_options, "plot_btags");
+  if (plot_btags && unblind) {
     // Plot in bins
     vector<pair<string, NamedFunc> > mass_bins = {{"SDB","hig_cand_am[0]<=100||hig_cand_am[0]>140"},{"HIG","hig_cand_am[0]>100&&hig_cand_am[0]<=140"}};
     vector<pair<string, NamedFunc> > met_bins = {{"MET75", "met<=75"},{"75MET150","met>75&&met<=150"},{"150MET200","met>150&&met<=200"},{"200MET", "met>200"}};
@@ -648,6 +648,24 @@ int main(int argc, char *argv[]){
         base_filters&&ttbar_resolved&&bin.second, 
         ttbar_procs_trueB, plt_log).Weight(weight).Tag("FixName:syst__ttbar_btags_"+bin.first+"_"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
     }
+
+    torch::OrderedDict<string, NamedFunc> drmaxs;
+    drmaxs.insert("lowdrmax", "hig_cand_drmax[0]<=1.1");
+    drmaxs.insert("highdrmax", "hig_cand_drmax[0]>1.1");
+    // (all, 2b, 3b, 4b)
+    torch::OrderedDict<string, NamedFunc> btags;
+    btags.insert("2b", "nbt==2&&nbm==2");
+    btags.insert("3b", "nbt>=2&&nbm==3&&nbl==3");
+    btags.insert("4b", "nbt>=2&&nbm>=3&&nbl>=4");
+    for (auto const & drmax : drmaxs) {
+      for (auto const & btag : btags) {
+        // <m_bb> across true 0b, 1b, 2b, 3b, 4b for met>150
+        pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+          base_filters&&ttbar_resolved&&drmax.value()&&btag.value()&&"met>150",
+          ttbar_procs_trueB, plt_lin).Weight(weight).Tag("FixName:syst__ttbar_amjj_trueb01234_"+drmax.key()+"_"+btag.key()+"_met150").LuminosityTag(total_luminosity_string);
+      }
+    }
+
   }
 
   bool plot_isrTrueb = HigUtilities::is_in_string_options(string_options, "plot_isrTrueb");
@@ -677,10 +695,10 @@ int main(int argc, char *argv[]){
         pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
           base_filters&&ttbar_resolved&&drmax.value()&&btag.value(),
           ttbar_procs_trueB, plt_lin).Weight(weight).Tag("FixName:syst__ttbar_amjj_trueb01234_"+drmax.key()+"_"+btag.key()).LuminosityTag(total_luminosity_string);
-        // <m_bb> across true 0b, 1b, 2b, 3b, 4b for met>150
-        pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
-          base_filters&&ttbar_resolved&&drmax.value()&&btag.value()&&"met>150",
-          ttbar_procs_trueB, plt_lin).Weight(weight).Tag("FixName:syst__ttbar_amjj_trueb01234_"+drmax.key()+"_"+btag.key()+"_met150").LuminosityTag(total_luminosity_string);
+        //// <m_bb> across true 0b, 1b, 2b, 3b, 4b for met>150
+        //pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+        //  base_filters&&ttbar_resolved&&drmax.value()&&btag.value()&&"met>150",
+        //  ttbar_procs_trueB, plt_lin).Weight(weight).Tag("FixName:syst__ttbar_amjj_trueb01234_"+drmax.key()+"_"+btag.key()+"_met150").LuminosityTag(total_luminosity_string);
       }
     }
   }

@@ -87,7 +87,7 @@ namespace{
   string year_string = "2016,2017,2018";
   // string_options is split by comma. ex) option1,option2 
   // Use HigUtilities::is_in_string_options(string_options, "option2") to check if in string_options.
-  // Options: use_old_trigger,split_ttbar_met,save_entries_weights_to_file,print_entries_weights
+  // Options: use_old_trigger,split_ttbar_met,search_ttbar_same_bins,save_entries_weights_to_file,print_entries_weights
   string string_options = "";
 }
 
@@ -331,6 +331,10 @@ int main(int argc, char *argv[]){
       metcuts.push_back(metdef+">200&&"+metdef+"<=300");
       metcuts.push_back(metdef+">300&&"+metdef+"<=450");
       metcuts.push_back(metdef+">450");
+    } else if (HigUtilities::is_in_string_options(string_options, "search_ttbar_same_bins")) {
+      metcuts.push_back(metdef+">150&&"+metdef+"<=200");
+      metcuts.push_back(metdef+">200&&"+metdef+"<=300");
+      metcuts.push_back(metdef+">300");
     } else {
       metcuts.push_back(metdef+">150&&"+metdef+"<=200");
       metcuts.push_back(metdef+">200&&"+metdef+"<=300");
@@ -350,7 +354,11 @@ int main(int argc, char *argv[]){
       metcuts.push_back(metdef+">150&&"+metdef+"<=200");
       metcuts.push_back(metdef+">200&&"+metdef+"<=300");
       metcuts.push_back(metdef+">300");
-    } else {
+    } else if (HigUtilities::is_in_string_options(string_options, "search_ttbar_same_bins")) {
+      metcuts.push_back(metdef+">150&&"+metdef+"<=200");
+      metcuts.push_back(metdef+">200&&"+metdef+"<=300");
+      metcuts.push_back(metdef+">300");
+    }else {
       metcuts.push_back(metdef+">0&&"+metdef+"<=75");
       metcuts.push_back(metdef+">75&&"+metdef+"<=150");
       metcuts.push_back(metdef+">150");
@@ -360,7 +368,7 @@ int main(int argc, char *argv[]){
     if (sample=="qcd" || sample=="search") { // add an inclusive bin
       metcuts.push_back(metdef+">150");
     } else if (sample=="ttbar" ) {
-      if (!split_ttbar_met) {
+      if (!split_ttbar_met || !HigUtilities::is_in_string_options(string_options, "search_ttbar_same_bins")) {
         metcuts.push_back(metdef+">0");
       }
     } else if (sample=="zll"){
@@ -1076,7 +1084,7 @@ void plotTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
   TH1D * otherHistLow = getTH1DFromAllyields(/*yieldIndex*/5, allyields, abcd, /*planeType*/1);
   TH1D * vjetHistLow = getTH1DFromAllyields(/*yieldIndex*/6, allyields, abcd, /*planeType*/1);
   TH1D * ttxHistLow = getTH1DFromAllyields(/*yieldIndex*/7, allyields, abcd, /*planeType*/1);
-  THStack * bkgStackHistLow = new THStack("bkgStackLow", "Low #Delta R_{max}");
+  THStack * bkgStackHistLow = new THStack("bkgStackLow", "Low #Delta R_{max};Bin;Yield");
   otherHistLow->SetFillColor(kGray);
   bkgStackHistLow->Add(otherHistLow);
   vjetHistLow->SetFillColor(kOrange-4);
@@ -1095,11 +1103,11 @@ void plotTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
   predHistLow->SetMarkerColor(kRed);
   predHistLow->SetLineColor(kRed);
   predHistLow->SetLineWidth(3);
-  changePredToMinimum(predHistLow, 0.04);
+  changePredToMinimum(predHistLow, 0.03);
 
   TH1D * dataHistLow = getTH1DFromAllyields(/*yieldIndex*/0, allyields, abcd, /*planeType*/1, /*blindSignalRegion*/!unblind);
   dataHistLow->SetMarkerStyle(kFullCircle);
-  changeHistToMinimum(dataHistLow, 0.04);
+  changeHistToMinimum(dataHistLow, 0.03);
 
   ////
   TH1D * bkgHistHigh = getTH1DFromAllyields(/*yieldIndex*/1, allyields, abcd, /*planeType*/2);
@@ -1108,7 +1116,7 @@ void plotTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
   TH1D * otherHistHigh = getTH1DFromAllyields(/*yieldIndex*/5, allyields, abcd, /*planeType*/2);
   TH1D * vjetHistHigh = getTH1DFromAllyields(/*yieldIndex*/6, allyields, abcd, /*planeType*/2);
   TH1D * ttxHistHigh = getTH1DFromAllyields(/*yieldIndex*/7, allyields, abcd, /*planeType*/2);
-  THStack * bkgStackHistHigh = new THStack("bkgStackHigh", "High #Delta R_{max}");
+  THStack * bkgStackHistHigh = new THStack("bkgStackHigh", "High #Delta R_{max};Bin;Yield");
   otherHistHigh->SetFillColor(kGray);
   bkgStackHistHigh->Add(otherHistHigh);
   vjetHistHigh->SetFillColor(kOrange-4);
@@ -1127,7 +1135,7 @@ void plotTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
   predHistHigh->SetMarkerColor(kRed);
   predHistHigh->SetLineColor(kRed);
   predHistHigh->SetLineWidth(3);
-  changePredToMinimum(predHistHigh, 0.04);
+  changePredToMinimum(predHistHigh, 0.03);
 
   TH1D * dataHistHigh = getTH1DFromAllyields(/*yieldIndex*/0, allyields, abcd, /*planeType*/2, /*blindSignalRegion*/!unblind);
   dataHistHigh->SetMarkerStyle(kFullCircle);
