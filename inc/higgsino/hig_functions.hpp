@@ -101,6 +101,7 @@ namespace Higfuncs{
   extern const NamedFunc final_ttbar_pass_filters;
   extern const NamedFunc final_zll_pass_filters;
   extern const NamedFunc final_qcd_pass_filters;
+  extern const NamedFunc htobb;
 
   // weights
   extern const NamedFunc w_years;

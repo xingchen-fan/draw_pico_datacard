@@ -1669,10 +1669,10 @@ const NamedFunc hem_weight("hem_weight", [](const Baby & b) -> NamedFunc::Scalar
 const NamedFunc pass_filters("pass_filters", [](const Baby &b) -> NamedFunc::ScalarType{
   if (!b.pass_goodv() || !b.pass_hbhe() || !b.pass_hbheiso() || !b.pass_ecaldeadcell() || !b.pass_badpfmu() || !b.pass_muon_jet()) return false;
   if (b.type()/1000 == 0 && !b.pass_eebadsc()) return false; //only apply eebadsc fiter for data
-  if ((b.type()/1000 != 106) && (b.type()/1000 != 107) && !b.pass_cschalo_tight()) return false; //not for fastsim
+  if (!b.FastSim() && !b.pass_cschalo_tight()) return false; //not for fastsim
   if (!b.pass_low_neutral_jet()) return false;
   if (!b.pass_htratio_dphi_tight()) return false;
-  if ((b.type()/1000 == 106 || b.type()/1000 == 107)  && !b.pass_jets()) return false; //back to only for fastsim
+  if (b.FastSim() && !b.pass_jets()) return false; //back to only for fastsim
   //if (!b.pass_jets()) return false; //was modified
   if ((abs(b.SampleType())==2017 || abs(b.SampleType())==2018) && !Higfuncs::pass_ecalnoisejet.GetScalar(b)) return false; 
   if (!Higfuncs::pass_hemveto.GetScalar(b)) return false;
@@ -1712,11 +1712,24 @@ const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
 const NamedFunc final_weight = "weight"*eff_higtrig_run2*w_years*Functions::w_pileup;
 const NamedFunc final_weight_notrgeff = "weight"*w_years*Functions::w_pileup;
 
-
 const NamedFunc w_pileup_nosignal("w_pileup_nosignal",[](const Baby &b) -> NamedFunc::ScalarType{
   if ((b.type()/1000) == 106)  return 1.0;
   if ((b.type()/1000) == 107)  return 1.0;
   return Functions::w_pileup.GetScalar(b);
+});
+
+//requires all MC Higgs to decay to bb
+const NamedFunc htobb("htobb", [](const Baby &b) -> NamedFunc::ScalarType{
+  if ((b.type() / 1000 != 107) && (b.type() / 1000 != 106)) return true; //non SUSY model
+  //int num_bs = 0;
+  for (unsigned int mc_idx(0); mc_idx < b.mc_id()->size(); mc_idx++) {
+    //if (abs(b.mc_id()->at(mc_idx)) == 5 && b.mc_mom()->at(mc_idx) == 25)
+    //  num_bs++;
+    if (abs(b.mc_id()->at(mc_idx)) != 5 && b.mc_mom()->at(mc_idx) == 25)
+      return false;
+  }
+  //if (num_bs == 4) return true;
+  return true;
 });
 
 const NamedFunc jet_trigger = "HLT_PFJet500";

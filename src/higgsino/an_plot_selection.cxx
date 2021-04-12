@@ -101,13 +101,13 @@ int main(int argc, char *argv[]){
                          "njet>=4&&!low_dphi_met&&met>150&&"
                          "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40";
   NamedFunc sr_baseline_noqcd = filters&&
-                         "ntk==0&&nvlep==0&&met>150&&njet>=4&&njet<=5&&nbt>=2&&"
+                         "weight<1.5&&ntk==0&&nvlep==0&&met>150&&njet>=4&&njet<=5&&nbt>=2&&"
                          "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40";
   NamedFunc sr_baseline_nohig = filters&&
-                         "met/mht<2 && met/met_calo<2&&weight<1.5&&"
+                         "weight<1.5&&met/mht<2 && met/met_calo<2&&weight<1.5&&"
                          "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&nbt>=2";
   NamedFunc sr_baseline_onlynum = filters&&
-                         "ntk==0&&nvlep==0&&met>150&&njet>=4&&njet<=5&&nbt>=2";
+                         "weight<1.5&&ntk==0&&nvlep==0&&met>150&&njet>=4&&njet<=5&&nbt>=2";
   NamedFunc mixed_model_weight = script_utilities::mixed_model_weight;
   NamedFunc search_resolved = script_utilities::search_resolved;
   NamedFunc hig_nb = script_utilities::hig_nb;
@@ -156,7 +156,7 @@ int main(int argc, char *argv[]){
         .Tag("FixName:kinematicvars__signal_drmax_shapes_"+options.year_string)
         .LuminosityTag(total_luminosity_string);
     pm.Push<Hist1D>(Axis(20, 0, 4, "hig_cand_drmax[0]", "#Delta R_{max}", {2.2}),
-        Higfuncs::pass_filters && "njet>=4&&nbt>=2&&nbm>=3&&nbl>=4&&hig_cand_am[0]>=100&&hig_cand_am[0]<=140",
+        Higfuncs::pass_filters && "weight<1.5&&njet>=4&&nbt>=2&&nbm>=3&&nbl>=4&&hig_cand_am[0]>=100&&hig_cand_am[0]<=140",
         search_procs, plt_lin).Weight(mixed_model_weight)
         .Tag("FixName:kinematicvars__signalbackground_drmax_lin_"+options.year_string)
         .LuminosityTag(total_luminosity_string);

@@ -43,6 +43,7 @@ namespace{
   bool single_thread = false;
   bool no_signal = false;
   bool no_t5hh = true;
+  bool do_htobb = false;
   bool no_mc = false;
   // string_options is split by comma. ex) option1,option2 
   // Use HigUtilities::is_in_string_options(string_options, "option2") to check if in string_options.
@@ -107,20 +108,6 @@ const NamedFunc eventNumberVeto("eventNumberVeto", [](const Baby &b) -> NamedFun
   //  index = index+1;
   //}
   return !found;
-});
-
-//requires all MC Higgs to decay to bb
-const NamedFunc htobb("htobb", [](const Baby &b) -> NamedFunc::ScalarType{
-  //if ((b.type() % 1000 != 107) && (b.type() % 1000 != 106)) return true; //non SUSY model
-  //int num_bs = 0;
-  for (unsigned int mc_idx(0); mc_idx < b.mc_id()->size(); mc_idx++) {
-    //if (abs(b.mc_id()->at(mc_idx)) == 5 && b.mc_mom()->at(mc_idx) == 25)
-    //  num_bs++;
-    if (abs(b.mc_id()->at(mc_idx)) != 5 && b.mc_mom()->at(mc_idx) == 25)
-      return false;
-  }
-  //if (num_bs == 4) return true;
-  return true;
 });
 
 string getLuminosityString(string const & year_string) {
@@ -340,9 +327,9 @@ void addMultipleSignalProcesses(string const & processName_postfix, NamedFunc co
     //vector<string> sigm_t5hh = {"*mGluino-1200_mChi-1150_mLSP-400_*.root","*mGluino-1600_mChi-1550_mLSP-1_*.root","*mGluino-2000_mChi-1950_mLSP-1_*.root"};
     //vector<string> model_names = {"T5HH(1200_400)","T5HH(1600_0)","T5HH(2000_0)"};
     for (unsigned isig(0); isig<sigm_t5hh.size(); isig++){
-      addProcess(model_names[isig]+processName_postfix, Process::Type::signal, 1, additionalCut&&htobb,
-        nanoAodFolder, production, "t5hh", sigm_t5hh[isig], sample_name, year_string,
-        procs);
+      addProcess(model_names[isig]+processName_postfix, Process::Type::signal, 1, additionalCut,
+          nanoAodFolder, production, "t5hh", sigm_t5hh[isig], sample_name, year_string,
+          procs);
     }
   }
 }
@@ -512,6 +499,7 @@ int main(int argc, char *argv[]){
   }
 
   NamedFunc weight = Higfuncs::final_weight;
+  if (do_htobb) weight = Higfuncs::final_weight*Higfuncs::htobb;
 
 
   //    Useful binning definitions
@@ -722,6 +710,7 @@ void GetOptions(int argc, char *argv[]){
       {"year", required_argument, 0, 'y'},
       {"unblind", no_argument, 0, 'u'},
       {"no_signal", no_argument, 0, 0},
+      {"htobb", no_argument, 0, 0},
       {"t5hh", no_argument, 0, 0},
       {"no_mc", no_argument, 0, 0},
       {"string_options", required_argument, 0, 'o'},
@@ -758,6 +747,8 @@ void GetOptions(int argc, char *argv[]){
         no_mc = true;
       } else if (optname == "t5hh") {
         no_t5hh = false;
+      } else if (optname == "htobb") {
+        do_htobb = true;
       } else {
         printf("Bad option! Found option name %s\n", optname.c_str());
         exit(1);

@@ -318,6 +318,7 @@ namespace script_utilities {
   //section
   const NamedFunc mixed_model_weight("mixed_model_weight",[](const Baby &b) -> NamedFunc::ScalarType{
     if (b.type() / 1000 != 106) return Higfuncs::final_weight.GetScalar(b); //not TChiHH
+    if (b.mprod() == 0) return Higfuncs::final_weight.GetScalar(b); //N1N2
     double xsec1d, xsec2d, xsec1d_unc, xsec2d_unc;
     xsec::higgsinoCrossSection(b.mprod(),xsec1d,xsec1d_unc);
     xsec::higgsino2DCrossSection(b.mprod(),xsec2d,xsec2d_unc);
