@@ -33,6 +33,11 @@
 #include "higgsino/write_kappa_datacards.hpp"
 #include "higgsino/hig_utilities.hpp"
 
+// Example commands for 1D scan
+// ./run/higgsino/write_kappa_datacards_priority.exe -o cards_1d_kappa_priority1/ -m CN -1 --unblind --unblind_signalregion
+// ./run/higgsino/write_kappa_datacards_priority.exe -o cards_1d_kappa_priority1_2016/ -m CN -1 --unblind --unblind_signalregion --year 2016
+// ./run/higgsino/write_kappa_datacards_priority.exe -o cards_1d_kappa_priority1_inverse/ -m CN -1 --unblind --unblind_signalregion -p 400_0 --inverse
+
 using namespace std;
 namespace 
 {
@@ -56,6 +61,7 @@ namespace
   bool is1D = true;
   int t5hh_range = 0;
   bool do_fullsim = false;
+  bool do_inverse_datacard = false;
 }
 
 const NamedFunc min_jet_dphi("min_jet_dphi", [](const Baby &b) -> NamedFunc::ScalarType{
@@ -337,13 +343,13 @@ int main(int argc, char *argv[])
   //samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/2018/SMS-TChiHH_2D/merged_higmc_preselect/";
 
   samplePaths["mc_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2016/mc/merged_higmc_preselect/";
-  samplePaths["signal_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2016/SMS-TChiHH_2D_fastSimJmeCorrection/skim_higsys/";
+  samplePaths["signal_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2016/SMS-TChiHH_2D_fastSimJmeCorrection/skim_higsys/";
   samplePaths["data_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2016/data/merged_higdata_preselect/";
   samplePaths["mc_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2017/mc/merged_higmc_preselect/";
-  samplePaths["signal_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2017/SMS-TChiHH_2D_fastSimJmeCorrection/skim_higsys/";
+  samplePaths["signal_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2017/SMS-TChiHH_2D_fastSimJmeCorrection/skim_higsys/";
   samplePaths["data_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2017/data/merged_higdata_preselect/";
   samplePaths["mc_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/mc/merged_higmc_preselect/";
-  samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2018/SMS-TChiHH_2D_fastSimJmeCorrection/skim_higsys/";
+  samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/SMS-TChiHH_2D_fastSimJmeCorrection/skim_higsys/";
   samplePaths["data_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/data/merged_higdata_preselect/";
   if (higgsino_model=="T5HH") {
     if (do_fullsim) {
@@ -798,8 +804,13 @@ int main(int argc, char *argv[])
     HigWriteDataCards::writeTableValues(tableValues,cardFile);
     tableValues.clear();
 
-    if (unblind) HigWriteDataCards::setDataCardBackground(mYields, sampleBins, "data", tableValues);
-    else HigWriteDataCards::setDataCardBackground(mYields, sampleBins, "mc", tableValues);
+    if (do_inverse_datacard) {
+      // Let's use MC as initial values
+      HigWriteDataCards::setDataCardBackgroundInverse(mYields, sampleBins, "mc", tableValues);
+    } else {
+      if (unblind) HigWriteDataCards::setDataCardBackground(mYields, sampleBins, "data", tableValues);
+      else HigWriteDataCards::setDataCardBackground(mYields, sampleBins, "mc", tableValues);
+    }
     HigWriteDataCards::writeTableValues(tableValues,cardFile, true);
     tableValues.clear();
     HigWriteDataCards::setDataCardKappa(kappas, kappa_uncertainties, dimensionBins, tableValues);
@@ -1212,6 +1223,7 @@ namespace HigWriteDataCards{
 
   void setDataCardBackground(map<string, pair<GammaParams, TableRow> > & mYields, vector<pair<string, string> > sampleBins, string const & mcTag, vector<vector<string> > & tableValues)
   {
+    bool useKappa = true;
     // title + type + tag + tagType + (yield,equation), equation arguments
     vector<string> row(6);
     for (unsigned rBin=0;rBin<sampleBins.size();++rBin)
@@ -1220,64 +1232,115 @@ namespace HigWriteDataCards{
       row[1] = "rateParam";
       row[2] = sampleBins[rBin].first;
       row[3] = "bkg";
-      if (countSubstring(sampleBins[rBin].first,"sig") != 2) 
+      if (countSubstring(sampleBins[rBin].first,"sig") != 2) // Set BCD rate parameters
       {
         float mcYield = mYields.at(mcTag+"_"+sampleBins[rBin].first).first.Yield();
-        //row[4] = to_string(int(mYields.at(mcTag+"_"+sampleBins[rBin].first).first.Yield())); //Integerize. Round down
-        //row[4] = to_string(int(mYields.at(mcTag+"_"+sampleBins[rBin].first).first.Yield())+1); //Integerize. Round up
-        //row[4] = RoundNumber(mYields.at(mcTag+"_"+sampleBins[rBin].first).first.Yield(), 0, 1).Data(); //Integerize. Round
-        row[4] = to_string(mcYield);
-        // Infinity defined in https://root.cern.ch/doc/master/RooNumber_8cxx_source.html
+        if (mcYield != 0) row[4] = to_string(mcYield);
+        else row[4] = to_string(30);
         row[5] = "[0,"+to_string(mcYield*10)+"]";
       }
-      else 
+      else  // Set A rate parameter (But in code, convension is swapped for ABCD, where D is signal region)
       {
-        //row[4] = "(@0*@1/@2)";
-        //vector<string> xydimension;
-        //HigUtilities::stringToVectorString(sampleBins[rBin].first, xydimension, "_");
-        //vector<string> aNameVector = xydimension;
-        //aNameVector[0] = "xbkg";
-        //aNameVector[1] = "ybkg";
-        //string aName;
-        //HigUtilities::vectorStringToString(aNameVector, aName, "_");
-        //vector<string> bNameVector = xydimension;
-        //bNameVector[1] = "ybkg";
-        //string bName;
-        //HigUtilities::vectorStringToString(bNameVector, bName, "_");
-        //vector<string> cNameVector = xydimension;
-        //cNameVector[0] = "xbkg";
-        //string cName;
-        //HigUtilities::vectorStringToString(cNameVector, cName, "_");
-        ////cout<<aName<<" "<<bName<<" "<<cName<<endl;
-        //row[5] = "rp_"+cName+",rp_"+bName+",rp_"+aName;
+        if (useKappa) {
+          row[4] = "(@0*@1/@2)*@3";
+          vector<string> xydimension;
+          HigUtilities::stringToVectorString(sampleBins[rBin].first, xydimension, "_");
+          vector<string> aNameVector = xydimension;
+          aNameVector[0] = "xbkg";
+          aNameVector[1] = "ybkg";
+          string aName;
+          HigUtilities::vectorStringToString(aNameVector, aName, "_");
+          vector<string> bNameVector = xydimension;
+          bNameVector[1] = "ybkg";
+          string bName;
+          HigUtilities::vectorStringToString(bNameVector, bName, "_");
+          vector<string> cNameVector = xydimension;
+          cNameVector[0] = "xbkg";
+          string cName;
+          HigUtilities::vectorStringToString(cNameVector, cName, "_");
+          string kappaName;
+          vector<string> kappaNameVector = xydimension;
+          HigUtilities::vectorStringToString(kappaNameVector, kappaName, "_");
+          //cout<<aName<<" "<<bName<<" "<<cName<<endl;
+          row[5] = "rp_"+cName+",rp_"+bName+",rp_"+aName+",kappa_"+kappaName;
+        } else {
+          row[4] = "(@0*@1/@2)";
+          vector<string> xydimension;
+          HigUtilities::stringToVectorString(sampleBins[rBin].first, xydimension, "_");
+          vector<string> aNameVector = xydimension;
+          aNameVector[0] = "xbkg";
+          aNameVector[1] = "ybkg";
+          string aName;
+          HigUtilities::vectorStringToString(aNameVector, aName, "_");
+          vector<string> bNameVector = xydimension;
+          bNameVector[1] = "ybkg";
+          string bName;
+          HigUtilities::vectorStringToString(bNameVector, bName, "_");
+          vector<string> cNameVector = xydimension;
+          cNameVector[0] = "xbkg";
+          string cName;
+          HigUtilities::vectorStringToString(cNameVector, cName, "_");
+          //cout<<aName<<" "<<bName<<" "<<cName<<endl;
+          row[5] = "rp_"+cName+",rp_"+bName+",rp_"+aName;
+        }
 
-        row[4] = "(@0*@1/@2)*@3";
-        vector<string> xydimension;
-        HigUtilities::stringToVectorString(sampleBins[rBin].first, xydimension, "_");
-        vector<string> aNameVector = xydimension;
-        aNameVector[0] = "xbkg";
-        aNameVector[1] = "ybkg";
-        string aName;
-        HigUtilities::vectorStringToString(aNameVector, aName, "_");
-        vector<string> bNameVector = xydimension;
-        bNameVector[1] = "ybkg";
-        string bName;
-        HigUtilities::vectorStringToString(bNameVector, bName, "_");
-        vector<string> cNameVector = xydimension;
-        cNameVector[0] = "xbkg";
-        string cName;
-        HigUtilities::vectorStringToString(cNameVector, cName, "_");
-        string kappaName;
-        vector<string> kappaNameVector = xydimension;
-        HigUtilities::vectorStringToString(kappaNameVector, kappaName, "_");
-        //cout<<aName<<" "<<bName<<" "<<cName<<endl;
-        row[5] = "rp_"+cName+",rp_"+bName+",rp_"+aName+",kappa_"+kappaName;
       }
       tableValues.push_back(row);
       setRow(row,"");
     }
-  
   }
+
+  void setDataCardBackgroundInverse(map<string, pair<GammaParams, TableRow> > & mYields, vector<pair<string, string> > sampleBins, string const & mcTag, vector<vector<string> > & tableValues)
+  {
+    // title + type + tag + tagType + (yield,equation), equation arguments
+    vector<string> row(6);
+    for (unsigned rBin=0;rBin<sampleBins.size();++rBin)
+    {
+      row[0] = "rp_"+sampleBins[rBin].first;
+      row[1] = "rateParam";
+      row[2] = sampleBins[rBin].first;
+      row[3] = "bkg";
+      if (countSubstring(sampleBins[rBin].first,"xsig") == 1 && countSubstring(sampleBins[rBin].first,"ybkg") == 1) { // Set B rate parameter
+          // Set equation: A * D / C / kappa
+          row[4] = "@0*@1/@2/@3";
+          // Set names, where sampleBins[rBin].first is B, xsig[0,1]_ybkg_met[0-3]_drmax[0,1]
+          vector<string> xydimension; 
+          HigUtilities::stringToVectorString(sampleBins[rBin].first, xydimension, "_");
+          // Set name for A
+          vector<string> aNameVector = xydimension;
+          string aName;
+          aNameVector[1] = "ysig";
+          HigUtilities::vectorStringToString(aNameVector, aName, "_");
+          // Set name for C
+          vector<string> cNameVector = xydimension;
+          cNameVector[0] = "xbkg";
+          cNameVector[1] = "ysig";
+          string cName;
+          HigUtilities::vectorStringToString(cNameVector, cName, "_");
+          // Set name for D
+          vector<string> dNameVector = xydimension;
+          dNameVector[0] = "xbkg";
+          dNameVector[1] = "ybkg";
+          string dName;
+          HigUtilities::vectorStringToString(dNameVector, dName, "_");
+          // Set name for kappa
+          string kappaName;
+          vector<string> kappaNameVector = xydimension;
+          kappaNameVector[1] = "ysig";
+          HigUtilities::vectorStringToString(kappaNameVector, kappaName, "_");
+          // Set equation parameters
+          row[5] = "rp_"+aName+",rp_"+dName+",rp_"+cName+",kappa_"+kappaName;
+      } else { // Set ACD rate parameter
+        float mcYield = mYields.at(mcTag+"_"+sampleBins[rBin].first).first.Yield();
+        if (mcYield != 0) row[4] = to_string(mcYield);
+        else row[4] = to_string(30);
+        row[5] = "[0,"+to_string(mcYield*10)+"]";
+      }
+      tableValues.push_back(row);
+      setRow(row,"");
+    }
+  }
+
 
   void setDataCardKappa(map<string, double > & kappas, map<string, double > & kappa_uncertainties, map<string, vector<pair<string, string> > > & dimensionBins, vector<vector<string> > & tableValues)
   {
@@ -1362,6 +1425,7 @@ namespace HigWriteDataCards{
         {"priority", required_argument, 0, 'r'},
         {"t5hhrange", required_argument, 0, 's'},
         {"fullsim", no_argument, 0, 'f'},
+        {"inverse", no_argument, 0, 0},
         {0, 0, 0, 0}
       };
   
@@ -1405,6 +1469,8 @@ namespace HigWriteDataCards{
             do_met_average = false;
           }else if(optname == "unblind_signalregion"){
             unblind_signalregion = true;
+          }else if(optname == "inverse") {
+            do_inverse_datacard = true;
           }else{
             printf("Bad option! Found option name %s\n", optname.c_str());
           }

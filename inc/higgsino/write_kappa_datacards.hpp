@@ -33,6 +33,7 @@ namespace HigWriteDataCards {
   // Counts number of "sig" to find tags for equations. Uses "bkg" tag. Relies on "xname_yname_dimensionname" tag 
   int countSubstring(const std::string& str, const std::string& sub);
   void setDataCardBackground(std::map<std::string, std::pair<GammaParams, TableRow> > & mYields, std::vector<std::pair<std::string, std::string> > sampleBins, std::string const & mcTag, std::vector<std::vector<std::string> > & tableValues);
+  void setDataCardBackgroundInverse(std::map<std::string, std::pair<GammaParams, TableRow> > & mYields, std::vector<std::pair<std::string, std::string> > sampleBins, std::string const & mcTag, std::vector<std::vector<std::string> > & tableValues);
   void setDataCardKappa(std::map<std::string, double > & kappas, std::map<std::string, double > & kappa_uncertainties, std::map<std::string, std::vector<std::pair<std::string, std::string> > > & dimensionBins, std::vector<std::vector<std::string> > & tableValues);
   void setDataCardKappa(std::map<std::string, double > & kappas, std::map<std::string, std::pair<double,double> > & kappa_uncertainties, std::map<std::string, std::vector<std::pair<std::string, std::string> > > & dimensionBins, std::vector<std::vector<std::string> > & tableValues);
   void writeTableValues(std::vector<std::vector<std::string> > & tableValues, std::ofstream & cardFile, bool alignLeft=false);
