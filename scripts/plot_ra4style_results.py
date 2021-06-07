@@ -218,12 +218,15 @@ edata_up = []
 edata_dn = []
 pull_pre = []
 pull_post = []
+#pulls as likelihood ratio significances
+pull_pre = [-0.9, 0.0, 0.6, 0.1,   0.0, 1.1, 0.6, -1.9,   0.9, 0.0, 3.5, -1.1,   -1.0, 1.5, 0.6, 0.3,   0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+#pull_post = []
 for ibin in range(len(data)):
   #make Poisson errors
   alpha = 1.0 - 0.6827
-  l = ROOT.Math.gamma_quantile(alpha/2,data[ibin],1.0)
-  if (data[ibin] == 0):
-    l = 0
+  l = 0
+  if (data[ibin] != 0):
+    l = ROOT.Math.gamma_quantile(alpha/2,data[ibin],1.0)
   u =  ROOT.Math.gamma_quantile_c(alpha/2,data[ibin]+1,1.0)
   edata_up.append(u-data[ibin])
   edata_dn.append(data[ibin]-l)
@@ -240,10 +243,14 @@ for ibin in range(len(data)):
   l_com_pos = (bkg_post[ibin]*w_pos+data[ibin]*w_dat)/(w_pos+w_dat)
   this_pull_pre = (data[ibin]-l_com_pre)/math.sqrt(e_dat**2-e_com_pre**2)
   this_pull_pos = (data[ibin]-l_com_pos)/math.sqrt(e_dat**2-e_com_pos**2)
-  pull_pre.append(this_pull_pre)
-  pull_post.append(this_pull_pos)
+  #pull_pre.append(this_pull_pre)
+  #pull_post.append(this_pull_pos)
+  #naive-pulls
   #pull_pre.append((data[ibin]-bkg_pre[ibin])/math.sqrt(bkg_pre[ibin]+ebkg_pre[ibin]*ebkg_pre[ibin]))
   #pull_post.append((data[ibin]-bkg_post[ibin])/math.sqrt(bkg_post[ibin]+ebkg_post[ibin]*ebkg_post[ibin]))
+  #poisson significance
+  #pull_pre.append(math.sqrt(2)*TMath.ErfInverse(-1.0+2.0*ROOT.Math.poisson_cdf(int(data[ibin]),bkg_pre[ibin])))
+  pull_post.append(math.sqrt(2)*TMath.ErfInverse(-1.0+2.0*ROOT.Math.poisson_cdf(int(data[ibin]),bkg_post[ibin])))
 
 print(pull_pre)
 print(pull_post)
@@ -451,9 +458,9 @@ if plot_pulls:
 
   bottom.cd()
   hbotdummy = TH1D("","",nhbins,0,nhbins+1.0)
-  hbotdummy.GetYaxis().SetRangeUser(-2.9,2.9)
+  hbotdummy.GetYaxis().SetRangeUser(-3.9,3.9)
   hbotdummy.GetYaxis().SetLabelSize(0.12)
-  hbotdummy.GetYaxis().SetTitle("Pull")
+  hbotdummy.GetYaxis().SetTitle("Sig.")
   hbotdummy.GetYaxis().CenterTitle()
   hbotdummy.GetYaxis().SetTitleSize(0.15)
   hbotdummy.GetYaxis().SetTitleOffset(0.2)
@@ -475,17 +482,17 @@ if plot_pulls:
   
   grpull_post.SetFillColor(tag2_color)
   grpull_post.SetFillStyle(3144)
-  grpull_post.Draw('B')
+  #grpull_post.Draw('B')
   
   a = TLine()
   a.SetLineWidth(1)
   a.SetLineStyle(3)
-  a.DrawLine(8.5, -2.9, 8.5, 2.9)
-  a.DrawLine(16.5, -2.9, 16.5, 2.9)
+  a.DrawLine(8.5, -3.9, 8.5, 3.9)
+  a.DrawLine(16.5, -3.9, 16.5, 3.9)
   a.SetLineColor(kGray+1)
-  a.DrawLine(4.5, -2.9, 4.5, 2.9)
-  a.DrawLine(12.5, -2.9, 12.5, 2.9)
-  a.DrawLine(19.5, -2.9, 19.5, 2.9)
+  a.DrawLine(4.5, -3.9, 4.5, 3.9)
+  a.DrawLine(12.5, -3.9, 12.5, 3.9)
+  a.DrawLine(19.5, -3.9, 19.5, 3.9)
   
   b = TLine()
   b.SetLineWidth(1)
@@ -498,9 +505,9 @@ if plot_pulls:
   b.SetLineStyle(3)
   for i in [-2.,2.]:
       b.DrawLine(0,i, nhbins+1,i)
-  #b.SetLineStyle(3)
-  #for i in [-3.,3.]:
-  #    b.DrawLine(0.5,i, nhbins+1.5,i)
+  b.SetLineStyle(3)
+  for i in [-3.,3.]:
+      b.DrawLine(0,i, nhbins+1,i)
 
 pname = 'plots/results_plot.pdf'
 can.Print(pname)

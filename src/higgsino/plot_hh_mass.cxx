@@ -172,7 +172,7 @@ int main(int argc, char *argv[]){
     search_procs, plt_lin).Weight(mixed_model_weight)
     .Tag("FixName:hhmass__sr_lowdrmax_"+options.year_string)
     .LuminosityTag(total_luminosity_string);
-  pm.Push<Hist1D>(Axis(70, 100, 1500, dihiggs_mass, "m_{HH} [GeV]", {}),
+  pm.Push<Hist1D>(Axis(7, 100, 1500, dihiggs_mass, "m_{HH} [GeV]", {}),
     sr_baseline_sr && "nbm==3&&nbl==3&&met>=300&&met<400&&hig_cand_drmax[0]<1.1",
     search_procs, plt_lin).Weight(mixed_model_weight)
     .Tag("FixName:hhmass__sr_bin11_"+options.year_string)
