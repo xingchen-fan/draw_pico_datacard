@@ -69,6 +69,9 @@ public:
   PlotOpt & AutoYAxis(bool auto_y_axis);
   bool AutoYAxis() const;
 
+  PlotOpt & ErrorOnZeroData(bool error_on_zero_data);
+  bool ErrorOnZeroData() const;
+
   PlotOpt & CanvasSize(int width, int height);
   PlotOpt & CanvasWidth(int width);
   int CanvasWidth() const;
@@ -152,6 +155,7 @@ private:
   double title_size_, extra_label_size_, label_size_;
   double x_title_offset_, y_title_offset_, z_title_offset_;
   bool auto_y_axis_;
+  bool error_on_zero_data_;
   int canvas_width_, canvas_height_;
   double left_margin_, right_margin_, bottom_margin_, top_margin_;
   double bottom_height_;

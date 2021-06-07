@@ -413,8 +413,22 @@ void Hist1D::Print(double luminosity,
     DrawAll(backgrounds_, draw_opt);
     if(this_opt_.ShowBackgroundError() && backgrounds_.size()) bkg_error.Draw("2 same");
     DrawAll(signals_, draw_opt, true);
+
     ReplaceAll(draw_opt, "hist", "e0p");
+    // Turn on error on zero
+    vector<TH1::EBinErrorOpt> default_bin_error_option;
+    if(this_opt_.ErrorOnZeroData()) {
+      for(auto &hist: datas_) {
+        default_bin_error_option.push_back(hist->scaled_hist_.GetBinErrorOption());
+        hist->scaled_hist_.SetBinErrorOption(TH1::kPoisson);
+      }
+    }
     DrawAll(datas_, draw_opt, true);
+    //// Return to default setting -> This doesn't work. log plots also show error on zero
+    //if(this_opt_.ErrorOnZeroData()) {
+    //  int iPlot = 0;
+    //  for(auto &hist: datas_) hist->scaled_hist_.SetBinErrorOption(default_bin_error_option[iPlot++]);
+    //}
     for(auto &cut: cut_vals) cut.Draw();
 
     vector<shared_ptr<TLegend> > legends = GetLegends();
@@ -501,6 +515,7 @@ void Hist1D::Print(double luminosity,
       full->Print(full_name.c_str());
       cout << "open " << full_name << endl;
     }
+
   }
 }
 
