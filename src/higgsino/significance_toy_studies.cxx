@@ -42,21 +42,47 @@ using std::max;
 using std::thread;
 using std::ref;
 
-void calculate_predictions(TRandom3 & random, vector<vector<vector<GammaParams> > > const & counts, vector<vector<float> > & predictions, vector<float> & pvalues);
+void calculate_predictions(TRandom3 & random, vector<vector<vector<GammaParams> > > const & counts, vector<vector<float> > & predictions, vector<float> & pvalues, vector<TH1D*> * kappa_hists = 0, vector<TH1D*> * prediction_hists = 0, vector<TH1D*> * toy_hists = 0);
 void calculate_kappas(vector<vector<vector<GammaParams> > > const & counts, vector<vector<float> > & kappas);
-vector<float> get_kappa_systematics();
+vector<float> get_kappa_systematics(bool fraction=true);
 
 float to_pvalue(float significance) {return 0.5-TMath::Erf(double(significance/sqrt(2)))/2;}
-float to_significance(float pvalue) {return ROOT::Math::normal_quantile_c(pvalue, 1);}
+float to_significance(float pvalue) {
+  if (pvalue == 0) return 99;
+  else if (pvalue == 1) return 0;
+  else return ROOT::Math::normal_quantile_c(pvalue, 1);
+}
 
 Double_t gamma(Double_t *x, Double_t * par) {
   return ROOT::Math::gamma_pdf(x[0],par[0]+1,1);
 }
 
-float get_significance(float pvalue) {
-  if (pvalue == 0) return 99;
-  else if (pvalue == 1) return 0;
-  else return ROOT::Math::normal_quantile_c(pvalue, 1);
+// -1 sigma, 0 sigma, 1 sigma
+vector<float> get_sigma_band(TH1D * hist) {
+  Double_t sigma[3] = {0.5-0.3413, 0.5, 0.5+0.3413}; Double_t x_sigma[3];
+  hist->GetQuantiles(3, x_sigma, sigma);
+  return {static_cast<float>(x_sigma[0]), static_cast<float>(x_sigma[1]), static_cast<float>(x_sigma[2])};
+}
+
+// 0 sigma, -1 sigma diff, +1 sigma diff
+vector<float> get_sigma_band(vector<float> & toy_predictions, float prediction) {
+  sort(toy_predictions.begin(), toy_predictions.end());
+  int prediction_index = -1;
+  for (int iToy = 0; iToy < static_cast<int>(toy_predictions.size()); iToy++) {
+    if (toy_predictions[iToy] > prediction) {
+      prediction_index = iToy;
+      break;
+    }
+  }
+  float nSigma = 1;
+  double integratedGaus = intGaus(0,1,0,nSigma);
+  int prediction_low_index = prediction_index - static_cast<int>(integratedGaus * toy_predictions.size());
+  if (prediction_low_index<0) prediction_low_index = 0;
+  int prediction_high_index = prediction_index + static_cast<int>(integratedGaus * toy_predictions.size());
+  if (prediction_high_index>static_cast<int>(toy_predictions.size())) prediction_high_index = toy_predictions.size()+1;
+  float prediction_low = prediction - toy_predictions[prediction_low_index];
+  float prediction_high = toy_predictions[prediction_high_index] - prediction;
+  return {prediction, prediction_low, prediction_high};
 }
 
 // yields[Nobs][Nsam] has the entries for each sample for each observable going into kappa
@@ -386,6 +412,7 @@ void make_observed_prefit_model(TRandom3 & random, vector<vector<vector<GammaPar
 // predictions[iplane] = [0=prediction,1=prediction_down,2=prediction_up]
 // pvalue[iplane] = pvalue for aboved observed in A
 void printPdf_counts(vector<vector<vector<GammaParams> > > const & counts, vector<vector<float> > const & kappas, vector<vector<float> > const & predictions, vector<float> const & pvalues, vector<float> const & normalizations, string const & filename, bool print_obs_error=false) {
+  vector<float> kappa_systematics = get_kappa_systematics(false);
   // Change table to vector of rows
   // | mc +- error | kappa +- error | prediction +- error | observation | Sig. |
   string table_prefix;
@@ -430,11 +457,11 @@ void printPdf_counts(vector<vector<vector<GammaParams> > > const & counts, vecto
         table_body << "2b, HIG &" << setprecision(2) << counts[iPlane][0][2].Yield() <<" $\\pm$ "<< setprecision(2) <<counts[iPlane][0][2].Uncertainty()<<" & & & "<<counts[iPlane][1][2].Yield()<<" $\\pm$ "<<counts[iPlane][1][2].Uncertainty()<<" & \\\\ \n";
         table_body << "\\hline\n";
         table_body << "3b, SDB &" << setprecision(2) << counts[iPlane][0][1].Yield() <<" $\\pm$ "<< setprecision(2) <<counts[iPlane][0][1].Uncertainty()<<" & & & "<<counts[iPlane][1][1].Yield()<<" $\\pm$ "<<counts[iPlane][1][1].Uncertainty()<<" & \\\\ \n";
-        table_body << "3b, HIG &" << setprecision(2) << counts[iPlane][0][0].Yield() <<" $\\pm$ "<< setprecision(2) <<counts[iPlane][0][0].Uncertainty()<<" & $"<<kappas[iPlane][0]<<"^{+"<<kappas[iPlane][2]<<"}_{-"<<kappas[iPlane][1]<<"}$ & $"<<predictions[iPlane][0]<<"^{+"<<predictions[iPlane][2]<<"}_{-"<<predictions[iPlane][1]<<"}$ & "<<counts[iPlane][1][0].Yield()<<" $\\pm$ "<<counts[iPlane][1][0].Uncertainty()<<" & "<<setprecision(2)<<get_significance(pvalues[iPlane])<<"\\\\ \n";
+        table_body << "3b, HIG &" << setprecision(2) << counts[iPlane][0][0].Yield() <<" $\\pm$ "<< setprecision(2) <<counts[iPlane][0][0].Uncertainty()<<" & $"<<kappas[iPlane][0]<<"^{+"<<kappas[iPlane][2]<<"}_{-"<<kappas[iPlane][1]<<"}\\pm"<<kappa_systematics[iPlane]<<"$ & $"<<predictions[iPlane][0]<<"^{+"<<predictions[iPlane][2]<<"}_{-"<<predictions[iPlane][1]<<"}$ & "<<counts[iPlane][1][0].Yield()<<" $\\pm$ "<<counts[iPlane][1][0].Uncertainty()<<" & "<<setprecision(2)<<to_significance(pvalues[iPlane])<<"\\\\ \n";
         table_body << "\\hline\n";
       } else {
         table_body << "4b, SDB &" << setprecision(2) << counts[iPlane][0][1].Yield() <<" $\\pm$ "<< setprecision(2) <<counts[iPlane][0][1].Uncertainty()<<" & & & "<<counts[iPlane][1][1].Yield()<<" $\\pm$ "<<counts[iPlane][1][1].Uncertainty()<<" & \\\\ \n";
-        table_body << "4b, HIG &" << setprecision(2) << counts[iPlane][0][0].Yield() <<" $\\pm$ "<< setprecision(2) <<counts[iPlane][0][0].Uncertainty()<<" & $"<<kappas[iPlane][0]<<"^{+"<<kappas[iPlane][2]<<"}_{-"<<kappas[iPlane][1]<<"}$ & $"<<predictions[iPlane][0]<<"^{+"<<predictions[iPlane][2]<<"}_{-"<<predictions[iPlane][1]<<"}$ & "<<counts[iPlane][1][0].Yield()<<" $\\pm$ "<<counts[iPlane][1][0].Uncertainty()<<" & "<<setprecision(2)<<get_significance(pvalues[iPlane])<<"\\\\ \n";
+        table_body << "4b, HIG &" << setprecision(2) << counts[iPlane][0][0].Yield() <<" $\\pm$ "<< setprecision(2) <<counts[iPlane][0][0].Uncertainty()<<" & $"<<kappas[iPlane][0]<<"^{+"<<kappas[iPlane][2]<<"}_{-"<<kappas[iPlane][1]<<"}\\pm"<<kappa_systematics[iPlane]<<"$ & $"<<predictions[iPlane][0]<<"^{+"<<predictions[iPlane][2]<<"}_{-"<<predictions[iPlane][1]<<"}$ & "<<counts[iPlane][1][0].Yield()<<" $\\pm$ "<<counts[iPlane][1][0].Uncertainty()<<" & "<<setprecision(2)<<to_significance(pvalues[iPlane])<<"\\\\ \n";
         table_body << "\\hline\n";
       }
     } else {
@@ -446,11 +473,11 @@ void printPdf_counts(vector<vector<vector<GammaParams> > > const & counts, vecto
         table_body << "2b, HIG &" << setprecision(2) << counts[iPlane][0][2].Yield() <<" $\\pm$ "<< setprecision(2) <<counts[iPlane][0][2].Uncertainty()<<" & & & "<< setprecision(1) <<counts[iPlane][1][2].Yield()<<" & \\\\ \n";
         table_body << "\\hline\n";
         table_body << "3b, SDB &" << setprecision(2) << counts[iPlane][0][1].Yield() <<" $\\pm$ "<< setprecision(2) <<counts[iPlane][0][1].Uncertainty()<<" & & & "<< setprecision(1) <<counts[iPlane][1][1].Yield()<<" & \\\\ \n";
-        table_body << "3b, HIG &" << setprecision(2) << counts[iPlane][0][0].Yield() <<" $\\pm$ "<< setprecision(2) <<counts[iPlane][0][0].Uncertainty()<<" & $"<<kappas[iPlane][0]<<"^{+"<<kappas[iPlane][2]<<"}_{-"<<kappas[iPlane][1]<<"}$ & $"<<predictions[iPlane][0]<<"^{+"<<predictions[iPlane][2]<<"}_{-"<<predictions[iPlane][1]<<"}$ & "<< setprecision(1) <<counts[iPlane][1][0].Yield()<<" & "<<setprecision(2)<<get_significance(pvalues[iPlane])<<"\\\\ \n";
+        table_body << "3b, HIG &" << setprecision(2) << counts[iPlane][0][0].Yield() <<" $\\pm$ "<< setprecision(2) <<counts[iPlane][0][0].Uncertainty()<<" & $"<<kappas[iPlane][0]<<"^{+"<<kappas[iPlane][2]<<"}_{-"<<kappas[iPlane][1]<<"}\\pm"<<kappa_systematics[iPlane]<<"$ & $"<<predictions[iPlane][0]<<"^{+"<<predictions[iPlane][2]<<"}_{-"<<predictions[iPlane][1]<<"}$ & "<< setprecision(1) <<counts[iPlane][1][0].Yield()<<" & "<<setprecision(2)<<to_significance(pvalues[iPlane])<<"\\\\ \n";
         table_body << "\\hline\n";
       } else {
         table_body << "4b, SDB &" << setprecision(2) << counts[iPlane][0][1].Yield() <<" $\\pm$ "<< setprecision(2) <<counts[iPlane][0][1].Uncertainty()<<" & & & "<< setprecision(1) <<counts[iPlane][1][1].Yield()<<" & \\\\ \n";
-        table_body << "4b, HIG &" << setprecision(2) << counts[iPlane][0][0].Yield() <<" $\\pm$ "<< setprecision(2) <<counts[iPlane][0][0].Uncertainty()<<" & $"<<kappas[iPlane][0]<<"^{+"<<kappas[iPlane][2]<<"}_{-"<<kappas[iPlane][1]<<"}$ & $"<<predictions[iPlane][0]<<"^{+"<<predictions[iPlane][2]<<"}_{-"<<predictions[iPlane][1]<<"}$ & "<< setprecision(1) <<counts[iPlane][1][0].Yield()<<" & "<<setprecision(2)<<get_significance(pvalues[iPlane])<<"\\\\ \n";
+        table_body << "4b, HIG &" << setprecision(2) << counts[iPlane][0][0].Yield() <<" $\\pm$ "<< setprecision(2) <<counts[iPlane][0][0].Uncertainty()<<" & $"<<kappas[iPlane][0]<<"^{+"<<kappas[iPlane][2]<<"}_{-"<<kappas[iPlane][1]<<"}\\pm"<<kappa_systematics[iPlane]<<"$ & $"<<predictions[iPlane][0]<<"^{+"<<predictions[iPlane][2]<<"}_{-"<<predictions[iPlane][1]<<"}$ & "<< setprecision(1) <<counts[iPlane][1][0].Yield()<<" & "<<setprecision(2)<<to_significance(pvalues[iPlane])<<"\\\\ \n";
         table_body << "\\hline\n";
       }
     }
@@ -471,7 +498,6 @@ void calculate_kappas(vector<vector<vector<GammaParams> > > const & counts, vect
   // D, B, C, A
   vector<float> pow_kappa({ 1, -1, -1,  1});
   for (unsigned iPlane = 0; iPlane < counts.size(); ++iPlane) {
-    float kappa, kappa_down, kappa_up;
     vector<vector<float> > entries;
     vector<vector<float> > weights;
     entries = {{float(counts[iPlane][0][3].NEffective())}, {float(counts[iPlane][0][1].NEffective())}, {float(counts[iPlane][0][2].NEffective())}, {float(counts[iPlane][0][0].NEffective())}};
@@ -481,9 +507,27 @@ void calculate_kappas(vector<vector<vector<GammaParams> > > const & counts, vect
     //  entries = {{float(counts[iPlane][0][3].NEffective()/4)}, {float(counts[iPlane][0][1].NEffective()/4)}, {float(counts[iPlane][0][2].NEffective()/4)}, {float(counts[iPlane][0][0].NEffective()/4)}};
     //  weights = {{float(counts[iPlane][0][3].Weight()*4)}, {float(counts[iPlane][0][1].Weight()*4)}, {float(counts[iPlane][0][2].Weight()*4)}, {float(counts[iPlane][0][0].Weight()*4)}};
     //}
-    kappa = calcKappa(entries, weights, pow_kappa, kappa_down, kappa_up);
-    kappas.push_back({kappa, kappa_down, kappa_up});
-    //cout<<iPlane<<" kappa: "<<kappa<<" "<<kappa_down<<" "<<kappa_up<<endl;
+
+    //float kappa, kappa_down, kappa_up;
+    //kappa = calcKappa(entries, weights, pow_kappa, kappa_down, kappa_up);
+    //kappas.push_back({kappa, kappa_down, kappa_up});
+    ////cout<<iPlane<<" kappa: "<<kappa<<" "<<kappa_down<<" "<<kappa_up<<endl;
+
+    TRandom3 toy_random(1234);
+    vector<float> kappa_systematics = get_kappa_systematics();
+    vector<float> toy_kappas(10000);
+    for (unsigned iTrial = 0; iTrial < 10000; ++iTrial) {
+      float toy_mc_a = gsl_ran_gamma(entries[3][0]+1, 1, toy_random);
+      float toy_mc_b = gsl_ran_gamma(entries[1][0]+1, 1, toy_random);
+      float toy_mc_c = gsl_ran_gamma(entries[2][0]+1, 1, toy_random);
+      float toy_mc_d = gsl_ran_gamma(entries[0][0]+1, 1, toy_random);
+      float toy_kappa_mean = (toy_mc_a * weights[3][0]) / (toy_mc_b*weights[1][0]) * (toy_mc_d*weights[0][0]) / (toy_mc_c*weights[2][0]);
+      float toy_kappa = toy_kappa_mean * pow(1+kappa_systematics[iPlane], toy_random.Gaus(0,1));
+      toy_kappas[iTrial] = toy_kappa;
+    }
+    float kappa = (entries[3][0]*weights[3][0]) / (entries[1][0]*weights[1][0]) * (entries[0][0]*weights[0][0]) / (entries[2][0]*weights[2][0]);
+    kappas.push_back(get_sigma_band(toy_kappas, kappa));
+
   }
 }
 
@@ -564,14 +608,111 @@ float calculate_pvalue(float observed, float prediction, float prediction_up_dif
   //return (Nabove+Nequal)/(Nabove+Nbelow+Nequal);
 }
 
+//// Count how many toys there are above observed
+//void calculate_predictions(TRandom3 & random, vector<vector<vector<GammaParams> > > const & counts, vector<vector<float> > & predictions, vector<float> & pvalues) {
+//  predictions.reserve(counts.size());
+//  pvalues.reserve(counts.size());
+//  // D, B, C, D_mc, B_mc, C_mc, A_mc
+//  vector<float> pow_totpred( {-1,  1,  1,   1, -1, -1,  1});
+//  for (unsigned iPlane = 0; iPlane < counts.size(); ++iPlane) {
+//    float prediction, prediction_down, prediction_up;
+//    vector<vector<float> > entries;
+//    vector<vector<float> > weights;
+//    // Don't use odd plane D and C to calculate predictions. This correlates A and A'.
+//    if (iPlane%2==0) {
+//      entries = {{float(counts[iPlane][1][3].Yield())}, {float(counts[iPlane][1][1].Yield())}, {float(counts[iPlane][1][2].Yield())},
+//        {float(counts[iPlane][0][3].NEffective())}, {float(counts[iPlane][0][1].NEffective())}, {float(counts[iPlane][0][2].NEffective())}, {float(counts[iPlane][0][0].NEffective())}};
+//      weights = {{1}, {1}, {1},
+//        {float(counts[iPlane][0][3].Weight())}, {float(counts[iPlane][0][1].Weight())}, {float(counts[iPlane][0][2].Weight())}, {float(counts[iPlane][0][0].Weight())}};
+//    // Don't use odd plane D and C to calculate predictions. This correlates A and A'.
+//    } else {
+//      entries = {{float(counts[iPlane-1][1][3].Yield())}, {float(counts[iPlane][1][1].Yield())}, {float(counts[iPlane-1][1][2].Yield())},
+//        {float(counts[iPlane-1][0][3].NEffective())}, {float(counts[iPlane][0][1].NEffective())}, {float(counts[iPlane-1][0][2].NEffective())}, {float(counts[iPlane][0][0].NEffective())}};
+//      weights = {{1}, {1}, {1},
+//        {float(counts[iPlane-1][0][3].Weight())}, {float(counts[iPlane][0][1].Weight())}, {float(counts[iPlane-1][0][2].Weight())}, {float(counts[iPlane][0][0].Weight())}};
+//    }
+//    //// Double uncertainty on kappa
+//    //if (iPlane == 8) {
+//    //  entries = {{float(counts[iPlane][1][3].Yield())}, {float(counts[iPlane][1][1].Yield())}, {float(counts[iPlane][1][2].Yield())},
+//    //    {float(counts[iPlane][0][3].NEffective()/4)}, {float(counts[iPlane][0][1].NEffective()/4)}, {float(counts[iPlane][0][2].NEffective()/4)}, {float(counts[iPlane][0][0].NEffective()/4)}};
+//    //  weights = {{1}, {1}, {1},
+//    //    {float(counts[iPlane][0][3].Weight()*4)}, {float(counts[iPlane][0][1].Weight()*4)}, {float(counts[iPlane][0][2].Weight()*4)}, {float(counts[iPlane][0][0].Weight()*4)}};
+//    //}
+//    //// Double uncertainty on prediction
+//    //if (iPlane == 8) {
+//    //  prediction_down = prediction_down*2;
+//    //  prediction_up = prediction_up*2;
+//    //}
+//    int nrep = 10000;
+//    vector<float> fKappas;
+//    prediction = calcKappa(random, entries, weights, pow_totpred, prediction_down, prediction_up, fKappas, /*do_data=false*/ false, /*verbose=false*/ false, /*syst=-1*/ -1, /*do_plot=false*/ false, /*nrep=100000*/ nrep, /*float nSigma=1*/ 1);
+//    predictions.push_back({prediction, prediction_down, prediction_up});
+//    //cout<<iPlane<<" prediction: "<<prediction<<" down: "<<prediction_down<<" up: "<<prediction_up<<endl;
+//
+//    //// calculate pvlaue strangly
+//    //float observed_a = counts[iPlane][1][0].NEffective();
+//    //// Redo kappa if not observed
+//    //int nAboveObserved;
+//    //int nrep_redo = nrep;
+//    //for (unsigned iRedo = 0; iRedo < 4; ++iRedo) {
+//    //  nAboveObserved = 0; // initialize
+//    //  for(unsigned iKappa = 0; iKappa < fKappas.size(); ++iKappa) if(fKappas[iKappa]>=observed_a) nAboveObserved++;
+//    //  if (nAboveObserved >=20) break; // Can make a p-value
+//    //  // clear memory
+//    //  // redo kappa calcualtion
+//    //  nrep_redo = nrep * pow(10,iRedo+1);
+//    //  //cout<<"nAboveObserved: "<<nAboveObserved<<". Redoing calcKappa with "<<nrep_redo<<endl;
+//    //  calcKappa(random, entries, weights, pow_totpred, prediction_down, prediction_up, fKappas, /*do_data=false*/ false, /*verbose=false*/ false, /*syst=-1*/ -1, /*do_plot=false*/ false, /*nrep=100000*/ nrep_redo, /*float nSigma=1*/ 1);
+//    //}
+//    //float pvalue = nAboveObserved*1./nrep_redo;
+//
+//    // Use Poisson toy with mean that has log-normal fluctuation
+//    float observed_a = counts[iPlane][1][0].Yield();
+//    if (prediction_down>prediction) prediction_down = prediction; // Prediction can be 0 if, B or C is 0. Ignore prediction_down
+//    //float significance = Significance(observed_a, prediction, prediction_up, prediction_down);
+//    //float pvalue = 0.5-TMath::Erf(double(significance/sqrt(2)))/2;
+//    float pvalue = calculate_pvalue(observed_a, prediction, prediction_up, prediction_down);
+//    float significance = to_significance(pvalue); (void)significance;
+//
+//    //cout<<iPlane<<" significance: "<<significance<<" pvalue: "<<pvalue<<endl;
+//
+//    //cout<<iPlane<<" predicted: "<<prediction<<" -"<<prediction_down<<" +"<<prediction_up<<" observed_a: "<<observed_a<<" pvalue: "<<pvalue<<" sigma: "<<ROOT::Math::normal_quantile_c(pvalue,1)<<endl;
+//    //if(prediction == 0) {
+//    //  cout<<iPlane<<" predicted: "<<prediction<<" -"<<prediction_down<<" +"<<prediction_up<<" observed_a: "<<observed_a<<" pvalue: "<<pvalue<<" sigma: "<<ROOT::Math::normal_quantile_c(pvalue,1)<<endl;
+//    //}
+//
+//    //// Use Poisson distribution to calculate significance, Can't handle case when 0 observed, 0 predicted
+//    //TF1 poisson("gamma", gamma, 0,10000, 1);
+//    //float observed_a = counts[iPlane][1][0].NEffective();
+//    //poisson.SetParameter(0,observed_a);
+//    //float pvalue = poisson.Integral(0, prediction);
+//
+//    //cout<<iPlane<<" predicted: "<<prediction<<" observed_a: "<<observed_a<<" pvalue: "<<pvalue<<" sigma: "<<ROOT::Math::normal_quantile_c(pvalue,1)<<endl;
+//    pvalues.push_back(pvalue);
+//  }
+//}
+
 // Count how many toys there are above observed
-void calculate_predictions(TRandom3 & random, vector<vector<vector<GammaParams> > > const & counts, vector<vector<float> > & predictions, vector<float> & pvalues) {
+void calculate_predictions(TRandom3 & random, vector<vector<vector<GammaParams> > > const & counts, vector<vector<float> > & predictions, vector<float> & pvalues, 
+  vector<TH1D*> * kappa_hists, vector<TH1D*> * prediction_hists, vector<TH1D*> * toy_hists) {
+  if (prediction_hists != 0) {
+    for (unsigned iPlane = 0; iPlane < counts.size(); ++iPlane) {
+      string planeName = "plane"+std::to_string(iPlane);
+      kappa_hists->push_back(new TH1D(("kappa_"+planeName).c_str(), ("kappa_"+planeName).c_str(), 100, 0, 0));
+      prediction_hists->push_back(new TH1D(("prediction_"+planeName).c_str(), ("prediction_"+planeName).c_str(), 100, 0, 0));
+      if (iPlane == 8) {
+        toy_hists->push_back(new TH1D(("toy_"+planeName).c_str(), ("toy_"+planeName).c_str(), 6, -0.5, 5.5));
+      } else toy_hists->push_back(new TH1D(("toy_"+planeName).c_str(), ("toy_"+planeName).c_str(), 100, 5, 5));
+    }
+  }
+  (void)random;
   predictions.reserve(counts.size());
   pvalues.reserve(counts.size());
   // D, B, C, D_mc, B_mc, C_mc, A_mc
   vector<float> pow_totpred( {-1,  1,  1,   1, -1, -1,  1});
   for (unsigned iPlane = 0; iPlane < counts.size(); ++iPlane) {
-    float prediction, prediction_down, prediction_up;
+    // entries[D,B,C,D_mc,B_mc,C_mc,A_mc] = [yield]
+    // weights[D,B,C,D_mc,B_mc,C_mc,A_mc] = [yield]
     vector<vector<float> > entries;
     vector<vector<float> > weights;
     // Don't use odd plane D and C to calculate predictions. This correlates A and A'.
@@ -587,64 +728,103 @@ void calculate_predictions(TRandom3 & random, vector<vector<vector<GammaParams> 
       weights = {{1}, {1}, {1},
         {float(counts[iPlane-1][0][3].Weight())}, {float(counts[iPlane][0][1].Weight())}, {float(counts[iPlane-1][0][2].Weight())}, {float(counts[iPlane][0][0].Weight())}};
     }
-    //// Double uncertainty on kappa
-    //if (iPlane == 8) {
-    //  entries = {{float(counts[iPlane][1][3].Yield())}, {float(counts[iPlane][1][1].Yield())}, {float(counts[iPlane][1][2].Yield())},
-    //    {float(counts[iPlane][0][3].NEffective()/4)}, {float(counts[iPlane][0][1].NEffective()/4)}, {float(counts[iPlane][0][2].NEffective()/4)}, {float(counts[iPlane][0][0].NEffective()/4)}};
-    //  weights = {{1}, {1}, {1},
-    //    {float(counts[iPlane][0][3].Weight()*4)}, {float(counts[iPlane][0][1].Weight()*4)}, {float(counts[iPlane][0][2].Weight()*4)}, {float(counts[iPlane][0][0].Weight()*4)}};
-    //}
-    //// Double uncertainty on prediction
-    //if (iPlane == 8) {
-    //  prediction_down = prediction_down*2;
-    //  prediction_up = prediction_up*2;
-    //}
-    int nrep = 10000;
-    vector<float> fKappas;
-    prediction = calcKappa(random, entries, weights, pow_totpred, prediction_down, prediction_up, fKappas, /*do_data=false*/ false, /*verbose=false*/ false, /*syst=-1*/ -1, /*do_plot=false*/ false, /*nrep=100000*/ nrep, /*float nSigma=1*/ 1);
-    predictions.push_back({prediction, prediction_down, prediction_up});
-    //cout<<iPlane<<" prediction: "<<prediction<<" down: "<<prediction_down<<" up: "<<prediction_up<<endl;
 
-    //// calculate pvlaue strangly
-    //float observed_a = counts[iPlane][1][0].NEffective();
-    //// Redo kappa if not observed
-    //int nAboveObserved;
-    //int nrep_redo = nrep;
-    //for (unsigned iRedo = 0; iRedo < 4; ++iRedo) {
-    //  nAboveObserved = 0; // initialize
-    //  for(unsigned iKappa = 0; iKappa < fKappas.size(); ++iKappa) if(fKappas[iKappa]>=observed_a) nAboveObserved++;
-    //  if (nAboveObserved >=20) break; // Can make a p-value
-    //  // clear memory
-    //  // redo kappa calcualtion
-    //  nrep_redo = nrep * pow(10,iRedo+1);
-    //  //cout<<"nAboveObserved: "<<nAboveObserved<<". Redoing calcKappa with "<<nrep_redo<<endl;
-    //  calcKappa(random, entries, weights, pow_totpred, prediction_down, prediction_up, fKappas, /*do_data=false*/ false, /*verbose=false*/ false, /*syst=-1*/ -1, /*do_plot=false*/ false, /*nrep=100000*/ nrep_redo, /*float nSigma=1*/ 1);
-    //}
-    //float pvalue = nAboveObserved*1./nrep_redo;
-
-    // Use Poisson toy with mean that has log-normal fluctuation
     float observed_a = counts[iPlane][1][0].Yield();
-    if (prediction_down>prediction) prediction_down = prediction; // Prediction can be 0 if, B or C is 0. Ignore prediction_down
-    //float significance = Significance(observed_a, prediction, prediction_up, prediction_down);
-    //float pvalue = 0.5-TMath::Erf(double(significance/sqrt(2)))/2;
-    float pvalue = calculate_pvalue(observed_a, prediction, prediction_up, prediction_down);
-    float significance = to_significance(pvalue); (void)significance;
 
-    //cout<<iPlane<<" significance: "<<significance<<" pvalue: "<<pvalue<<endl;
+    // Use entries and weights to get prediction (and uncertainty) and pvalue
+    TRandom3 toy_random(1234);
+    double precision = 0.03; // Desired precision on the p-value
+    double Nmin = 1/pow(precision,2), Nmax = 5e7; // Nmax controls max sigmas achievable (5e7->5.5 sigma)
+    float pvalue = -1;
+    // prediction_info = [prediction, prediction_down_diff, prediction_up_diff]
+    vector<float> prediction_info = {-1, -1, -1};
 
-    //cout<<iPlane<<" predicted: "<<prediction<<" -"<<prediction_down<<" +"<<prediction_up<<" observed_a: "<<observed_a<<" pvalue: "<<pvalue<<" sigma: "<<ROOT::Math::normal_quantile_c(pvalue,1)<<endl;
-    //if(prediction == 0) {
-    //  cout<<iPlane<<" predicted: "<<prediction<<" -"<<prediction_down<<" +"<<prediction_up<<" observed_a: "<<observed_a<<" pvalue: "<<pvalue<<" sigma: "<<ROOT::Math::normal_quantile_c(pvalue,1)<<endl;
+    if (observed_a==0) Nmax=Nmin; // For calculating prediction distribution
+
+    double Nbelow=0, Nabove=0;
+    vector<float> toy_predictions; toy_predictions.reserve(Nmax);
+
+    // kappa = A_mc / B_mc * D_mc / C_mc
+    float kappa = (entries[6][0]*weights[6][0]) / (entries[4][0]*weights[4][0]) * (entries[3][0]*weights[3][0]) / (entries[5][0]*weights[5][0]);
+    // kappa_systematics[iPlane] = fractional uncertainty
+    vector<float> kappa_systematics = get_kappa_systematics();
+    // Generate toys
+    while ( (std::min(Nbelow, Nabove))<Nmin && (Nbelow+Nabove)<Nmax) {
+      // Generate B, C, D toy yields
+      float toy_b = gsl_ran_gamma(entries[1][0]+1, 1, toy_random);
+      float toy_c = gsl_ran_gamma(entries[2][0]+1, 1, toy_random);
+      float toy_d = gsl_ran_gamma(entries[0][0]+1, 1, toy_random);
+      // Generate kappa with systematics from statistics
+      float toy_mc_a = gsl_ran_gamma(entries[6][0]+1, 1, toy_random);
+      float toy_mc_b = gsl_ran_gamma(entries[4][0]+1, 1, toy_random);
+      float toy_mc_c = gsl_ran_gamma(entries[5][0]+1, 1, toy_random);
+      float toy_mc_d = gsl_ran_gamma(entries[3][0]+1, 1, toy_random);
+      float toy_kappa_mean = (toy_mc_a * weights[6][0]) / (toy_mc_b*weights[4][0]) * (toy_mc_d*weights[3][0]) / (toy_mc_c*weights[5][0]);
+      //float toy_kappa = toy_kappa_mean;
+      // Add in other systematics to kappa with log-normal
+      float toy_kappa = toy_kappa_mean * pow(1+kappa_systematics[iPlane], toy_random.Gaus(0,1));
+      //float toy_kappa = kappa; (void)toy_kappa_mean;
+
+      // Calculate toy prediction
+      float toy_prediction = (toy_b*weights[1][0]) * (toy_c*weights[2][0]) / (toy_d*weights[0][0]) * toy_kappa;
+      toy_predictions.push_back(toy_prediction);
+      // Generate toy_observed using toy prediction
+      float toy_observed = toy_random.Poisson(toy_prediction);
+
+      if (prediction_hists != 0) {
+        kappa_hists->at(iPlane)->Fill(toy_kappa);
+        prediction_hists->at(iPlane)->Fill(toy_prediction);
+        toy_hists->at(iPlane)->Fill(toy_observed);
+      }
+
+      if (toy_observed >= observed_a) Nabove++;
+      else Nbelow++;
+    }
+
+    //cout<<"b: "<<entries[1][0]<<" c: "<<entries[2][0]<<" d: "<<entries[0][0]<<" kappa: "<<kappa<<" kappa uncertainty: "<<kappa_systematics[iPlane]<<" obs: "<<observed_a<<" Nabove: "<<Nabove<<" Nbelow: "<<Nbelow<<endl;
+    //if (prediction_hists != 0) {
+    //  cout<<toy_hists->at(iPlane)->GetEntries()<<endl;
     //}
+    
+    // Calculate pvalue
+    {
+      if (observed_a==0) pvalue = 1;
+      else if (Nabove==0) pvalue = 1./Nmax;
+      else if (Nbelow==0) pvalue = 1-1./Nmax;
+      else pvalue = Nabove/(Nabove+Nbelow);
+    }
 
-    //// Use Poisson distribution to calculate significance, Can't handle case when 0 observed, 0 predicted
-    //TF1 poisson("gamma", gamma, 0,10000, 1);
-    //float observed_a = counts[iPlane][1][0].NEffective();
-    //poisson.SetParameter(0,observed_a);
-    //float pvalue = poisson.Integral(0, prediction);
+    // Calculate prediction uncertainty
+    {
+      float prediction = kappa * entries[1][0] * entries[2][0] / entries[0][0];
+      prediction_info = get_sigma_band(toy_predictions, prediction);
+      //cout<<"iPlane "<<iPlane<<" "<<prediction_info[0]<<" "<<prediction_info[1]<<" "<<prediction_info[2]<<endl;
 
-    //cout<<iPlane<<" predicted: "<<prediction<<" observed_a: "<<observed_a<<" pvalue: "<<pvalue<<" sigma: "<<ROOT::Math::normal_quantile_c(pvalue,1)<<endl;
+      //sort(toy_predictions.begin(), toy_predictions.end());
+      //int prediction_index = -1;
+      //for (int iToy = 0; iToy < static_cast<int>(toy_predictions.size()); iToy++) {
+      //  if (toy_predictions[iToy] > prediction) {
+      //    prediction_index = iToy;
+      //    break;
+      //  }
+      //}
+      //float nSigma = 1;
+      //double integratedGaus = intGaus(0,1,0,nSigma);
+      //int prediction_low_index = prediction_index - static_cast<int>(integratedGaus * toy_predictions.size());
+      //if (prediction_low_index<0) prediction_low_index = 0;
+      //int prediction_high_index = prediction_index + static_cast<int>(integratedGaus * toy_predictions.size());
+      //if (prediction_high_index>static_cast<int>(toy_predictions.size())) prediction_high_index = toy_predictions.size()+1;
+      //float prediction_low = prediction - toy_predictions[prediction_low_index];
+      //float prediction_high = toy_predictions[prediction_high_index] - prediction;
+      //prediction_info = {prediction, prediction_low, prediction_high};
+      ////cout<<"prediction: "<<prediction<<" toy_predictions[prediction_index]: "<<toy_predictions[prediction_index]<<endl;
+      ////cout<<"prediction: "<<prediction<<" low: "<<toy_predictions[prediction_low_index]<<" high: "<<toy_predictions[prediction_high_index]<<endl;
+      ////cout<<"prediction index pred: "<<toy_predictions[prediction_index]<<endl;
+      ////cout<<"prediction: "<<prediction<<" pvalue: "<<pvalue<<" significance: "<<to_significance(pvalue)<<endl;
+    }
+
     pvalues.push_back(pvalue);
+    predictions.push_back(prediction_info);
   }
 }
 
@@ -741,6 +921,30 @@ void normalize_mc_to_data_by_met(vector<vector<vector<GammaParams> > > const & c
   }
 }
 
+float generateYield(TRandom3 & random, GammaParams binB, GammaParams binC, GammaParams binD, 
+  GammaParams binA_mc, GammaParams binB_mc, GammaParams binC_mc, GammaParams binD_mc,
+  float kappa_systematics,
+  float & true_value
+) {
+  float toy_b = gsl_ran_gamma(binB.Yield()+1, 1, random);
+  float toy_c = gsl_ran_gamma(binC.Yield()+1, 1, random);
+  float toy_d = gsl_ran_gamma(binD.Yield()+1, 1, random);
+  // Generate kappa with systematics from statistics
+  float toy_mc_a = gsl_ran_gamma(binA_mc.NEffective()+1, 1, random);
+  float toy_mc_b = gsl_ran_gamma(binB_mc.NEffective()+1, 1, random);
+  float toy_mc_c = gsl_ran_gamma(binC_mc.NEffective()+1, 1, random);
+  float toy_mc_d = gsl_ran_gamma(binD_mc.NEffective()+1, 1, random);
+  float toy_kappa_mean = (toy_mc_a * binA_mc.Weight()) / (toy_mc_b*binB_mc.Weight()) * (toy_mc_d*binD_mc.Weight()) / (toy_mc_c*binC_mc.Weight());
+  float toy_kappa = toy_kappa_mean * pow(1+kappa_systematics, random.Gaus(0,1));
+  //float toy_kappa = binA_mc.Yield() / binB_mc.Yield() * binD_mc.Yield() / binC_mc.Yield(); (void)kappa_systematics;
+  // Calculate toy prediction
+  float toy_prediction = (toy_b) * (toy_c) / (toy_d) * toy_kappa;
+  true_value = toy_prediction;
+  // Generate toy_observed using toy prediction
+  float toy_observed = random.Poisson(toy_prediction);
+  return toy_observed;
+}
+
 // mode: 0 poisson
 // mode: 1 poisson x Gamma distribution
 // mode: 2 poisson x gaussian with unc. from poisson (Model post-fit)
@@ -758,17 +962,20 @@ float generateYield(TRandom3 & random, float mean, float uncertainty, int mode,
   }
   // Fluctuate mean with Gamma
   else if (mode == 1) {
-    float fluctuated_mean=-1;
-    fluctuated_mean= gsl_ran_gamma(mean+1, 1, random);
+    //float fluctuated_mean=-1;
+    //fluctuated_mean= gsl_ran_gamma(mean+1, 1, random);
 
-    // Additional uncertinaty following log-normal
-    double theta = random.Gaus(0,1);
-    double kappa = 1+uncertainty/mean/weight; 
-    double uncorrelated_theta = random.Gaus(0,1);
+    //// Additional uncertinaty following log-normal
+    //double theta = random.Gaus(0,1);
+    //double kappa = 1+uncertainty/mean/weight; 
+    //double uncorrelated_theta = random.Gaus(0,1);
 
-    true_value = fluctuated_mean*weight*pow(kappa,theta)*pow(1+correlated_uncertainty,correlated_theta)*pow(1+uncorrelated_uncertinaty, uncorrelated_theta);
-    //cout<<"mean: "<<mean<<" uncertainty: "<<uncertainty<<" theta: "<<theta<<" uncertainty/mean: "<<uncertainty/mean/weight<<" theta: "<<theta<<" fluctuated_mean: "<<true_value<<endl;
-    return random.Poisson(true_value);
+    //true_value = fluctuated_mean*weight*pow(kappa,theta)*pow(1+correlated_uncertainty,correlated_theta)*pow(1+uncorrelated_uncertinaty, uncorrelated_theta);
+    ////cout<<"mean: "<<mean<<" uncertainty: "<<uncertainty<<" theta: "<<theta<<" uncertainty/mean: "<<uncertainty/mean/weight<<" theta: "<<theta<<" fluctuated_mean: "<<true_value<<endl;
+    //return random.Poisson(true_value);
+    (void) weight;
+    true_value = mean;
+    return gsl_ran_gamma(mean+1, 1, random);
   }
   // Fluctuate mean with gaussian, where gaussian uncertainty is sqrt(mean) [Try to model post-fit]
   else if (mode == 2) {
@@ -800,6 +1007,7 @@ float generateYield(TRandom3 & random, float mean, float uncertainty, int mode,
 
     // First method
     double kappa = 1+uncertainty/mean; 
+    if (mean ==0) kappa = 1;
     double uncorrelated_theta = random.Gaus(0,1);
     //// Original 
     //double fluctuated_mean = mean*pow(kappa,theta);
@@ -818,6 +1026,13 @@ float generateYield(TRandom3 & random, float mean, float uncertainty, int mode,
   }
   else return 0;
 }
+
+//float generateYield(TRandom3 & random, float mean, float uncertainty, int mode, 
+//  float & true_value,
+//  float uncorrelated_uncertinaty=0, float correlated_uncertainty=0, float correlated_theta=0,
+//  float weight=1 // used for gamma function
+//) {
+//}
 
 // correlated_uncertainty is in %.
 // counts[iplane][0=mc/1=data][0=A,1=B,2=C,3=D] = GammaParams
@@ -880,16 +1095,19 @@ void generateToy (vector<vector<vector<GammaParams> > > const & counts, int seed
       counts_toy[iPlane][1][2].SetNEffectiveAndWeight(generateYield(random_toy, obs_C, obs_C_unc*factor_uncerainty, /*mode*/ 4, true_C, uncorrelated_uncertinaty, correlated_uncertainty, correlated_theta, obs_C_weight), 1);
       counts_toy[iPlane][1][3].SetNEffectiveAndWeight(generateYield(random_toy, obs_D, obs_D_unc*factor_uncerainty, /*mode*/ 4, true_D, uncorrelated_uncertinaty, correlated_uncertainty, correlated_theta, obs_D_weight), 1);
     } else if (model_mode==2) {
-      //// Use Poisson x log-normal(Uncertainty) to generate toy yields
+      // Use Poisson x log-normal(Uncertainty) to generate toy yields
+      vector<float> kappa_systematics = get_kappa_systematics();
       //counts_toy[iPlane][1][0].SetNEffectiveAndWeight(generateYield(random_toy, obs_A, obs_A_unc*factor_uncerainty, /*mode*/ 4, true_A, uncorrelated_uncertinaty, correlated_uncertainty, correlated_theta, obs_A_weight), 1);
-      //counts_toy[iPlane][1][1].SetNEffectiveAndWeight(generateYield(random_toy, obs_B, obs_B_unc*factor_uncerainty, /*mode*/ 4, true_B, uncorrelated_uncertinaty, correlated_uncertainty, correlated_theta, obs_B_weight), 1);
-      //counts_toy[iPlane][1][2].SetNEffectiveAndWeight(generateYield(random_toy, obs_C, obs_C_unc*factor_uncerainty, /*mode*/ 4, true_C, uncorrelated_uncertinaty, correlated_uncertainty, correlated_theta, obs_C_weight), 1);
-      //counts_toy[iPlane][1][3].SetNEffectiveAndWeight(generateYield(random_toy, obs_D, obs_D_unc*factor_uncerainty, /*mode*/ 4, true_D, uncorrelated_uncertinaty, correlated_uncertainty, correlated_theta, obs_D_weight), 1);
-      // Use Poisson to generate toy yields
-      counts_toy[iPlane][1][0].SetNEffectiveAndWeight(generateYield(random_toy, obs_A, obs_A_unc*factor_uncerainty, /*mode*/ 0, true_A, uncorrelated_uncertinaty, correlated_uncertainty, correlated_theta, obs_A_weight), 1);
-      counts_toy[iPlane][1][1].SetNEffectiveAndWeight(generateYield(random_toy, obs_B, obs_B_unc*factor_uncerainty, /*mode*/ 0, true_B, uncorrelated_uncertinaty, correlated_uncertainty, correlated_theta, obs_B_weight), 1);
-      counts_toy[iPlane][1][2].SetNEffectiveAndWeight(generateYield(random_toy, obs_C, obs_C_unc*factor_uncerainty, /*mode*/ 0, true_C, uncorrelated_uncertinaty, correlated_uncertainty, correlated_theta, obs_C_weight), 1);
-      counts_toy[iPlane][1][3].SetNEffectiveAndWeight(generateYield(random_toy, obs_D, obs_D_unc*factor_uncerainty, /*mode*/ 0, true_D, uncorrelated_uncertinaty, correlated_uncertainty, correlated_theta, obs_D_weight), 1);
+      counts_toy[iPlane][1][0].SetNEffectiveAndWeight(generateYield(random_toy, counts[iPlane][1][1], counts[iPlane][1][2], counts[iPlane][1][3], counts[iPlane][0][0], counts[iPlane][0][1], counts[iPlane][0][2], counts[iPlane][0][3], kappa_systematics[iPlane], true_A),1);
+      counts_toy[iPlane][1][1].SetNEffectiveAndWeight(generateYield(random_toy, obs_B, obs_B_unc*factor_uncerainty, /*mode*/ 1, true_B, uncorrelated_uncertinaty, correlated_uncertainty, correlated_theta, obs_B_weight), 1);
+      counts_toy[iPlane][1][2].SetNEffectiveAndWeight(generateYield(random_toy, obs_C, obs_C_unc*factor_uncerainty, /*mode*/ 1, true_C, uncorrelated_uncertinaty, correlated_uncertainty, correlated_theta, obs_C_weight), 1);
+      counts_toy[iPlane][1][3].SetNEffectiveAndWeight(generateYield(random_toy, obs_D, obs_D_unc*factor_uncerainty, /*mode*/ 1, true_D, uncorrelated_uncertinaty, correlated_uncertainty, correlated_theta, obs_D_weight), 1);
+      //cout<<"toy A: "<<counts_toy[iPlane][1][0].Yield()<<" "<<counts_toy[iPlane][1][0].NEffective()<<endl;
+      //// Use Poisson to generate toy yields
+      //counts_toy[iPlane][1][0].SetNEffectiveAndWeight(generateYield(random_toy, obs_A, obs_A_unc*factor_uncerainty, /*mode*/ 0, true_A, uncorrelated_uncertinaty, correlated_uncertainty, correlated_theta, obs_A_weight), 1);
+      //counts_toy[iPlane][1][1].SetNEffectiveAndWeight(generateYield(random_toy, obs_B, obs_B_unc*factor_uncerainty, /*mode*/ 0, true_B, uncorrelated_uncertinaty, correlated_uncertainty, correlated_theta, obs_B_weight), 1);
+      //counts_toy[iPlane][1][2].SetNEffectiveAndWeight(generateYield(random_toy, obs_C, obs_C_unc*factor_uncerainty, /*mode*/ 0, true_C, uncorrelated_uncertinaty, correlated_uncertainty, correlated_theta, obs_C_weight), 1);
+      //counts_toy[iPlane][1][3].SetNEffectiveAndWeight(generateYield(random_toy, obs_D, obs_D_unc*factor_uncerainty, /*mode*/ 0, true_D, uncorrelated_uncertinaty, correlated_uncertainty, correlated_theta, obs_D_weight), 1);
     }
 
     //// Use Poisson x log-normal(statistical uncertianty+systematics uncertainty) to generate toy yields
@@ -983,7 +1201,27 @@ void makeTransparent(TCanvas & canvas) {
 }
 
 // Returns fractional systematics
-vector<float> get_kappa_systematics() {
+vector<float> get_kappa_systematics(bool fractional) {
+  vector<float> kappa(16);
+  kappa[0] = 1.24878;
+  kappa[1] = 1.22935;
+  kappa[2] = 1.07006;
+  kappa[3] = 1.07059;
+  kappa[4] = 1.08211;
+  kappa[5] = 1.10397;
+  kappa[6] = 0.919397;
+  kappa[7] = 0.929219;
+  kappa[8] = 0.852653;
+  kappa[9] = 2.40327;
+  kappa[10] = 0.939968;
+  kappa[11] = 0.905643;
+  kappa[12] = 1.22588;
+  kappa[13] = 0.964878;
+  kappa[14] = 0.988554;
+  kappa[15] = 1.02952;
+
+
+
   // controlSystematics[iPlane][control] = fractional systematic
   vector<map<string, float> > controlSystematics(16);
   controlSystematics[0]["ttbar"] = 1.12; 
@@ -1039,8 +1277,13 @@ vector<float> get_kappa_systematics() {
 
   vector<float> kappa_systematics(controlSystematics.size()); 
   for (unsigned iPlane = 0; iPlane < controlSystematics.size(); ++iPlane) {
-    kappa_systematics[iPlane] = sqrt(pow(controlSystematics[iPlane]["ttbar"]-1,2)+pow(controlSystematics[iPlane]["vjets"]-1,2)+pow(controlSystematics[iPlane]["qcd"]-1,2));
-    //cout<<iPlane<<" ttbar: "<<controlSystematics[iPlane]["ttbar"]<<" vjets: "<<controlSystematics[iPlane]["vjets"]<<" qcd: "<<controlSystematics[iPlane]["qcd"]<<" kappa_systematics: "<<kappa_systematics[iPlane]<<endl;
+    float kappa_ttbar_systematic = kappa[iPlane] * (controlSystematics[iPlane]["ttbar"]-1);
+    float kappa_zjets_systematic = kappa[iPlane] * (controlSystematics[iPlane]["vjets"]-1);
+    float kappa_qcd_systematic = kappa[iPlane] * (controlSystematics[iPlane]["qcd"]-1);
+    kappa_systematics[iPlane] = sqrt(pow(kappa_ttbar_systematic,2)+pow(kappa_zjets_systematic,2)+pow(kappa_qcd_systematic,2));
+    if(fractional) kappa_systematics[iPlane] = kappa_systematics[iPlane]/kappa[iPlane];
+    //cout<<iPlane<<" ttbar: "<<kappa_ttbar_systematic<<" zjets: "<<kappa_zjets_systematic<<" qcd: "<<kappa_qcd_systematic<<" kappa systematic: "<<kappa_systematics[iPlane]<<" kappa: "<<kappa[iPlane]<<endl;
+    //cout<<iPlane<<" ttbar: "<<controlSystematics[iPlane]["ttbar"]<<" vjets: "<<controlSystematics[iPlane]["vjets"]<<" qcd: "<<controlSystematics[iPlane]["qcd"]<<" kappa_systematics: "<<kappa_systematics[iPlane]<<" kappa: "<<kappa[iPlane]<<endl;
   }
   return kappa_systematics;
 }
@@ -1066,7 +1309,42 @@ int main(/* int argc, char *argv[] */){
   // pvalue[iplane] = pvalue for aboved observed in A
   vector<float> pvalues;
   TRandom3 random;
-  calculate_predictions(random, counts, predictions, pvalues);
+  vector<TH1D*> kappa_hists;
+  vector<TH1D*> prediction_hists;
+  vector<TH1D*> toy_hists;
+  calculate_predictions(random, counts, predictions, pvalues, &kappa_hists, &prediction_hists, &toy_hists);
+
+  // Draw kappa and prediction distributions
+  for (unsigned iPlane=0; iPlane < counts.size(); ++iPlane) {
+    TCanvas * canvas_plane = new TCanvas(("plane"+std::to_string(iPlane)).c_str(), ("plane"+std::to_string(iPlane)).c_str(), 1500, 500);
+    canvas_plane->Divide(3,1);
+    canvas_plane->cd(1);
+    kappa_hists[iPlane]->SetTitle(("#kappa for bin "+std::to_string(iPlane)+";#kappa;# toys").c_str());
+    kappa_hists[iPlane]->Draw();
+    vector<float> kappa_sigma_band = get_sigma_band(kappa_hists[iPlane]);
+    //cout<<"kappa["<<iPlane<<"]: "<<kappa_sigma_band[1]-kappa_sigma_band[0]<<" "<<kappa_sigma_band[2]-kappa_sigma_band[1]<<endl;
+    TLine * kappa_m1 = new TLine(kappa_sigma_band[0], 0, kappa_sigma_band[0], kappa_hists[iPlane]->GetMaximum()); kappa_m1->Draw();
+    TLine * kappa_p1 = new TLine(kappa_sigma_band[2], 0, kappa_sigma_band[2], kappa_hists[iPlane]->GetMaximum()); kappa_p1->Draw();
+    canvas_plane->cd(2);
+    prediction_hists[iPlane]->SetTitle(("Pre-fit prediction for bin "+std::to_string(iPlane)+";Pre-fit prediction;# toys").c_str());
+    prediction_hists[iPlane]->Draw();
+    vector<float> prediction_sigma_band = get_sigma_band(prediction_hists[iPlane]);
+    TLine * prediction_m1 = new TLine(prediction_sigma_band[0], 0, prediction_sigma_band[0], prediction_hists[iPlane]->GetMaximum()); prediction_m1->Draw();
+    TLine * prediction_p1 = new TLine(prediction_sigma_band[2], 0, prediction_sigma_band[2], prediction_hists[iPlane]->GetMaximum()); prediction_p1->Draw();
+    //cout<<"prediction["<<iPlane<<"]: "<<prediction_sigma_band[1]-prediction_sigma_band[0]<<" "<<prediction_sigma_band[2]-prediction_sigma_band[1]<<endl;
+    canvas_plane->cd(3);
+    gPad->SetLogy();
+    toy_hists[iPlane]->SetTitle(("Toy yields for bin A in bin "+std::to_string(iPlane)+";Toy yield in bin A;# toys").c_str());
+    toy_hists[iPlane]->Draw();
+    float observed_yield = counts[iPlane][1][0].Yield()-0.5;
+    //vector<float> toy_sigma_band = get_sigma_band(toy_hists[iPlane]);
+    TLine * observed_line = new TLine(observed_yield, 0, observed_yield, toy_hists[iPlane]->GetMaximum()); observed_line->Draw();
+    //TLine * toy_m1 = new TLine(toy_sigma_band[0], 0, toy_sigma_band[0], toy_hists[iPlane]->GetMaximum()); toy_m1->Draw();
+    //TLine * toy_p1 = new TLine(toy_sigma_band[2], 0, toy_sigma_band[2], toy_hists[iPlane]->GetMaximum()); toy_p1->Draw();
+    canvas_plane->SaveAs(("plots/kappa_prediction_toy_plane_"+std::to_string(iPlane)+".pdf").c_str());
+    cout<<"open plots/kappa_prediction_toy_plane_"+std::to_string(iPlane)+".pdf"<<endl;
+  }
+
   //// test_stats[iplane] = test_stat
   //vector<float> test_stats;
   //calculate_test_stats(counts, predictions, test_stats);
@@ -1085,7 +1363,7 @@ int main(/* int argc, char *argv[] */){
   for (unsigned iPlane = 0; iPlane<pvalues.size(); ++iPlane) {
     float significance;
     //cout<<iPlane<<" pvalue: "<<pvalues[iPlane]<<endl;
-    significance = ROOT::Math::normal_quantile_c(pvalues[iPlane],1);
+    significance = to_significance(pvalues[iPlane]);
     hist_significance->Fill(significance);
     if (iPlane%2==0) hist_significance_3b->Fill(significance);
     if (iPlane%2==1) hist_significance_4b->Fill(significance);
@@ -1094,12 +1372,12 @@ int main(/* int argc, char *argv[] */){
   // Generate toys
   bool generate_toys = false;
   bool use_threads = true;
-  unsigned nToys = 1;
+  unsigned nToys = 10000;
   float histNBin = 10000;
   float histMax = 100;
 
-  // 0: MC, 1: background-only fit, 2: observed+prefit
-  int model_mode = 1;
+  // 0: MC, 1: background-only fit, 2: b,c,d observed+prefit (default)
+  int model_mode = 2;
   float correlated_uncertainty = 0.0; //fraction ex) 0.1 is 10%
   float uncorrelated_uncertinaty = 0.00; //fraction: ex) 0.05 is 5%
   float factor_uncerainty = 0; // Uncertainty factor of log-normal with statistical uncertainty ex) 0 is no log-normal uncertianty. Used for Gamma model_mode.
@@ -1140,7 +1418,7 @@ int main(/* int argc, char *argv[] */){
     // Made model with observed+prefit. Can use counts to do it.
     vector<vector<vector<GammaParams> > > observed_prefit_counts;
     make_observed_prefit_model(random, counts, observed_prefit_counts);
-    replace_counts(counts, 0, 0, observed_prefit_counts);
+    replace_counts(counts, 0, 0, observed_prefit_counts); // Replace MC
     model_counts = observed_prefit_counts;
   }
 
@@ -1184,7 +1462,7 @@ int main(/* int argc, char *argv[] */){
     TH1F * hist_probe_true_c_mc = new TH1F("hist_probe_true_c_mc","hist_probe_true_c_mc", 100, 0, probe_max_c);
     TH1F * hist_probe_true_d_mc = new TH1F("hist_probe_true_d_mc","hist_probe_true_d_mc", 100, 0, probe_max_d);
     TH1F * hist_probe_prediction = new TH1F("hist_probe_prediction", "hist_probe_prediction", 100, 0, probe_max_a);
-    TH1F * hist_probe_significance = new TH1F("hist_probe_significance", "hist_probe_significance", 20, -5, 5);
+    TH1F * hist_probe_significance = new TH1F("hist_probe_significance", "hist_probe_significance", 100, -5, 5);
 
     TH1F * hist_max_test_stat = new TH1F("hist_max_test_stat", "hist_max_test_stat", histNBin, 0, histMax);
     TH1F * hist_significance_toy = new TH1F("hist_significance_toy","hist_significance_toy", 10, -5, 5);
@@ -1338,11 +1616,14 @@ int main(/* int argc, char *argv[] */){
 
   TCanvas c1("c1", "c1", 500, 500);
   c1.SetLogy();
+  hist_max_test_stat->SetTitle("Max. significance between 16 bins;Max. significance (#sigma);# toys/0.1 #sigma");
   hist_max_test_stat->Rebin(10);
   hist_max_test_stat->GetXaxis()->SetRangeUser(0, 10);
   hist_max_test_stat->Draw();
-  c1.SaveAs("test_stat.pdf");
-  cout<<"open test_stat.pdf"<<endl;
+  TLine * observed_test_stat = new TLine(max_test_stat,0,max_test_stat,hist_max_test_stat->GetMaximum()); 
+  observed_test_stat->SetLineColor(kRed);observed_test_stat->Draw();
+  c1.SaveAs("plots/test_stat.pdf");
+  cout<<"open plots/test_stat.pdf"<<endl;
 
   gStyle->SetOptStat(111111);              // No Stats box
   TCanvas c2("c2", "c2", 500, 500);
@@ -1359,8 +1640,8 @@ int main(/* int argc, char *argv[] */){
   c2.cd(4);
   hist_probe_d->SetStats(1);
   hist_probe_d->Draw();
-  c2.SaveAs("test_stat_toy_yields.pdf");
-  cout<<"open test_stat_toy_yields.pdf"<<endl;
+  c2.SaveAs("plots/test_stat_toy_yields.pdf");
+  cout<<"open plots/test_stat_toy_yields.pdf"<<endl;
 
   TCanvas c3("c3", "c3", 500, 500);
   c3.Divide(2,2);
@@ -1376,8 +1657,8 @@ int main(/* int argc, char *argv[] */){
   c3.cd(4);
   hist_probe_d_mc->SetStats(1);
   hist_probe_d_mc->Draw();
-  c3.SaveAs("test_stat_toy_yields_mc.pdf");
-  cout<<"open test_stat_toy_yields_mc.pdf"<<endl;
+  c3.SaveAs("plots/test_stat_toy_yields_mc.pdf");
+  cout<<"open plots/test_stat_toy_yields_mc.pdf"<<endl;
 
   TCanvas c4("c4", "c4", 500, 500);
   c4.Divide(2,2);
@@ -1393,8 +1674,8 @@ int main(/* int argc, char *argv[] */){
   c4.cd(4);
   hist_probe_true_d->SetStats(1);
   hist_probe_true_d->Draw();
-  c4.SaveAs("test_stat_toy_true_yields.pdf");
-  cout<<"open test_stat_toy_true_yields.pdf"<<endl;
+  c4.SaveAs("plots/test_stat_toy_true_yields.pdf");
+  cout<<"open plots/test_stat_toy_true_yields.pdf"<<endl;
 
   TCanvas c5("c5", "c5", 500, 500);
   gStyle->SetOptStat(220001111);              // No Stats box
@@ -1406,7 +1687,7 @@ int main(/* int argc, char *argv[] */){
   stat_significance_toy_norm->SetY1NDC(0.3);
   stat_significance_toy_norm->SetY2NDC(0.6);
   hist_significance_toy_norm->Scale(16);
-  hist_significance_toy_norm->SetMaximum(5.5);
+  hist_significance_toy_norm->SetMaximum(6.5);
   //hist_significance_toy_nozeroobs->SetLineColor(kGreen);
   //hist_significance_toy_nozeroobs->DrawNormalized("same");
   (void)hist_significance_toy_nozeroobs;
@@ -1415,8 +1696,8 @@ int main(/* int argc, char *argv[] */){
   //hist_significance->DrawNormalized("sames hist");
   //hist_significance->DrawNormalized("same")->Scale(0.5);
   c5.Modified(); c5.Update();
-  c5.SaveAs("hist_significances.pdf");
-  cout<<"open hist_significances.pdf"<<endl;
+  c5.SaveAs("plots/hist_significances.pdf");
+  cout<<"open plots/hist_significances.pdf"<<endl;
 
   TCanvas c9("c9", "c9", 500, 500);
   gStyle->SetOptStat(220001111);              // No Stats box
@@ -1434,8 +1715,8 @@ int main(/* int argc, char *argv[] */){
   //hist_significance_3b->DrawNormalized("sames hist");
   //hist_significance->DrawNormalized("same")->Scale(0.5);
   c9.Modified(); c9.Update();
-  c9.SaveAs("hist_significances_3b.pdf");
-  cout<<"open hist_significances_3b.pdf"<<endl;
+  c9.SaveAs("plots/hist_significances_3b.pdf");
+  cout<<"open plots/hist_significances_3b.pdf"<<endl;
 
   TCanvas c10("c10", "c10", 500, 500);
   gStyle->SetOptStat(220001111);              // No Stats box
@@ -1452,15 +1733,15 @@ int main(/* int argc, char *argv[] */){
   hist_significance_4b->Draw("sames hist");
   //hist_significance->DrawNormalized("same")->Scale(0.5);
   c10.Modified(); c10.Update();
-  c10.SaveAs("hist_significances_4b.pdf");
-  cout<<"open hist_significances_4b.pdf"<<endl;
+  c10.SaveAs("plots/hist_significances_4b.pdf");
+  cout<<"open plots/hist_significances_4b.pdf"<<endl;
 
   gStyle->SetOptStat(220001111);              // No Stats box
   TCanvas c6("c6", "c6", 500, 500);
   hist_delta_toy->SetStats(1);
   hist_delta_toy->Draw();
-  c6.SaveAs("hist_delta_toy.pdf");
-  cout<<"open hist_delta_toy.pdf"<<endl;
+  c6.SaveAs("plots/hist_delta_toy.pdf");
+  cout<<"open plots/hist_delta_toy.pdf"<<endl;
 
   TCanvas c7("c7", "c7", 500, 500);
   makeTransparent(c7);
@@ -1468,16 +1749,22 @@ int main(/* int argc, char *argv[] */){
   hist_probe_prediction->SetLineColor(kRed);
   hist_probe_prediction->Scale(5);
   hist_probe_prediction->Draw("same hist");
-  c7.SaveAs("hist_probe_prediction.pdf");
-  cout<<"open hist_probe_prediction.pdf"<<endl;
+  c7.SaveAs("plots/hist_probe_prediction.pdf");
+  cout<<"open plots/hist_probe_prediction.pdf"<<endl;
 
   TCanvas c8("c8", "c8", 500, 500);
   makeTransparent(c8);
   gStyle->SetOptStat(220001111);              // No Stats box
   hist_probe_significance->SetStats(1);
   hist_probe_significance->Draw();
-  c8.SaveAs("hist_probe_significance.pdf");
-  cout<<"open hist_probe_significance.pdf"<<endl;
+  c8.SaveAs("plots/hist_probe_significance.pdf");
+  cout<<"open plots/hist_probe_significance.pdf"<<endl;
+  float probe_all = hist_probe_significance->Integral(0,100);
+  float probe_above = hist_probe_significance->Integral(int(100./10*to_significance(pvalues[probe_plane]))+50, 100);
+  float probe_pvalue = probe_above / probe_all;
+  cout<<"Number of significance: "<<probe_all<<endl;
+  cout<<"Number of significance above significance: "<<probe_above<<endl;
+  cout<<"Calculated significance: "<<to_significance(pvalues[probe_plane])<<" toys significance: "<<to_significance(probe_pvalue)<<endl;
 
   double seconds = (std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - begTime)).count();
   TString hhmmss = HoursMinSec(seconds);
