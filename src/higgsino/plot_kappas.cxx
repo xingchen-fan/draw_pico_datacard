@@ -67,7 +67,8 @@ using std::get;
 namespace{
   bool split_bkg = true;
   bool do_signal = true;
-  bool do_zbi = true;
+  bool do_zbi = false;
+  bool do_zbi_signal = false;
   bool do_incl_met = true;
   bool do_bin_drmax = true;
   bool do_old_bin = false;
@@ -87,7 +88,7 @@ namespace{
   string year_string = "2016,2017,2018";
   // string_options is split by comma. ex) option1,option2 
   // Use HigUtilities::is_in_string_options(string_options, "option2") to check if in string_options.
-  // Options: use_old_trigger,split_ttbar_met,search_ttbar_same_bins,save_entries_weights_to_file,print_entries_weights
+  // Options: use_old_trigger,split_ttbar_met,search_ttbar_same_bins,save_entries_weights_to_file,print_entries_weights,do_zbi,do_zbi_signal
   string string_options = "";
 }
 
@@ -117,6 +118,8 @@ void GetOptions(int argc, char *argv[]);
 int main(int argc, char *argv[]){
   gErrorIgnoreLevel=6000; // Turns off ROOT errors due to missing branches
   GetOptions(argc, argv);
+  do_zbi = HigUtilities::is_in_string_options(string_options, "do_zbi");
+  do_zbi_signal = HigUtilities::is_in_string_options(string_options, "do_zbi_signal");
 
   std::chrono::high_resolution_clock::time_point begTime;
   begTime = std::chrono::high_resolution_clock::now();
@@ -561,8 +564,8 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
   }
   if(do_signal) {
     for(size_t ind=0; ind<Nsig; ind++){
-      out<<"|c"<<(do_zbi?"c":"");
-      Ncol += 1 + (do_zbi?1:0);
+      out<<"|c"<<(do_zbi_signal?"c":"");
+      Ncol += 1 + (do_zbi_signal?1:0);
     } 
   }
 
@@ -575,7 +578,7 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
   if(do_signal) {
     for(size_t ind=0; ind<Nsig; ind++) {
       TString signame = proc_sigs[ind]->name_.c_str();
-      if(do_zbi) out << "& \\multicolumn{2}{c"<<(ind<Nsig-1?"|":"")<<"}{" << signame <<"}";
+      if(do_zbi_signal) out << "& \\multicolumn{2}{c"<<(ind<Nsig-1?"|":"")<<"}{" << signame <<"}";
       else  out << "& " << signame;
     }
   }
@@ -642,7 +645,7 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
         if(do_signal){
           for(size_t ind=0; ind<Nsig; ind++) {
             out<<ump<<RoundNumber(allyields[2+ind][index].Yield(), digits_table);
-            if(do_zbi){
+            if(do_zbi_signal){
               out << ump;
               if(iabcd==3) {
                 //float signif = Significance(preds[iplane][ibin][0]+allyields[2+ind][index].Yield(),preds[iplane][ibin][0], preds[iplane][ibin][1], preds[iplane][ibin][2]);
@@ -763,6 +766,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
       vy.push_back(k_ordered[iplane][ibin][0]);
       veyh.push_back(k_ordered[iplane][ibin][1]);
       veyl.push_back(k_ordered[iplane][ibin][2]);
+      cout<<"plane: "<<iplane<<" ibin: "<<ibin<<" kappa: "<<k_ordered[iplane][ibin][0]<<" +"<<k_ordered[iplane][ibin][1]<<" -"<<k_ordered[iplane][ibin][2]<<endl;
 
       //// MC kappas with data uncertainties
       vx_kmd.push_back(bin);
@@ -1107,11 +1111,11 @@ void plotTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
   predHistLow->SetMarkerColor(kRed);
   predHistLow->SetLineColor(kRed);
   predHistLow->SetLineWidth(3);
-  changePredToMinimum(predHistLow, 0.03);
+  changePredToMinimum(predHistLow, 0.04);
 
   TH1D * dataHistLow = getTH1DFromAllyields(/*yieldIndex*/0, allyields, abcd, /*planeType*/1, /*blindSignalRegion*/!unblind);
   dataHistLow->SetMarkerStyle(kFullCircle);
-  changeHistToMinimum(dataHistLow, 0.03);
+  changeHistToMinimum(dataHistLow, 0.04);
 
   ////
   TH1D * bkgHistHigh = getTH1DFromAllyields(/*yieldIndex*/1, allyields, abcd, /*planeType*/2);
@@ -1139,7 +1143,7 @@ void plotTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
   predHistHigh->SetMarkerColor(kRed);
   predHistHigh->SetLineColor(kRed);
   predHistHigh->SetLineWidth(3);
-  changePredToMinimum(predHistHigh, 0.03);
+  changePredToMinimum(predHistHigh, 0.04);
 
   TH1D * dataHistHigh = getTH1DFromAllyields(/*yieldIndex*/0, allyields, abcd, /*planeType*/2, /*blindSignalRegion*/!unblind);
   dataHistHigh->SetMarkerStyle(kFullCircle);
