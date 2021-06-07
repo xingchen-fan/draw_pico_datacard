@@ -39,7 +39,7 @@ namespace{
   bool unblind_signalregion = false;
   // string_options is split by comma. ex) option1,option2 
   // Use HigUtilities::is_in_string_options(string_options, "option2") to check if in string_options.
-  string string_options = "plot_in_btags,plot_in_btags_with_met_split";
+  string string_options = "plot_in_btags,plot_in_btags_with_met_split,plot_baseline";
   // Other options: plot_in_btags_for_mc,plot_in_btags_split,plot_in_planes
 }
 
@@ -195,7 +195,7 @@ void setProcsDict(string const & production, string const & nanoAodFolder, strin
   //string mass_points_string = "225_0, 700_0, 950_0"; // Below looks good 
   //string mass_points_string = "225_0, 400_0"; // 2016 AN
   //if (unblind && !unblind_signalregion) mass_points_string = "";
-  vector<int> sig_colors = {kGreen+1, kRed, kBlue, kOrange}; // Requires mass_points.size() >= sig_colors.size()
+  vector<int> sig_colors = {kGreen-6, kRed, kBlue, kOrange}; // Requires mass_points.size() >= sig_colors.size()
   // signal_filenames["TChiHH(nlsp,lsp)"] = {filename}
   torch::OrderedDict<string, set<string> > signal_filenames;
   // mass_points = [[nlsp, lsp]]
@@ -421,7 +421,7 @@ int main(int argc, char *argv[]){
   lin_norm_info.Title(TitleType::info)   
     .Bottom(BottomType::off)
     .YAxis(YAxisType::linear)
-    .Stack(StackType::data_norm).LegendColumns(3);
+    .Stack(StackType::data_norm).LegendColumns(3).ErrorOnZeroData(true);
   PlotOpt log_norm_info = lin_norm_info().YAxis(YAxisType::log);
   PlotOpt log_norm = lin_norm_info().YAxis(YAxisType::log).Title(TitleType::info).LogMinimum(.2);
   PlotOpt lin_norm = lin_norm_info().YAxis(YAxisType::linear).Title(TitleType::info);
@@ -673,7 +673,7 @@ int main(int argc, char *argv[]){
   bool plot_in_btags_with_met_split = HigUtilities::is_in_string_options(string_options, "plot_in_btags_with_met_split");
   if (plot_in_btags_with_met_split) {
     // met; 2b [search]
-    pm.Push<Hist1D>(Axis(15, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}),
+    pm.Push<Hist1D>(Axis(14, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}),
       search_filters&&search_resolved_cuts 
       &&"(nbt==2&&nbm==2)"&&extra_cut
       ,procs_search[proc_name], plt_log).Weight(weight).Tag("FixName:met__2b__search").LuminosityTag(total_luminosity_string);
@@ -694,7 +694,7 @@ int main(int argc, char *argv[]){
       &&"(nbt==2&&nbm==2)&&met>300"&&extra_cut
       , procs_search[proc_name], plt_lin).Weight(weight).Tag("FixName:amjj__2b_highmet__search").LuminosityTag(total_luminosity_string);
     // met; 3b|4b [search]
-    pm.Push<Hist1D>(Axis(15, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}),
+    pm.Push<Hist1D>(Axis(14, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}),
       search_filters&&search_resolved_cuts 
       &&"((nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))"&&extra_cut
       ,procs_search[proc_name], plt_log).Weight(weight).Tag("FixName:met__3b4b__search").LuminosityTag(total_luminosity_string);
@@ -966,9 +966,56 @@ int main(int argc, char *argv[]){
       , procs_search[proc_name], plt_lin).Weight(weight).Tag("FixName:amjj__3b4b_lowdrmax_met400__search").LuminosityTag(total_luminosity_string);
   }
 
+  if (unblind && HigUtilities::is_in_string_options(string_options, "plot_baseline")) {
+
+    // nb
+    pm.Push<Hist1D>(Axis(3, 1.5, 4.5, Higfuncs::hig_bcat, "N_{b}", {2.5}),
+      search_filters&&search_resolved_cuts
+      ,procs_search[proc_name], plt_log).Weight(weight).Tag("FixName:nb__search").LuminosityTag(total_luminosity_string);
+    // Plot according to btags
+    vector<pair<string, NamedFunc> > nbCuts = {{"2b3b4b",hig_bcat==2||hig_bcat==3||hig_bcat==4}, {"3b4b",hig_bcat==3||hig_bcat==4}, {"4b",hig_bcat==4}};
+    for (unsigned iCut = 0; iCut < nbCuts.size(); ++iCut) {
+      string nbCutName = nbCuts[iCut].first;
+      NamedFunc nbCut = nbCuts[iCut].second;
+      // am
+      pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+        search_filters&&
+        "met/mht<2 && met/met_calo<2&&weight<1.5&&"
+        "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
+        "hig_cand_drmax[0]<=2.2&&hig_cand_dm[0]<=40"&&nbCut
+        , procs_search[proc_name], plt_lin).Weight(weight).Tag("FixName:amjj__"+nbCutName+"__search").LuminosityTag(total_luminosity_string);
+      // dm
+      pm.Push<Hist1D>(Axis(10,0,100,"hig_cand_dm[0]", "#Deltam [GeV]", {40.}),
+        search_filters&&
+        "met/mht<2 && met/met_calo<2&&weight<1.5&&"
+        "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
+        "hig_cand_drmax[0]<=2.2&&hig_cand_am[0]<=200"&&nbCut
+        , procs_search[proc_name], plt_lin).Weight(weight).Tag("FixName:dmjj__"+nbCutName+"__search").LuminosityTag(total_luminosity_string);
+      // Delta R max
+      pm.Push<Hist1D>(Axis(20,0,4,"hig_cand_drmax[0]", "#DeltaR_{max}", {1.1, 2.2}),
+        search_filters&&
+        "met/mht<2 && met/met_calo<2&&weight<1.5&&"
+        "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
+        "hig_cand_dm[0]<=40&&hig_cand_am[0]<=200"&&nbCut
+        ,procs_search[proc_name], plt_log).Weight(weight).Tag("FixName:drmax__"+nbCutName+"__search_log").LuminosityTag(total_luminosity_string);
+      // met
+      pm.Push<Hist1D>(Axis(14, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}),
+      search_filters&&search_resolved_cuts&&nbCut
+      ,procs_search[proc_name], plt_log).Weight(weight).Tag("FixName:met__"+nbCutName+"__search").LuminosityTag(total_luminosity_string);
+    }
+  }
+
   pm.multithreaded_ = !single_thread;
   pm.min_print_ = true;
   pm.MakePlots(1.);
+
+  //// Get Figures
+  //vector<std::unique_ptr<Figure> > const & figures = pm.Figures();
+  //for (auto figurePtr = figures.begin(); figurePtr != figures.end(); ++figurePtr) {
+  //  Hist1D * figure = dynamic_cast<Hist1D *>(figurePtr->get());
+  //  cout<<figure->Name()<<endl;
+  //  // Processes
+  //}
 
   time(&endtime); 
   cout<<endl<<"Took "<<difftime(endtime, begtime)<<" seconds"<<endl<<endl;
