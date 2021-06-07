@@ -35,7 +35,7 @@ using namespace PlotOptTypes;
 namespace{
   bool single_thread = false;
   string year_string = "run2";
-  bool unblind = false;
+  bool unblind = true;
   // string_options is split by comma. ex) option1,option2 
   // Use HigUtilities::is_in_string_options(string_options, "option2") to check if in string_options.
   string string_options = "makePies,plot_data_vs_mc,plot_isr,plot_kappa";
@@ -232,12 +232,12 @@ int main(int argc, char *argv[]){
                   attach_folder(mc_base_folder, years, ttbar_mc_skim_folder, mctags["all"]),"stitch&&nisr==2"));
   ttbar_procs_nisr.push_back(Process::MakeShared<Baby_pico>("N_{ISR} => 3", Process::Type::background,colors("nisr_3"),
                   attach_folder(mc_base_folder, years, ttbar_mc_skim_folder, mctags["all"]),"stitch&&nisr>=3"));
-  if (unblind) {
-    ttbar_procs_nisr.push_back(Process::MakeShared<Baby_pico>("Data", Process::Type::data, kBlack,
-                    attach_folder(data_base_folder, years, ttbar_data_skim_folder, {"*.root"}),
-                    triggers_data
-                    ));
-  }
+  //if (unblind) {
+  //  ttbar_procs_nisr.push_back(Process::MakeShared<Baby_pico>("Data", Process::Type::data, kBlack,
+  //                  attach_folder(data_base_folder, years, ttbar_data_skim_folder, {"*.root"}),
+  //                  triggers_data
+  //                  ));
+  //}
 
   vector<shared_ptr<Process> > ttbar_data_procs_btag;
   if (unblind) {

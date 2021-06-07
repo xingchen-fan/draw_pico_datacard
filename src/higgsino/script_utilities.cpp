@@ -208,6 +208,13 @@ namespace script_utilities {
     gluinofull_folder_dict["zll"] = zll_gluinofull_skim_folder;
     gluinofull_folder_dict["qcd"] = qcd_gluinofull_skim_folder;
     gluinofull_folder_dict["unskimmed"] = gluinofull_unskimmed_folder;
+    //std::unordered_map<std::string, NamedFunc> data_trigger_dict;
+    //data_trigger_dict["search"] = Higfuncs::met_trigger;
+    //data_trigger_dict["met150"] = Higfuncs::met_trigger;
+    //data_trigger_dict["ttbar"] = Higfuncs::met_trigger || Higfuncs::el_trigger || Higfuncs::mu_trigger;
+    //data_trigger_dict["zll"] = Higfuncs::el_trigger || Higfuncs::mu_trigger;
+    //data_trigger_dict["qcd"] = Higfuncs::met_trigger;
+    //data_trigger_dict["unskimmed"] = "1";
     //TODO: check for unsupported skimnames
 
     std::vector<std::shared_ptr<Process>> procs;
@@ -307,9 +314,16 @@ namespace script_utilities {
 
     //add data
     if (unblind) {
+      NamedFunc triggers = Higfuncs::met_trigger;
+      if (skim_name == "ttbar") {
+        triggers = Higfuncs::met_trigger || Higfuncs::el_trigger || Higfuncs::mu_trigger;
+      }
+      else if (skim_name == "zll") {
+        triggers = Higfuncs::el_trigger || Higfuncs::mu_trigger;
+      }
       procs.push_back(Process::MakeShared<Baby_pico>("Data", Process::Type::data, 
           kBlack, attach_folder(data_production_folder, years, data_folder_dict[skim_name], 
-          {"*.root"}),"stitch"));
+          {"*.root"}),triggers));
     }
     return procs;
   }
@@ -318,7 +332,7 @@ namespace script_utilities {
   //section
   const NamedFunc mixed_model_weight("mixed_model_weight",[](const Baby &b) -> NamedFunc::ScalarType{
     if (b.type() / 1000 != 106) return Higfuncs::final_weight.GetScalar(b); //not TChiHH
-    if (b.mlsp() == 0) return Higfuncs::final_weight.GetScalar(b); //N1N2
+    if (b.mlsp() <= 1) return Higfuncs::final_weight.GetScalar(b); //N1N2
     double xsec1d, xsec2d, xsec1d_unc, xsec2d_unc;
     xsec::higgsinoCrossSection(b.mprod(),xsec1d,xsec1d_unc);
     xsec::higgsino2DCrossSection(b.mprod(),xsec2d,xsec2d_unc);

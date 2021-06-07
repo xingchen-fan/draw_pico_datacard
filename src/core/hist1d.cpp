@@ -43,6 +43,7 @@
 #include "TMath.h"
 #include "TBox.h"
 #include "TLegendEntry.h"
+#include "TFile.h"
 
 #include "core/utilities.hpp"
 
@@ -390,9 +391,9 @@ void Hist1D::Print(double luminosity,
       bottom->cd();
 
 
-      if(bot_plots.size()>0) bot_plots.at(0).Draw("e0");
+      if(bot_plots.size()>0) bot_plots.at(0).Draw("e0p");
       bottom_background.Draw("2 same");
-      string draw_opt = "e0 same";
+      string draw_opt = "e0p0 same";
       for(auto &h: bot_plots){
         h.Draw(draw_opt.c_str());
       }
@@ -413,8 +414,22 @@ void Hist1D::Print(double luminosity,
     DrawAll(backgrounds_, draw_opt);
     if(this_opt_.ShowBackgroundError() && backgrounds_.size()) bkg_error.Draw("2 same");
     DrawAll(signals_, draw_opt, true);
+
     ReplaceAll(draw_opt, "hist", "e0p");
+    // Turn on error on zero
+    vector<TH1::EBinErrorOpt> default_bin_error_option;
+    if(this_opt_.ErrorOnZeroData()) {
+      for(auto &hist: datas_) {
+        default_bin_error_option.push_back(hist->scaled_hist_.GetBinErrorOption());
+        hist->scaled_hist_.SetBinErrorOption(TH1::kPoisson);
+      }
+    }
     DrawAll(datas_, draw_opt, true);
+    //// Return to default setting -> This doesn't work. log plots also show error on zero
+    //if(this_opt_.ErrorOnZeroData()) {
+    //  int iPlot = 0;
+    //  for(auto &hist: datas_) hist->scaled_hist_.SetBinErrorOption(default_bin_error_option[iPlot++]);
+    //}
     for(auto &cut: cut_vals) cut.Draw();
 
     vector<shared_ptr<TLegend> > legends = GetLegends();
@@ -501,6 +516,7 @@ void Hist1D::Print(double luminosity,
       full->Print(full_name.c_str());
       cout << "open " << full_name << endl;
     }
+
   }
 }
 
@@ -773,7 +789,7 @@ void Hist1D::FixAsymmErrors(const unique_ptr<SingleHist1D> &sh1d) const{
     }
   }
 
-  if(turn_off_sumw2){
+  if(turn_off_sumw2 || this_opt_.ErrorOnZeroData()) {
     h.Sumw2(false);
   }
 }
@@ -1034,8 +1050,16 @@ vector<shared_ptr<TLatex> > Hist1D::GetTitleTexts() const{
       ERROR("Did not understand title type "+to_string(static_cast<int>(this_opt_.Title())));
     }
    
-    out.push_back(make_shared<TLatex>(left, bottom+0.2*(top-bottom),
-				      ("#font[62]{CMS}#scale[0.74]{#font[52]{ "+extra+"}}").c_str()));
+    if (this_opt_.TitleInFrame()) {
+      double in_frame_bottom = 1.-this_opt_.TopMargin()-this_opt_.LegendPad()-this_opt_.TitleSize();
+      double in_frame_left = this_opt_.LeftMargin()+this_opt_.LegendPad();
+      out.push_back(make_shared<TLatex>(in_frame_left, in_frame_bottom,
+		  		      ("#font[62]{CMS}#scale[0.74]{#font[52]{ "+extra+"}}").c_str()));
+    }
+    else
+      out.push_back(make_shared<TLatex>(left, bottom+0.2*(top-bottom),
+		  		      ("#font[62]{CMS}#scale[0.74]{#font[52]{ "+extra+"}}").c_str()));
+    
    
     out.back()->SetNDC();
     out.back()->SetTextAlign(11);
@@ -1185,7 +1209,20 @@ std::vector<TH1D> Hist1D::GetBottomPlots(double &the_min, double &the_max) const
   switch(this_opt_.Bottom()){
   case BottomType::ratio:
     for(auto &h: out){
+      h.Sumw2(false);
+      h.SetBinErrorOption(TH1::kPoisson);
       h.Divide(&denom);
+      for(int bin = 0; bin <= denom.GetNbinsX()+1; ++bin){
+        if (h.GetBinContent(bin) < 1.0e-12) {
+          if (denom.GetBinContent(bin) > 0) {
+            h.SetBinContent(bin, 0);
+            h.SetBinError(bin, 1.8/denom.GetBinContent(bin));
+          }
+          else
+            //hack to avoid seeing any plotted points for bins with no signal or background
+            h.SetBinContent(bin, -1);
+        }
+      }
     }
     break;
   case BottomType::diff:
@@ -1259,6 +1296,7 @@ std::vector<TH1D> Hist1D::GetBottomPlots(double &the_min, double &the_max) const
     }
   }
 
+  //make bottom plot title
   if(this_opt_.Bottom() == BottomType::ratio){
     the_min = this_opt_.RatioMinimum();
     the_max = this_opt_.RatioMaximum();
@@ -1437,6 +1475,7 @@ vector<shared_ptr<TLegend> > Hist1D::GetLegends(){
   double left = this_opt_.LeftMargin()+this_opt_.LegendPad();
   double top = 1.-this_opt_.TopMargin()-this_opt_.LegendPad();
   double bottom = top-this_opt_.TrueLegendHeight(n_entries);
+  if (this_opt_.TitleInFrame()) left += 0.3;
 
   double delta_x = this_opt_.TrueLegendWidth(n_entries);
   vector<shared_ptr<TLegend> > legends(n_columns);

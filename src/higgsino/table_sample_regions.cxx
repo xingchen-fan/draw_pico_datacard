@@ -51,6 +51,7 @@ namespace{
   // Options: veto_events_with_list,
   // Options: make_event_list,make_event_list_for_excess
   // Options: process_event_list_data,process_event_list_mc,process_event_list_signal
+  // Options: sigscan_points,no_weight
   string string_options = "";
 }
 
@@ -180,7 +181,11 @@ void addProcess(string const & processName, Process::Type type, int color, Named
     else if (fileTag=="2D") fileNames = {"*TChiHH*HToBB_2D_Tune*.root"};
     else fileNames = {"*TChiHH_mChi-"+massPoints[0]+"_mLSP-"+massPoints[1]+"_*.root"};
   }
-  else if (dataType=="t5hh") fileNames = set<string>({fileTag});
+  else if (dataType=="t5hh") {
+    if (fileTag=="1D") fileNames = {"*T5qqqqZH*.root"};
+    else if (fileTag=="2D") fileNames = {"*T5qqqqZH_HToBB*.root"};
+    else fileNames = set<string>({fileTag});
+  }
   else fileNames = mctags[fileTag];
 
   // Set folders
@@ -231,14 +236,18 @@ void addProcess(string const & processName, Process::Type type, int color, Named
   folderDict.insert("qcd_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higqcd/");
 
   folderDict.insert("t5hh_production_folder", t5hhProductionFolder);
-  folderDict.insert("search_t5hh_skim_folder", "SMS-T5qqqqZH_FullSim/merged_higmc_higloose/");
-  folderDict.insert("ttbar_t5hh_skim_folder", "SMS-T5qqqqZH_FullSim/merged_higmc_higlep1T/");
-  folderDict.insert("zll_t5hh_skim_folder", "SMS-T5qqqqZH_FullSim/merged_higmc_higlep2T/");
-  folderDict.insert("qcd_t5hh_skim_folder", "SMS-T5qqqqZH_FullSim/merged_higmc_higqcd/");
-  //folderDict.insert("search_t5hh_skim_folder", "SMS-T5qqqqZH_fastSimJmeCorrection/merged_higmc_higloose/");
-  //folderDict.insert("ttbar_t5hh_skim_folder", "SMS-T5qqqqZH_fastSimJmeCorrection/merged_higmc_higlep1T/");
-  //folderDict.insert("zll_t5hh_skim_folder", "SMS-T5qqqqZH_fastSimJmeCorrection/merged_higmc_higlep2T/");
-  //folderDict.insert("qcd_t5hh_skim_folder", "SMS-T5qqqqZH_fastSimJmeCorrection/merged_higmc_higqcd/");
+  if (dataType=="t5hh" && fileTag=="2D") {
+    folderDict.insert("search_t5hh_skim_folder", "SMS-T5qqqqZH_fastSimJmeCorrection/merged_higmc_higloose/");
+    folderDict.insert("ttbar_t5hh_skim_folder", "SMS-T5qqqqZH_fastSimJmeCorrection/merged_higmc_higlep1T/");
+    folderDict.insert("zll_t5hh_skim_folder", "SMS-T5qqqqZH_fastSimJmeCorrection/merged_higmc_higlep2T/");
+    folderDict.insert("qcd_t5hh_skim_folder", "SMS-T5qqqqZH_fastSimJmeCorrection/merged_higmc_higqcd/");
+  }
+  else {
+    folderDict.insert("search_t5hh_skim_folder", "SMS-T5qqqqZH_FullSim/merged_higmc_higloose/");
+    folderDict.insert("ttbar_t5hh_skim_folder", "SMS-T5qqqqZH_FullSim/merged_higmc_higlep1T/");
+    folderDict.insert("zll_t5hh_skim_folder", "SMS-T5qqqqZH_FullSim/merged_higmc_higlep2T/");
+    folderDict.insert("qcd_t5hh_skim_folder", "SMS-T5qqqqZH_FullSim/merged_higmc_higqcd/");
+  }
 
   // Set paths
   set<string> pathNames;
@@ -315,21 +324,33 @@ void addMultipleSignalProcesses(string const & processName_postfix, NamedFunc co
   string const & nanoAodFolder, string const & production, string const & sample_name, string const & year_string, 
   vector<shared_ptr<Process> > & procs) 
 {
-  vector<string> sigm = {"175", "500", "950"};
-  for (unsigned isig(0); isig<sigm.size(); isig++){
-    addProcess("TChiHH("+sigm[isig]+",0) "+processName_postfix, Process::Type::signal, 1, additionalCut,
-      nanoAodFolder, production, "signal", sigm[isig]+"_0", sample_name, year_string,
-      procs);
+  //special case for checking bright point on significance scan
+  if (HigUtilities::is_in_string_options(string_options, "sigscan_points")) {
+    vector<string> sigm = {"250", "275", "300"};
+    vector<string> sigmlsp = {"100", "100", "100"};
+    for (unsigned isig(0); isig<sigm.size(); isig++){
+      addProcess("TChiHH("+sigm[isig]+","+sigmlsp[isig]+") "+processName_postfix, Process::Type::signal, 1, additionalCut,
+        nanoAodFolder, production, "signal", sigm[isig]+"_"+sigmlsp[isig], sample_name, year_string,
+        procs);
+    }
   }
-  if (!no_t5hh) {
-    vector<string> sigm_t5hh = {"*mGluino-1000_mChi-950_mLSP-1_*.root","*mGluino-1600_mChi-1550_mLSP-1_*.root","*mGluino-2000_mChi-1950_mLSP-1_*.root"};
-    vector<string> model_names = {"T5HH(1000,0)","T5HH(1600,0)","T5HH(2000,0)"};
-    //vector<string> sigm_t5hh = {"*mGluino-1200_mChi-1150_mLSP-400_*.root","*mGluino-1600_mChi-1550_mLSP-1_*.root","*mGluino-2000_mChi-1950_mLSP-1_*.root"};
-    //vector<string> model_names = {"T5HH(1200_400)","T5HH(1600_0)","T5HH(2000_0)"};
-    for (unsigned isig(0); isig<sigm_t5hh.size(); isig++){
-      addProcess(model_names[isig]+processName_postfix, Process::Type::signal, 1, additionalCut,
-          nanoAodFolder, production, "t5hh", sigm_t5hh[isig], sample_name, year_string,
-          procs);
+  else {
+    vector<string> sigm = {"175", "500", "950"};
+    for (unsigned isig(0); isig<sigm.size(); isig++){
+      addProcess("TChiHH("+sigm[isig]+",0) "+processName_postfix, Process::Type::signal, 1, additionalCut,
+        nanoAodFolder, production, "signal", sigm[isig]+"_0", sample_name, year_string,
+        procs);
+    }
+    if (!no_t5hh) {
+      vector<string> sigm_t5hh = {"*mGluino-1000_mChi-950_mLSP-1_*.root","*mGluino-1600_mChi-1550_mLSP-1_*.root","*mGluino-2000_mChi-1950_mLSP-1_*.root"};
+      vector<string> model_names = {"T5HH(1000,0)","T5HH(1600,0)","T5HH(2000,0)"};
+      //vector<string> sigm_t5hh = {"*mGluino-1200_mChi-1150_mLSP-400_*.root","*mGluino-1600_mChi-1550_mLSP-1_*.root","*mGluino-2000_mChi-1950_mLSP-1_*.root"};
+      //vector<string> model_names = {"T5HH(1200_400)","T5HH(1600_0)","T5HH(2000_0)"};
+      for (unsigned isig(0); isig<sigm_t5hh.size(); isig++){
+        addProcess(model_names[isig]+processName_postfix, Process::Type::signal, 1, additionalCut,
+            nanoAodFolder, production, "t5hh", sigm_t5hh[isig], sample_name, year_string,
+            procs);
+      }
     }
   }
 }
@@ -451,6 +472,12 @@ int main(int argc, char *argv[]){
       addProcess("TChiHH2D_2016", Process::Type::signal, 1, base_filters&&resolved_cuts,
         nanoAodFolder_a, production_a, "signal", "2D", sample_a, "2016",
         procs_all);
+      addProcess("T5HH1D_2016", Process::Type::signal, 1, base_filters&&resolved_cuts,
+        nanoAodFolder_a, production_a, "t5hh", "1D", sample_a, "2016",
+        procs_all);
+      addProcess("T5HH2D_2016", Process::Type::signal, 1, base_filters&&resolved_cuts,
+        nanoAodFolder_a, production_a, "t5hh", "2D", sample_a, "2016",
+        procs_all);
     }
     if (unblind) {
       addDataProcess("_2016", base_filters&&resolved_cuts,
@@ -469,6 +496,12 @@ int main(int argc, char *argv[]){
         procs_all);
       addProcess("TChiHH2D_2017", Process::Type::signal, 1, base_filters&&resolved_cuts,
         nanoAodFolder_a, production_a, "signal", "2D", sample_a, "2017",
+        procs_all);
+      addProcess("T5HH1D_2017", Process::Type::signal, 1, base_filters&&resolved_cuts,
+        nanoAodFolder_a, production_a, "t5hh", "1D", sample_a, "2017",
+        procs_all);
+      addProcess("T5HH2D_2017", Process::Type::signal, 1, base_filters&&resolved_cuts,
+        nanoAodFolder_a, production_a, "t5hh", "2D", sample_a, "2017",
         procs_all);
     }
     if (unblind) {
@@ -489,6 +522,12 @@ int main(int argc, char *argv[]){
       addProcess("TChiHH2D_2018", Process::Type::signal, 1, base_filters&&resolved_cuts,
         nanoAodFolder_a, production_a, "signal", "2D", sample_a, "2018",
         procs_all);
+      addProcess("T5HH1D_2018", Process::Type::signal, 1, base_filters&&resolved_cuts,
+        nanoAodFolder_a, production_a, "t5hh", "1D", sample_a, "2018",
+        procs_all);
+      addProcess("T5HH2D_2018", Process::Type::signal, 1, base_filters&&resolved_cuts,
+        nanoAodFolder_a, production_a, "t5hh", "2D", sample_a, "2018",
+        procs_all);
     }
     if (unblind) {
       addDataProcess("_2018", base_filters&&resolved_cuts,
@@ -499,8 +538,12 @@ int main(int argc, char *argv[]){
   }
 
   NamedFunc weight = Higfuncs::final_weight;
-  if (do_htobb) weight = Higfuncs::final_weight*Higfuncs::htobb;
-
+  if (do_htobb) 
+    weight = Higfuncs::final_weight*Higfuncs::htobb;
+  if (HigUtilities::is_in_string_options(string_options, "sigscan_points"))
+    weight *= HigUtilities::w_CNToN1N2;
+  if (HigUtilities::is_in_string_options(string_options, "no_weight")) 
+    weight = "1"; 
 
   //    Useful binning definitions
   //------------------------------------------
@@ -670,11 +713,18 @@ int main(int argc, char *argv[]){
     eventListNames.insert("resolved_list_CR_met300_SCAN_TChiHH2D_2016.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_TChiHH2D_2016.txt");
     eventListNames.insert("resolved_list_CR_met300_SCAN_TChiHH2D_2017.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_TChiHH2D_2017.txt");
     eventListNames.insert("resolved_list_CR_met300_SCAN_TChiHH2D_2018.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_TChiHH2D_2018.txt");
+    eventListNames.insert("resolved_list_CR_met300_SCAN_T5HH1D_2016.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_T5HH1D_2016.txt");
+    eventListNames.insert("resolved_list_CR_met300_SCAN_T5HH1D_2017.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_T5HH1D_2017.txt");
+    eventListNames.insert("resolved_list_CR_met300_SCAN_T5HH1D_2018.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_T5HH1D_2018.txt");
+    eventListNames.insert("resolved_list_CR_met300_SCAN_T5HH2D_2016.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_T5HH2D_2016.txt");
+    eventListNames.insert("resolved_list_CR_met300_SCAN_T5HH2D_2017.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_T5HH2D_2017.txt");
+    eventListNames.insert("resolved_list_CR_met300_SCAN_T5HH2D_2018.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_T5HH2D_2018.txt");
   }
   for (string const & eventListName : eventListNames) {
     ifstream eventList(eventListName);
     bool isSignal = false;
     if (eventListName.find("TChiHH") != string::npos) isSignal = true;
+    if (eventListName.find("T5HH") != string::npos) isSignal = true;
     string processedEventListName = "processed_"+eventListName;
     cout<<"Processing "<<eventListName<<" to "<<processedEventListName<<endl;
     ofstream processedEventList(processedEventListName);

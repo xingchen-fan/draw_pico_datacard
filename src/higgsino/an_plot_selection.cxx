@@ -83,6 +83,10 @@ int main(int argc, char *argv[]){
       years, {"TChiHH(175,0)","TChiHH(500,0)","TChiHH(900,0)",
       "TChiHH(350,200)","TChiHH(450,100)"}, "met150", false, 
       {kGreen+1, kRed, kBlue, kYellow, kCyan}, true);
+  std::vector<std::shared_ptr<Process>> search_procs_higloose = 
+      script_utilities::getall_processes(
+      years, {"TChiHH(175,0)","TChiHH(500,0)","TChiHH(900,0)",
+      "TChiHH(350,200)","TChiHH(450,100)"}, "search");
 
   //------------------------------------------------------------------------------------
   //                                     named funcs
@@ -156,7 +160,7 @@ int main(int argc, char *argv[]){
         .Tag("FixName:kinematicvars__signal_drmax_shapes_"+options.year_string)
         .LuminosityTag(total_luminosity_string);
     pm.Push<Hist1D>(Axis(20, 0, 4, "hig_cand_drmax[0]", "#Delta R_{max}", {2.2}),
-        Higfuncs::pass_filters && "weight<1.5&&njet>=4&&nbt>=2&&nbm>=3&&nbl>=4&&hig_cand_am[0]>=100&&hig_cand_am[0]<=140",
+        sr_baseline_nohig && "weight<1.5&&njet>=4&&nbt>=2&&nbm>=3&&nbl>=4&&hig_cand_am[0]>=100&&hig_cand_am[0]<=140&&hig_cand_dm[0]<40",
         search_procs, plt_lin).Weight(mixed_model_weight)
         .Tag("FixName:kinematicvars__signalbackground_drmax_lin_"+options.year_string)
         .LuminosityTag(total_luminosity_string);
@@ -181,7 +185,7 @@ int main(int argc, char *argv[]){
      pm.Push<Hist1D>(Axis(5, -0.5, 4.5, hig_nb, "N_{b}", {1.5,2.5,3.5}),
          sr_baseline_nob,
          search_procs, plt_log).Weight(mixed_model_weight)
-         .Tag("FixName:selection__nminus1_nb_nb4_log_"+options.year_string)
+         .Tag("FixName:selection__nminus1_nb_log_"+options.year_string)
          .LuminosityTag(total_luminosity_string);
      pm.Push<Hist1D>(Axis(40, 150, 800, "met", "MET [GeV]", {200, 300, 400}),
          sr_baseline && "nbm>=3&&nbl>=4",
@@ -242,7 +246,7 @@ int main(int argc, char *argv[]){
          search_procs, plt_lin).Weight(mixed_model_weight)
          .Tag("FixName:selection__nminus1_higcanddm_nb4_lin_"+options.year_string)
          .LuminosityTag(total_luminosity_string);
-     pm.Push<Hist1D>(Axis(40, 0, 4.0, "hig_cand_drmax[0]", "#Delta R_{max}", {2.2}),
+     pm.Push<Hist1D>(Axis(40, 0, 4.0, "hig_cand_drmax[0]", "#Delta R_{max}", {1.1,2.2}),
          sr_baseline_nohig && "nbm>=3&&nbl>=4&&hig_cand_am[0]<200&&hig_cand_dm[0]<40",
          search_procs, plt_lin).Weight(mixed_model_weight)
          .Tag("FixName:selection__nminus1_higcanddrmax_nb4_lin_"+options.year_string)

@@ -24,6 +24,7 @@ PlotOpt::PlotOpt():
   y_title_offset_(2.2),
   z_title_offset_(1.),
   auto_y_axis_(true),
+  error_on_zero_data_(false),
   canvas_width_(600),
   canvas_height_(600),
   left_margin_(0.19),
@@ -206,6 +207,24 @@ PlotOpt & PlotOpt::AutoYAxis(bool auto_y_axis){
 
 bool PlotOpt::AutoYAxis() const{
   return auto_y_axis_;
+}
+
+PlotOpt & PlotOpt::ErrorOnZeroData(bool error_on_zero_data){
+  error_on_zero_data_ = error_on_zero_data;
+  return *this;
+}
+
+bool PlotOpt::ErrorOnZeroData() const{
+  return error_on_zero_data_;
+}
+
+PlotOpt & PlotOpt::TitleInFrame(bool title_in_frame) {
+  title_in_frame_ = title_in_frame;
+  return *this;
+}
+
+bool PlotOpt::TitleInFrame() const {
+  return title_in_frame_;
 }
 
 PlotOpt & PlotOpt::CanvasSize(int width, int height){
@@ -450,6 +469,7 @@ double PlotOpt::TrueLegendEntryHeight(size_t num_entries) const{
 
 double PlotOpt::TrueLegendWidth(size_t num_entries) const{
   double left = left_margin_ + legend_pad_;
+  if (title_in_frame_) left += 0.3;
   double right = 1. - right_margin_ - legend_pad_;
   return (right-left)/min(num_entries, static_cast<size_t>(legend_columns_));
 }

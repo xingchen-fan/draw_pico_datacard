@@ -33,7 +33,11 @@ using namespace Higfuncs;
 
 namespace{
   bool single_thread = false;
-  string year_string = "2016";
+  string year_string = "run2";
+  string string_options = "plot_kappa";
+  // possible string_options
+  // plot_notrgeff - plot studies of am with no trigger efficiencies applied
+  // plot_kappa - plot MC kappas for the search region
 }
 
 int main(int argc, char *argv[]){
@@ -62,17 +66,14 @@ int main(int argc, char *argv[]){
   vector<PlotOpt> plt_shapes_info = {lin_shapes_info};
 
   // Set options
-  string mc_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
-  //string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/";
+  string mc_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
   string mc_skim_folder = "mc/merged_higmc_higloose/";
 
-  string data_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
-  //string data_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt";
-  string data_skim_folder = "mc/merged_higmc_higloose/";
+  string data_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
+  string data_skim_folder = "data/merged_higdata_higloose/";
 
-  string sig_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
-  //string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/";
-  string sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higloose/";
+  string sig_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
+  string sig_skim_folder = "SMS-TChiHH_2D_fastSimJmeCorrections/merged_higmc_higloose/";
 
   //years = {2016, 2017, 2018};
   //years = {2016};
@@ -129,7 +130,7 @@ int main(int argc, char *argv[]){
   procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGray+2,
                   attach_folder(mc_base_folder, years, mc_skim_folder, mctags["other"]),"stitch"));
 
-  // Set signal mc
+  //// Set signal mc
   vector<string> signal_mass = {"200", "450", "700", "950"}; 
   vector<int> sig_colors = {kGreen+1, kRed, kBlue, kOrange}; // need signal_mass.size() >= sig_colors.size()
   for (unsigned isig(0); isig<signal_mass.size(); isig++){
@@ -175,6 +176,7 @@ int main(int argc, char *argv[]){
                          "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))";
 
   PlotMaker pm;
+
   
   pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     base_filters&&base_resolved, procs_btag, plt_shapes).Weight(weight).Tag("FixName:bkgest__amjj_shapes").LuminosityTag(total_luminosity_string);
@@ -183,30 +185,34 @@ int main(int argc, char *argv[]){
   pm.Push<Table>("FixName:pie_bkgest__trueb_pies_onemet__3b", vector<TableRow> ({TableRow("", base_filters&&base_resolved&&"(nbt>=2&&nbm==3&&nbl==3)", 0, 0, weight)}), procs_trueB, true, true, true);
   pm.Push<Table>("FixName:pie_bkgest__trueb_pies_onemet__4b", vector<TableRow> ({TableRow("", base_filters&&base_resolved&&"(nbt>=2&&nbm>=3&&nbl>=4)", 0, 0, weight)}), procs_trueB, true, true, true);
 
-  // No trigger study
-  pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
-    base_filters&&base_resolved, procs_btag, plt_shapes).Weight(weight_notrgeff).Tag("FixName:bkgest__amjj_shapes_notrgeff").LuminosityTag(total_luminosity_string);
-  // Plane MET vs drmax
-  vector<NamedFunc> plane_cuts;
-  plane_cuts.push_back("met>150&&met<=200 && hig_cand_drmax[0]<=1.1");
-  plane_cuts.push_back("met>200&&met<=300 && hig_cand_drmax[0]<=1.1");
-  plane_cuts.push_back("met>300&&met<=400 && hig_cand_drmax[0]<=1.1");
-  plane_cuts.push_back("met>400           && hig_cand_drmax[0]<=1.1");
-  plane_cuts.push_back("met>150&&met<=200 && hig_cand_drmax[0]>1.1");
-  plane_cuts.push_back("met>200&&met<=300 && hig_cand_drmax[0]>1.1");
-  plane_cuts.push_back("met>300&&met<=400 && hig_cand_drmax[0]>1.1");
-  plane_cuts.push_back("met>400           && hig_cand_drmax[0]>1.1");
-  for (unsigned iPlane = 0; iPlane < plane_cuts.size(); ++iPlane) {
+  if (HigUtilities::is_in_string_options(string_options,"plot_notrgeff")) {
+    // No trigger study
     pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
-      base_filters&&base_resolved&&plane_cuts[iPlane], procs_btag, plt_shapes).Weight(weight).Tag("FixName:bkgest__amjj_shapes_plane"+to_string(iPlane)).LuminosityTag(total_luminosity_string);
-    pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
-      base_filters&&base_resolved&&plane_cuts[iPlane], procs_btag, plt_shapes).Weight(weight_notrgeff).Tag("FixName:bkgest__amjj_shapes_plane"+to_string(iPlane)+"_notrgeff").LuminosityTag(total_luminosity_string);
+      base_filters&&base_resolved, procs_btag, plt_shapes).Weight(weight_notrgeff).Tag("FixName:bkgest__amjj_shapes_notrgeff").LuminosityTag(total_luminosity_string);
+    // Plane MET vs drmax
+    vector<NamedFunc> plane_cuts;
+    plane_cuts.push_back("met>150&&met<=200 && hig_cand_drmax[0]<=1.1");
+    plane_cuts.push_back("met>200&&met<=300 && hig_cand_drmax[0]<=1.1");
+    plane_cuts.push_back("met>300&&met<=400 && hig_cand_drmax[0]<=1.1");
+    plane_cuts.push_back("met>400           && hig_cand_drmax[0]<=1.1");
+    plane_cuts.push_back("met>150&&met<=200 && hig_cand_drmax[0]>1.1");
+    plane_cuts.push_back("met>200&&met<=300 && hig_cand_drmax[0]>1.1");
+    plane_cuts.push_back("met>300&&met<=400 && hig_cand_drmax[0]>1.1");
+    plane_cuts.push_back("met>400           && hig_cand_drmax[0]>1.1");
+    for (unsigned iPlane = 0; iPlane < plane_cuts.size(); ++iPlane) {
+      pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+        base_filters&&base_resolved&&plane_cuts[iPlane], procs_btag, plt_shapes).Weight(weight).Tag("FixName:bkgest__amjj_shapes_plane"+to_string(iPlane)).LuminosityTag(total_luminosity_string);
+      pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+        base_filters&&base_resolved&&plane_cuts[iPlane], procs_btag, plt_shapes).Weight(weight_notrgeff).Tag("FixName:bkgest__amjj_shapes_plane"+to_string(iPlane)+"_notrgeff").LuminosityTag(total_luminosity_string);
+    }
   }
 
   //pm.Push<Table>("syst__ttbar_pies__2b_met300", vector<TableRow> ({TableRow("", base_filters&&base_resolved&&"(nbt==2&&nbm==2)&&met>300          &&hig_cand_drmax[0]<=1.1", 0, 0, weight)}), procs, true, true, true);
 
   // kappa plot
-  //system(("./run/higgsino/plot_kappas.exe --sample search --scen mc --year "+year_string).c_str());
+  if (HigUtilities::is_in_string_options(string_options,"plot_kappa")) {
+    system(("./run/higgsino/plot_kappas.exe --sample search --scen mc --year "+year_string).c_str());
+  }
 
   pm.multithreaded_ = !single_thread;
   pm.min_print_ = true;
@@ -221,12 +227,13 @@ void GetOptions(int argc, char *argv[]){
     static struct option long_options[] = {
       {"single_thread", no_argument, 0, 's'},
       {"year", required_argument, 0, 0},
+      {"string_options", required_argument, 0, 'o'},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "s", long_options, &option_index);
+    opt = getopt_long(argc, argv, "so:", long_options, &option_index);
 
     if( opt == -1) break;
 
@@ -234,6 +241,9 @@ void GetOptions(int argc, char *argv[]){
     switch(opt){
     case 's':
       single_thread = true;
+      break;
+    case 'o':
+      string_options = optarg;
       break;
     case 0:
       optname = long_options[option_index].name;

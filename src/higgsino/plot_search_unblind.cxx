@@ -39,8 +39,9 @@ namespace{
   bool unblind_signalregion = false;
   // string_options is split by comma. ex) option1,option2 
   // Use HigUtilities::is_in_string_options(string_options, "option2") to check if in string_options.
-  string string_options = "plot_in_btags,plot_in_btags_with_met_split";
-  // Other options: plot_in_btags_for_mc,plot_in_btags_split,plot_in_planes
+  string string_options = "plot_in_btags,plot_in_btags_with_met_split,plot_baseline";
+  // Other options: plot_in_btags_for_mc,plot_in_btags_split,plot_in_planes,paper_style
+  // paper_style - sets plot style and MC categories to match boosted
 }
 
 vector<pair<int, int> > parseMassPoints(string const & mass_points_string) {
@@ -179,6 +180,8 @@ void setProcsDict(string const & production, string const & nanoAodFolder, strin
                                    "*_QCD_HT2000toInf_*"});
   mc_filenames["other"]   = set<string>({"*_WH*.root", "*_ZH_HToBB*.root",
                                      "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"});
+  mc_filenames["other_and_single_t"]   = set<string>({"*_WH*.root", "*_ZH_HToBB*.root",
+                                     "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root","*_ST_*.root"});
   mc_filenames["all"] = set<string>({"*TTJets_SingleLept*",
                                "*TTJets_DiLept*",
                                "*_TTZ*.root", "*_TTW*.root",
@@ -195,7 +198,7 @@ void setProcsDict(string const & production, string const & nanoAodFolder, strin
   //string mass_points_string = "225_0, 700_0, 950_0"; // Below looks good 
   //string mass_points_string = "225_0, 400_0"; // 2016 AN
   //if (unblind && !unblind_signalregion) mass_points_string = "";
-  vector<int> sig_colors = {kGreen+1, kRed, kBlue, kOrange}; // Requires mass_points.size() >= sig_colors.size()
+  vector<int> sig_colors = {kGreen-6, kRed, kBlue, kOrange}; // Requires mass_points.size() >= sig_colors.size()
   // signal_filenames["TChiHH(nlsp,lsp)"] = {filename}
   torch::OrderedDict<string, set<string> > signal_filenames;
   // mass_points = [[nlsp, lsp]]
@@ -274,6 +277,25 @@ void setProcsDict(string const & production, string const & nanoAodFolder, strin
       sig_colors[iMassPoint], attach_folder(signal_production_folder, years, signal_skim_folder, signal_filenames[iMassPoint].value() ), "1"));
   }
   procsDict["mc_and_sig_and_data"].push_back(Process::MakeShared<Baby_pico>("Data", Process::Type::data, kBlack, 
+                   attach_folder(data_production_folder, years, data_skim_folder, {"*.root"}), triggers_data));
+
+  //dictionary combines some MC categories for paper
+  procsDict["paper_mc_and_sig_and_data"];
+  procsDict["paper_mc_and_sig_and_data"].push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X", Process::Type::background,colors("tt_htau"),
+                  attach_folder(mc_production_folder, years, mc_skim_folder, mc_filenames["tt"]),"stitch"));
+  procsDict["paper_mc_and_sig_and_data"].push_back(Process::MakeShared<Baby_pico>("Z+jets", Process::Type::background, kOrange+1,
+                  attach_folder(mc_production_folder, years, mc_skim_folder,mc_filenames["zjets"]),"stitch"));
+  procsDict["paper_mc_and_sig_and_data"].push_back(Process::MakeShared<Baby_pico>("W+jets", Process::Type::background, kGreen+1,
+                  attach_folder(mc_production_folder, years, mc_skim_folder,mc_filenames["wjets"]),"stitch"));
+  procsDict["paper_mc_and_sig_and_data"].push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background, colors("other"),
+                  attach_folder(mc_production_folder, years, mc_skim_folder, mc_filenames["qcd"]),"stitch")); 
+  procsDict["paper_mc_and_sig_and_data"].push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGray+2,
+                  attach_folder(mc_production_folder, years, mc_skim_folder, mc_filenames["other_and_single_t"]),"stitch"));
+  for (unsigned iMassPoint = 0; iMassPoint < signal_filenames.size(); ++iMassPoint) {
+    procsDict["paper_mc_and_sig_and_data"].push_back(Process::MakeShared<Baby_pico>(signal_filenames[iMassPoint].key(), Process::Type::signal, 
+      sig_colors[iMassPoint], attach_folder(signal_production_folder, years, signal_skim_folder, signal_filenames[iMassPoint].value() ), "1"));
+  }
+  procsDict["paper_mc_and_sig_and_data"].push_back(Process::MakeShared<Baby_pico>("Data", Process::Type::data, kBlack, 
                    attach_folder(data_production_folder, years, data_skim_folder, {"*.root"}), triggers_data));
 
   // Set mc btag procs
@@ -421,7 +443,7 @@ int main(int argc, char *argv[]){
   lin_norm_info.Title(TitleType::info)   
     .Bottom(BottomType::off)
     .YAxis(YAxisType::linear)
-    .Stack(StackType::data_norm).LegendColumns(3);
+    .Stack(StackType::data_norm).LegendColumns(3).ErrorOnZeroData(true);
   PlotOpt log_norm_info = lin_norm_info().YAxis(YAxisType::log);
   PlotOpt log_norm = lin_norm_info().YAxis(YAxisType::log).Title(TitleType::info).LogMinimum(.2);
   PlotOpt lin_norm = lin_norm_info().YAxis(YAxisType::linear).Title(TitleType::info);
@@ -430,6 +452,10 @@ int main(int argc, char *argv[]){
   PlotOpt log_norm_data = lin_norm_info().YAxis(YAxisType::log).Title(TitleType::info).LogMinimum(.2).Bottom(BottomType::ratio).PrintVals(true);
   PlotOpt lin_norm_data = lin_norm_info().YAxis(YAxisType::linear).Title(TitleType::info).Bottom(BottomType::ratio).PrintVals(true);
   PlotOpt lin_lumi = lin_norm_info.Title(TitleType::data).Bottom(BottomType::ratio).YAxis(YAxisType::linear).Stack(StackType::data_norm).RatioMaximum(1.86);
+  PlotOpt lin_norm_paper = lin_norm().Title(TitleType::preliminary).LegendColumns(2).TitleInFrame(true);
+  PlotOpt lin_norm_data_paper = lin_norm_data().Title(TitleType::preliminary).LegendColumns(2).TitleInFrame(true).RatioMaximum(1.9).RatioMinimum(0.0);
+  PlotOpt log_norm_paper = log_norm().Title(TitleType::preliminary).LegendColumns(2).TitleInFrame(true);
+  PlotOpt log_norm_data_paper = log_norm_data().Title(TitleType::preliminary).LegendColumns(2).TitleInFrame(true).RatioMaximum(1.9).RatioMinimum(0.0);
 
   vector<PlotOpt> plt_norm_info = {lin_norm_info, log_norm_info};
   vector<PlotOpt> plt_lin = {lin_norm};
@@ -439,6 +465,14 @@ int main(int argc, char *argv[]){
   vector<PlotOpt> plt_lin_lumi = {lin_lumi};
   if (unblind) plt_lin = {lin_norm_data};
   if (unblind) plt_log = {log_norm_data};
+  if (HigUtilities::is_in_string_options(string_options, "paper_style")) {
+    plt_lin = {lin_norm_paper};
+    plt_log = {log_norm_paper};
+    if (unblind) {
+      plt_lin = {lin_norm_data_paper};
+      plt_log = {log_norm_data_paper};
+    }
+  }
 
   set<int> years;
   HigUtilities::parseYears(year_string, years);
@@ -513,6 +547,8 @@ int main(int argc, char *argv[]){
 
   string proc_name = "mc_and_sig";
   if (unblind) proc_name += "_and_data";
+  if (HigUtilities::is_in_string_options(string_options, "paper_style"))
+    proc_name = "paper_mc_and_sig_and_data";
 
   NamedFunc extra_cut = "1";
   NamedFunc signalReject = "njet>=4&&njet<=5&&!(((nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))&&(hig_cand_am[0]>100&&hig_cand_am[0]<=140))";
@@ -673,7 +709,7 @@ int main(int argc, char *argv[]){
   bool plot_in_btags_with_met_split = HigUtilities::is_in_string_options(string_options, "plot_in_btags_with_met_split");
   if (plot_in_btags_with_met_split) {
     // met; 2b [search]
-    pm.Push<Hist1D>(Axis(15, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}),
+    pm.Push<Hist1D>(Axis(14, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}),
       search_filters&&search_resolved_cuts 
       &&"(nbt==2&&nbm==2)"&&extra_cut
       ,procs_search[proc_name], plt_log).Weight(weight).Tag("FixName:met__2b__search").LuminosityTag(total_luminosity_string);
@@ -694,7 +730,7 @@ int main(int argc, char *argv[]){
       &&"(nbt==2&&nbm==2)&&met>300"&&extra_cut
       , procs_search[proc_name], plt_lin).Weight(weight).Tag("FixName:amjj__2b_highmet__search").LuminosityTag(total_luminosity_string);
     // met; 3b|4b [search]
-    pm.Push<Hist1D>(Axis(15, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}),
+    pm.Push<Hist1D>(Axis(14, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}),
       search_filters&&search_resolved_cuts 
       &&"((nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))"&&extra_cut
       ,procs_search[proc_name], plt_log).Weight(weight).Tag("FixName:met__3b4b__search").LuminosityTag(total_luminosity_string);
@@ -966,9 +1002,56 @@ int main(int argc, char *argv[]){
       , procs_search[proc_name], plt_lin).Weight(weight).Tag("FixName:amjj__3b4b_lowdrmax_met400__search").LuminosityTag(total_luminosity_string);
   }
 
+  if (unblind && HigUtilities::is_in_string_options(string_options, "plot_baseline")) {
+
+    // nb
+    pm.Push<Hist1D>(Axis(3, 1.5, 4.5, Higfuncs::hig_bcat, "N_{b}", {2.5}),
+      search_filters&&search_resolved_cuts
+      ,procs_search[proc_name], plt_log).Weight(weight).Tag("FixName:nb__search").LuminosityTag(total_luminosity_string);
+    // Plot according to btags
+    vector<pair<string, NamedFunc> > nbCuts = {{"2b3b4b",hig_bcat==2||hig_bcat==3||hig_bcat==4}, {"3b4b",hig_bcat==3||hig_bcat==4}, {"4b",hig_bcat==4}};
+    for (unsigned iCut = 0; iCut < nbCuts.size(); ++iCut) {
+      string nbCutName = nbCuts[iCut].first;
+      NamedFunc nbCut = nbCuts[iCut].second;
+      // am
+      pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+        search_filters&&
+        "met/mht<2 && met/met_calo<2&&weight<1.5&&"
+        "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
+        "hig_cand_drmax[0]<=2.2&&hig_cand_dm[0]<=40"&&nbCut
+        , procs_search[proc_name], plt_lin).Weight(weight).Tag("FixName:amjj__"+nbCutName+"__search").LuminosityTag(total_luminosity_string);
+      // dm
+      pm.Push<Hist1D>(Axis(10,0,100,"hig_cand_dm[0]", "#Deltam [GeV]", {40.}),
+        search_filters&&
+        "met/mht<2 && met/met_calo<2&&weight<1.5&&"
+        "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
+        "hig_cand_drmax[0]<=2.2&&hig_cand_am[0]<=200"&&nbCut
+        , procs_search[proc_name], plt_lin).Weight(weight).Tag("FixName:dmjj__"+nbCutName+"__search").LuminosityTag(total_luminosity_string);
+      // Delta R max
+      pm.Push<Hist1D>(Axis(20,0,4,"hig_cand_drmax[0]", "#DeltaR_{max}", {1.1, 2.2}),
+        search_filters&&
+        "met/mht<2 && met/met_calo<2&&weight<1.5&&"
+        "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
+        "hig_cand_dm[0]<=40&&hig_cand_am[0]<=200"&&nbCut
+        ,procs_search[proc_name], plt_log).Weight(weight).Tag("FixName:drmax__"+nbCutName+"__search_log").LuminosityTag(total_luminosity_string);
+      // met
+      pm.Push<Hist1D>(Axis(14, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}),
+      search_filters&&search_resolved_cuts&&nbCut
+      ,procs_search[proc_name], plt_log).Weight(weight).Tag("FixName:met__"+nbCutName+"__search").LuminosityTag(total_luminosity_string);
+    }
+  }
+
   pm.multithreaded_ = !single_thread;
   pm.min_print_ = true;
   pm.MakePlots(1.);
+
+  //// Get Figures
+  //vector<std::unique_ptr<Figure> > const & figures = pm.Figures();
+  //for (auto figurePtr = figures.begin(); figurePtr != figures.end(); ++figurePtr) {
+  //  Hist1D * figure = dynamic_cast<Hist1D *>(figurePtr->get());
+  //  cout<<figure->Name()<<endl;
+  //  // Processes
+  //}
 
   time(&endtime); 
   cout<<endl<<"Took "<<difftime(endtime, begtime)<<" seconds"<<endl<<endl;

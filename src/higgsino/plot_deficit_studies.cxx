@@ -40,14 +40,14 @@ using namespace PlotOptTypes;
 namespace{
   bool single_thread = false;
   string year_string = "2018";
-  std::string string_options = "plot_mettrends,plot_reweight,plot_years";
+  std::string string_options = "plot_mettrends,plot_lowlevel,plot_reweight,plot_years";
   //string_options
   // plot_mettrends (default) - plot am trends as a function of met
   // plot_reweight (default) - plot changes in met and pt trends after top pt spectrum is corrected to match data
   // plot_years (default) - plot am/pt trends in 1l CR across years
+  // plot_lowlevel (default) - plot low level jet quantities
   // plot_metdrmax - plot am trend with different met and drmax cuts
   // plot_nonorm - plot unnormalized am trends
-  // plot_lowlevel - plot low level jet quantities
   // plot_amsplit - plot variables with cuts on am
   // plot_reweight_sig - plot changes in met and pt trends after signals are reweighted based on top pt data-MC comparison
   bool unblind = true;
@@ -796,6 +796,11 @@ int main(int argc, char *argv[]){
         .LuminosityTag(total_luminosity_string);
       pm2.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
         onelep_baseline,
+        ttbar_procs, plt_lin).Weight(weight)
+        .Tag("FixName:deficit__am_1lcr_"+year_string)
+        .LuminosityTag(total_luminosity_string);
+      pm2.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
+        onelep_baseline,
         ttbar_procs, plt_lin).Weight(weight*w_pt)
         .Tag("FixName:deficit__am_wpt_1lcr_"+year_string)
         .LuminosityTag(total_luminosity_string);
@@ -836,6 +841,8 @@ int main(int argc, char *argv[]){
         ttbar_procs, plt_lin).Weight(weight*w_pt)
         .Tag("FixName:deficit__drmax_wpt_lowam_1lcr_"+year_string)
         .LuminosityTag(total_luminosity_string);
+
+      system("./run/higgsino/plot_kappas.exe --scen syst_ttpt");
     }
 
     if (HigUtilities::is_in_string_options(string_options,"plot_reweight_sig")) {

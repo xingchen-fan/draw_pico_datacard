@@ -398,6 +398,7 @@ int main(int argc, char *argv[])
     } else {
       signal_files = Glob(signal_folder+"/*.root");
     }
+    std::cout << signal_folder << "/*.root" << std::endl;
     string mGluino, mLSP, mChi;
     for (string signal_file : signal_files) {
       if (higgsino_model=="T5HH") {
@@ -405,6 +406,7 @@ int main(int argc, char *argv[])
         if (stoi(mChi) != (stoi(mGluino)-50)) continue; // Ingore points outside the 2D scan
         if (t5hh_range >= 0 && stoi(mGluino)<t5hh_range) continue; //non-negative t5hh is lower bound
         if (t5hh_range < 0 && stoi(mGluino)>=(-1*t5hh_range)) continue; //negative t5hh is upper bound
+        std::cout << "Pushing back " << mGluino << ", " << mLSP << std::endl;
         massPoints.push_back({mGluino, mLSP});
       }
       else {
@@ -428,7 +430,7 @@ int main(int argc, char *argv[])
   NamedFunc met_triggers = Higfuncs::met_trigger;
   if(unblind) HigUtilities::setDataProcesses(years, samplePaths, filters&&met_triggers, sampleProcesses);
   if (higgsino_model=="T5HH") {
-    HigUtilities::setSignalProcessesT5HH(massPoints, years, samplePaths, filters&&htobb, sampleProcesses);
+    HigUtilities::setSignalProcessesT5HH(massPoints, years, samplePaths, filters, sampleProcesses);
   } else {
     HigUtilities::setSignalProcesses(massPoints, years, samplePaths, filters, sampleProcesses);
   }
@@ -1104,15 +1106,20 @@ namespace HigWriteDataCards{
           float avrmet_value = mYields.at(avrlabel).first.Yield();
           float genmet_value = mYields.at(genlabel).first.Yield();
           float syst_value = 2.0;
-          if (avrmet_value != 0)
+          if (avrmet_value != 0) {
             syst_value = (recmet_value-genmet_value)/2.0/avrmet_value;
-          //if (fabs(syst_value) > 0.5 && syst_value != 2.0) 
-          //  std::cout << "DEBUG: large fs met systematic. RECO value: "
-          //       << recmet_value << ", GEN value: " << genmet_value << std::endl;
-          if (syst_value > 1.0) syst_value = 1.0;
-          if (syst_value <= -1.0) syst_value = -0.99;
-          //convention for sign
-          row[2+2*bin_idx] = to_string(syst_value+1.0);
+            //convention for sign
+            if (syst_value >= 1.0)
+              row[2+2*bin_idx] = "0.01/2.00";
+            else if (syst_value <= -1.0)
+              row[2+2*bin_idx] = "2.00/0.01";
+            else {
+              row[2+2*bin_idx] = to_string(-1.0*syst_value+1.0)+"/"+to_string(syst_value+1.0);
+            }
+          }
+          else {
+            row[2+2*bin_idx] = "2.00/2.00";
+          }
         }
         else if (sys.first == "SignalScale") {
           //renormalization and factorization scale systematic

@@ -96,11 +96,11 @@ namespace script_utilities {
   const std::string mc_unskimmed_folder = "mc/unskimmed/";
 
   const std::string data_production_folder = std::string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
-  const std::string search_data_skim_folder = "data/merged_higmc_higloose/";
+  const std::string search_data_skim_folder = "data/merged_higdata_higloose/";
   const std::string met150_data_skim_folder = "data/skim_met150/";
-  const std::string ttbar_data_skim_folder = "data/merged_higmc_higlep1T/";
-  const std::string zll_data_skim_folder = "data/merged_higmc_higlep2T/";
-  const std::string qcd_data_skim_folder = "data/merged_higmc_higqcd/";
+  const std::string ttbar_data_skim_folder = "data/merged_higdata_higlep1T/";
+  const std::string zll_data_skim_folder = "data/merged_higdata_higlep2T/";
+  const std::string qcd_data_skim_folder = "data/merged_higdata_higqcd/";
   const std::string data_unskimmed_folder = "data/raw_pico/";
 
   const std::string signal_production_folder = std::string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";

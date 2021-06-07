@@ -853,6 +853,8 @@ namespace HigUtilities {
       if (year == 2018) total_luminosity += 59.74;
     }
     string total_luminosity_string = RoundNumber(total_luminosity, 1, 1).Data();
+    if (total_luminosity > 136.0 && total_luminosity < 138.0)
+      total_luminosity_string = "137";
     return total_luminosity_string;
   }
 
