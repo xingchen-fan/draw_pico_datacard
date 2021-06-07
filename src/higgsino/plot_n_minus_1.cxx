@@ -45,7 +45,7 @@ namespace{
   string lepton_type = "";
   // string_options is split by comma. ex) option1,option2 
   // Use HigUtilities::is_in_string_options(string_options, "option2") to check if in string_options.
-  // Options: plot_additional_variables,plot_ht_correlation,plot_eta_vs_phi,plot_in_bins
+  // Options: plot_additional_variables,plot_ht_correlation,plot_eta_vs_phi,plot_in_bins, cut_3b4b
   string string_options = "";
 }
 
@@ -395,7 +395,7 @@ int main(int argc, char *argv[]){
   axis_dict.insert("nlep",Axis(5, 0.5, 5.5, "nlep", "N_{leps}", {}));
   axis_dict.insert("nmu",Axis(5, 0.5, 5.5, "nmu", "N_{muons}", {}));
   axis_dict.insert("nel",Axis(5, 0.5, 5.5, "nel", "N_{electrons}", {}));
-  axis_dict.insert("met",Axis(15, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}));
+  axis_dict.insert("met",Axis(14, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}));
   axis_dict.insert("met_detail",Axis(28, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}));
   axis_dict.insert("mht_detail",Axis(28, 150, 850., "mht", "MHT [GeV]", {}));
   axis_dict.insert("ht",Axis(20, 0, 1000., "ht", "HT [GeV]", {}));
@@ -420,7 +420,7 @@ int main(int argc, char *argv[]){
   axis_dict.insert("h2_dr",Axis(20,0,4,h2_dr, "Sublead higgs #DeltaR", {1.1, 2.2}));
   axis_dict.insert("h1_mass",Axis(10, 0, 200, h1_mass, "Lead m_{bb} [GeV]", {100, 140}));
   axis_dict.insert("h2_mass",Axis(10, 0, 200, h2_mass, "Sublead m_{bb} [GeV]", {100, 140}));
-  axis_dict.insert("jet_pt[0]",Axis(16, 0, 480., "jet_pt[0]", "p_{T} jet [0] [GeV]", {}));
+  axis_dict.insert("jet_pt[0]",Axis(20, 0, 600., "jet_pt[0]", "p_{T} jet [0] [GeV]", {}));
   axis_dict.insert("jet_pt[1]",Axis(16, 0, 480., "jet_pt[1]", "p_{T} jet [1] [GeV]", {}));
   axis_dict.insert("jet_pt[2]",Axis(16, 0, 480., "jet_pt[2]", "p_{T} jet [2] [GeV]", {}));
   axis_dict.insert("jet_pt[3]",Axis(16, 0, 480., "jet_pt[3]", "p_{T} jet [3] [GeV]", {}));
@@ -516,9 +516,13 @@ int main(int argc, char *argv[]){
     target_variables.insert("h1_mass");
     target_variables.insert("h2_mass");
     target_variables.insert("mht_filter");
+    target_variables.insert("jet_pt[0]");
   }
 
   NamedFunc basic_cut = "1";
+  if (sample_name == "search") basic_cut = "(nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4)";
+  if (HigUtilities::is_in_string_options(string_options, "cut_3b4b")) basic_cut = "(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4)";
+  //basic_cut = "njet>=4&&hig_cand_am[0]>100&&hig_cand_am[0]<=140&&hig_cand_drmax[0]<=1.1";
 
   // Loop over variables
   for (auto const & target_var : target_variables) {
