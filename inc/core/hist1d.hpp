@@ -115,7 +115,7 @@ private:
   void StackHistos() const;
   void NormalizeHistos() const;
   void FixAsymmErrors() const;
-  void FixAsymmErrors(const std::unique_ptr<SingleHist1D> &sh1d) const;
+  void FixAsymmErrors(const std::unique_ptr<SingleHist1D> &sh1d, bool error_on_zero_data=false) const;
 
   void SetRanges() const;
 

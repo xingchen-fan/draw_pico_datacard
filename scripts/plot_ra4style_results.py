@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 import os
 import math
+import ProcessCombineOutput
 from ROOT import *
 
 #do_sig = True
@@ -18,6 +19,7 @@ tag1_color = kPink+2
 tag2 = '_r4' 
 tag2_lbl = 'Post-fit'
 tag2_color = kAzure+1
+tag2_color_2 = kAzure+2
 
 #tag_sig_c = '_r4_1900'
 #
@@ -201,17 +203,13 @@ tag2_color = kAzure+1
 #    for i in range(2): 
 #        print "open "+fulltab[i].name.replace(".tex",".pdf")
 
-#currently manually enter data, later we will get it from combine
-bkg_pre = [159.0, 91.4, 11.1, 2.8, 50.7, 27.7, 2.7, 2.9, 6.0, 1.97, 0.074, 0.88, 2.55, 0.96, 0.42, 0.69]
-ebkg_pre = [12.0, 9.4, 3.4, 1.9, 8.6, 5.3, 1.3, 2.3, 1.6, 0.64, 0.083, 0.91, 0.84, 0.47, 0.42, 0.71]
-bkg_post = [150.5, 92.1, 12.5, 2.8, 51.7, 32.6, 3.3, 1.34, 6.9, 2.18, 0.78, 0.52, 2.51, 1.33, 1.15, 0.79]
-ebkg_post = [8.2, 6.6, 2.6, 1.2, 5.8, 4.1, 1.2, 0.88, 1.5, 0.63, 0.46, 0.48, 0.69, 0.55, 0.71, 0.58]
-data = [141.0, 91.0, 14.0, 3.0, 51.0, 37.0, 4.0, 0.0, 9.0, 2.0, 4.0, 0.0, 1.0, 3.0, 1.0, 1.0]
-bkg_pre += [33.8, 7.4, 1.68, 4.0, 0.89, 0.2]
-ebkg_pre += [6.4, 1.9, 0.89, 1.4, 0.36, 0.17]
-bkg_post += [37.1, 7.4, 1.53, 3.62, 0.75, 0.16]
-ebkg_post += [4.4, 1.4, 0.64, 0.96, 0.25, 0.12]
-data += [43.0, 7.0, 1.0, 4.0, 0.0, 0.0]
+bkg_pre = ProcessCombineOutput.bkg_pre
+ebkg_pre_up = ProcessCombineOutput.ebkg_pre_up
+ebkg_pre_dn = ProcessCombineOutput.ebkg_pre_dn
+bkg_post = ProcessCombineOutput.bkg_post
+ebkg_post_up = ProcessCombineOutput.ebkg_post_up
+ebkg_post_dn = ProcessCombineOutput.ebkg_post_dn
+data = ProcessCombineOutput.data
 #edata_up = [math.sqrt(ibin) for ibin in data]
 #edata_dn = [math.sqrt(ibin) for ibin in data]
 edata_up = []
@@ -219,7 +217,10 @@ edata_dn = []
 pull_pre = []
 pull_post = []
 #pulls as likelihood ratio significances
-pull_pre = [-0.9, 0.0, 0.6, 0.1,   0.0, 1.1, 0.6, -1.9,   0.9, 0.0, 3.5, -1.1,   -1.0, 1.5, 0.6, 0.3,   0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+#pull_pre = [-0.9, 0.0, 0.6, 0.1,   0.0, 1.1, 0.6, -1.9,   0.9, 0.0, 3.5, -1.1,   -1.0, 1.5, 0.6, 0.3,   0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+#pulls from poisson with toys
+#pull_pre = [-1.04, -0.056, 0.53, -0.088,   -0.014, ]
+#pull_post = [-0.67, -0.13, 0.25, -0.10,   ]
 #pull_post = []
 for ibin in range(len(data)):
   #make Poisson errors
@@ -231,11 +232,13 @@ for ibin in range(len(data)):
   edata_up.append(u-data[ibin])
   edata_dn.append(data[ibin]-l)
   #make pulls
-  w_pre = 1.0/ebkg_pre[ibin]**2
-  w_pos = 1.0/ebkg_post[ibin]**2
+  w_pre = 1.0/ebkg_pre_up[ibin]**2
+  w_pos = 1.0/ebkg_post_up[ibin]**2
   e_dat = edata_dn[ibin]
   if data[ibin] < bkg_pre[ibin]:
     e_dat = edata_up[ibin]
+    w_pre = 1.0/ebkg_pre_dn[ibin]**2
+    w_pos = 1.0/ebkg_post_dn[ibin]**2
   w_dat = 1.0/e_dat**2
   e_com_pre = 1.0/math.sqrt(w_pre+w_dat)
   e_com_pos = 1.0/math.sqrt(w_pos+w_dat)
@@ -243,14 +246,15 @@ for ibin in range(len(data)):
   l_com_pos = (bkg_post[ibin]*w_pos+data[ibin]*w_dat)/(w_pos+w_dat)
   this_pull_pre = (data[ibin]-l_com_pre)/math.sqrt(e_dat**2-e_com_pre**2)
   this_pull_pos = (data[ibin]-l_com_pos)/math.sqrt(e_dat**2-e_com_pos**2)
-  #pull_pre.append(this_pull_pre)
-  #pull_post.append(this_pull_pos)
+  pull_pre.append(this_pull_pre)
+  pull_post.append(this_pull_pos)
   #naive-pulls
   #pull_pre.append((data[ibin]-bkg_pre[ibin])/math.sqrt(bkg_pre[ibin]+ebkg_pre[ibin]*ebkg_pre[ibin]))
   #pull_post.append((data[ibin]-bkg_post[ibin])/math.sqrt(bkg_post[ibin]+ebkg_post[ibin]*ebkg_post[ibin]))
   #poisson significance
-  #pull_pre.append(math.sqrt(2)*TMath.ErfInverse(-1.0+2.0*ROOT.Math.poisson_cdf(int(data[ibin]),bkg_pre[ibin])))
-  pull_post.append(math.sqrt(2)*TMath.ErfInverse(-1.0+2.0*ROOT.Math.poisson_cdf(int(data[ibin]),bkg_post[ibin])))
+  #if (ibin > 15):
+  #  pull_pre.append(math.sqrt(2)*TMath.ErfInverse(-1.0+2.0*ROOT.Math.poisson_cdf(int(data[ibin]),bkg_pre[ibin])))
+  #  pull_post.append(math.sqrt(2)*TMath.ErfInverse(-1.0+2.0*ROOT.Math.poisson_cdf(int(data[ibin]),bkg_post[ibin])))
 
 print(pull_pre)
 print(pull_post)
@@ -262,8 +266,10 @@ nhbins = len(data)
 #-------------------------------------
 miny, maxy = 0.051, 3000
 htopdummy = TH1D("","",nhbins,0,nhbins+1)
-grbkg_pre = TGraphErrors(nhbins)
-grbkg_post = TGraphErrors(nhbins)
+grbkg_pre = TGraphAsymmErrors(nhbins)
+grbkg_post = TGraphAsymmErrors(nhbins)
+grbkg_horiz_pre = TGraphAsymmErrors(nhbins)
+grbkg_horiz_post = TGraphAsymmErrors(nhbins)
 grdata = TGraphAsymmErrors(nhbins)
 grpull_pre = TGraph(nhbins)
 grpull_post = TGraph(nhbins)
@@ -273,11 +279,23 @@ for ibin in range(nbins):
     #if 'r4' not in bins[ibin]: continue
     i +=1
     grbkg_pre.SetPoint(i-1, i,bkg_pre[ibin])
-    grbkg_pre.SetPointError(i-1, 0.5, ebkg_pre[ibin])    
+    grbkg_pre.SetPointEYhigh(i-1, ebkg_pre_up[ibin])    
+    grbkg_pre.SetPointEYlow(i-1, ebkg_pre_dn[ibin])    
+    grbkg_pre.SetPointEXhigh(i-1, 0.5)
+    grbkg_pre.SetPointEXlow(i-1, 0.5)
+    grbkg_horiz_pre.SetPoint(i-1, i,bkg_pre[ibin])
+    grbkg_horiz_pre.SetPointEXhigh(i-1, 0.5)
+    grbkg_horiz_pre.SetPointEXlow(i-1, 0.5)
     grpull_pre.SetPoint(i-1, i, pull_pre[ibin])
 
     grbkg_post.SetPoint(i-1, i, bkg_post[ibin])
-    grbkg_post.SetPointError(i-1, 0.5, ebkg_post[ibin])
+    grbkg_post.SetPointEYhigh(i-1, ebkg_post_up[ibin])
+    grbkg_post.SetPointEYlow(i-1, ebkg_post_dn[ibin])
+    grbkg_post.SetPointEXhigh(i-1, 0.5)
+    grbkg_post.SetPointEXlow(i-1, 0.5)
+    grbkg_horiz_post.SetPoint(i-1, i, bkg_post[ibin])
+    grbkg_horiz_post.SetPointEXhigh(i-1, 0.5)
+    grbkg_horiz_post.SetPointEXlow(i-1, 0.5)
     grpull_post.SetPoint(i-1, i, pull_post[ibin])
 
     if ((not plot_pulls) and (data[ibin] == 0)):
@@ -355,28 +373,42 @@ leg.SetFillColor(0)
 leg.SetFillStyle(0)
 leg.SetBorderSize(0)
 leg.SetTextFont(42)
-leg.SetNColumns(2)
+leg.SetNColumns(3)
 
 grbkg_pre.SetLineColor(tag1_color)
 grbkg_pre.SetLineWidth(1)
 grbkg_pre.SetFillColor(0)
 grbkg_pre.SetFillStyle(0)
 grbkg_pre.Draw('2')
+grbkg_horiz_pre.SetLineColor(tag1_color)
+grbkg_horiz_pre.SetLineWidth(1)
+grbkg_horiz_pre.SetFillColor(0)
+grbkg_horiz_pre.SetFillStyle(0)
+grbkg_horiz_pre.SetMarkerColorAlpha(tag1_color, 1.0)
+grbkg_horiz_pre.Draw('P')
 leg.AddEntry(grbkg_pre, tag1_lbl.replace("--","-"), "F")
 
 grbkg_post.SetFillColor(tag2_color)
 grbkg_post.SetFillStyle(3144)
 grbkg_post.SetLineWidth(0)
 grbkg_post.Draw('2')
+grbkg_horiz_post.SetLineColor(tag2_color_2)
+grbkg_horiz_post.SetFillStyle(3144)
+grbkg_horiz_post.SetLineWidth(1)
+grbkg_horiz_post.SetMarkerColorAlpha(tag2_color, 1.0)
+grbkg_horiz_post.Draw('P')
+#grbkg_post.SetLineWidth(1)
+#grbkg_post.SetLineColor(tag2_color_2)
 leg.AddEntry(grbkg_post, tag2_lbl.replace("--","-"), "F")
 
 grdata.SetMarkerStyle(20)
 grdata.Draw('P')
+leg.AddEntry(grdata, "data", "PL")
 
 leg.Draw()
 
 cmslabel = TLatex()
-cmslabel.SetTextSize(0.06)
+cmslabel.SetTextSize(0.09)
 cmslabel.SetNDC(kTRUE)
 cmslabel.SetTextAlign(11)
 cmslabel.DrawLatex(top.GetLeftMargin()+0.005, 0.92,"#font[62]{CMS}")
@@ -392,31 +424,31 @@ binlabel.DrawLatex(4.5, 1600,"Resolved, High-#Delta R#lower[-0.1]{_{max}}")
 binlabel.DrawLatex(12.5, 1600,"Resolved, Low-#Delta R#lower[-0.1]{_{max}}")
 binlabel.DrawLatex(19.5, 1600,"Boosted")
 binlabel.SetTextSize(nb_title_size)
-ptmiss = "p#lower[-0.1]{_{T}}#kern[-0.25]{#scale[1.15]{#lower[0.2]{^{miss}}}}";
+ptmiss = "#font[52]{p}#font[42]{#lower[-0.1]{_{T}}#kern[-0.25]{#scale[1.15]{#lower[0.2]{^{miss}}}}}";
 
-binlabel.DrawLatex(2.5, 800,"#font[52]{3b}")
-binlabel.DrawLatex(6.5, 800,"#font[52]{4b}")
-binlabel.DrawLatex(10.5, 800,"#font[52]{3b}")
-binlabel.DrawLatex(14.5, 800,"#font[52]{4b}")
-binlabel.DrawLatex(18, 800,"#font[52]{1H}")
-binlabel.DrawLatex(21, 800,"#font[52]{2H}")
+binlabel.DrawLatex(2.5, 800,"#font[42]{3b}")
+binlabel.DrawLatex(6.5, 800,"#font[42]{4b}")
+binlabel.DrawLatex(10.5, 800,"#font[42]{3b}")
+binlabel.DrawLatex(14.5, 800,"#font[42]{4b}")
+binlabel.DrawLatex(18, 800,"#font[42]{1H}")
+binlabel.DrawLatex(21, 800,"#font[42]{2H}")
 
 for i in range(4):
     binlabel.SetTextSize(met_title_size)
-    binlabel.DrawLatex(2.5+i*4, 450,"#font[52]{"+ptmiss+" [GeV]}")
+    binlabel.DrawLatex(2.5+i*4, 450,ptmiss+" #font[42]{[GeV]}")
     binlabel.SetTextSize(met_range_size)
-    binlabel.DrawLatex(1+i*4, 250,"#font[52]{150-200}")
-    binlabel.DrawLatex(2+i*4, 250,"#font[52]{200-300}")
-    binlabel.DrawLatex(3+i*4, 250,"#font[52]{300-400}")
-    binlabel.DrawLatex(4+i*4, 250,"#font[52]{400+}")
+    binlabel.DrawLatex(1+i*4, 250,"#font[42]{150-200}")
+    binlabel.DrawLatex(2+i*4, 250,"#font[42]{200-300}")
+    binlabel.DrawLatex(3+i*4, 250,"#font[42]{300-400}")
+    binlabel.DrawLatex(4+i*4, 250,"#font[42]{#geq400}")
 
 for i in range(2):
     binlabel.SetTextSize(met_title_size)
-    binlabel.DrawLatex(17+1+i*3, 450,"#font[52]{"+ptmiss+" [GeV]}")
+    binlabel.DrawLatex(17+1+i*3, 450,ptmiss+" #font[42]{[GeV]}")
     binlabel.SetTextSize(met_range_size)
-    binlabel.DrawLatex(17+0+i*3, 250,"#font[52]{300-500}")
-    binlabel.DrawLatex(17+1+i*3, 250,"#font[52]{500-700}")
-    binlabel.DrawLatex(17+2+i*3, 250,"#font[52]{700+}")
+    binlabel.DrawLatex(17+0+i*3, 250,"#font[42]{300-500}")
+    binlabel.DrawLatex(17+1+i*3, 250,"#font[42]{500-700}")
+    binlabel.DrawLatex(17+2+i*3, 250,"#font[42]{#geq 700}")
 
 #for i in range(2):
 #    binlabel.DrawLatex(4+i*18, 350,"#font[52]{200 < "+ptmiss+"#leq 350 GeV}")
@@ -458,9 +490,10 @@ if plot_pulls:
 
   bottom.cd()
   hbotdummy = TH1D("","",nhbins,0,nhbins+1.0)
-  hbotdummy.GetYaxis().SetRangeUser(-3.9,3.9)
+  hbotdummy.GetYaxis().SetRangeUser(-2.9,2.9)
   hbotdummy.GetYaxis().SetLabelSize(0.12)
-  hbotdummy.GetYaxis().SetTitle("Sig.")
+  hbotdummy.GetYaxis().SetTitle("Pull")
+  hbotdummy.GetYaxis().SetNdivisions(206)
   hbotdummy.GetYaxis().CenterTitle()
   hbotdummy.GetYaxis().SetTitleSize(0.15)
   hbotdummy.GetYaxis().SetTitleOffset(0.2)
@@ -483,16 +516,17 @@ if plot_pulls:
   grpull_post.SetFillColor(tag2_color)
   grpull_post.SetFillStyle(3144)
   #grpull_post.Draw('B')
+  #not well defined for pulls or likelihood ratio significance
   
   a = TLine()
   a.SetLineWidth(1)
   a.SetLineStyle(3)
-  a.DrawLine(8.5, -3.9, 8.5, 3.9)
-  a.DrawLine(16.5, -3.9, 16.5, 3.9)
+  a.DrawLine(8.5, -2.9, 8.5, 2.9)
+  a.DrawLine(16.5, -2.9, 16.5, 2.9)
   a.SetLineColor(kGray+1)
-  a.DrawLine(4.5, -3.9, 4.5, 3.9)
-  a.DrawLine(12.5, -3.9, 12.5, 3.9)
-  a.DrawLine(19.5, -3.9, 19.5, 3.9)
+  a.DrawLine(4.5, -2.9, 4.5, 2.9)
+  a.DrawLine(12.5, -2.9, 12.5, 2.9)
+  a.DrawLine(19.5, -2.9, 19.5, 2.9)
   
   b = TLine()
   b.SetLineWidth(1)
@@ -505,9 +539,9 @@ if plot_pulls:
   b.SetLineStyle(3)
   for i in [-2.,2.]:
       b.DrawLine(0,i, nhbins+1,i)
-  b.SetLineStyle(3)
-  for i in [-3.,3.]:
-      b.DrawLine(0,i, nhbins+1,i)
+  #b.SetLineStyle(3)
+  #for i in [-3.,3.]:
+  #    b.DrawLine(0,i, nhbins+1,i)
 
 pname = 'plots/results_plot.pdf'
 can.Print(pname)

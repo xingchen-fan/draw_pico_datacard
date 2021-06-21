@@ -47,6 +47,15 @@ cat test/scan_point*/limit*txt | sort >> resolved_test_limits.txt
 ./run/higgsino/plot_limit.exe -f resolved_test_limits.txt
 ~~~~
 
+To generate AN plots:
+
+To generate Paper plots:
+
+~~~~bash
+./run/higgsino/plot_search_unblind.exe -u -a -o plot_baseline,paper_style,plot_in_btags,plot_in_btags_with_met_split
+./scripts/plot_ra4style_results.py
+~~~~
+
 ## Getting Higgsino cross-section (CN to N1N2) scale factors.
 
 ### Step 1. Download cross-section files

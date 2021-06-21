@@ -735,6 +735,9 @@ void Hist1D::NormalizeHistos() const{
     double data_norm = datas_.front()->scaled_hist_.IntegralAndError(0, nbins+1, data_error, "width");
     double mc_norm = backgrounds_.front()->scaled_hist_.IntegralAndError(0, nbins+1, mc_error, "width");
     mc_scale_ = data_norm/mc_norm;
+    if(this_opt_.PrintVals()){
+      cout << "MC scale factor: " << mc_scale_ << endl;
+    }
     mc_scale_error_ = hypot(data_norm*mc_error, mc_norm*data_error)/(mc_norm*mc_norm);
     for(auto &hist: backgrounds_){
       hist->scaled_hist_.Scale(mc_scale_);
@@ -767,14 +770,15 @@ void Hist1D::FixAsymmErrors() const{
   for(const auto &hist: signals_){
     FixAsymmErrors(hist);
   }
-  for(const auto &hist: datas_){
-    FixAsymmErrors(hist);
+  for(unsigned data_idx = 0; data_idx < datas_.size(); data_idx++) {
+    bool error_on_zero = (data_idx == (datas_.size()-1)) && this_opt_.ErrorOnZeroData();
+    FixAsymmErrors(datas_[data_idx], error_on_zero);
   }
 }
 
 /*!\brief Restore asymmetric error bars if histogram unweighted"
  */
-void Hist1D::FixAsymmErrors(const unique_ptr<SingleHist1D> &sh1d) const{
+void Hist1D::FixAsymmErrors(const unique_ptr<SingleHist1D> &sh1d, bool error_on_zero_data) const{
   TH1D &h = sh1d->scaled_hist_;
   const TArrayD *sumw2 = h.GetSumw2();
 
@@ -789,7 +793,7 @@ void Hist1D::FixAsymmErrors(const unique_ptr<SingleHist1D> &sh1d) const{
     }
   }
 
-  if(turn_off_sumw2 || this_opt_.ErrorOnZeroData()) {
+  if(turn_off_sumw2 || error_on_zero_data) {
     h.Sumw2(false);
   }
 }
@@ -1209,20 +1213,21 @@ std::vector<TH1D> Hist1D::GetBottomPlots(double &the_min, double &the_max) const
   switch(this_opt_.Bottom()){
   case BottomType::ratio:
     for(auto &h: out){
-      h.Sumw2(false);
-      h.SetBinErrorOption(TH1::kPoisson);
+      //commented code makes error bars on zero entry bins
+      //h.Sumw2(false);
+      //h.SetBinErrorOption(TH1::kPoisson);
       h.Divide(&denom);
-      for(int bin = 0; bin <= denom.GetNbinsX()+1; ++bin){
-        if (h.GetBinContent(bin) < 1.0e-12) {
-          if (denom.GetBinContent(bin) > 0) {
-            h.SetBinContent(bin, 0);
-            h.SetBinError(bin, 1.8/denom.GetBinContent(bin));
-          }
-          else
-            //hack to avoid seeing any plotted points for bins with no signal or background
-            h.SetBinContent(bin, -1);
-        }
-      }
+      //for(int bin = 0; bin <= denom.GetNbinsX()+1; ++bin){
+      //  if (h.GetBinContent(bin) < 1.0e-12) {
+      //    if (denom.GetBinContent(bin) > 0) {
+      //      h.SetBinContent(bin, 0);
+      //      h.SetBinError(bin, 1.8/denom.GetBinContent(bin));
+      //    }
+      //    else
+      //      //hack to avoid seeing any plotted points for bins with no signal or background
+      //      h.SetBinContent(bin, -1);
+      //  }
+      //}
     }
     break;
   case BottomType::diff:
