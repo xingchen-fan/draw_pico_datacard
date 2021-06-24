@@ -48,7 +48,10 @@
 #include "TLegendEntry.h"
 #include "TFile.h"
 
+#include "core/plot_opt.hpp"
 #include "core/utilities.hpp"
+
+using namespace PlotOptTypes;
 
 /*!\brief Standard constructor
 
@@ -180,11 +183,13 @@ void EfficiencyPlot::SingleEfficiencyPlot::RecordEvent(const Baby &baby){
 EfficiencyPlot::EfficiencyPlot(const Axis &xaxis, const NamedFunc &denominator_cut,
                                const NamedFunc &numerator_cut,
                                const std::vector<std::shared_ptr<Process> > &processes,
-                               const bool draw_histograms):
+                               const bool draw_histograms,
+                               const std::vector<PlotOpt> &plot_options):
   Figure(),
   xaxis_(xaxis),
   cut_(denominator_cut),
   numerator_cut_(numerator_cut),
+  plot_options_(plot_options),
   draw_histograms_(draw_histograms),
   weight_("weight"),
   tag_(""),
@@ -409,10 +414,29 @@ void EfficiencyPlot::Print(double luminosity,
 	TLatex t;
 	t.SetTextColor(kBlack);
 	t.SetTextSize(0.04);
-  if (datas_.size() == 0)
-    t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Simulation}}");
-  else
+  PlotOpt this_opt_ = plot_options_[0];
+  //TODO: fix this to allow multiple styles in one go
+  if (this_opt_.Title() == TitleType::preliminary)
     t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}");
+  else if (this_opt_.Title() == TitleType::simulation_preliminary)
+    t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Simulation Preliminiary}}");
+  else if (this_opt_.Title() == TitleType::simulation)
+    t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Simulation}}");
+  else if (this_opt_.Title() == TitleType::supplementary)
+    t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Supplementary}}");
+  else if (this_opt_.Title() == TitleType::simulation_supplementary)
+    t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Simulation Supplementary}}");
+  else if (this_opt_.Title() == TitleType::data)
+    t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS}");
+  else if (this_opt_.Title() == TitleType::info) {
+    if (datas_.size() == 0) {
+      t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Simulation Preliminiary}}");
+    }
+    else {
+      t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}");
+    }
+    //TODO: add info title
+  }
 	t.SetTextAlign(31);
   TString lumi_string = RoundNumber(luminosity_,1) + " fb^{-1}";
   if (luminosity_tag_ != "")
@@ -503,6 +527,10 @@ void EfficiencyPlot::Print(double luminosity,
   }
   full->Print(full_name.c_str());
   std::cout << "open " << full_name << std::endl;
+}
+
+std::string EfficiencyPlot::GetTag() const{
+  return tag_;
 }
 
 std::set<const Process*> EfficiencyPlot::GetProcesses() const{
@@ -634,6 +662,8 @@ void EfficiencyPlot::SetLinearPlotDrawOptions(std::unique_ptr<TH1D> &linear_plot
   linear_plot->SetFillStyle(0);
 }
 
+
+
 ///*!\brief Get vertical lines at cut values
 //
 //  \param[in] y_min Lower bound of y-axis
@@ -679,4 +709,3 @@ const std::vector<std::unique_ptr<EfficiencyPlot::SingleEfficiencyPlot> >& Effic
     return backgrounds_;
   }
 }
-

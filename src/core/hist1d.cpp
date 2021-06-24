@@ -534,6 +534,10 @@ set<const Process*> Hist1D::GetProcesses() const{
   return processes;
 }
 
+std::string Hist1D::GetTag() const {
+  return tag_;
+}
+
 Figure::FigureComponent * Hist1D::GetComponent(const Process *process){
   const auto &component_list = GetComponentList(process);
   for(const auto &component: component_list){

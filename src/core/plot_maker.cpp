@@ -45,6 +45,7 @@ PlotMaker::PlotMaker():
   multithreaded_(true),
   min_print_(false),
   print_2d_figures_(true),
+  max_entries_(-1),
   figures_(){
 }
 
@@ -68,6 +69,18 @@ void PlotMaker::MakePlots(double luminosity,
       figure->Print(luminosity, subdir);
     }
   }
+}
+
+const std::unique_ptr<Figure> & PlotMaker::GetFigure(std::string tag) const {
+  for (unsigned figure_idx = 0; figure_idx < figures_.size(); figure_idx++) {
+    std::string figure_tag = figures_[figure_idx]->GetTag();
+    ReplaceAll(figure_tag, "FixName:", "");
+    if (figure_tag == tag) {
+      return figures_[figure_idx];
+    }
+  }
+  ERROR("No figure with tag "+tag);
+  return figures_[0];
 }
 
 const vector<unique_ptr<Figure> > & PlotMaker::Figures() const{
@@ -151,6 +164,8 @@ long PlotMaker::GetYield(Baby *baby_ptr){
   tag += oss.str();
 
   long num_entries = baby.GetEntries();
+  if (max_entries_ > 0) 
+    num_entries = max_entries_ < num_entries ? max_entries_ : num_entries;
 
   vector<pair<const Process*, set<Figure::FigureComponent*> > > proc_figs(baby.processes_.size());
   size_t iproc = 0;

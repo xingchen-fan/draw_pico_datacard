@@ -48,7 +48,7 @@ public:
 
   EfficiencyPlot(const Axis &xaxis, const NamedFunc &denominator_cut, const NamedFunc &numerator_cut,
                  const std::vector<std::shared_ptr<Process> > &processes,
-                 const bool draw_histograms=true);
+                 const bool draw_histograms=true, const std::vector<PlotOpt> &plot_options = {PlotOpt()});
   EfficiencyPlot(EfficiencyPlot &&) = default;
   EfficiencyPlot& operator=(EfficiencyPlot &&) = default;
   ~EfficiencyPlot() = default;
@@ -56,6 +56,7 @@ public:
   //functions overwriting the virtual functions from Figure
   void Print(double luminosity,
              const std::string &subdir) final;
+  std::string GetTag() const final;
   std::set<const Process*> GetProcesses() const final;
   FigureComponent * GetComponent(const Process *process) final;
 
@@ -69,11 +70,11 @@ public:
   EfficiencyPlot & LuminosityTag(const std::string &tag);
   EfficiencyPlot & FixTitle(const std::string &title);
   EfficiencyPlot & YTitle(const std::string &ytitle);
-  //EfficiencyPlot & SaveEfficiencyFile(); //TODO: allow for saving as cpp file 
 
   Axis xaxis_;//!<Specification of content: plotted variable, binning, etc.
   NamedFunc cut_;//!<Event selection
   NamedFunc numerator_cut_;//!<Event selection
+  std::vector<PlotOpt> plot_options_;//!<Styles with which to draw plot
   bool draw_histograms_;//!<flag for drawing histograms in addition to efficiency plot
 
   NamedFunc weight_;//!<Event weight

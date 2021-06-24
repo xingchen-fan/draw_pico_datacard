@@ -843,18 +843,16 @@ namespace HigUtilities {
     return r_signal_lepton_pt;
   }
 
-  string getLuminosityString(string const & year_string) {
+  string getLuminosityString(string const & year_string, int const & decimals) {
     set<int> years;
     HigUtilities::parseYears(year_string, years);
     float total_luminosity = 0;
     for (auto const & year : years) {
-      if (year == 2016) total_luminosity += 35.92;
+      if (year == 2016) total_luminosity += 36.33;
       if (year == 2017) total_luminosity += 41.53;
       if (year == 2018) total_luminosity += 59.74;
     }
-    string total_luminosity_string = RoundNumber(total_luminosity, 1, 1).Data();
-    if (total_luminosity > 136.0 && total_luminosity < 138.0)
-      total_luminosity_string = "137";
+    string total_luminosity_string = RoundNumber(total_luminosity, decimals, 1).Data();
     return total_luminosity_string;
   }
 

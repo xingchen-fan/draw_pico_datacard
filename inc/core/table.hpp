@@ -55,13 +55,16 @@ public:
   std::vector<GammaParams> BackgroundYield(double luminosity) const;
   std::vector<GammaParams> DataYield() const;
   
+  std::string GetTag() const final {return tag_;};
   std::set<const Process*> GetProcesses() const final;
 
   FigureComponent * GetComponent(const Process *process) final;
 
+  Table & Tag(const std::string &tag) {tag_ = tag;return *this;}
   Table & LuminosityTag(const std::string &tag) {luminosity_tag_ = tag;return *this;}
   Table & Precision(const int &precision) {precision_ = precision;return *this;}
   
+  std::string tag_;
   std::string luminosity_tag_;//!<Filename tag to identify plot
   std::string name_;
   std::vector<TableRow> rows_;

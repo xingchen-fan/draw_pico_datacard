@@ -527,6 +527,10 @@ set<const Process*> Hist2D::GetProcesses() const{
   return processes;
 }
 
+std::string Hist2D::GetTag() const{
+  return tag_;
+}
+
 Figure::FigureComponent * Hist2D::GetComponent(const Process *process){
   const auto &component_list = GetComponentList(process);
   for(const auto &component: component_list){

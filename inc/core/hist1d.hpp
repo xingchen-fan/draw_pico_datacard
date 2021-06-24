@@ -64,6 +64,7 @@ public:
 
   std::set<const Process*> GetProcesses() const final;
 
+  std::string GetTag() const final;
   FigureComponent * GetComponent(const Process *process) final;
   std::vector<TH1D> GetBottomPlots(double &the_min, double &the_max) const;
 

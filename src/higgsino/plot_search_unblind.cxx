@@ -476,7 +476,10 @@ int main(int argc, char *argv[]){
 
   set<int> years;
   HigUtilities::parseYears(year_string, years);
-  string total_luminosity_string = HigUtilities::getLuminosityString(year_string);
+  int lumi_precision = 1;
+  if (HigUtilities::is_in_string_options(string_options, "paper_style"))
+    lumi_precision = 0;
+  string total_luminosity_string = HigUtilities::getLuminosityString(year_string, lumi_precision);
 
   // Set folders according
   // production, nanoAODFolder, sample_name, year_string, 

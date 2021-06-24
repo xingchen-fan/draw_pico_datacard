@@ -46,6 +46,8 @@ public:
   void Print(double luminosity,
              const std::string &subdir) override;
 
+  std::string GetTag() const final;
+
   std::set<const Process*> GetProcesses() const override;
 
   FigureComponent * GetComponent(const Process *process) override;

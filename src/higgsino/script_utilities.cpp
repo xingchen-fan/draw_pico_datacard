@@ -176,6 +176,7 @@ namespace script_utilities {
     std::unordered_map<std::string, std::string> mc_folder_dict;
     mc_folder_dict["search"] = search_mc_skim_folder;
     mc_folder_dict["met150"] = met150_mc_skim_folder;
+    mc_folder_dict["1l2j"] = skim1l2j_mc_skim_folder;
     mc_folder_dict["ttbar"] = ttbar_mc_skim_folder;
     mc_folder_dict["zll"] = zll_mc_skim_folder;
     mc_folder_dict["qcd"] = qcd_mc_skim_folder;
@@ -183,6 +184,7 @@ namespace script_utilities {
     std::unordered_map<std::string, std::string> data_folder_dict;
     data_folder_dict["search"] = search_data_skim_folder;
     data_folder_dict["met150"] = met150_data_skim_folder;
+    data_folder_dict["1l2j"] = skim1l2j_data_skim_folder;
     data_folder_dict["ttbar"] = ttbar_data_skim_folder;
     data_folder_dict["zll"] = zll_data_skim_folder;
     data_folder_dict["qcd"] = qcd_data_skim_folder;
@@ -190,6 +192,7 @@ namespace script_utilities {
     std::unordered_map<std::string, std::string> signal_folder_dict;
     signal_folder_dict["search"] = search_signal_skim_folder;
     signal_folder_dict["met150"] = met150_signal_skim_folder;
+    signal_folder_dict["1l2j"] = skim1l2j_signal_skim_folder;
     signal_folder_dict["ttbar"] = ttbar_signal_skim_folder;
     signal_folder_dict["zll"] = zll_signal_skim_folder;
     signal_folder_dict["qcd"] = qcd_signal_skim_folder;
@@ -197,6 +200,7 @@ namespace script_utilities {
     std::unordered_map<std::string, std::string> gluinofast_folder_dict;
     gluinofast_folder_dict["search"] = search_gluinofast_skim_folder;
     gluinofast_folder_dict["met150"] = met150_gluinofast_skim_folder;
+    gluinofast_folder_dict["1l2j"] = skim1l2j_gluinofast_skim_folder;
     gluinofast_folder_dict["ttbar"] = ttbar_gluinofast_skim_folder;
     gluinofast_folder_dict["zll"] = zll_gluinofast_skim_folder;
     gluinofast_folder_dict["qcd"] = qcd_gluinofast_skim_folder;
@@ -204,6 +208,7 @@ namespace script_utilities {
     std::unordered_map<std::string, std::string> gluinofull_folder_dict;
     gluinofull_folder_dict["search"] = search_gluinofull_skim_folder;
     gluinofull_folder_dict["met150"] = met150_gluinofull_skim_folder;
+    gluinofull_folder_dict["1l2j"] = skim1l2j_gluinofull_skim_folder;
     gluinofull_folder_dict["ttbar"] = ttbar_gluinofull_skim_folder;
     gluinofull_folder_dict["zll"] = zll_gluinofull_skim_folder;
     gluinofull_folder_dict["qcd"] = qcd_gluinofull_skim_folder;

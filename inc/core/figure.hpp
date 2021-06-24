@@ -2,8 +2,9 @@
 #define H_FIGURE
 
 #include <memory>
-#include <vector>
 #include <mutex>
+#include <string>
+#include <vector>
 
 #include "core/process.hpp"
 #include "core/baby.hpp"
@@ -43,6 +44,8 @@ public:
                      const std::string &subdir) = 0;
 
   virtual std::set<const Process*> GetProcesses() const = 0;
+
+  virtual std::string GetTag() const {return "";}
 
   virtual FigureComponent * GetComponent(const Process *process) = 0;
 };

@@ -29,6 +29,7 @@ public:
   void MakePlots(double luminosity,
                  const std::string &subdir = "");
 
+  const std::unique_ptr<Figure> & GetFigure(std::string tag) const;
   const std::vector<std::unique_ptr<Figure> > & Figures() const;
   template<typename FigureType>
   FigureType * GetLast(){
@@ -45,6 +46,7 @@ public:
   bool multithreaded_;
   bool min_print_;
   bool print_2d_figures_;
+  long max_entries_;
   void * event_veto_data_;
 
 private:
