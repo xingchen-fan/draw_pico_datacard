@@ -361,8 +361,8 @@ void EfficiencyPlot::Print(double luminosity,
     background_ratio_plot_->Draw(draw_options.c_str());
     draw_options = "P";
     if (draw_histograms_) {
-      SetLinearPlotDrawOptions(total_background_denominator, linear_y_max, true);
-      SetLinearPlotDrawOptions(total_background_numerator, linear_y_max, false);
+      SetLinearPlotDrawOptions(total_background_denominator, linear_y_max/ratio_y_max, true);
+      SetLinearPlotDrawOptions(total_background_numerator, linear_y_max/ratio_y_max, false);
       total_background_denominator->SetLineColor(background_color_);
       total_background_numerator->SetLineColor(background_color_);
       total_background_denominator->Draw("same hist");
@@ -376,8 +376,8 @@ void EfficiencyPlot::Print(double luminosity,
     signal_ratio_plots_.at(signal_idx)->Draw(draw_options.c_str());
     draw_options = "P";
     if (draw_histograms_) {
-      SetLinearPlotDrawOptions(signal_denominator_plots.at(signal_idx), linear_y_max, true);
-      SetLinearPlotDrawOptions(signal_numerator_plots.at(signal_idx), linear_y_max, false);
+      SetLinearPlotDrawOptions(signal_denominator_plots.at(signal_idx), linear_y_max/ratio_y_max, true);
+      SetLinearPlotDrawOptions(signal_numerator_plots.at(signal_idx), linear_y_max/ratio_y_max, false);
       signal_denominator_plots.at(signal_idx)->SetLineColor(signal_colors.at(signal_idx));
       signal_numerator_plots.at(signal_idx)->SetLineColor(signal_colors.at(signal_idx));
       signal_denominator_plots.at(signal_idx)->Draw("same hist");
@@ -391,8 +391,8 @@ void EfficiencyPlot::Print(double luminosity,
     data_ratio_plots_.at(data_idx)->Draw(draw_options.c_str());
     draw_options = "P";
     if (draw_histograms_) {
-      SetLinearPlotDrawOptions(data_denominator_plots.at(data_idx), linear_y_max, true);
-      SetLinearPlotDrawOptions(data_numerator_plots.at(data_idx), linear_y_max, false);
+      SetLinearPlotDrawOptions(data_denominator_plots.at(data_idx), linear_y_max/ratio_y_max, true);
+      SetLinearPlotDrawOptions(data_numerator_plots.at(data_idx), linear_y_max/ratio_y_max, false);
       data_denominator_plots.at(data_idx)->SetLineColor(data_colors.at(data_idx));
       data_numerator_plots.at(data_idx)->SetLineColor(data_colors.at(data_idx));
       data_denominator_plots.at(data_idx)->Draw("same hist");
@@ -473,7 +473,7 @@ void EfficiencyPlot::Print(double luminosity,
 	//draw right axis
 	pad->Update();
 	TGaxis *norm_axis = new TGaxis(gPad->GetUxmax(), gPad->GetUymin(), gPad->GetUxmax(), 
-                                 gPad->GetUymax(), 0, 2*ratio_y_max*linear_y_max, 505, "+L");
+                                 gPad->GetUymax(), 0, gPad->GetUymax()*2.0/ratio_y_max*linear_y_max, 505, "+L");
   norm_axis->SetTickLength(0.3);
   norm_axis->SetLabelSize(0.03);
   norm_axis->SetTitle("Events/bin");
