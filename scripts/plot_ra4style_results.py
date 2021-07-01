@@ -210,11 +210,16 @@ bkg_post = ProcessCombineOutput.bkg_post
 ebkg_post_up = ProcessCombineOutput.ebkg_post_up
 ebkg_post_dn = ProcessCombineOutput.ebkg_post_dn
 data = ProcessCombineOutput.data
+signal_500_raw = ProcessCombineOutput.signal_500
 #edata_up = [math.sqrt(ibin) for ibin in data]
 #edata_dn = [math.sqrt(ibin) for ibin in data]
+signal_500 = []
 edata_up = []
 edata_dn = []
+esignal_up = []
+esignal_dn = []
 pull_pre = []
+pull_sig = []
 pull_post = []
 #pulls as likelihood ratio significances
 #pull_pre = [-0.9, 0.0, 0.6, 0.1,   0.0, 1.1, 0.6, -1.9,   0.9, 0.0, 3.5, -1.1,   -1.0, 1.5, 0.6, 0.3,   0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
@@ -223,6 +228,8 @@ pull_post = []
 #pull_post = [-0.67, -0.13, 0.25, -0.10,   ]
 #pull_post = []
 for ibin in range(len(data)):
+  #calculate expected signal+bkg
+  signal_500.append(signal_500_raw[ibin] + bkg_pre[ibin])
   #make Poisson errors
   alpha = 1.0 - 0.6827
   l = 0
@@ -231,6 +238,12 @@ for ibin in range(len(data)):
   u =  ROOT.Math.gamma_quantile_c(alpha/2,data[ibin]+1,1.0)
   edata_up.append(u-data[ibin])
   edata_dn.append(data[ibin]-l)
+  #
+  if (data[ibin] != 0):
+    l = ROOT.Math.gamma_quantile(alpha/2,signal_500[ibin],1.0)
+  u =  ROOT.Math.gamma_quantile_c(alpha/2,signal_500[ibin]+1,1.0)
+  esignal_up.append(u-signal_500[ibin])
+  esignal_dn.append(signal_500[ibin]-l)
   #make pulls
   w_pre = 1.0/ebkg_pre_up[ibin]**2
   w_pos = 1.0/ebkg_post_up[ibin]**2
@@ -240,14 +253,22 @@ for ibin in range(len(data)):
     w_pre = 1.0/ebkg_pre_dn[ibin]**2
     w_pos = 1.0/ebkg_post_dn[ibin]**2
   w_dat = 1.0/e_dat**2
+  e_sig = esignal_dn[ibin]
+  w_sig = 1.0/e_sig**2
+  w_pre_sig = 1.0/ebkg_pre_up[ibin]**2
   e_com_pre = 1.0/math.sqrt(w_pre+w_dat)
   e_com_pos = 1.0/math.sqrt(w_pos+w_dat)
+  e_com_sig = 1.0/math.sqrt(w_pre_sig+w_sig)
   l_com_pre = (bkg_pre[ibin]*w_pre+data[ibin]*w_dat)/(w_pre+w_dat)
   l_com_pos = (bkg_post[ibin]*w_pos+data[ibin]*w_dat)/(w_pos+w_dat)
+  l_com_sig = (bkg_pre[ibin]*w_pre_sig+signal_500[ibin]*w_sig)/(w_pre_sig+w_sig)
   this_pull_pre = (data[ibin]-l_com_pre)/math.sqrt(e_dat**2-e_com_pre**2)
   this_pull_pos = (data[ibin]-l_com_pos)/math.sqrt(e_dat**2-e_com_pos**2)
+  this_pull_sig = (signal_500[ibin]-l_com_sig)/math.sqrt(e_sig**2-e_com_sig**2)
   pull_pre.append(this_pull_pre)
   pull_post.append(this_pull_pos)
+  pull_sig.append(this_pull_sig)
+
   #naive-pulls
   #pull_pre.append((data[ibin]-bkg_pre[ibin])/math.sqrt(bkg_pre[ibin]+ebkg_pre[ibin]*ebkg_pre[ibin]))
   #pull_post.append((data[ibin]-bkg_post[ibin])/math.sqrt(bkg_post[ibin]+ebkg_post[ibin]*ebkg_post[ibin]))
@@ -273,6 +294,8 @@ grbkg_horiz_post = TGraphAsymmErrors(nhbins)
 grdata = TGraphAsymmErrors(nhbins)
 grpull_pre = TGraph(nhbins)
 grpull_post = TGraph(nhbins)
+grsignal = TGraphAsymmErrors(nhbins)
+grpull_sig = TGraph(nhbins)
 i = 0
 print(nbins)
 for ibin in range(nbins):
@@ -298,12 +321,20 @@ for ibin in range(nbins):
     grbkg_horiz_post.SetPointEXlow(i-1, 0.5)
     grpull_post.SetPoint(i-1, i, pull_post[ibin])
 
-    if ((not plot_pulls) and (data[ibin] == 0)):
-      grdata.SetPoint(i-1, i, miny)
-    else:
-      grdata.SetPoint(i-1, i, data[ibin])
+    #if ((not plot_pulls) and (data[ibin] == 0)):
+    #  grdata.SetPoint(i-1, i, miny)
+    #else:
+    grdata.SetPoint(i-1, i, data[ibin])
     grdata.SetPointEYhigh(i-1, edata_up[ibin])
     grdata.SetPointEYlow(i-1, edata_dn[ibin])
+    grsignal.SetPoint(i-1, i, signal_500[ibin])
+    grsignal.SetPointEYhigh(i-1, 0)
+    grsignal.SetPointEYlow(i-1, 0)
+    grsignal.SetPointEXhigh(i-1, 0.5)
+    grsignal.SetPointEXlow(i-1, 0.5)
+    grpull_sig.SetPoint(i-1, i, pull_sig[ibin])
+    #grsignal.SetPointEYhigh(i-1, esignal_up[ibin])
+    #grsignal.SetPointEYlow(i-1, esignal_dn[ibin])
     #grdata.SetPointEXhigh(i, 0.)
     #grdata.SetPointEXlow(i, 0.)
 
@@ -357,6 +388,8 @@ htopdummy.GetYaxis().SetTitle("Events / Bin")
 htopdummy.GetYaxis().CenterTitle()
 htopdummy.GetYaxis().SetTitleSize(top_axis_title_size)
 htopdummy.GetYaxis().SetTitleOffset(top_axis_title_offset)
+#htopdummy.GetXaxis().SetRangeUser(0.01, nhbins+0.99)
+htopdummy.GetXaxis().SetLimits(0.01, nhbins+0.99)
 htopdummy.Draw()
 
 if not plot_pulls:
@@ -367,13 +400,13 @@ if not plot_pulls:
   htopdummy.GetXaxis().SetTitleSize(top_axis_title_size)
   htopdummy.GetXaxis().SetTitleOffset(top_axis_title_offset)
 
-leg = TLegend(0.4, 0.9, 0.7, 0.98)
+leg = TLegend(0.3, 0.9, 0.7, 0.98)
 # leg.SetTextSize(30)
 leg.SetFillColor(0)
 leg.SetFillStyle(0)
 leg.SetBorderSize(0)
 leg.SetTextFont(42)
-leg.SetNColumns(3)
+leg.SetNColumns(4)
 
 grbkg_pre.SetLineColor(tag1_color)
 grbkg_pre.SetLineWidth(1)
@@ -400,6 +433,12 @@ grbkg_horiz_post.Draw('P')
 #grbkg_post.SetLineWidth(1)
 #grbkg_post.SetLineColor(tag2_color_2)
 leg.AddEntry(grbkg_post, tag2_lbl.replace("--","-"), "F")
+
+#grsignal.SetMarkerStyle(20)
+grsignal.SetMarkerColorAlpha(kGreen+3, 1.0)
+grsignal.SetLineColor(kGreen+3)
+grsignal.Draw('P')
+leg.AddEntry(grsignal, "TChiHH(500,1)+bkg", "PL")
 
 grdata.SetMarkerStyle(20)
 grdata.Draw('P')
@@ -501,9 +540,12 @@ if plot_pulls:
   hbotdummy.GetXaxis().SetLabelSize(0.12)
   hbotdummy.GetXaxis().SetLabelOffset(0.02)
   hbotdummy.GetXaxis().SetTitle("Bin number")
+  hbotdummy.GetXaxis().SetNdivisions(24);
   hbotdummy.GetXaxis().CenterTitle()
   hbotdummy.GetXaxis().SetTitleSize(0.15)
   hbotdummy.GetXaxis().SetTitleOffset(0.9)
+  #hbotdummy.GetXaxis().SetRangeUser(0.01,nhbins+0.99)
+  hbotdummy.GetXaxis().SetLimits(0.01,nhbins+0.99)
   
   hbotdummy.Draw()
   
@@ -512,6 +554,12 @@ if plot_pulls:
   grpull_pre.SetFillColor(0)
   grpull_pre.SetFillStyle(0)
   grpull_pre.Draw('B')
+
+  grpull_sig.SetLineColor(kRed+2)
+  grpull_sig.SetLineWidth(1)
+  grpull_sig.SetFillColor(0)
+  grpull_sig.SetFillStyle(0)
+  #grpull_sig.Draw('B')
   
   grpull_post.SetFillColor(tag2_color)
   grpull_post.SetFillStyle(3144)

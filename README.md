@@ -53,7 +53,7 @@ To get limits for the full scan in the batch, use the following script to genera
 ~~~~bash
 ./scripts/write_combine_cmds.py --card_dir datacards/tchihh_onedim -m CN
 ./scripts/write_combine_cmds.py --card_dir datacards/tchihh_twodim -m N1N2
-./scripts/write_combine_cmds.py --card_dir datacards/t5hh_twodim -m T5HH
+./scripts/write_combine_cmds.py --card_dir datacards/t5hh_onedim -m T5HH
 ./scripts/write_combine_cmds.py --card_dir datacards/t5hh_twodim -m T5HH
 ~~~~
 

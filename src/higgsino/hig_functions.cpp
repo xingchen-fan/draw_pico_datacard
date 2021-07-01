@@ -1701,16 +1701,30 @@ const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
 
   double weight = 1;
   if (b.SampleType()==2016){
-    return weight*35.92; // prev 35.9
+    return weight*36.32264; 
   } else if (b.SampleType()==2017){
-    return weight*41.53; // prev 41.5
+    return weight*41.52756;
   } else {
-    return weight*59.74; // prev 59.6
+    return weight*59.67377;
   }
 });
 
-const NamedFunc final_weight = "weight"*eff_higtrig_run2*w_years*Functions::w_pileup;
-const NamedFunc final_weight_notrgeff = "weight"*w_years*Functions::w_pileup;
+const NamedFunc w_years_search("w_years_search", [](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.SampleType()<0) return 1.;
+
+  double weight = 1;
+  if (b.SampleType()==2016){
+    return weight*36.21863; 
+  } else if (b.SampleType()==2017){
+    return weight*41.48629;
+  } else {
+    return weight*59.64675;
+  }
+});
+
+const NamedFunc final_weight = "weight"*eff_higtrig_run2*w_years_search*Functions::w_pileup;
+const NamedFunc final_weight_cr = "weight"*eff_higtrig_run2*w_years*Functions::w_pileup;
+const NamedFunc final_weight_notrgeff = "weight"*w_years_search*Functions::w_pileup;
 
 const NamedFunc w_pileup_nosignal("w_pileup_nosignal",[](const Baby &b) -> NamedFunc::ScalarType{
   if ((b.type()/1000) == 106)  return 1.0;

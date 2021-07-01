@@ -105,7 +105,9 @@ namespace Higfuncs{
 
   // weights
   extern const NamedFunc w_years;
+  extern const NamedFunc w_years_search;
   extern const NamedFunc final_weight;
+  extern const NamedFunc final_weight_cr;
   extern const NamedFunc final_weight_notrgeff;
   extern const NamedFunc w_pileup_nosignal;
 

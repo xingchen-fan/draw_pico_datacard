@@ -848,9 +848,9 @@ namespace HigUtilities {
     HigUtilities::parseYears(year_string, years);
     float total_luminosity = 0;
     for (auto const & year : years) {
-      if (year == 2016) total_luminosity += 36.33;
-      if (year == 2017) total_luminosity += 41.53;
-      if (year == 2018) total_luminosity += 59.74;
+      if (year == 2016) total_luminosity += 36.22;
+      if (year == 2017) total_luminosity += 41.49;
+      if (year == 2018) total_luminosity += 59.65;
     }
     string total_luminosity_string = RoundNumber(total_luminosity, decimals, 1).Data();
     return total_luminosity_string;

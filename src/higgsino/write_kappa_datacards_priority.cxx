@@ -1103,7 +1103,7 @@ namespace HigWriteDataCards{
       row[1] = "lnN";
       for (unsigned int bin_idx = 0; bin_idx < (sampleBins.size()); bin_idx++) {
         if (sys.first == "LumiSyst") {
-          row[2+2*bin_idx] = "1.0243";
+          row[2+2*bin_idx] = "1.016";
         }
         else if (sys.first == "SignalJetID") {
           row[2+2*bin_idx] = "1.01";
