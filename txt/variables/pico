@@ -6,6 +6,7 @@ int type
 bool stitch
 bool stitch_ht
 bool stitch_htmet
+bool stitch_dy
 
 ####################   Global   ###################
 int npv
@@ -24,6 +25,7 @@ float met_tru_phi
 float mt
 float mt_tru
 float ht_isr_me
+float vbf_mva
 
 ###################   Higgsinos   ##################
 float hig_am_dnn
@@ -196,7 +198,10 @@ std::vector<float> photon_eta
 std::vector<float> photon_phi
 std::vector<float> photon_reliso
 std::vector<float> photon_r9
+std::vector<float> photon_hoe
+std::vector<float> photon_pterr
 std::vector<float> photon_drmin
+std::vector<float> photon_idmva
 std::vector<int>   photon_pflavor
 std::vector<bool>  photon_id
 std::vector<bool>  photon_elveto
