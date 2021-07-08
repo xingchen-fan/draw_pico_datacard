@@ -73,14 +73,14 @@ int main(int argc, char *argv[]){
   PlotOpt style2D("txt/plot_styles.txt", "Scatter");
   vector<PlotOpt> twodim_plotopts = {style2D().Title(TitleType::info).YAxis(YAxisType::log).Overflow(OverflowType::overflow)};
 
-  string production_dir = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
+  string production_dir = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_klamath/";
   string old_production_dir = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/";
   shared_ptr<Process> pro_met2016c = Process::MakeShared<Baby_pico>("MET\\_2016RunC", Process::Type::data, kBlack, {old_production_dir+"2016/data/raw_pico/raw_pico_MET__Run2016C*.root"}, "1");
   shared_ptr<Process> pro_met2018d = Process::MakeShared<Baby_pico>("MET\\_2018RunD", Process::Type::data, kBlack, {production_dir+"2018/data/raw_pico/raw_pico_MET__Run2018D*.root"}, "1");
   shared_ptr<Process> pro_egamma2018d = Process::MakeShared<Baby_pico>("EGamma\\_2018RunD", Process::Type::data, kBlack, {production_dir+"2018/data/skim_met150/raw_pico_met150_EGamma__Run2018D*.root"}, "1");
   vector<shared_ptr<Process> > procs_metsync = {pro_met2016c};
 
-  string onelep_dir = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/"+year_string+"/data/skim_higlep1T/raw_pico_higlep1T_";
+  string onelep_dir = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_klamath/"+year_string+"/data/skim_higlep1T/raw_pico_higlep1T_";
   vector<shared_ptr<Process> > procs_onelep = {};
   if (year_string == "2018") {
     shared_ptr<Process> pro_onelep = Process::MakeShared<Baby_pico>("1l data", Process::Type::data, kBlack, {onelep_dir+"MET*.root", onelep_dir+"EGamma*.root",onelep_dir+"SingleMuon*.root"}, "1");
@@ -145,7 +145,7 @@ int main(int argc, char *argv[]){
   vector<string> mlsp_sigm2d = {"50","200","100"}; 
   vector<int> sig_colors = {kGreen+1, kRed, kBlue}; // need sigm.size() <= sig_colors.size()
   vector<int> sig_colors2d = {kOrange, kYellow, kCyan};
-  string foldersig = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/"+year_string+"/SMS-TChiHH_2D/skim_met150/";
+  string foldersig = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_klamath/"+year_string+"/SMS-TChiHH_2D/skim_met150/";
   for (unsigned isig(1); isig<mchi_sigm.size(); isig++) {
     mc_procs.push_back(Process::MakeShared<Baby_pico>("GMSB("+mchi_sigm[isig]+")", 
       Process::Type::signal, sig_colors[isig], {foldersig+"*TChiHH_mChi-"+mchi_sigm[isig]+"_mLSP-"+mlsp_sigm[isig]+"*.root"}, "stitch"));

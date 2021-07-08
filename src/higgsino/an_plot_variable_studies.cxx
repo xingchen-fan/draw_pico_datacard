@@ -68,9 +68,9 @@ int main(int argc, char *argv[]){
   vector<PlotOpt> twodim_plotopts = {style2D().Title(TitleType::info).YAxis(YAxisType::log).Overflow(OverflowType::overflow)};
 
   // Set options
-  string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
+  string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_klamath/";
   string mc_skim_folder = "mc/skim_met150/";
-  string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
+  string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_klamath/";
   string sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_preselect/";
   string foldersig = mc_base_folder+year_string+"/SMS-TChiHH_2D/unskimmed/";
   if (year_string == "2016_all") foldersig = mc_base_folder+"/2016/SMS-TChiHH_2D/unskimmed/";

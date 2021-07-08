@@ -672,8 +672,8 @@ int main(int argc, char *argv[]){
   // year_string: 2016/2017/2018/run2
   //string production_a = "higgsino_eldorado"; string nanoAodFolder_a = "/net/cms29/cms29r0/pico/NanoAODv5";
   //string production_a = "higgsino_humboldt"; string nanoAodFolder_a = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv5";
-  string production_a = "higgsino_inyo"; string nanoAodFolder_a = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7";
-  //string production_a = "higgsino_inyo"; string nanoAodFolder_a = "/cms29r0/pico/NanoAODv7";
+  string production_a = "higgsino_klamath"; string nanoAodFolder_a = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7";
+  //string production_a = "higgsino_klamath"; string nanoAodFolder_a = "/cms29r0/pico/NanoAODv7";
   string sample_a = "search";
   string year_string_a = "2016";
   TString tablename_a = "FixName:table_resolved_"+production_a+"_"+sample_a+"_"+CopyReplaceAll(year_string_a, ",","_")+"_a";
@@ -708,8 +708,8 @@ int main(int argc, char *argv[]){
 
 
   //string production_b = "higgsino_humboldt"; string nanoAodFolder_b = "/net/cms25/cms25r5/pico/NanoAODv5";
-  //string production_b = "higgsino_inyo"; string nanoAodFolder_b = "/net/cms25/cms25r5/pico/NanoAODv7";
-  //string production_b = "higgsino_inyo"; string nanoAodFolder_b = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7";
+  //string production_b = "higgsino_klamath"; string nanoAodFolder_b = "/net/cms25/cms25r5/pico/NanoAODv7";
+  //string production_b = "higgsino_klamath"; string nanoAodFolder_b = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7";
   string production_b = "higgsino_klamath"; string nanoAodFolder_b = "/net/cms25/cms25r5/pico/NanoAODv7";
   string sample_b = "search";
   string year_string_b = "2016";

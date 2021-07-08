@@ -164,7 +164,7 @@ int main(int argc, char *argv[]){
     }
   }
 
-  string base_folder = "/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/";
+  string base_folder = "/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
   string data_skim_met150_folder = "data/skim_met150/";
   string data_skim_1l2j_folder = "data/skim_1l2j/";
   string mc_skim_met150_folder = "mc/skim_met150/";

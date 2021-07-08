@@ -295,7 +295,7 @@ int main(int argc, char *argv[]){
   // production, nanoAODFolder, sample_name, year_string, 
   // Set procs
   // Set baseline, filter according: sample_name
-  //string production = "higgsino_inyo"; 
+  //string production = "higgsino_klamath"; 
   //string nanoAodFolder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7";
   string production = "higgsino_klamath"; 
   string nanoAodFolder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7";

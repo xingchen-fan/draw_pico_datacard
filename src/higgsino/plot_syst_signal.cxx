@@ -108,13 +108,13 @@ int main(int argc, char *argv[]){
   //                                 samples
   //------------------------------------------------------------------------------------
 
-  std::string mc_base_folder = "/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/";
+  std::string mc_base_folder = "/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
   std::string mc_skim_folder = "mc/merged_higmc_higloose/";
   std::string ttbar_mc_skim_folder = "mc/merged_higmc_higlep1T/";
   std::string zll_mc_skim_folder = "mc/merged_higmc_higlep2T/";
   std::string qcd_mc_skim_folder = "mc/merged_higmc_higqcd/";
 
-  std::string data_base_folder = "/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/";
+  std::string data_base_folder = "/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
   std::string data_skim_folder = "data/merged_higdata_higloose/";
   std::string ttbar_data_skim_folder = "data/merged_higdata_higlep1T/";
   std::string zll_data_skim_folder = "data/merged_higdata_higlep2T/";

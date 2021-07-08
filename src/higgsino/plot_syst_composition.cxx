@@ -108,19 +108,19 @@ int main(int argc, char *argv[]){
   //                                 samples
   //------------------------------------------------------------------------------------
 
-  std::string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
+  std::string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_klamath/";
   std::string mc_skim_folder = "mc/merged_higmc_higloose/";
   std::string ttbar_mc_skim_folder = "mc/merged_higmc_higlep1T/";
   std::string zll_mc_skim_folder = "mc/merged_higmc_higlep2T/";
   std::string qcd_mc_skim_folder = "mc/merged_higmc_higqcd/";
 
-  std::string data_base_folder = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
+  std::string data_base_folder = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_klamath/";
   std::string data_skim_folder = "data/merged_higdata_higloose/";
   std::string ttbar_data_skim_folder = "data/merged_higdata_higlep1T/";
   std::string zll_data_skim_folder = "data/merged_higdata_higlep2T/";
   std::string qcd_data_skim_folder = "data/merged_higdata_higqcd/";
 
-  std::string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
+  std::string sig_base_folder = "/net/cms25/cms25r5/pico/NanoAODv7/higgsino_klamath/";
   std::string search_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higloose/";
   std::string ttbar_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higlep1T/";
   std::string zll_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higlep2T/";

@@ -106,14 +106,14 @@ int main(int argc, char *argv[]){
   if (unblind) plt_log = {log_norm_data};
 
   // Set options
-  string mc_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
+  string mc_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_klamath/";
   //string mc_skim_folder = "mc/merged_higmc_higloose/";
   string mc_skim_folder = "mc/skim_met150/"; //needs to be loose enough to make n-1 plots, excepting MET
   string ttbar_mc_skim_folder = "mc/merged_higmc_higlep1T/";
   string zll_mc_skim_folder = "mc/merged_higmc_higlep2T/";
   string qcd_mc_skim_folder = "mc/merged_higmc_higqcd/";
 
-  string data_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
+  string data_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_klamath/";
   //string data_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt";
   //string data_skim_folder = "data/merged_higmc_higloose/";
   string data_skim_folder = "data/skim_met150/";
@@ -121,7 +121,7 @@ int main(int argc, char *argv[]){
   string zll_data_skim_folder = "data/merged_higmc_higlep2T/";
   string qcd_data_skim_folder = "data/merged_higmc_higqcd/";
 
-  string sig_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/";
+  string sig_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_klamath/";
   //string sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_preselect/";
   string sig_skim_folder = "SMS-TChiHH_2D/skim_met150/";
   string foldersig = mc_base_folder+year_string+"/SMS-TChiHH_2D/unskimmed/";

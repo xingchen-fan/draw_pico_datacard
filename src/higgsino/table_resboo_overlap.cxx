@@ -482,7 +482,7 @@ int main(int argc, char *argv[]){
   string higgsino_version = "";
 
   //string production_a = "higgsino_humboldt"+higgsino_version; string nanoAodFolder_a = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv5";
-  string production_a = "higgsino_inyo"; 
+  string production_a = "higgsino_klamath"; 
   string nanoAodFolder_a = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7";
   string sample_a = sample_name;
   string year_string_a = year_string;

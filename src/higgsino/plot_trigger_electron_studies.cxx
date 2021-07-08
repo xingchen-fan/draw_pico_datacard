@@ -104,7 +104,7 @@ int main(int argc, char *argv[]){
   //                                 samples
   //------------------------------------------------------------------------------------
 
-  std::string mc_base_folder = "/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/";
+  std::string mc_base_folder = "/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
   std::string mc_skim_folder = "mc/skim_met150/";
   std::string mc_unskimmed_folder = "mc/unskimmed/";
   std::string sr_mc_skim_folder = "mc/merged_higmc_higloose/";
@@ -112,7 +112,7 @@ int main(int argc, char *argv[]){
   std::string zll_mc_skim_folder = "mc/merged_higmc_higlep2T/";
   std::string qcd_mc_skim_folder = "mc/merged_higmc_higqcd/";
 
-  std::string data_base_folder = "/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/";
+  std::string data_base_folder = "/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
   std::string data_unskimmed = "data/raw_pico/";
   std::string data_skim_folder = "data/skim_met150/";
   std::string sr_data_skim_folder = "data/merged_higdata_higloose/";
@@ -120,7 +120,7 @@ int main(int argc, char *argv[]){
   std::string zll_data_skim_folder = "data/merged_higdata_higlep2T/";
   std::string qcd_data_skim_folder = "data/merged_higdata_higqcd/";
 
-  std::string sig_base_folder = "/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/";
+  std::string sig_base_folder = "/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
   std::string search_sig_skim_folder = "SMS-TChiHH_2D/skim_met150/";
   std::string sr_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higloose/";
   std::string ttbar_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higlep1T/";
@@ -263,7 +263,7 @@ int main(int argc, char *argv[]){
   sr_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}", Process::Type::background, colors("tt_1l"),
                   attach_folder(mc_base_folder, years, mc_skim_folder, {"*TTJets_SingleLeptFromT_Tune*"}), "stitch"));
   //sr_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X", 
-  //      Process::Type::background,colors("tt_1l"),{"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_inyo/2016/mc/unskimmed/pico_TTJets_DiLept*.root"},"stitch"));
+  //      Process::Type::background,colors("tt_1l"),{"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_klamath/2016/mc/unskimmed/pico_TTJets_DiLept*.root"},"stitch"));
   
   std::vector<std::shared_ptr<Process> > mc_procs_procs;
   mc_procs_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X", Process::Type::background,colors("tt_1l"),
