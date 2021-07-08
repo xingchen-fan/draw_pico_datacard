@@ -439,6 +439,11 @@ int main(int argc, char *argv[]){
 
   Palette colors("txt/colors.txt", "default");
 
+  TitleType cms_title = TitleType::data;
+  if (HigUtilities::is_in_string_options(string_options, "preliminary")) {
+    cms_title = TitleType::preliminary;
+  }
+
   PlotOpt lin_norm_info("txt/plot_styles.txt", "CMSPaper");
   lin_norm_info.Title(TitleType::info)   
     .Bottom(BottomType::off)
@@ -451,11 +456,11 @@ int main(int argc, char *argv[]){
   PlotOpt lin_shapes_info = lin_shapes().Title(TitleType::info).Bottom(BottomType::off);
   PlotOpt log_norm_data = lin_norm_info().YAxis(YAxisType::log).Title(TitleType::info).LogMinimum(.2).Bottom(BottomType::ratio).PrintVals(true);
   PlotOpt lin_norm_data = lin_norm_info().YAxis(YAxisType::linear).Title(TitleType::info).Bottom(BottomType::ratio).PrintVals(true);
-  PlotOpt lin_lumi = lin_norm_info.Title(TitleType::data).Bottom(BottomType::ratio).YAxis(YAxisType::linear).Stack(StackType::data_norm).RatioMaximum(1.86);
-  PlotOpt lin_norm_paper = lin_norm().Title(TitleType::data).LegendColumns(2).TitleInFrame(true);
-  PlotOpt lin_norm_data_paper = lin_norm_data().Title(TitleType::data).LegendColumns(2).TitleInFrame(true).RatioMaximum(1.9).RatioMinimum(0.1);
-  PlotOpt log_norm_paper = log_norm().Title(TitleType::data).LegendColumns(2).TitleInFrame(true);
-  PlotOpt log_norm_data_paper = log_norm_data().Title(TitleType::data).LegendColumns(2).TitleInFrame(true).RatioMaximum(1.9).RatioMinimum(0.1);
+  PlotOpt lin_lumi = lin_norm_info.Title(cms_title).Bottom(BottomType::ratio).YAxis(YAxisType::linear).Stack(StackType::data_norm).RatioMaximum(1.86);
+  PlotOpt lin_norm_paper = lin_norm().Title(cms_title).LegendColumns(2).TitleInFrame(true);
+  PlotOpt lin_norm_data_paper = lin_norm_data().Title(cms_title).LegendColumns(2).TitleInFrame(true).RatioMaximum(1.9).RatioMinimum(0.1);
+  PlotOpt log_norm_paper = log_norm().Title(cms_title).LegendColumns(2).TitleInFrame(true);
+  PlotOpt log_norm_data_paper = log_norm_data().Title(cms_title).LegendColumns(2).TitleInFrame(true).RatioMaximum(1.9).RatioMinimum(0.1);
 
   vector<PlotOpt> plt_norm_info = {lin_norm_info, log_norm_info};
   vector<PlotOpt> plt_lin = {lin_norm};

@@ -86,6 +86,7 @@ cat datacards/t5hh_twodim/scan_point*/limit*txt | sort >> t5hh_twodim_resolved_l
 
 ~~~~bash
 ./run/higgsino/plot_search_unblind.exe -u -a -o plot_baseline,paper_style,plot_in_btags,plot_in_btags_with_met_split
+./run/higgsino/plot_kappas.exe -s search --scen mc -y run2
 ./scripts/plot_ra4style_results.py
 ~~~~
 

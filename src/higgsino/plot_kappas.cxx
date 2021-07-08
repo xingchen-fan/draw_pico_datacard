@@ -88,7 +88,7 @@ namespace{
   string year_string = "2016,2017,2018";
   // string_options is split by comma. ex) option1,option2 
   // Use HigUtilities::is_in_string_options(string_options, "option2") to check if in string_options.
-  // Options: use_old_trigger,split_ttbar_met,search_ttbar_same_bins,save_entries_weights_to_file,print_entries_weights,do_zbi,do_zbi_signal
+  // Options: use_old_trigger,split_ttbar_met,search_ttbar_same_bins,save_entries_weights_to_file,print_entries_weights,do_zbi,do_zbi_signal,preliminary
   string string_options = "";
 }
 
@@ -920,14 +920,22 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
   leg.Draw();
 
   //// Drawing CMS labels and line at 1
-  TString cmsPrel = "#font[62]{CMS} #scale[0.8]{#font[52]{}}";
+  TString cmsText = "#font[62]{CMS} #scale[0.8]{#font[52]{}}";
+  TString cmsPrel = "#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}";
   TString cmsSim = "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation}}";
+  TString cmsSimPrel = "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation Preliminary}}";
   TLatex cmslabel;
   cmslabel.SetTextSize(0.06);
   cmslabel.SetNDC(kTRUE);
+  if (HigUtilities::is_in_string_options(string_options, "preliminary")) {
+    if(alt_scen != "data") cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,cmsSimPrel);
+    else cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,cmsPrel);
+  }
+  else {
+    if(alt_scen != "data") cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,cmsSim);
+    else cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,cmsText);
+  }
   cmslabel.SetTextAlign(11);
-  if(alt_scen != "data") cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,cmsSim);
-  else cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,cmsPrel);
   cmslabel.SetTextAlign(31);
   //cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015,"#font[42]{13 TeV}");
   cmslabel.SetTextSize(0.053);
