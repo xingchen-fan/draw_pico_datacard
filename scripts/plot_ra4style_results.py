@@ -3,6 +3,7 @@ import os
 import math
 import ProcessCombineOutput
 from ROOT import *
+import sys
 
 #do_sig = True
 #compile_table = True
@@ -10,7 +11,14 @@ from ROOT import *
 #
 # --- Official plot
 
-plot_pulls = True
+plot_pulls = False
+preliminary = False
+
+for arg in sys.argv:
+  if (arg == '--preliminary'):
+    preliminary = True
+  if (arg == '--pulls'):
+    pulls = True
 
 tag1 = '_nor4'
 tag1_lbl = 'Pre-fit'
@@ -363,7 +371,7 @@ if not plot_pulls:
   tpad_bottom_margin = 0.1
   top_axis_label_size = 0.04
   top_axis_title_size = 0.05
-  top_axis_title_offset = 0.65
+  top_axis_title_offset = 0.7
 
 gStyle.SetOptStat(0)
 top = TPad("top_pad", "top_pad", 0., tpad_bottom, 1., 1.)
@@ -451,8 +459,12 @@ cmslabel = TLatex()
 cmslabel.SetTextSize(0.09)
 cmslabel.SetNDC(kTRUE)
 cmslabel.SetTextAlign(11)
-#cmslabel.DrawLatex(top.GetLeftMargin()+0.005, 0.92,"#font[62]{CMS}")
-cmslabel.DrawLatex(top.GetLeftMargin()+0.005, 0.92,"#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}")
+if not plot_pulls:
+  cmslabel.SetTextSize(0.07)
+if preliminary:
+  cmslabel.DrawLatex(top.GetLeftMargin()+0.005, 0.92,"#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}")
+else:
+  cmslabel.DrawLatex(top.GetLeftMargin()+0.005, 0.92,"#font[62]{CMS}")
 cmslabel.SetTextAlign(31)
 cmslabel.DrawLatex(1-top.GetRightMargin()-0.005, 0.92,"#font[42]{137 fb^{-1} (13 TeV)}")
 
@@ -593,6 +605,8 @@ if plot_pulls:
   #    b.DrawLine(0,i, nhbins+1,i)
 
 pname = 'plots/results_plot.pdf'
+if preliminary:
+  pname = 'plots/results_plot_preliminary.pdf'
 can.Print(pname)
 
 print 'open', pname

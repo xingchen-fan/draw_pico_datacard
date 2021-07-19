@@ -7,11 +7,13 @@ using namespace std;
 Axis::Axis(const vector<double> &bins,
            const NamedFunc &var,
            const string &title,
-           const set<double> &cut_vals):
+           const set<double> &cut_vals,
+           const set<double> &hard_cut_vals):
   var_(var),
   title_(title),
   units_(""),
   cut_vals_(cut_vals),
+  hard_cut_vals_(hard_cut_vals),
   bins_(bins){
   sort(bins_.begin(), bins_.end());
   ParseUnits();
@@ -21,11 +23,13 @@ Axis::Axis(size_t nbins,
            double xmin, double xmax,
            const NamedFunc &var,
            const string &title,
-           const set<double> &cut_vals):
+           const set<double> &cut_vals,
+           const set<double> &hard_cut_vals):
   var_(var),
   title_(title),
   units_(""),
   cut_vals_(cut_vals),
+  hard_cut_vals_(hard_cut_vals),
   bins_(GetEdges(nbins, xmin, xmax)){
   ParseUnits();
   }

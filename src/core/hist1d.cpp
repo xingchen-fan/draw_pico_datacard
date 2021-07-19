@@ -1138,6 +1138,13 @@ vector<TLine> Hist1D::GetCutLines(double y_min, double y_max, bool adjust_bottom
     out.back().SetLineColor(kBlack);
     out.back().SetLineWidth(3);
   }
+  for(double cut: xaxis_.hard_cut_vals_){
+    out.emplace_back(cut, bottom, cut, y_max);
+    out.back().SetNDC(false);
+    out.back().SetLineStyle(9);
+    out.back().SetLineColor(kBlack);
+    out.back().SetLineWidth(3);
+  }
 
   return out;
 }

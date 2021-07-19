@@ -14,12 +14,14 @@ public:
   Axis(const std::vector<double> &bins,
        const NamedFunc &var,
        const std::string &title = "",
-       const std::set<double> &cut_vals = {});
+       const std::set<double> &cut_vals = {},
+       const std::set<double> &hard_cut_vals = {});
   Axis(std::size_t nbins,
        double xmin, double xmax,
        const NamedFunc &var,
        const std::string &title = "",
-       const std::set<double> &cut_vals = {});
+       const std::set<double> &cut_vals = {},
+       const std::set<double> &hard_cut_vals = {});
 
   Axis(const Axis &) = default;
   Axis& operator=(const Axis &) = default;
@@ -38,7 +40,8 @@ public:
   NamedFunc var_;//!< Variable to be plotted
   std::string title_;//!< Axis title without units
   std::string units_;//!< Units of Axis::var_
-  std::set<double> cut_vals_;//!< Values of HistoDef::var_ for which to plot a line
+  std::set<double> cut_vals_;//!< Values of HistoDef::var_ for which to plot a dashed line
+  std::set<double> hard_cut_vals_;//!< Values of HistoDef::var_ for which to plot a solid line
 
 private:
   std::vector<double> bins_;//!<List of bin edges
