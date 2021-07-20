@@ -962,7 +962,10 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
   line.DrawLine(minx, 1, maxx, 1);
 
   TString fname="plots/kappa_"+sample+"_" +abcd.scenario + (do_highnb?"_highnb":"")+(do_midnb?"_midnb":"");
-  fname += "_lumi"+RoundNumber(lumi, 0)+".pdf";
+  fname += "_lumi"+RoundNumber(lumi, 0);
+  if (HigUtilities::is_in_string_options(string_options, "preliminary"))
+    fname += "_preliminary";
+  fname += ".pdf";
   can.SaveAs(fname);
   cout<<endl<<" open "<<fname<<endl; 
 

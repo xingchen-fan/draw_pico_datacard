@@ -38,6 +38,8 @@ PlotOpt::PlotOpt():
   legend_marker_width_(0.12),
   legend_pad_(0.028),
   legend_density_(1.),
+  legend_left_pad_(0.),
+  legend_left_column_offset_(0.),
   log_minimum_(0.),
   ratio_minimum_(0.1),
   ratio_maximum_(1.9),
@@ -349,6 +351,24 @@ double PlotOpt::LegendPad() const{
   return legend_pad_;
 }
 
+PlotOpt & PlotOpt::LegendLeftPad(double left_pad){
+  legend_left_pad_ = left_pad;
+  return *this;
+}
+
+double PlotOpt::LegendLeftPad() const{
+  return legend_left_pad_;
+}
+
+PlotOpt & PlotOpt::LegendLeftColumnOffset(double left_column_offset){
+  legend_left_column_offset_ = left_column_offset;
+  return *this;
+}
+
+double PlotOpt::LegendLeftColumnOffset() const{
+  return legend_left_column_offset_;
+}
+
 PlotOpt & PlotOpt::LegendDensity(double density){
   legend_density_ = density;
   return *this;
@@ -468,7 +488,7 @@ double PlotOpt::TrueLegendEntryHeight(size_t num_entries) const{
 }
 
 double PlotOpt::TrueLegendWidth(size_t num_entries) const{
-  double left = left_margin_ + legend_pad_;
+  double left = left_margin_ + legend_left_pad_ + legend_pad_;
   if (title_in_frame_) left += 0.3;
   double right = 1. - right_margin_ - legend_pad_;
   return (right-left)/min(num_entries, static_cast<size_t>(legend_columns_));
@@ -583,6 +603,10 @@ void PlotOpt::SetProperty(const string &property,
     LegendMarkerWidth(stod(value));
   }else if(property == "LegendPad"){
     LegendPad(stod(value));
+  }else if(property == "LegendLeftPad"){
+    LegendLeftPad(stod(value));
+  }else if(property == "LegendLeftColumnOffset"){
+    LegendLeftColumnOffset(stod(value));
   }else if(property == "LegendDensity"){
     LegendDensity(stod(value));
   }else if(property == "BottomPlotHeight"){

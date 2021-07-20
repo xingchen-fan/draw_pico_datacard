@@ -1488,7 +1488,7 @@ vector<shared_ptr<TLegend> > Hist1D::GetLegends(){
   if(this_opt_.DisplayLumiEntry()) ++n_entries;
   size_t n_columns = min(n_entries, static_cast<size_t>(this_opt_.LegendColumns()));
 
-  double left = this_opt_.LeftMargin()+this_opt_.LegendPad();
+  double left = this_opt_.LeftMargin()+this_opt_.LegendLeftPad()+this_opt_.LegendPad();
   double top = 1.-this_opt_.TopMargin()-this_opt_.LegendPad();
   double bottom = top-this_opt_.TrueLegendHeight(n_entries);
   if (this_opt_.TitleInFrame()) left += 0.3;
@@ -1496,7 +1496,8 @@ vector<shared_ptr<TLegend> > Hist1D::GetLegends(){
   double delta_x = this_opt_.TrueLegendWidth(n_entries);
   vector<shared_ptr<TLegend> > legends(n_columns);
   for(size_t i = 0; i < n_columns; ++i){
-    double x = left+i*delta_x;
+    double left_column_offset = (i == 0) ? this_opt_.LegendLeftColumnOffset() : 0;
+    double x = left+i*delta_x+left_column_offset;
     legends.at(i) = make_shared<TLegend>(x, bottom, x+this_opt_.LegendMarkerWidth(), top);
     legends.at(i)->SetFillStyle(0);
     legends.at(i)->SetBorderSize(0);

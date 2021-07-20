@@ -104,6 +104,10 @@ public:
   double LegendMarkerWidth() const;
   PlotOpt & LegendPad(double pad);
   double LegendPad() const;
+  PlotOpt & LegendLeftPad(double left_pad);
+  double LegendLeftPad() const;
+  PlotOpt & LegendLeftColumnOffset(double left_column_offset);
+  double LegendLeftColumnOffset() const;
   PlotOpt & LegendDensity(double density);
   double LegendDensity() const;
 
@@ -165,6 +169,7 @@ private:
   int legend_columns_;
   double legend_entry_height_, legend_max_height_;
   double legend_marker_width_, legend_pad_, legend_density_;
+  double legend_left_pad_, legend_left_column_offset_;
   double log_minimum_;
   double ratio_minimum_, ratio_maximum_;
   int n_divisions_, n_divisions_bottom_;

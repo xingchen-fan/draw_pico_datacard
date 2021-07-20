@@ -293,7 +293,7 @@ nhbins = len(data)
 
 #         Plotting the data
 #-------------------------------------
-miny, maxy = 0.051, 3000
+miny, maxy = 0.051, 6000
 htopdummy = TH1D("","",nhbins,0,nhbins+1)
 grbkg_pre = TGraphAsymmErrors(nhbins)
 grbkg_post = TGraphAsymmErrors(nhbins)
@@ -353,6 +353,9 @@ for ibin in range(nbins):
 can = TCanvas('c','c',1000,500)
 can.cd()
 
+left_margin = 0.06
+right_margin = 0.02
+
 an_region_size = 0.05
 nb_title_size = 0.045
 met_title_size = 0.04
@@ -364,14 +367,14 @@ top_axis_title_size = 0.075
 top_axis_title_offset = 0.5
 if not plot_pulls:
   an_region_size = 0.041
-  nb_title_size = 0.033
-  met_title_size = 0.028
-  met_range_size = 0.02
+  nb_title_size = 0.04
+  met_title_size = 0.037
+  met_range_size = 0.0325
   tpad_bottom = 0.
   tpad_bottom_margin = 0.1
   top_axis_label_size = 0.04
   top_axis_title_size = 0.05
-  top_axis_title_offset = 0.7
+  top_axis_title_offset = 0.565
 
 gStyle.SetOptStat(0)
 top = TPad("top_pad", "top_pad", 0., tpad_bottom, 1., 1.)
@@ -380,8 +383,8 @@ can.SetFillStyle(4000);
 
 top.SetTopMargin(0.1)
 top.SetBottomMargin(tpad_bottom_margin)
-top.SetLeftMargin(0.1)
-top.SetRightMargin(0.05)
+top.SetLeftMargin(left_margin)
+top.SetRightMargin(right_margin)
 top.SetFillStyle(4000);
 top.Draw()
 
@@ -403,10 +406,13 @@ htopdummy.Draw()
 if not plot_pulls:
   htopdummy.GetXaxis().SetLabelSize(top_axis_label_size)
   #htopdummy.GetXaxis().SetLabelOffset(0.02)
+  htopdummy.GetXaxis().SetNdivisions(24);
   htopdummy.GetXaxis().SetTitle("Bin number")
   htopdummy.GetXaxis().CenterTitle()
   htopdummy.GetXaxis().SetTitleSize(top_axis_title_size)
-  htopdummy.GetXaxis().SetTitleOffset(top_axis_title_offset)
+  htopdummy.GetXaxis().SetTickLength(0.02)
+  htopdummy.GetXaxis().SetTitleOffset(0.85)
+  htopdummy.GetXaxis().SetLimits(0.01,nhbins+0.99)
 
 leg = TLegend(0.4, 0.9, 0.7, 0.98)
 #leg = TLegend(0.3, 0.9, 0.7, 0.98) #w/ signal
@@ -451,7 +457,7 @@ leg.AddEntry(grbkg_post, tag2_lbl.replace("--","-"), "F")
 
 grdata.SetMarkerStyle(20)
 grdata.Draw('P')
-leg.AddEntry(grdata, "data", "PL")
+leg.AddEntry(grdata, "Data", "eP")
 
 leg.Draw()
 
@@ -466,41 +472,46 @@ if preliminary:
 else:
   cmslabel.DrawLatex(top.GetLeftMargin()+0.005, 0.92,"#font[62]{CMS}")
 cmslabel.SetTextAlign(31)
+cmslabel.SetTextSize(0.05)
 cmslabel.DrawLatex(1-top.GetRightMargin()-0.005, 0.92,"#font[42]{137 fb^{-1} (13 TeV)}")
 
 binlabel = TLatex()
 binlabel.SetTextSize(an_region_size)
 # binlabel.SetNDC(kTRUE)
 binlabel.SetTextAlign(21)
-binlabel.DrawLatex(4.5, 1600,"Resolved, High-#Delta R#lower[-0.1]{_{max}}")
-binlabel.DrawLatex(12.5, 1600,"Resolved, Low-#Delta R#lower[-0.1]{_{max}}")
-binlabel.DrawLatex(19.5, 1600,"Boosted")
+binlabel.DrawLatex(4.5, 3000,"Resolved, High #DeltaR#lower[-0.1]{_{max}}")
+binlabel.DrawLatex(12.5, 3000,"Resolved, Low #DeltaR#lower[-0.1]{_{max}}")
+binlabel.DrawLatex(19.5, 3000,"Boosted")
 binlabel.SetTextSize(nb_title_size)
-ptmiss = "#font[52]{p}#font[42]{#lower[-0.1]{_{T}}#kern[-0.25]{#scale[1.15]{#lower[0.2]{^{miss}}}}}";
+ptmiss = "#font[52]{p}#font[42]{#lower[-0.1]{_{T}}#kern[-0.25]{#scale[1.0]{#lower[0.2]{^{miss}}}}}";
 
-binlabel.DrawLatex(2.5, 800,"#font[42]{3b}")
-binlabel.DrawLatex(6.5, 800,"#font[42]{4b}")
-binlabel.DrawLatex(10.5, 800,"#font[42]{3b}")
-binlabel.DrawLatex(14.5, 800,"#font[42]{4b}")
-binlabel.DrawLatex(18, 800,"#font[42]{1H}")
-binlabel.DrawLatex(21, 800,"#font[42]{2H}")
+binlabel.DrawLatex(2.5, 1600,"#font[42]{3b}")
+binlabel.DrawLatex(6.5, 1600,"#font[42]{4b}")
+binlabel.DrawLatex(10.5, 1600,"#font[42]{3b}")
+binlabel.DrawLatex(14.5, 1600,"#font[42]{4b}")
+binlabel.DrawLatex(18, 1600,"#font[42]{1H}")
+binlabel.DrawLatex(21, 1600,"#font[42]{2H}")
 
 for i in range(4):
     binlabel.SetTextSize(met_title_size)
-    binlabel.DrawLatex(2.5+i*4, 450,ptmiss+" #font[42]{[GeV]}")
+    binlabel.SetTextAngle(0.0)
+    binlabel.DrawLatex(2.5+i*4, 900,ptmiss+" #font[42]{[GeV]}")
     binlabel.SetTextSize(met_range_size)
-    binlabel.DrawLatex(1+i*4, 250,"#font[42]{150-200}")
-    binlabel.DrawLatex(2+i*4, 250,"#font[42]{200-300}")
-    binlabel.DrawLatex(3+i*4, 250,"#font[42]{300-400}")
-    binlabel.DrawLatex(4+i*4, 250,"#font[42]{#geq400}")
+    binlabel.SetTextAngle(-40.0)
+    binlabel.DrawLatex(1+i*4, 350,"#font[42]{150-200}")
+    binlabel.DrawLatex(2+i*4, 350,"#font[42]{200-300}")
+    binlabel.DrawLatex(3+i*4, 350,"#font[42]{300-400}")
+    binlabel.DrawLatex(4+i*4, 350,"#font[42]{>400}")
 
 for i in range(2):
     binlabel.SetTextSize(met_title_size)
-    binlabel.DrawLatex(17+1+i*3, 450,ptmiss+" #font[42]{[GeV]}")
+    binlabel.SetTextAngle(0.0)
+    binlabel.DrawLatex(17+1+i*3, 900,ptmiss+" #font[42]{[GeV]}")
     binlabel.SetTextSize(met_range_size)
-    binlabel.DrawLatex(17+0+i*3, 250,"#font[42]{300-500}")
-    binlabel.DrawLatex(17+1+i*3, 250,"#font[42]{500-700}")
-    binlabel.DrawLatex(17+2+i*3, 250,"#font[42]{#geq 700}")
+    binlabel.SetTextAngle(-40.0)
+    binlabel.DrawLatex(17+0+i*3, 350,"#font[42]{300-500}")
+    binlabel.DrawLatex(17+1+i*3, 350,"#font[42]{500-700}")
+    binlabel.DrawLatex(17+2+i*3, 350,"#font[42]{>700}")
 
 #for i in range(2):
 #    binlabel.DrawLatex(4+i*18, 350,"#font[52]{200 < "+ptmiss+"#leq 350 GeV}")
@@ -535,8 +546,8 @@ if plot_pulls:
   bottom = TPad("bottom_pad", "bottom_pad", 0., 0., 1., 0.3)
   bottom.SetTopMargin(0.)
   bottom.SetBottomMargin(0.3)
-  bottom.SetLeftMargin(0.1)
-  bottom.SetRightMargin(0.05)
+  bottom.SetLeftMargin(left_margin)
+  bottom.SetRightMargin(right_margin)
   bottom.SetFillStyle(4000);
   bottom.Draw()
 
