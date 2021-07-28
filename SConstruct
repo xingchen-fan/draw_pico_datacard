@@ -37,12 +37,13 @@ def addWarningEnv(_env):
                           '-Wall', '-Wextra', '-Werror', '-Wshadow', '-Woverloaded-virtual', '-Wold-style-cast', 
                           '-Wcast-align', '-Wcast-qual', '-Wdisabled-optimization', 
                           '-Wformat=2', '-Wformat-nonliteral', '-Wformat-security', 
-                          '-Wformat-y2k', '-Winit-self', '-Winvalid-pch', '-Wlong-long', 
+                          '-Wformat-y2k', '-Winit-self', '-Winvalid-pch', 
                           '-Wmissing-format-attribute', '-Wmissing-include-dirs', '-Wmissing-noreturn', 
                           '-Wpacked', '-Wpointer-arith', '-Wredundant-decls', '-Wstack-protector', 
-                          '-Wswitch-default', '-Wswitch-enum', '-Wundef', '-Wunused', '-Wvariadic-macros', 
+                          '-Wswitch-default', '-Wundef', '-Wunused', '-Wvariadic-macros', 
                           '-Wwrite-strings', '-Wctor-dtor-privacy', '-Wnon-virtual-dtor', '-Wsign-promo', '-Wsign-compare', 
                           #'-Wunsafe-loop-optimizations', '-Wfloat-equal', '-Wsign-conversion', '-Wunreachable-code',
+                          #'-Wlong-long','-Wswitch-enum' for json.hpp
                          ])
 
 def addBasicEnv(_env):

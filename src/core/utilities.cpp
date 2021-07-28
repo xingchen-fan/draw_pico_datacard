@@ -177,8 +177,8 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "!(hig_cand_am[0]>100&&hig_cand_am[0]<=140)","SBD");
   ReplaceAll(code, "hig_cand_am[0]>100&&hig_cand_am[0]<=140","HIG");
   ReplaceAll(code, "hig_cand_am[0]", "#LTm#GT");
-  ReplaceAll(code, "hig_cand_drmax[0]<=1.1", "lo-#DeltaR_{max}");
-  ReplaceAll(code, "hig_cand_drmax[0]>1.1", "hi-#DeltaR_{max}");
+  ReplaceAll(code, "hig_cand_drmax[0]<=1.1", "low #DeltaR_{max}");
+  ReplaceAll(code, "hig_cand_drmax[0]>1.1", "high #DeltaR_{max}");
   ReplaceAll(code, "hig_cand_drmax[0]", "#DeltaR_{max}");
   ReplaceAll(code, "hig_cand_dm[0]", "#Delta m");
 

@@ -293,7 +293,7 @@ nhbins = len(data)
 
 #         Plotting the data
 #-------------------------------------
-miny, maxy = 0.051, 6000
+miny, maxy = 0.051, 7000
 htopdummy = TH1D("","",nhbins,0,nhbins+1)
 grbkg_pre = TGraphAsymmErrors(nhbins)
 grbkg_post = TGraphAsymmErrors(nhbins)
@@ -461,6 +461,8 @@ leg.AddEntry(grdata, "Data", "eP")
 
 leg.Draw()
 
+gPad.RedrawAxis()
+
 cmslabel = TLatex()
 cmslabel.SetTextSize(0.09)
 cmslabel.SetNDC(kTRUE)
@@ -479,18 +481,18 @@ binlabel = TLatex()
 binlabel.SetTextSize(an_region_size)
 # binlabel.SetNDC(kTRUE)
 binlabel.SetTextAlign(21)
-binlabel.DrawLatex(4.5, 3000,"Resolved, High #DeltaR#lower[-0.1]{_{max}}")
-binlabel.DrawLatex(12.5, 3000,"Resolved, Low #DeltaR#lower[-0.1]{_{max}}")
-binlabel.DrawLatex(19.5, 3000,"Boosted")
+binlabel.DrawLatex(4.5, 3500,"Resolved, High #DeltaR#lower[-0.1]{_{max}}")
+binlabel.DrawLatex(12.5, 3500,"Resolved, Low #DeltaR#lower[-0.1]{_{max}}")
+binlabel.DrawLatex(19.5, 3500,"Boosted")
 binlabel.SetTextSize(nb_title_size)
 ptmiss = "#font[52]{p}#font[42]{#lower[-0.1]{_{T}}#kern[-0.25]{#scale[1.0]{#lower[0.2]{^{miss}}}}}";
 
-binlabel.DrawLatex(2.5, 1600,"#font[42]{3b}")
-binlabel.DrawLatex(6.5, 1600,"#font[42]{4b}")
-binlabel.DrawLatex(10.5, 1600,"#font[42]{3b}")
-binlabel.DrawLatex(14.5, 1600,"#font[42]{4b}")
-binlabel.DrawLatex(18, 1600,"#font[42]{1H}")
-binlabel.DrawLatex(21, 1600,"#font[42]{2H}")
+binlabel.DrawLatex(2.5, 1800,"#font[42]{3b}")
+binlabel.DrawLatex(6.5, 1800,"#font[42]{4b}")
+binlabel.DrawLatex(10.5, 1800,"#font[42]{3b}")
+binlabel.DrawLatex(14.5, 1800,"#font[42]{4b}")
+binlabel.DrawLatex(18, 1800,"#font[42]{1H}")
+binlabel.DrawLatex(21, 1800,"#font[42]{2H}")
 
 for i in range(4):
     binlabel.SetTextSize(met_title_size)

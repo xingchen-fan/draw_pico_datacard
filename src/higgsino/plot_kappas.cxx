@@ -4,6 +4,9 @@
 //    There are 4 possibilities for the sample, requested with option -s. These are: search, zll, qcd, ttbar
 //    Option -t plots the kappas with a tighter selection, see basecuts below, e.g.
 //         ./run/hig/plot_kappa.exe --mm mc_as_data -t -s zll -l 36.2
+// Examples
+//   rp run/higgsino/plot_kappas.exe --sample search --year run2 --scen mc
+//   rp run/higgsino/plot_kappas.exe --sample search --year run2 --unblind --string_options use_datacard_results,do_zbi --scen data
 
 #include <fstream>
 #include <iostream>
@@ -43,7 +46,7 @@
 #include "core/functions.hpp"
 #include "higgsino/hig_functions.hpp"
 #include "higgsino/hig_utilities.hpp"
-
+#include "higgsino/json.hpp"
 
 #include "TVector2.h"
 #include "TMath.h"
@@ -88,8 +91,9 @@ namespace{
   string year_string = "2016,2017,2018";
   // string_options is split by comma. ex) option1,option2 
   // Use HigUtilities::is_in_string_options(string_options, "option2") to check if in string_options.
-  // Options: use_old_trigger,split_ttbar_met,search_ttbar_same_bins,save_entries_weights_to_file,print_entries_weights,do_zbi,do_zbi_signal,preliminary
-  string string_options = "";
+  // Options: use_old_trigger,split_ttbar_met,search_ttbar_same_bins,save_entries_weights_to_file,print_entries_weights,do_zbi,do_zbi_signal,use_datacard_results,preliminary
+  // use_datacard_results expects txt/datacard_results.json made from script/process_datacard.py
+  string string_options = "paper_style";
 }
 
 struct abcd_def{
@@ -98,9 +102,36 @@ struct abcd_def{
   vector<TString> bincuts;
 };
 
+const NamedFunc w_years_old("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
+      if (b.SampleType()<0) return 1.;
+
+        double weight = 1;
+      if (b.SampleType()==2016){
+        return weight*35.92; // prev 35.9
+      } else if (b.SampleType()==2017){
+        return weight*41.53; // prev 41.5
+      } else {
+        return weight*59.74; // prev 59.6
+      }
+});
+
+
 TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
                    vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &preds, 
                    vector<vector<float> > yieldsPlane, vector<shared_ptr<Process> > &proc_sigs, float total_luminosity);
+TString printTableWithCombine(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
+                   vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &preds, 
+                   vector<shared_ptr<Process> > &proc_sigs, 
+                   nlohmann::json const & datacard_results, float total_luminosity);
+TString printPaperTableWithCombine(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
+                   vector<vector<vector<float> > > &kappas, nlohmann::json const & datacard_results, 
+                   float total_luminosity);
+string planeIndexToName(int const & iplane, int const & ibin);
+string planeIndexToSystematicName(int const & iplane, int const & ibin);
+string kappa_latex(int const & iplane, int const & inb, vector<vector<vector<float> > > &kappas, map<string, map<string, float> > & controlSystematics);
+string fit_latex(int const & iplane, int const & inb, string const & fit_name, nlohmann::json const & datacard_results);
+string obs_latex(int const & iplane, int const & inb, vector<vector<GammaParams> > &allyields);
+void setControlSystematics(vector<vector<vector<float> > > &kappas, map<string, map<string, float> > & controlSystematics);
 void plotKappa(abcd_def &abcd, vector<vector<vector<float> > >  &kappas, 
                vector<vector<vector<float> > >  &kappas_mm, vector<vector<vector<float> > >  &kmcdat, float total_luminosity);
 void plotTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
@@ -257,7 +288,8 @@ int main(int argc, char *argv[]){
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Defining scenarios  //////////////////////////////////////////
-  NamedFunc nom_wgt = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years*Functions::w_pileup;
+  //NamedFunc nom_wgt = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years_search*Functions::w_pileup;
+  NamedFunc nom_wgt = "weight"*Higfuncs::eff_higtrig_run2*w_years_old*Functions::w_pileup; //hotfix: use old lumi for now
   NamedFunc wgt_syst_trg_eff = "weight"*Higfuncs::w_years*Functions::w_pileup;
   if (trigger_version == 0) nom_wgt = "weight"*Higfuncs::eff_higtrig_run2_v0*Higfuncs::w_years*Functions::w_pileup;
 
@@ -272,7 +304,7 @@ int main(int argc, char *argv[]){
     scenarios = vector<string>();
     scenarios.push_back("syst_bctag");
     weights.emplace("syst_bctag", nom_wgt*"sys_bctag[0]");
-  } else if(alt_scen == "syst_ttx_up"){
+  } else if(alt_scen == "syst_ttx_up"){ // Get kappa systematics for ttx
     scenarios = vector<string>();
     scenarios.push_back("syst_ttx_up");
     weights.emplace("syst_ttx_up", nom_wgt/(1+Higfuncs::wgt_syst_ttx));
@@ -280,7 +312,7 @@ int main(int argc, char *argv[]){
     scenarios = vector<string>();
     scenarios.push_back("syst_ttx_down");
     weights.emplace("syst_ttx_down", nom_wgt/(1-Higfuncs::wgt_syst_ttx));
-  } else if(alt_scen == "syst_vjets_up"){
+  } else if(alt_scen == "syst_vjets_up"){ // Get kappa systematics for vjets
     scenarios = vector<string>();
     scenarios.push_back("syst_vjets_up");
     weights.emplace("syst_vjets_up", nom_wgt/(1+Higfuncs::wgt_syst_vjets));
@@ -288,7 +320,7 @@ int main(int argc, char *argv[]){
     scenarios = vector<string>();
     scenarios.push_back("syst_vjets_down");
     weights.emplace("syst_vjets_down", nom_wgt/(1-Higfuncs::wgt_syst_vjets));
-  } else if(alt_scen == "syst_qcd_down"){
+  } else if(alt_scen == "syst_qcd_down"){ // Get kappa systematics for qcd
     scenarios = vector<string>();
     scenarios.push_back("syst_qcd_down");
     weights.emplace("syst_qcd_down", nom_wgt/(1-Higfuncs::wgt_syst_qcd));
@@ -505,6 +537,27 @@ int main(int argc, char *argv[]){
     if (debug) cout<<"Making tables."<<endl;
     TString fullname = printTable(abcds[iscen], allyields, kappas, preds, yieldsPlane, proc_sigs, total_luminosity);
     tablenames.push_back(fullname);
+
+    if (HigUtilities::is_in_string_options(string_options, "use_datacard_results")) {
+      string datacard_results_filename = "txt/datacard_results.json";
+      if (!FileExists(datacard_results_filename)) {
+        cout<<"[Error] Combine results json file does not exist at "<<datacard_results_filename<<endl;
+      //} else if (years.size() != 3){
+      //  cout<<"[Error] Combine results is for 2016,2017,2018. Change option year to 2016,2017,2018"<<endl;
+      } else if (nbcuts.size() != 3 or planecuts.size() != 8) {
+        cout<<"[Error] Combine results is for 8 met-drmax planes with 2b,3b,4b. Change options to match this."<<endl;
+      } else {
+        // Load json file
+        ifstream datacard_results_file (datacard_results_filename);
+        nlohmann::json datacard_results;
+        datacard_results_file >> datacard_results;
+        // printTableWithCombine assumes ibin is for 3b,4b and iplane is for met[0-3]_dramx[0-1] (=> planeIndexToName)
+        TString full_combine_name = printTableWithCombine(abcds[iscen], allyields, kappas, preds, proc_sigs, datacard_results, total_luminosity);
+        tablenames.push_back(full_combine_name);
+        TString paper_combine_name = printPaperTableWithCombine(abcds[iscen], allyields, kappas, datacard_results, total_luminosity);
+        tablenames.push_back(paper_combine_name);
+      }
+    }
     
     //// Plotting kappa
     if (debug) cout<<"Making kappa plots."<<endl;
@@ -691,6 +744,387 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
   return fullname;
 } // printTable
 
+//// Prints table with results
+// allyields: [0] data, [1] bkg, [2] T1tttt(NC), [3] T1tttt(C)
+// if split_bkg: [2/4] Other, [3/5] tt1l, [4/6] tt2l
+TString printTableWithCombine(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
+                   vector<vector<vector<float> > > &kappas, vector<vector<vector<float> > > &preds, 
+                   vector<shared_ptr<Process> > &proc_sigs, 
+                   nlohmann::json const & datacard_results, float total_luminosity){
+
+  //cout<<endl<<"Printing table (significance estimation can take a bit)"<<endl;
+  //// Table general parameters
+  TString ump = " & ";
+
+  //// Setting output file name
+  TString lumi_s = RoundNumber(total_luminosity, 0);
+  if (lumi_s=="1") lumi_s = "137";
+  TString outname = "tables/table_pred_"+sample+"_lumi"+lumi_s+(do_highnb?"_highnb":"")+(do_midnb?"_midnb":""); 
+  outname += "_"+abcd.scenario+".tex";
+  ofstream out(outname);
+
+  //// Printing main table preamble
+  out << "\\resizebox{\\textwidth}{!}{\n";
+  out << "\\begin{tabular}[tbp!]{ l ";
+  size_t Nsig = proc_sigs.size(); // Number of signal points (for now it cannot be changed)
+  size_t Ncol = 1;
+  if(split_bkg) {out << "|ccc"; Ncol +=3;}
+  out << "|cc"; Ncol +=2; //for kappa and tot bkg
+  out << "|cc"; Ncol += 2; //for prefit/postfit prediction
+  if (unblind || alt_scen == "data") {
+    out << "c "<<(do_zbi?"c":""); // for observed and significance
+    Ncol += 1 + (do_zbi?1:0);
+  }
+  if(do_signal) {
+    for(size_t ind=0; ind<Nsig; ind++){
+      out<<"|c"<<(do_zbi_signal?"c":"");
+      Ncol += 1 + (do_zbi_signal?1:0);
+    } 
+  }
+
+  out<<"}\\hline\\hline\n";
+  out<<"${\\cal L}="<<lumi_s<<"$ fb$^{-1}$ ";
+  if(split_bkg) out << " & Other & V$+$jets & $t\\bar{t}$ ";
+  out << "& $\\kappa$ & MC bkg.";
+  out << " & Pre-fit Pred. & Post-fit Value ";
+  if (unblind || alt_scen == "data") out << "& Obs. "<<(do_zbi?"& Signi.":"");
+  if(do_signal) {
+    for(size_t ind=0; ind<Nsig; ind++) {
+      TString signame = proc_sigs[ind]->name_.c_str();
+      if(do_zbi_signal) out << "& \\multicolumn{2}{c"<<(ind<Nsig-1?"|":"")<<"}{" << signame <<"}";
+      else  out << "& " << signame;
+    }
+  }
+  out << " \\\\ \\hline\\hline\n";
+
+  vector<TString> binNames({"SBD, crb", "SBD, xb", "HIG, crb", "HIG, xb"});
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////// Printing results////////////////////////////////////////////////
+  for(size_t iplane=0; iplane < abcd.planecuts.size(); iplane++) {
+    out<<endl<< "\\multicolumn{"<<Ncol<<"}{c}{$"<<CodeToLatex(abcd.planecuts[iplane].Data())
+       <<"$ }  \\\\ \\hline\n";
+    for(size_t ibin=0; ibin < abcd.bincuts.size(); ibin++){
+      for(auto iabcd:{0,2,1,3}){
+        if (ibin>0 && iabcd%2==0) continue; // don't print the 2b regions again
+        size_t index = iplane*abcd.bincuts.size()*4+ibin*4+iabcd;
+        if(iabcd==1) out << "\\hline" << endl;
+        //// Printing bin name
+        TString binName = binNames[iabcd];
+        if (!do_highnb && (sample=="zll" || sample=="qcd")) {
+          if(do_midnb) binName.ReplaceAll("xb", "2b").ReplaceAll("crb", "1b");
+          else binName.ReplaceAll("xb", "1b").ReplaceAll("crb", "0b");
+        } else {
+          if(ibin==0) binName.ReplaceAll("xb", "3b");
+          else binName.ReplaceAll("xb", "4b");
+          binName.ReplaceAll("crb", "2b");
+        }
+        out << binName;
+        //// Printing Other, tt1l, tt2l
+        if(split_bkg){
+          size_t offset = (do_signal?Nsig:0);
+          out << ump <<RoundNumber(allyields[offset+2][index].Yield(), digits_table) << "$\\pm$" << RoundNumber(allyields[offset+2][index].Uncertainty(), digits_table)
+              << ump <<RoundNumber(allyields[offset+3][index].Yield(), digits_table) << "$\\pm$" << RoundNumber(allyields[offset+3][index].Uncertainty(), digits_table)
+              << ump <<RoundNumber(allyields[offset+4][index].Yield(), digits_table) << "$\\pm$" << RoundNumber(allyields[offset+4][index].Uncertainty(), digits_table);
+        }
+        //// Printing kappa
+        out<<ump;
+        // controlSystematics["xy_name_plane_name"][ttbar/vjets/qcd/combine] = systematic
+        map<string, map<string, float> > controlSystematics;
+        setControlSystematics(kappas, controlSystematics);
+        if(iabcd==3) out  << "$"    << RoundNumber(kappas[iplane][ibin][0], digits_table)
+                          << "^{+"  << RoundNumber(kappas[iplane][ibin][1], digits_table)
+                          << "}_{-" << RoundNumber(kappas[iplane][ibin][2], digits_table) 
+                          << "} \\pm "<<RoundNumber(controlSystematics[planeIndexToSystematicName(iplane,ibin)]["combine"], digits_table)<<"$ ";
+        //// Printing MC Bkg yields
+        out << ump << RoundNumber(allyields[1][index].Yield(), digits_table) << "$\\pm$" << RoundNumber(allyields[1][index].Uncertainty(), digits_table);
+        //// Printing background predictions
+        out << ump;
+        // Prefit
+        if(iabcd==3) 
+          out << "$"    << RoundNumber(datacard_results[planeIndexToName(iplane, ibin)]["prefit"][0].get<float>(), digits_table)
+              << "^{+"  << RoundNumber(datacard_results[planeIndexToName(iplane, ibin)]["prefit"][2].get<float>(), digits_table)
+              << "}_{" << RoundNumber(datacard_results[planeIndexToName(iplane, ibin)]["prefit"][1].get<float>(), digits_table) <<"}$ ";
+        out << ump;
+        // Postfit
+        if(iabcd==3) 
+          out << "$"    << RoundNumber(datacard_results[planeIndexToName(iplane, ibin)]["postfit"][0].get<float>(), digits_table)
+              << "^{+"  << RoundNumber(datacard_results[planeIndexToName(iplane, ibin)]["postfit"][2].get<float>(), digits_table)
+              << "}_{" << RoundNumber(datacard_results[planeIndexToName(iplane, ibin)]["postfit"][1].get<float>(), digits_table) <<"}$ ";
+        
+        if (unblind || alt_scen == "data") {
+          //// Printing observed events in data and Obs/MC ratio
+          out << ump;
+          if(iabcd==3) { // signal region
+            if (unblind) out << RoundNumber(allyields[0][index].Yield(), 0);
+          }
+          else out << RoundNumber(allyields[0][index].Yield(), 0);
+          //// Printing Zbi significance
+          if(do_zbi) { // "$"+RoundNumber(Significance( ),1)+"\\sigma$"
+            out << ump;
+            //if(iabcd==3) out << "$"+RoundNumber(utilities::to_significance(utilities::calculate_pvalue(allyields[0][index].Yield(), preds[iplane][ibin][0], 
+            //                                      preds[iplane][ibin][1], preds[iplane][ibin][2])),1)+"\\sigma$";
+            if(iabcd==3) out << "$"+RoundNumber(datacard_results[planeIndexToName(iplane, ibin)]["significance"][0].get<float>(),1)+"\\sigma$";
+          }
+        }
+        //// Printing signal yields
+        if(do_signal){
+          for(size_t ind=0; ind<Nsig; ind++) {
+            out<<ump<<RoundNumber(allyields[2+ind][index].Yield(), digits_table);
+            if(do_zbi_signal){
+              out << ump;
+              if(iabcd==3) {
+                //float signif = Significance(preds[iplane][ibin][0]+allyields[2+ind][index].Yield(),preds[iplane][ibin][0], preds[iplane][ibin][1], preds[iplane][ibin][2]);
+                float signif = utilities::to_significance(utilities::calculate_pvalue(preds[iplane][ibin][0]+allyields[2+ind][index].Yield(),preds[iplane][ibin][0], preds[iplane][ibin][1], preds[iplane][ibin][2]));
+                if (allyields[2+ind][index].Yield()>0.45 && signif>0.45) {
+                  out<<"$"+RoundNumber(signif,1)+"\\sigma$";
+                } else {
+                  out<<"$ - $";
+                }
+              }
+            } // if do_zbi
+          } // Loop over signals
+        } // if do_signal
+        out << "\\\\ \n";
+      } // Loop over bin cuts
+    } // Loop over ABCD cuts
+    out << "\\hline\\hline\n";
+  } // Loop over plane cuts
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  //// Printing footer and closing file
+  out<< "\\end{tabular}"<<endl;
+  out << "}\n"; // For resizebox
+  out.close();
+
+  //// Copying header and table to the compilable file
+  TString fullname = outname; fullname.ReplaceAll("table_","fulltable_combine_");
+  ofstream full(fullname);
+  ifstream header("txt/header.tex");
+  full<<header.rdbuf();
+  header.close();
+  if(!abcd.scenario.Contains("signal")) full << "\\usepackage[landscape]{geometry}\n\n";
+  full << "\\begin{document}\n\n";
+  full << "\\begin{preview}\n";
+  // full << "\\caption{" << abcd.caption <<".}\\vspace{0.1in}\n\\label{tab:"<<abcd.scenario<<"}\n";
+  ifstream outtab(outname);
+  full << outtab.rdbuf();
+  outtab.close();
+  full << "\\end{preview}\n";
+  full << "\\end{document}\n";
+  full.close();
+
+  return fullname;
+} // printTable
+
+//// Prints table with results
+// allyields: [0] data, [1] bkg, [2] T1tttt(NC), [3] T1tttt(C)
+// if split_bkg: [2/4] Other, [3/5] tt1l, [4/6] tt2l
+TString printPaperTableWithCombine(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
+                   vector<vector<vector<float> > > &kappas, nlohmann::json const & datacard_results, 
+                   float total_luminosity){
+
+  //// Table general parameters
+  TString ump = " & ";
+  TString hline = "\\hline";
+  TString br = "\\\\";
+  TString pm = "\\pm";
+
+  //// Setting output file name
+  TString lumi_s = RoundNumber(total_luminosity, 0);
+  TString outname = "tables/table_pred_"+sample+"_lumi"+lumi_s+(do_highnb?"_highnb":"")+(do_midnb?"_midnb":""); 
+  outname += "_"+abcd.scenario+".tex";
+  ofstream out(outname);
+
+  // controlSystematics["xy_name_plane_name"][ttbar/vjets/qcd/combine] = systematic
+  map<string, map<string, float> > controlSystematics;
+  setControlSystematics(kappas, controlSystematics);
+
+  // Printing main table preamble
+  out << "\\resizebox{\\textwidth}{!}{\n";
+  out << "\\begin{tabular}[tbp!]{rrccccr}";
+  out << hline << endl;
+  out << "\\multirow{2}{*}{$\\Delta R_{\\text{max}}$} & \\multirow{2}{*}{$N_{\\text{b}}$} & \\multirow{2}{*}{$ p^{\\text{miss}}_{\\text{T}}$[GeV]} & \\multirow{2}{*}{$\\kappa$} & \\multicolumn{2}{c}{$N_{\\text{bkg}}$} & \\multirow{2}{*}{$N_{\\text{obs}}$}" <<br<<endl;
+  out << "& & & & Pre-fit & Post-fit &"<<br<<endl;
+  out << hline << endl;
+  out << "\\multirow{8}{*}{1.1--2.2} &" <<endl;
+  out << "\\multirow{4}{*}{3} & 150--200 &" << kappa_latex(1,0, kappas, controlSystematics) << ump << fit_latex(1, 0,"prefit", datacard_results) << ump << fit_latex(1, 0,"postfit", datacard_results) << ump << obs_latex(1,0, allyields) << br << endl;
+  out << "                  & & 200--300 &" << kappa_latex(3,0, kappas, controlSystematics) << ump << fit_latex(3, 0,"prefit", datacard_results) << ump << fit_latex(3, 0,"postfit", datacard_results) << ump << obs_latex(3,0, allyields) << br << endl;
+  out << "                  & & 300--400 &" << kappa_latex(5,0, kappas, controlSystematics) << ump << fit_latex(5, 0,"prefit", datacard_results) << ump << fit_latex(5, 0,"postfit", datacard_results) << ump << obs_latex(5,0, allyields) << br << endl;
+  out << "\\vspace{4pt}" <<endl;
+  out << "                  & &   $>400$ &" << kappa_latex(7,0, kappas, controlSystematics) << ump << fit_latex(7, 0,"prefit", datacard_results) << ump << fit_latex(7, 0,"postfit", datacard_results) << ump << obs_latex(7,0, allyields) << br << endl;
+
+  out << "&\\multirow{4}{*}{4} & 150--200 &" << kappa_latex(1,1, kappas, controlSystematics) << ump << fit_latex(1, 1,"prefit", datacard_results) << ump << fit_latex(1, 1,"postfit", datacard_results) << ump << obs_latex(1,1, allyields) << br << endl;
+  out << "                  & & 200--300 &" << kappa_latex(3,1, kappas, controlSystematics) << ump << fit_latex(3, 1,"prefit", datacard_results) << ump << fit_latex(3, 1,"postfit", datacard_results) << ump << obs_latex(3,1, allyields) << br << endl;
+  out << "                  & & 300--400 &" << kappa_latex(5,1, kappas, controlSystematics) << ump << fit_latex(5, 1,"prefit", datacard_results) << ump << fit_latex(5, 1,"postfit", datacard_results) << ump << obs_latex(5,1, allyields) << br << endl;
+  out << "\\vspace{4pt}" <<endl;
+  out << "                  & &   $>400$ &" << kappa_latex(7,1, kappas, controlSystematics) << ump << fit_latex(7, 1,"prefit", datacard_results) << ump << fit_latex(7, 1,"postfit", datacard_results) << ump << obs_latex(7,1, allyields) << br << endl;
+
+  out << "\\multirow{8}{*}{$<1.1$} &" <<endl;
+  out << "\\multirow{4}{*}{3} & 150--200 &" << kappa_latex(0,0, kappas, controlSystematics) << ump << fit_latex(0, 0,"prefit", datacard_results) << ump << fit_latex(0, 0,"postfit", datacard_results) << ump << obs_latex(0,0, allyields) << br << endl;
+  out << "                  & & 200--300 &" << kappa_latex(2,0, kappas, controlSystematics) << ump << fit_latex(2, 0,"prefit", datacard_results) << ump << fit_latex(2, 0,"postfit", datacard_results) << ump << obs_latex(2,0, allyields) << br << endl;
+  out << "                  & & 300--400 &" << kappa_latex(4,0, kappas, controlSystematics) << ump << fit_latex(4, 0,"prefit", datacard_results) << ump << fit_latex(4, 0,"postfit", datacard_results) << ump << obs_latex(4,0, allyields) << br << endl;
+  out << "\\vspace{4pt}" <<endl;
+  out << "                  & &   $>400$ &" << kappa_latex(6,0, kappas, controlSystematics) << ump << fit_latex(6, 0,"prefit", datacard_results) << ump << fit_latex(6, 0,"postfit", datacard_results) << ump << obs_latex(6,0, allyields) << br << endl;
+
+  out << "&\\multirow{4}{*}{4} & 150--200 &" << kappa_latex(0,1, kappas, controlSystematics) << ump << fit_latex(0, 1,"prefit", datacard_results) << ump << fit_latex(0, 1,"postfit", datacard_results) << ump << obs_latex(0,1, allyields) << br << endl;
+  out << "                  & & 200--300 &" << kappa_latex(2,1, kappas, controlSystematics) << ump << fit_latex(2, 1,"prefit", datacard_results) << ump << fit_latex(2, 1,"postfit", datacard_results) << ump << obs_latex(2,1, allyields) << br << endl;
+  out << "                  & & 300--400 &" << kappa_latex(4,1, kappas, controlSystematics) << ump << fit_latex(4, 1,"prefit", datacard_results) << ump << fit_latex(4, 1,"postfit", datacard_results) << ump << obs_latex(4,1, allyields) << br << endl;
+  out << "\\vspace{4pt}" <<endl;
+  out << "                  & &   $>400$ &" << kappa_latex(6,1, kappas, controlSystematics) << ump << fit_latex(6, 1,"prefit", datacard_results) << ump << fit_latex(6, 1,"postfit", datacard_results) << ump << obs_latex(6,1, allyields) << br << endl;
+  out << hline<<endl;
+
+  //// Printing footer and closing file
+  out<< "\\end{tabular}"<<endl;
+  out << "}\n"; // For resizebox
+  out.close();
+
+  //// Copying header and table to the compilable file
+  TString fullname = outname; fullname.ReplaceAll("table_","paper_table_combine_");
+  ofstream full(fullname);
+  ifstream header("txt/header.tex");
+  full<<header.rdbuf();
+  header.close();
+  if(!abcd.scenario.Contains("signal")) full << "\\usepackage[landscape]{geometry}\n\n";
+  full << "\\begin{document}\n\n";
+  full << "\\begin{preview}\n";
+  // full << "\\caption{" << abcd.caption <<".}\\vspace{0.1in}\n\\label{tab:"<<abcd.scenario<<"}\n";
+  ifstream outtab(outname);
+  full << outtab.rdbuf();
+  outtab.close();
+  full << "\\end{preview}\n";
+  full << "\\end{document}\n";
+  full.close();
+
+  return fullname;
+} // printTable
+
+// ibin is for nb 3,4; iplane is for met&&drmax0/1
+string planeIndexToName(int const & iplane, int const & ibin) {
+  string xy_name = "no_xy_name";
+  if (ibin==0) xy_name = "rp_xsig0_ysig";
+  else if (ibin==1) xy_name = "rp_xsig1_ysig";
+  string plane_name = "no_plane_name";
+  if (iplane==0) plane_name = "met0_drmax0";
+  else if (iplane==1) plane_name = "met0_drmax1";
+  else if (iplane==2) plane_name = "met1_drmax0";
+  else if (iplane==3) plane_name = "met1_drmax1";
+  else if (iplane==4) plane_name = "met2_drmax0";
+  else if (iplane==5) plane_name = "met2_drmax1";
+  else if (iplane==6) plane_name = "met3_drmax0";
+  else if (iplane==7) plane_name = "met3_drmax1";
+  return xy_name+"_"+plane_name;
+}
+string planeIndexToSystematicName(int const & iplane, int const & inb) {
+  return planeIndexToName(iplane, inb).replace(9,4,"ybkg").substr(3);
+}
+
+// example: 142 => 3, 12 => 2, 3.2 => 1, 0.14 => -1, ...
+int get_significant_figure(float number) {
+  stringstream number_stream;
+  number_stream << number;
+  string number_string = number_stream.str();
+  size_t decimal_pos = number_string.find(".");
+  if (decimal_pos == string::npos) decimal_pos = number_string.size();
+  size_t nonzero_pos = number_string.find_first_of("123456789");
+  int figure = static_cast<int>(decimal_pos) - static_cast<int>(nonzero_pos);
+  //cout<<number_string<<endl;
+  //cout<<"decimal: "<<decimal_pos<<endl;
+  //cout<<"non-zero: "<<nonzero_pos<<endl;
+  //cout<<figure<<endl;
+  return figure;
+}
+
+int get_min_significant_figure(vector<float> numbers) {
+  int min_figure = 0;
+  int temp_figure = 0;
+  for (unsigned iNumber = 0; iNumber < numbers.size(); ++iNumber) {
+    temp_figure = get_significant_figure(numbers[iNumber]);
+    //cout<<"number: "<<numbers[iNumber]<<" figure: "<<temp_figure<<endl;
+    if (iNumber==0) min_figure = temp_figure;
+    else {
+      if (min_figure > temp_figure) min_figure = temp_figure;
+    }
+  }
+  return min_figure;
+}
+
+string uncertainty_latex(float value_up, float value_down, int significant_figure) {
+  string up_string = string(RoundNumber(fabs(value_up), -significant_figure).Data());
+  string down_string = string(RoundNumber(fabs(value_down), -significant_figure).Data());
+  string uncertainty_string;
+  if (up_string == down_string) uncertainty_string = "\\pm"+up_string;
+  else uncertainty_string = "^{+" + up_string + "}_{-" + down_string +"}";
+  return uncertainty_string;
+}
+
+int get_second_significant(int significant_figure) {
+  int second_figure;
+  if (significant_figure == 1) second_figure = significant_figure -2;
+  else second_figure = significant_figure -1;
+  return second_figure;
+}
+
+// kappas[met0_drmax0,met0_drmax1,...][nb=3,nb=4] = [value,up,down]
+// controlSystematics["xy_name_plane_name"][ttbar/vjets/qcd/combine] = systematic
+string kappa_latex(int const & iplane, int const & inb, vector<vector<vector<float> > > &kappas, map<string, map<string, float> > & controlSystematics) {
+  string bin_name_systematic = planeIndexToSystematicName(iplane, inb);
+  float & kappa = kappas[iplane][inb][0];
+  float & kappa_up = kappas[iplane][inb][1];
+  float & kappa_down = kappas[iplane][inb][2];
+  float & kappa_systematics = controlSystematics.at(bin_name_systematic)["combine"];
+  // Calculate significant number of digits
+  int min_figure = get_min_significant_figure({kappa_up, kappa_down, kappa_systematics});
+  int second_figure = get_second_significant(min_figure);
+  if (second_figure < -2) second_figure = -2;
+  else if (second_figure > 0) second_figure = 0;
+  string kappa_stat_string = uncertainty_latex(kappa_up, kappa_down, second_figure);
+  return "$" + string(RoundNumber(kappa, -second_figure).Data()) + kappa_stat_string + " \\pm "+ string(RoundNumber(kappa_systematics, -second_figure).Data()) + "$";
+}
+// datacard_results[rp_"xy_name"_"plane_name"][prefit/postfit/significance] = [value, down, up]
+string fit_latex(int const & iplane, int const & inb, string const & fit_name, nlohmann::json const & datacard_results) {
+  float value = datacard_results[planeIndexToName(iplane, inb)][fit_name][0].get<float>();
+  float value_down = datacard_results[planeIndexToName(iplane, inb)][fit_name][1].get<float>();
+  float value_up = datacard_results[planeIndexToName(iplane, inb)][fit_name][2].get<float>();
+  int min_figure = get_min_significant_figure({value_up, value_down});
+  int second_figure = get_second_significant(min_figure);
+  if (second_figure < -2) second_figure = -2;
+  else if (second_figure > 0) second_figure = 0;
+  cout<<value<<" "<<value_down<<" "<<value_up<<" "<<min_figure<<" "<<second_figure<<endl;
+  return "$" + string(RoundNumber(value, -second_figure).Data()) + uncertainty_latex(value_up, value_down, second_figure) + "$";
+}
+// allyields[0=data,1=bkg,...][bin_index] = Gamma
+// bin_index = iplane*2(nb)*4(abcd)+inb*4+iabcd(0=D,1=C,2=B,3=A)
+// iplane = met0_drmax0,met0_drmax1,...
+string obs_latex(int const & iplane, int const & inb, vector<vector<GammaParams> > &allyields) {
+  int bin_index = iplane*2*4 + inb*4 + 3;
+  return "$" + string(RoundNumber(allyields[0][bin_index].Yield(),0).Data()) + "$";
+}
+
+// controlSystematics["xy_name_plane_name"][ttbar/vjets/qcd/combine] = systematic
+// kappas[met0_drmax0,met0_drmax1,...][nb=3,nb=4] = [value,up,down]
+void setControlSystematics(vector<vector<vector<float> > > &kappas, map<string, map<string, float> > & controlSystematics) {
+  HigUtilities::getControlSystematics(controlSystematics);
+  // Calculate combined systematics
+  for (unsigned iplane = 0; iplane < kappas.size(); ++iplane) {
+    for (unsigned inb = 0; inb < kappas[0].size(); ++inb) {
+      // Get information
+      string bin_name = planeIndexToName(iplane, inb).substr(3);
+      string bin_name_systematic = planeIndexToSystematicName(iplane, inb);
+      float & kappa = kappas[iplane][inb][0];
+      float & rel_ttbar_systematic = controlSystematics[bin_name_systematic]["ttbar"];
+      float & rel_vjets_systematic = controlSystematics[bin_name_systematic]["vjets"];
+      float & rel_qcd_systematic = controlSystematics[bin_name_systematic]["qcd"];
+      // Calculate combined systematic
+      float ttbar_systematic = kappa * rel_ttbar_systematic - kappa;
+      float vjets_systematic = kappa * rel_vjets_systematic - kappa;
+      float qcd_systematic = kappa * rel_qcd_systematic - kappa;
+      float combined_systematic = sqrt(pow(ttbar_systematic,2)+pow(vjets_systematic,2)+pow(qcd_systematic,2));
+      controlSystematics.at(bin_name_systematic)["combine"] = combined_systematic;
+      //cout<<bin_name<<" kappa:"<<kappa<<" ttbar:"<<rel_ttbar_systematic<<" vjets:"<<rel_vjets_systematic<<" qcd:"<<rel_qcd_systematic<<" combined:"<<combined_systematic<<endl;
+    }
+  }
+}
+
 //// Makes kappa plots
 void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas, 
                vector<vector<vector<float> > > &kappas_mm, vector<vector<vector<float> > > &kmcdat, float total_luminosity){
@@ -738,9 +1172,9 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
   TLatex klabel; klabel.SetTextFont(42); klabel.SetTextAlign(23);
 
 
-  float minx = 0.5, maxx = nbins+0.5, miny = 0;
+  float minx = 0, maxx = nbins+1.0, miny = 0;
   float maxy = 3;
-  TH1D histo("histo", "", nbins, minx, maxx);
+  TH1D histo("histo", "", nbins+1, minx, maxx);
   histo.SetMinimum(miny);
   histo.SetMaximum(maxy);
   histo.GetYaxis()->CenterTitle(true);
@@ -798,7 +1232,10 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
       TString text = ""; 
       //if(alt_scen=="data") text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-1)*100,0,1)+"%"; // with respect to kappa being 1
       if(alt_scen=="data") text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-kap)*100,0,kap)+"%"; // with respect to kap because mc is value that will be used.
-      else if (alt_scen=="mc_as_data" || alt_scen=="mc") text = "#Delta_{#kappa}="+RoundNumber((kap-1)*100,0,1)+"%";
+      else if (alt_scen=="mc_as_data" || alt_scen=="mc") {
+        text = "#Delta_{#kappa}="+RoundNumber((kap-1)*100,0,1)+"%";
+        if (HigUtilities::is_in_string_options(string_options, "paper_style")) text = "#Delta="+RoundNumber((kap-1)*100,0,1)+"%";
+      }
       else {
         /*if fake mismeasure*/ text = "#Delta_{#kappa}="+RoundNumber((kap_mm-kap)*100,0,kap)+"%";
         cout<<"bin["<<ibin<<"] plane["<<iplane<<"] Delta kappa: "<<RoundNumber((kap_mm-kap)*100,0,kap)+"%"<<endl;
@@ -832,6 +1269,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
         TString unc_ = RoundNumber(kapUp*100,0, kap)>RoundNumber(kapDown*100,0, kap) ? RoundNumber(kapUp*100,0, kap) : RoundNumber(kapDown*100,0, kap);
         // text = "#sigma_{stat}=^{+"+RoundNumber(kapUp*100,0, 1)+"%}_{-"+RoundNumber(kapDown*100,0, 1)+"%}";
         text = "#sigma_{st}^{mc}="+unc_+"%";
+        if (HigUtilities::is_in_string_options(string_options, "paper_style")) text = "#sigma="+unc_+"%";
       }
       klabel.DrawLatex(bin, 0.78*maxy, text);
       // adding label to indicate the ABCD corresponding to each kappa value
@@ -855,7 +1293,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
     label.SetTextSize(abcd.planecuts.size()>=10 ? 0.025 : 0.045);
     string metdef = "met";
     if (sample=="zll") metdef = "ll_pt";
-    double lmargin(opts.LeftMargin()), rmargin(opts.RightMargin()), bmargin(opts.BottomMargin());
+    double lmargin(opts.LeftMargin()+0.025), rmargin(opts.RightMargin()+0.025), bmargin(opts.BottomMargin());
     if (abcd.planecuts[iplane].Contains("drmax")) {
       //separate the MET and dRmax cuts
       string plabel = abcd.planecuts[iplane].Data();
@@ -868,7 +1306,11 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
         string metlabel = plabel.substr(0, plabel.find("&&hig_cand_drmax"));
         metlabel = CodeToRootTex(metlabel); 
         ReplaceAll(metlabel, "<"+metdef+"#leq","#minus"); 
+        if (HigUtilities::is_in_string_options(string_options, "paper_style")) metlabel += " [GeV]";
         if(metlabel == "> 0") metlabel = "Inclusive";
+        //if (iplane==0) label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/abcd.planecuts.size()*(iplane+1), 0.13, metlabel.c_str());
+        //else if (iplane == k_ordered.size()) label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/abcd.planecuts.size()*(iplane+1), 0.13, metlabel.c_str());
+        //else label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/abcd.planecuts.size()*(iplane+1), 0.13, metlabel.c_str());
         label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/abcd.planecuts.size()*(iplane+1), 0.13, metlabel.c_str());
       }
     } else { // if not binning in dRmax
@@ -878,9 +1320,11 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
       label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.03*maxy, plabel.c_str());
     }
     // write pT miss at the bottom of the plot...
-    if (iplane==0) {
-      if (sample=="zll") label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/2., bmargin-0.08, "p_{T}^{Z} [GeV]");
-      else label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/2., bmargin-0.08, "p_{T}^{miss} [GeV]");
+    if (!HigUtilities::is_in_string_options(string_options, "paper_style")) {
+      if (iplane==0) {
+        if (sample=="zll") label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/2., bmargin-0.08, "p_{T}^{Z} [GeV]");
+        else label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/2., bmargin-0.08, "p_{T}^{miss} [GeV]");
+      }
     }
   } // Loop over plane cuts
 
@@ -912,7 +1356,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
   graph_mm.SetLineColor(1); graph_mm.SetLineWidth(2);
   if(alt_scen!="mc_as_data" && alt_scen!="mc") graph_mm.Draw("p0 same");
 
-  leg.AddEntry(&graph, "MC", "ep");
+  if (alt_scen != "mc") leg.AddEntry(&graph, "MC", "ep");
   TString data_s = (alt_scen=="data"?"Data":"Pseudodata");
   if(alt_scen!="mc_as_data" && alt_scen!="mc") 
     leg.AddEntry(&graph_mm, data_s, "ep");
@@ -924,9 +1368,11 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
   TString cmsPrel = "#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}";
   TString cmsSim = "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation}}";
   TString cmsSimPrel = "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation Preliminary}}";
+  //if (!HigUtilities::is_in_string_options(string_options, "paper_style")) cmsSim = "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation Preliminary}}";
   TLatex cmslabel;
   cmslabel.SetTextSize(0.06);
   cmslabel.SetNDC(kTRUE);
+  cmslabel.SetTextAlign(11);
   if (HigUtilities::is_in_string_options(string_options, "preliminary")) {
     if(alt_scen != "data") cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,cmsSimPrel);
     else cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,cmsPrel);
@@ -935,7 +1381,6 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
     if(alt_scen != "data") cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,cmsSim);
     else cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,cmsText);
   }
-  cmslabel.SetTextAlign(11);
   cmslabel.SetTextAlign(31);
   //cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015,"#font[42]{13 TeV}");
   cmslabel.SetTextSize(0.053);
@@ -946,6 +1391,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
   else if(sample.Contains("qcd")) abcd_title = "Low #Delta#phi control region";
   else if(sample.Contains("ttbar")) abcd_title = "Single-lepton control region";
   else abcd_title = "Search region";
+  if (HigUtilities::is_in_string_options(string_options, "paper_style")) abcd_title = "";
 
   TString title = "";
   TString fontstyle = RoundNumber(opts.Font()+10,0);
