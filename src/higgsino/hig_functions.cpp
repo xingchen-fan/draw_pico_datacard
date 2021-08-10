@@ -1696,6 +1696,7 @@ const NamedFunc final_ttbar_pass_filters = pass_filters&& "met/met_calo<5&&weigh
 const NamedFunc final_zll_pass_filters = pass_filters&& "met/met_calo<5&&weight<1.5";
 const NamedFunc final_qcd_pass_filters = pass_filters&& "met/mht<2 && met/met_calo<2";
 
+// Control region luminosities
 const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
   if (b.SampleType()<0) return 1.;
 
@@ -1709,6 +1710,7 @@ const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
   }
 });
 
+// Search region luminosities
 const NamedFunc w_years_search("w_years_search", [](const Baby &b) -> NamedFunc::ScalarType{
   if (b.SampleType()<0) return 1.;
 
