@@ -1,15 +1,69 @@
 #! /usr/bin/env python
 import os
 import math
-import ProcessCombineOutput
 from ROOT import *
 import sys
 
-#do_sig = True
-#compile_table = True
-#
-#
-# --- Official plot
+def read_datacard_results(bkg_pre, ebkg_pre_up, ebkg_pre_dn, bkg_post, ebkg_post_up, ebkg_post_dn, data, signal_500_raw):
+  fit_bin_ordering = [50,52,54,56,58,60,62,64,49,51,53,55,57,59,61,63]
+  #data_bin_ordering = [11,23,35,47,12,24,36,48,5,17,29,41,6,18,30,42]
+  data_bin_ordering = [24,36,48,60,25,37,49,61,18,30,42,54,19,31,43,55,4,5,6,1,2,3]
+  prefit_filename = 'multidimfit_prefit.root'
+  postfit_filename = 'multidimfit_postfit.root'
+  boosted_filename = 'boosted_results.root'
+  datacard_filename = 'datacard_500.txt'
+  prefit_file = TFile.Open(prefit_filename,'READ')
+  postfit_file = TFile.Open(postfit_filename,'READ')
+  boosted_file = TFile.Open(boosted_filename,'READ')
+  prefit_args = []
+  postfit_args = []
+  data_args = []
+  prefit_result = prefit_file.fit_mdf.floatParsFinal()
+  for bin_idx in fit_bin_ordering:
+    prefit_args.append(prefit_result.at(bin_idx))
+    bkg_pre.append(prefit_result.at(bin_idx).getValV())
+    ebkg_pre_up.append(prefit_result.at(bin_idx).getErrorHi())
+    ebkg_pre_dn.append(-1.0*prefit_result.at(bin_idx).getErrorLo())
+  postfit_result = postfit_file.fit_mdf.floatParsFinal()
+  for bin_idx in fit_bin_ordering:
+    postfit_args.append(postfit_result.at(bin_idx))
+    bkg_post.append(postfit_result.at(bin_idx).getValV())
+    ebkg_post_up.append(postfit_result.at(bin_idx).getErrorHi())
+    ebkg_post_dn.append(-1.0*postfit_result.at(bin_idx).getErrorLo())
+  for bin_idx in [0,1,2,3,4,5]:
+    prefit_args.append(boosted_file.prefit.at(bin_idx))
+    bkg_pre.append(boosted_file.prefit.at(bin_idx).getValV())
+    ebkg_pre_up.append(boosted_file.prefit.at(bin_idx).getErrorHi())
+    ebkg_pre_dn.append(-1.0*boosted_file.prefit.at(bin_idx).getErrorLo())
+    postfit_args.append(boosted_file.postfit.at(bin_idx))
+    bkg_post.append(boosted_file.postfit.at(bin_idx).getValV())
+    ebkg_post_up.append(boosted_file.postfit.at(bin_idx).getErrorHi())
+    ebkg_post_dn.append(-1.0*boosted_file.postfit.at(bin_idx).getErrorLo())
+  datacard = open(datacard_filename,'r')
+  datacard_lines = datacard.read().split('\n')
+  datacard_binnames = datacard_lines[67].split()
+  datacard_yields = datacard_lines[68].split()
+  for bin_idx in data_bin_ordering:
+    data_args.append(RooRealVar(datacard_binnames[bin_idx],datacard_binnames[bin_idx],float(datacard_yields[bin_idx])))
+    data.append(float(datacard_yields[bin_idx]))
+  datacard.close()
+  prefit_values = RooArgList('prefit_values')
+  postfit_values = RooArgList('postfit_values')
+  data_values = RooArgList('observed_values')
+  for prefit_arg in prefit_args:
+    prefit_values.add(prefit_arg)
+  for postfit_arg in postfit_args:
+    postfit_values.add(postfit_arg)
+  for data_arg in data_args:
+    data_values.add(data_arg)
+  output_file = TFile.Open('SUS-20-007_fitresults.root','RECREATE')
+  prefit_values.Write()
+  postfit_values.Write()
+  data_values.Write()
+  output_file.Close()
+  prefit_file.Close()
+  postfit_file.Close()
+  boosted_file.Close()
 
 plot_pulls = False
 preliminary = False
@@ -29,198 +83,31 @@ tag2_lbl = 'Post-fit'
 tag2_color = kAzure+1
 tag2_color_2 = kAzure+2
 
-#tag_sig_c = '_r4_1900'
-#
-## --- Effect of systematics
-## tag1 = '_nor4'
-## tag1_lbl = 'R1--R3 fit'
-#tag1_color = kBlack
-#
-## tag2 = '_nor4_nosys' 
-## tag2_lbl = 'R1--R3 fit (no syst)'
-#tag2_color = kGray+1
-#
-##         Bin names
-##-------------------------------------
-#bins = []
-#for imj in ['lmj','hmj']:
-#    for imet in ['lmet','mmet','hmet']:
-#        for ir in ['r1','r2','r3','r4']:
-#            if ir=='r1' or ir=='r3':
-#                if imj=='lmj':
-#                    bins.append('_'.join([ir,imet]))
-#                else:
-#                    continue
-#            else:
-#                for inb in ['lnb','mnb','hnb']:
-#                    for inj in ['lnj','hnj']:
-#                        bins.append('_'.join([ir,imet,inb, inj,imj]))
-#
-#nbins = len(bins)
-## in the combine output they are ordered alphabetically
-#bins_alpha = sorted(bins)
+bkg_pre = []
+ebkg_pre_up = []
+ebkg_pre_dn = []
+bkg_post = []
+ebkg_post_up = []
+ebkg_post_dn = []
+data = []
+signal_500_raw = []
+read_datacard_results(bkg_pre, ebkg_pre_up, ebkg_pre_dn, bkg_post, ebkg_post_up, ebkg_post_dn, data, signal_500_raw)
 
-#         Reading the data
-#-------------------------------------
-#bkg_pre, ebkg_pre, pull_pre = [None]*nbins, [None]*nbins, [None]*nbins
-#data, edata_up, edata_dn = [None]*nbins, [None]*nbins, [None]*nbins
-#sig_nc, esig_nc = [None]*nbins, [None]*nbins
-#
-#file_pre = TFile("root/fitDiagnostics"+tag1+".root")
-#bkg_in = file_pre.Get('shapes_fit_b/total_background')
-#data_in = file_pre.Get('shapes_fit_b/total_data')
-#sig_nc_in = file_pre.Get('shapes_prefit/total_signal')
-#for ibin in range(0,nbins):
-#    ibin_alpha = bins_alpha.index(bins[ibin])
-#    x, y  = Double(0), Double(0)
-#    data_in.GetPoint(ibin_alpha, x, y)
-#    data[ibin] = y
-#    edata_up[ibin] = data_in.GetErrorYhigh(ibin_alpha)
-#    edata_dn[ibin] = data_in.GetErrorYlow(ibin_alpha)
-#    bkg_pre[ibin] = bkg_in.GetBinContent(ibin_alpha+1)
-#    ebkg_pre[ibin] = bkg_in.GetBinError(ibin_alpha+1)
-#    pull_pre[ibin] = (data[ibin]-bkg_pre[ibin])/math.sqrt(bkg_pre[ibin]+ebkg_pre[ibin]*ebkg_pre[ibin])
-#    sig_nc[ibin] = sig_nc_in.GetBinContent(ibin_alpha+1)
-#    esig_nc[ibin] = sig_nc_in.GetBinError(ibin_alpha+1)
-#file_pre.Close()
-#
-#bkg_post, ebkg_post, pull_post = [None]*nbins, [None]*nbins, [None]*nbins
-#file_post = TFile("root/fitDiagnostics"+tag2+".root")
-#bkg_in = file_post.Get('shapes_fit_b/total_background')
-#for ibin in range(0,nbins):
-#    ibin_alpha = bins_alpha.index(bins[ibin])
-#    bkg_post[ibin] = bkg_in.GetBinContent(ibin_alpha+1)
-#    ebkg_post[ibin] = bkg_in.GetBinError(ibin_alpha+1)
-#    pull_post[ibin] = (data[ibin]-bkg_post[ibin])/math.sqrt(bkg_post[ibin]+ebkg_post[ibin]*ebkg_post[ibin])
-#file_post.Close()
-#
-#sig_c, esig_c = [None]*nbins, [None]*nbins
-#file_sig_c = TFile("root/fitDiagnostics"+tag_sig_c+".root")
-#sig_c_in = file_sig_c.Get('shapes_prefit/total_signal')
-#for ibin in range(0,nbins):
-#    ibin_alpha = bins_alpha.index(bins[ibin])
-#    sig_c[ibin] = sig_c_in.GetBinContent(ibin_alpha+1)
-#    esig_c[ibin] = sig_c_in.GetBinError(ibin_alpha+1)
-#file_sig_c.Close()
-#
-##         Making table
-##-------------------------------------
-#tab = []
-#tab.append(open("tables/table_lmj"+tag1+"_vs"+tag2+".tex","w"))
-#tab.append(open("tables/table_hmj"+tag1+"_vs"+tag2+".tex","w"))
-#ncols = 4
-#if (do_sig): ncols +=2
-#
-#tab_head = "\\begin{tabular}[tbp!]{ l cc"
-#for i in range(ncols-3): tab_head += " r"
-#tab_head += "} \n\\hline\\hline\n"
-#tab_head += "${\\cal L}=137$ fb$^{-1}$ &"
-#if do_sig:
-#    tab_head += " T1tttt(2100,100) & T1tttt(1900,1250) &"
-#tab_head += tag1_lbl+" & "+tag2_lbl+" & Obs. \\\\ \\hline\n"
-## tab_head += tag1_lbl+" & Pull & "+tag2_lbl+" & Pull & Obs. \\\\ \\hline\n"
-#for i in range(2): tab[i].write(tab_head)
-#
-#save_rows = { 'r1_lmet':'', 'r3_lmet':'', 'r1_mmet':'', 'r3_mmet':'', 'r1_hmet':'', 'r3_hmet':''}
-#irow = 0
-#for ibin in range(nbins):
-#    tmp = bins[ibin].split("_")
-#    ireg = tmp[0].replace("r","R")
-#    imet = tmp[1].replace("lmet","$200<p_{\\rm T}^{\\text{miss}}\\leq350$ GeV")
-#    imet = imet.replace("mmet","$350<p_{\\rm T}^{\\text{miss}}\\leq500$ GeV")
-#    imet = imet.replace("hmet","$p_{\\rm T}^{\\text{miss}}> 500$ GeV")
-#    inb,inj = '',''
-#    if ireg=='R2' or ireg=='R4':
-#        inb = tmp[2].replace("lnb","$N_{b} = 1$").replace("mnb","$N_{b} = 2$").replace("hnb","$N_{b} \\geq 3$")
-#        if "hmet" in bins[ibin]:
-#            inj = tmp[3].replace("lnj"," $6\\leq N_{jets} \\leq 7$").replace("hnj","$N_{jets} \\geq 8$")
-#        else:
-#            inj = tmp[3].replace("lnj"," $N_{jets} = 7$").replace("hnj","$N_{jets} \\geq 8$")
-#    
-#    itab = ibin/42
-#    if (irow%14==0):
-#        tab[itab].write("\\hline\n\\multicolumn{"+str(ncols)+"}{c}{"+imet+"}  \\\\ \\hline\n");
-#
-#    if ibin>41 and (ibin-42)%6==0: 
-#        irow +=1
-#        tmp_ = bins[ibin].split("_")
-#        insert_bin = tmp_[0].replace("r2","r1").replace("r4","r3")+'_'+tmp_[1]
-#        tab[itab].write(save_rows[insert_bin])
-#        if '3' in insert_bin:
-#            tab[itab].write("\\hline\n")
-#
-#
-#    cols = []
-#    if ireg=='R2' or ireg=='R4':
-#        cols.append('{0:<30}'.format(ireg+": "+inb+", "+inj))
-#    else:
-#        cols.append('{0:<30}'.format(ireg))
-#    if do_sig:
-#        cols.append('{0:>10.1f}'.format(sig_nc[ibin], esig_nc[ibin]))
-#        cols.append('{0:>10.1f}'.format(sig_c[ibin], esig_c[ibin]))
-#    if (ireg=="R4"):
-#        cols.append('{0:>20}'.format('${0:.1f} \\pm {1:.1f}$'.format(bkg_pre[ibin], ebkg_pre[ibin])))
-#    else:
-#        cols.append('{0:>20}'.format('${0:.0f} \\pm {1:.1f}$'.format(bkg_pre[ibin], ebkg_pre[ibin])))
-#    # if ireg=="R4": 
-#    #     cols.append('{0:>7.1f}'.format(pull_pre[ibin]))
-#    # else: 
-#    #     cols.append('')
-#    cols.append('{0:>20}'.format('${0:.1f} \\pm {1:.1f}$'.format(bkg_post[ibin], ebkg_post[ibin])))
-#    # if ireg=="R4": 
-#    #     cols.append('{0:>7.1f}'.format(pull_post[ibin]))
-#    # else: 
-#    #     cols.append('')
-#    cols.append('{0:>10.0f}'.format(data[ibin]))
-#    tab[itab].write('&'.join(cols)+'\\\\\n')
-#
-#    if ibin<42 and ('1' in ireg or '3' in ireg): 
-#        save_rows[bins[ibin]] = '&'.join(cols)+'\\\\\n'
-#
-#    if '3' in ireg: 
-#        tab[itab].write("\\hline\n")
-#
-#    irow += 1
-#
-#for itab in tab:
-#    itab.write("\\hline\\hline\n \\end{tabular}\n")
-#    itab.close()
-#
-#
-##         Making tables that can compile standalone
-##----------------------------------------------------------
-#fulltab = []
-#
-#for i in range(2):
-#    tabname = tab[i].name.split("/")[-1]
-#    fulltab.append(open("tables/full"+tabname,"w"))
-#    with open("txt/header.tex") as head:
-#        for line in head.readlines():
-#            fulltab[i].write(line)
-#    fulltab[i].write("\\begin{document}\n\\begin{preview}\n")
-#    with open(tab[i].name) as body:
-#        for line in body.readlines():
-#            fulltab[i].write(line)
-#    fulltab[i].write("\\end{preview}\n\\end{document}\n")
-#    fulltab[i].close()
-#    if (compile_table):
-#        print "Converting "+fulltab[i].name+" ..."
-#        os.system("pdflatex "+fulltab[i].name+" > /dev/null")
-#
-#if compile_table:
-#    for i in range(2): 
-#        print "open "+fulltab[i].name.replace(".tex",".pdf")
+#14 - D met0 low drmax      20 - D met0 hidrmax
+#15 - B nb3 met0 low drmax  21 - B nb3 met0 hidrmax
+#16 - B nb4 met0 low drmax  22 - B nb4 met0 hidrmax
+#17 - C met0 low drmax      23 - C met0 hidrmax
+#18 - A nb3 met0 low drmax  24 - A nb3 met0 hidrmax
+#19 - A nb4 met0 low drmax  25 - A nb4 met0 hidrmax
 
-bkg_pre = ProcessCombineOutput.bkg_pre
-ebkg_pre_up = ProcessCombineOutput.ebkg_pre_up
-ebkg_pre_dn = ProcessCombineOutput.ebkg_pre_dn
-bkg_post = ProcessCombineOutput.bkg_post
-ebkg_post_up = ProcessCombineOutput.ebkg_post_up
-ebkg_post_dn = ProcessCombineOutput.ebkg_post_dn
-data = ProcessCombineOutput.data
-signal_500_raw = ProcessCombineOutput.signal_500
-#edata_up = [math.sqrt(ibin) for ibin in data]
-#edata_dn = [math.sqrt(ibin) for ibin in data]
+#signal yields by hand for now? from datacard?
+signal_500_raw = [1.36, 5.06, 6.49, 5.17, 2.53, 9.76, 12.12, 10.76, 1.40, 4.18, 3.77, 2.43, 3.45, 10.18, 8.94, 6.15] + [3.21, 0.61, 0.13, 9.76, 1.46, 0.24]
+
+print(ebkg_pre_up)
+print(ebkg_pre_dn)
+print(ebkg_post_up)
+print(ebkg_post_dn)
+
 signal_500 = []
 edata_up = []
 edata_dn = []
@@ -267,9 +154,19 @@ for ibin in range(len(data)):
   e_com_pre = 1.0/math.sqrt(w_pre+w_dat)
   e_com_pos = 1.0/math.sqrt(w_pos+w_dat)
   e_com_sig = 1.0/math.sqrt(w_pre_sig+w_sig)
+  print('0')
+  print(bkg_pre)
   l_com_pre = (bkg_pre[ibin]*w_pre+data[ibin]*w_dat)/(w_pre+w_dat)
-  l_com_pos = (bkg_post[ibin]*w_pos+data[ibin]*w_dat)/(w_pos+w_dat)
+  dummy_var = 1.0
+  print('1')
+  print(bkg_pre)
+  #l_com_pos = (bkg_post[ibin]*w_pos+data[ibin]*w_dat)/(w_pos+w_dat)
+  l_com_pos = 1.0
+  print('2')
+  print(bkg_pre)
   l_com_sig = (bkg_pre[ibin]*w_pre_sig+signal_500[ibin]*w_sig)/(w_pre_sig+w_sig)
+  print('3')
+  print(bkg_pre)
   this_pull_pre = (data[ibin]-l_com_pre)/math.sqrt(e_dat**2-e_com_pre**2)
   this_pull_pos = (data[ibin]-l_com_pos)/math.sqrt(e_dat**2-e_com_pos**2)
   this_pull_sig = (signal_500[ibin]-l_com_sig)/math.sqrt(e_sig**2-e_com_sig**2)
