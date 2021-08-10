@@ -15,6 +15,13 @@ git clone --recurse-submodules https://github.com/richstu/draw_pico
 source set_env.sh
 ~~~~
 
+An alternative method is shown below:
+~~~~bash
+git clone https://github.com/richstu/draw_pico
+git submodule update --init --remote --recursive
+source set_env.sh
+~~~~
+
 ## Higgsino useful commands
 
 ### To make datacards and get limits:
