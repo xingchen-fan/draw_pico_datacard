@@ -86,6 +86,8 @@ namespace HigUtilities {
   void setABCDBins(std::map<std::string, std::string> xBins, std::map<std::string, std::string> yBins, std::map<std::string, std::vector<std::pair<std::string, std::string> > > dimensionBins, std::vector<std::pair<std::string, std::string> > & sampleBins);
   void setABCDBinsPriority(std::map<std::string, std::string> xBins, std::map<std::string, std::string> yBins, std::map<std::string, std::vector<std::pair<std::string, std::string> > > dimensionBins, std::vector<std::pair<std::string, std::string> > & sampleBins, int priority);
   void combineDimensionBins(std::map<std::string, std::vector<std::pair<std::string, std::string> > > & dimensionBins);
+  void setABCDBinsPriority(std::map<std::string, NamedFunc> xBins, std::map<std::string, NamedFunc> yBins, std::map<std::string, std::vector<std::pair<std::string, NamedFunc> > > dimensionBins, std::vector<std::pair<std::string, NamedFunc> > & sampleBins, int priority);
+  void combineDimensionBins(std::map<std::string, std::vector<std::pair<std::string, NamedFunc> > > & dimensionBins);
 
   void setMcProcesses(std::set<int> years, std::map<std::string, std::string> samplePaths, NamedFunc filters, std::map<std::string, std::vector<std::shared_ptr<Process> > > & sampleProcesses);
   void setDataProcesses(std::set<int> years, std::map<std::string, std::string> samplePaths, NamedFunc filters, std::map<std::string, std::vector<std::shared_ptr<Process> > > & sampleProcesses);
@@ -95,6 +97,8 @@ namespace HigUtilities {
   void addBinCuts(std::vector<std::pair<std::string, std::string> > sampleBins, std::string baseline, NamedFunc weight, std::string tag, RowInformation & cutRows);
   void addBinCuts(std::vector<std::pair<std::string, std::string> > sampleBins, std::string baseline, NamedFunc weight, std::string tag, TString (*replaceFunc)(TString) ,RowInformation & cutRows);
   void addBinCuts(std::vector<std::pair<std::string, std::string> > sampleBins, std::string baseline, NamedFunc weight, std::string tag, TString (*replaceFunc)(TString, size_t), RowInformation & cutRows);
+  void addBinCuts(std::vector<std::pair<std::string, NamedFunc> > sampleBins, NamedFunc baseline, NamedFunc weight, std::string tag, RowInformation & cutRows);
+  void addBinCuts(std::vector<std::pair<std::string, NamedFunc> > sampleBins, NamedFunc baseline, NamedFunc weight, std::string tag, TString (*replaceFunc)(TString) ,RowInformation & cutRows);
   // Luminosity used for labeling for table
   // Luminosity used for scaling for hist1d
   void makePlots(std::map<std::string, RowInformation > & cutTable, std::map<std::string, std::vector<std::shared_ptr<Process> > > & sampleProcesses, float luminosity, PlotMaker & pm, bool verbose=false);

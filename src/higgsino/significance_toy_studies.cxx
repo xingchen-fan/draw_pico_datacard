@@ -748,13 +748,23 @@ void calculate_predictions(TRandom3 & random, vector<vector<vector<GammaParams> 
     float kappa = (entries[6][0]*weights[6][0]) / (entries[4][0]*weights[4][0]) * (entries[3][0]*weights[3][0]) / (entries[5][0]*weights[5][0]);
     // kappa_systematics[iPlane] = fractional uncertainty
     vector<float> kappa_systematics = get_kappa_systematics();
+
+    //// Print input
+    //cout<<"----------------"<<endl;
+    //cout<<"Input to significance for plane: "<<iPlane<<endl;
+    //cout<<"A_obs: "<<observed_a<<" B_obs: "<<entries[1][0]<<" C_obs: "<<entries[2][0]<<" D_obs: "<<entries[0][0]<<endl;
+    //cout<<"A_mc: "<<entries[6][0]<<" B_obs: "<<entries[4][0]<<" C_obs: "<<entries[5][0]<<" D_obs: "<<entries[3][0]<<endl;
+    //cout<<"A_weight: "<<weights[6][0]<<" B_obs: "<<weights[4][0]<<" C_obs: "<<weights[5][0]<<" D_obs: "<<weights[3][0]<<endl;
+    //cout<<"kappa_systematics: "<<kappa_systematics[iPlane]<<endl;
+    //cout<<"----------------"<<endl;
+
     // Generate toys
     while ( (std::min(Nbelow, Nabove))<Nmin && (Nbelow+Nabove)<Nmax) {
       // Generate B, C, D toy yields
       float toy_b = gsl_ran_gamma(entries[1][0]+1, 1, toy_random);
       float toy_c = gsl_ran_gamma(entries[2][0]+1, 1, toy_random);
       float toy_d = gsl_ran_gamma(entries[0][0]+1, 1, toy_random);
-      // Generate kappa with systematics from statistics
+      // Generate kappa with systematics from statistics. Covers MET systematics.
       float toy_mc_a = gsl_ran_gamma(entries[6][0]+1, 1, toy_random);
       float toy_mc_b = gsl_ran_gamma(entries[4][0]+1, 1, toy_random);
       float toy_mc_c = gsl_ran_gamma(entries[5][0]+1, 1, toy_random);
@@ -1295,8 +1305,11 @@ int main(/* int argc, char *argv[] */){
   // Load data
   // counts[iplane][0=mc/1=data][0=A,1=B,2=C,3=D] = GammaParams
   vector<vector<vector<GammaParams> > > counts;
-  // From scripts/datacard_to_counts.py, or from plot_kappas
-  string count_in_bins_filename = "counts_in_bins.txt";
+  // Can generate counts_in_bins.txt by two methods
+  // 1. scripts/datacard_to_counts.py
+  // 2. ./run/higgsino/plot_kappas.exe --sample search --year run2 --unblind --scen data --string_options save_entries_weights_to_file 
+  string count_in_bins_filename = "./txt/counts_in_bins/counts_in_bins.txt";
+  //string count_in_bins_filename = "./txt/counts_in_bins/counts_in_bins_mc.txt";
   load_counts(count_in_bins_filename, counts);
   //print_counts(counts);
 

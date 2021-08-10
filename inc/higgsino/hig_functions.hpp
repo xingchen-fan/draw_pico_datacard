@@ -70,6 +70,7 @@ namespace Higfuncs{
   extern const NamedFunc nb_exci;
   extern const NamedFunc nb_gs;
 
+  std::vector<unsigned> get_higgs_bbjet_indices(std::vector<float> const & jet_m, std::vector<float> const & jet_deepcsv, std::vector<float> const & jet_pt, std::vector<float> const & jet_eta, std::vector<float> const & jet_phi, std::vector<bool> const & jet_isgood);
   extern const NamedFunc h1b1_pt;
   extern const NamedFunc h1b2_pt;
   extern const NamedFunc h2b1_pt;

@@ -48,7 +48,7 @@ bool smaller_dm(tuple<double, double, vector<unsigned> > higgs_1, tuple<double, 
   return get<0>(higgs_1) < get<0>(higgs_2);
 }
 
-vector<unsigned> get_higgs_bbjet_indices(vector<float> const & jet_m, vector<float> const & jet_deepcsv, vector<float> const & jet_pt, vector<float> const & jet_eta, vector<float> const & jet_phi, vector<bool> const & jet_islep) {
+vector<unsigned> get_higgs_bbjet_indices_islep(vector<float> const & jet_m, vector<float> const & jet_deepcsv, vector<float> const & jet_pt, vector<float> const & jet_eta, vector<float> const & jet_phi, vector<bool> const & jet_islep) {
   //cout<<"event start"<<endl;
   // Reconstruct resolved
   // Sort by btag
@@ -114,19 +114,19 @@ vector<unsigned> get_higgs_bbjet_indices(vector<float> const & jet_m, vector<flo
 }
 
 extern const NamedFunc higgs_h1b1_pt("higgs_h1b1_pt", [](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   return (*b.jet_pt())[bbjet_indices.at(0)];
 });
 extern const NamedFunc higgs_h1b2_pt("higgs_h1b2_pt", [](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   return (*b.jet_pt())[bbjet_indices.at(1)];
 });
 extern const NamedFunc higgs_h2b1_pt("higgs_h2b1_pt", [](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   return (*b.jet_pt())[bbjet_indices.at(2)];
 });
 extern const NamedFunc higgs_h2b2_pt("higgs_h2b2_pt", [](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   return (*b.jet_pt())[bbjet_indices.at(3)];
 });
 
@@ -143,19 +143,19 @@ const NamedFunc boost_low_dphi("boost_low_dphi", [](const Baby &b) -> NamedFunc:
   return low_dphi;
 });
 extern const NamedFunc higgs_h1_dr("higgs_h1_dr", [](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   ROOT::Math::PtEtaPhiMVector h1b1 ((*b.jet_pt())[bbjet_indices.at(0)], (*b.jet_eta())[bbjet_indices.at(0)], (*b.jet_phi())[bbjet_indices.at(0)], (*b.jet_m())[bbjet_indices.at(0)]);
   ROOT::Math::PtEtaPhiMVector h1b2 ((*b.jet_pt())[bbjet_indices.at(1)], (*b.jet_eta())[bbjet_indices.at(1)], (*b.jet_phi())[bbjet_indices.at(1)], (*b.jet_m())[bbjet_indices.at(1)]);
   return DeltaR(h1b1, h1b2);
 });
 extern const NamedFunc higgs_h2_dr("higgs_h2_dr", [](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   ROOT::Math::PtEtaPhiMVector h2b1 ((*b.jet_pt())[bbjet_indices.at(2)], (*b.jet_eta())[bbjet_indices.at(2)], (*b.jet_phi())[bbjet_indices.at(2)], (*b.jet_m())[bbjet_indices.at(2)]);
   ROOT::Math::PtEtaPhiMVector h2b2 ((*b.jet_pt())[bbjet_indices.at(3)], (*b.jet_eta())[bbjet_indices.at(3)], (*b.jet_phi())[bbjet_indices.at(3)], (*b.jet_m())[bbjet_indices.at(3)]);
   return DeltaR(h2b1, h2b2);
 });
 extern const NamedFunc higgs_min_dr("higgs_min_dr", [](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   ROOT::Math::PtEtaPhiMVector h1b1 ((*b.jet_pt())[bbjet_indices.at(0)], (*b.jet_eta())[bbjet_indices.at(0)], (*b.jet_phi())[bbjet_indices.at(0)], (*b.jet_m())[bbjet_indices.at(0)]);
   ROOT::Math::PtEtaPhiMVector h1b2 ((*b.jet_pt())[bbjet_indices.at(1)], (*b.jet_eta())[bbjet_indices.at(1)], (*b.jet_phi())[bbjet_indices.at(1)], (*b.jet_m())[bbjet_indices.at(1)]);
   float h1_dr = DeltaR(h1b1, h1b2);
@@ -165,14 +165,14 @@ extern const NamedFunc higgs_min_dr("higgs_min_dr", [](const Baby &b) -> NamedFu
   return min(h1_dr, h2_dr);
 });
 extern const NamedFunc higgs_h1_mass("higgs_h1_mass", [](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   ROOT::Math::PtEtaPhiMVector h1b1 ((*b.jet_pt())[bbjet_indices.at(0)], (*b.jet_eta())[bbjet_indices.at(0)], (*b.jet_phi())[bbjet_indices.at(0)], (*b.jet_m())[bbjet_indices.at(0)]);
   ROOT::Math::PtEtaPhiMVector h1b2 ((*b.jet_pt())[bbjet_indices.at(1)], (*b.jet_eta())[bbjet_indices.at(1)], (*b.jet_phi())[bbjet_indices.at(1)], (*b.jet_m())[bbjet_indices.at(1)]);
   ROOT::Math::PtEtaPhiMVector higgs1 = h1b1 + h1b2;
   return higgs1.M();
 });
 extern const NamedFunc higgs_h2_mass("higgs_h2_mass", [](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   ROOT::Math::PtEtaPhiMVector h2b1 ((*b.jet_pt())[bbjet_indices.at(2)], (*b.jet_eta())[bbjet_indices.at(2)], (*b.jet_phi())[bbjet_indices.at(2)], (*b.jet_m())[bbjet_indices.at(2)]);
   ROOT::Math::PtEtaPhiMVector h2b2 ((*b.jet_pt())[bbjet_indices.at(3)], (*b.jet_eta())[bbjet_indices.at(3)], (*b.jet_phi())[bbjet_indices.at(3)], (*b.jet_m())[bbjet_indices.at(3)]);
   ROOT::Math::PtEtaPhiMVector higgs2 = h2b1 + h2b2;
@@ -186,7 +186,7 @@ extern const NamedFunc higgs_h2_mass("higgs_h2_mass", [](const Baby &b) -> Named
   return higgs2.M();
 });
 extern const NamedFunc higgs_average_mass("higgs_average_mass", [](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   ROOT::Math::PtEtaPhiMVector h1b1 ((*b.jet_pt())[bbjet_indices.at(0)], (*b.jet_eta())[bbjet_indices.at(0)], (*b.jet_phi())[bbjet_indices.at(0)], (*b.jet_m())[bbjet_indices.at(0)]);
   ROOT::Math::PtEtaPhiMVector h1b2 ((*b.jet_pt())[bbjet_indices.at(1)], (*b.jet_eta())[bbjet_indices.at(1)], (*b.jet_phi())[bbjet_indices.at(1)], (*b.jet_m())[bbjet_indices.at(1)]);
   ROOT::Math::PtEtaPhiMVector higgs1 = h1b1 + h1b2;
@@ -197,35 +197,35 @@ extern const NamedFunc higgs_average_mass("higgs_average_mass", [](const Baby &b
 });
 
 extern const NamedFunc higgs_h1b1_bcsv("higgs_h1b1_bcsv", [](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   return (*b.jet_deepcsv())[bbjet_indices.at(0)];
 });
 extern const NamedFunc higgs_h1b2_bcsv("higgs_h1b2_bcsv", [](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   return (*b.jet_deepcsv())[bbjet_indices.at(1)];
 });
 extern const NamedFunc higgs_h1_bcsv_diff("higgs_h1_bcsv_diff", [](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   float h1b1_bcsv = (*b.jet_deepcsv())[bbjet_indices.at(0)];
   float h1b2_bcsv = (*b.jet_deepcsv())[bbjet_indices.at(1)];
   return fabs(h1b1_bcsv - h1b2_bcsv);
 });
 extern const NamedFunc higgs_h2b1_bcsv("higgs_h2b1_bcsv", [](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   return (*b.jet_deepcsv())[bbjet_indices.at(2)];
 });
 extern const NamedFunc higgs_h2b2_bcsv("higgs_h2b2_bcsv", [](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   return (*b.jet_deepcsv())[bbjet_indices.at(3)];
 });
 extern const NamedFunc higgs_h2_bcsv_diff("higgs_h2_bcsv_diff", [](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   float h2b1_bcsv = (*b.jet_deepcsv())[bbjet_indices.at(2)];
   float h2b2_bcsv = (*b.jet_deepcsv())[bbjet_indices.at(3)];
   return fabs(h2b1_bcsv - h2b2_bcsv);
 });
 extern const NamedFunc higgs_btag_good("higgs_btag_good", [](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   float h1b1_bcsv = (*b.jet_deepcsv())[bbjet_indices.at(0)];
   float h1b2_bcsv = (*b.jet_deepcsv())[bbjet_indices.at(1)];
   float h2b1_bcsv = (*b.jet_deepcsv())[bbjet_indices.at(2)];
@@ -233,24 +233,24 @@ extern const NamedFunc higgs_btag_good("higgs_btag_good", [](const Baby &b) -> N
   return h1b1_bcsv>0.8953&&h1b2_bcsv>0.2217&&h2b1_bcsv>0.8953&&h2b2_bcsv>0.2217;
 });
 extern const NamedFunc higgs_h1b1_pflavor("higgs_h1b1_pflavor", [](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   return abs((*b.jet_pflavor())[bbjet_indices.at(0)]);
 });
 extern const NamedFunc higgs_h1b2_pflavor("higgs_h1b2_pflavor", [](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   return abs((*b.jet_pflavor())[bbjet_indices.at(1)]);
 });
 extern const NamedFunc higgs_h2b1_pflavor("higgs_h2b1_pflavor", [](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   return abs((*b.jet_pflavor())[bbjet_indices.at(2)]);
 });
 extern const NamedFunc higgs_h2b2_pflavor("higgs_h2b2_pflavor", [](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   return abs((*b.jet_pflavor())[bbjet_indices.at(3)]);
 });
 
 extern const NamedFunc higgs_h1b2_jet_mass("higgs_h1b2_jet_mass", [](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   ROOT::Math::PtEtaPhiMVector h1b2 ((*b.jet_pt())[bbjet_indices.at(1)], (*b.jet_eta())[bbjet_indices.at(1)], (*b.jet_phi())[bbjet_indices.at(1)], (*b.jet_m())[bbjet_indices.at(1)]);
   // Combine h1b2 with other jets
   vector<ROOT::Math::PtEtaPhiMVector> w_cand;
@@ -281,7 +281,7 @@ extern const NamedFunc higgs_h1b2_jet_mass("higgs_h1b2_jet_mass", [](const Baby 
   else return w_cand[0].M();
 });
 extern const NamedFunc higgs_h1b1_jet_mass("higgs_h1b1_jet_mass", [](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   int bbjet_index = 0;
   ROOT::Math::PtEtaPhiMVector bjet ((*b.jet_pt())[bbjet_indices.at(bbjet_index)], (*b.jet_eta())[bbjet_indices.at(bbjet_index)], (*b.jet_phi())[bbjet_indices.at(bbjet_index)], (*b.jet_m())[bbjet_indices.at(bbjet_index)]);
   // Combine with other jets
@@ -305,7 +305,7 @@ extern const NamedFunc higgs_h1b1_jet_mass("higgs_h1b1_jet_mass", [](const Baby 
   return w_mass[0];
 });
 extern const NamedFunc higgs_h2b1_jet_mass("higgs_h2b1_jet_mass", [](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   int bbjet_index = 2;
   ROOT::Math::PtEtaPhiMVector bjet ((*b.jet_pt())[bbjet_indices.at(bbjet_index)], (*b.jet_eta())[bbjet_indices.at(bbjet_index)], (*b.jet_phi())[bbjet_indices.at(bbjet_index)], (*b.jet_m())[bbjet_indices.at(bbjet_index)]);
   // Combine with other jets
@@ -329,7 +329,7 @@ extern const NamedFunc higgs_h2b1_jet_mass("higgs_h2b1_jet_mass", [](const Baby 
   return w_mass[0];
 });
 extern const NamedFunc higgs_h2b2_jet_mass("higgs_h2b2_jet_mass", [](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   int bbjet_index = 3;
   ROOT::Math::PtEtaPhiMVector bjet ((*b.jet_pt())[bbjet_indices.at(bbjet_index)], (*b.jet_eta())[bbjet_indices.at(bbjet_index)], (*b.jet_phi())[bbjet_indices.at(bbjet_index)], (*b.jet_m())[bbjet_indices.at(bbjet_index)]);
   // Combine with other jets
@@ -368,7 +368,7 @@ extern const NamedFunc jet0_p("jet0_p", [](const Baby &b) -> NamedFunc::ScalarTy
 });
 
 extern const NamedFunc average_btag("average_btag", [](const Baby &b) -> NamedFunc::ScalarType{
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   return ((*b.jet_deepcsv())[bbjet_indices.at(0)]+(*b.jet_deepcsv())[bbjet_indices.at(1)]+(*b.jet_deepcsv())[bbjet_indices.at(2)]+(*b.jet_deepcsv())[bbjet_indices.at(3)])/4;
 });
 
@@ -383,7 +383,7 @@ vector<int> getJetTypes(vector<float> const & jet_deepcsv, vector<bool> const & 
                          vector<float> const & mc_pt, vector<float> const & mc_eta, vector<float> const & mc_phi,vector<float> const & mc_mass
                         ) {
   // Find jets that are used to reconstruct higgs
-  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(jet_m, jet_deepcsv, jet_pt, jet_eta, jet_phi, jet_islep);
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(jet_m, jet_deepcsv, jet_pt, jet_eta, jet_phi, jet_islep);
   // TODO search for particles from tau
   // Find (duscb) quarks that are from ttbar's W and b quark from ttbar
   // ID: 0: unknown, (1:d, 2:u, 3:s, 4:c, 5:b) from W or tau, 6:b from t
@@ -500,7 +500,7 @@ const NamedFunc jetType_h2b2("jetType_h2b2", [](const Baby &b) -> NamedFunc::Sca
 
 //const NamedFunc eventType("eventType", [](const Baby &b) -> NamedFunc::VectorType{
 //  // Find jets that are used to reconstruct higgs
-//  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
+//  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
 //  // TODO search for particles from tau
 //  // Find (duscb) quarks that are from ttbar's W and b quark from ttbar
 //  // ID: 0: unknown, (1:d, 2:u, 3:s, 4:c, 5:b) from W or tau, 6:b from t

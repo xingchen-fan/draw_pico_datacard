@@ -13,6 +13,8 @@
 #include "TError.h"
 #include "TColor.h"
 #include "TVector2.h"
+#include "Math/Vector4D.h"
+#include "TMath.h"
 
 #include "core/baby.hpp"
 #include "core/process.hpp"
@@ -45,9 +47,75 @@ namespace{
   string lepton_type = "";
   // string_options is split by comma. ex) option1,option2 
   // Use HigUtilities::is_in_string_options(string_options, "option2") to check if in string_options.
-  // Options: plot_additional_variables,plot_ht_correlation,plot_eta_vs_phi,plot_in_bins, cut_3b4b
+  // Options: plot_additional_variables,plot_ht_correlation,plot_eta_vs_phi,plot_in_bins, cut_3b4b, plot_dr
   string string_options = "";
 }
+
+// Returns number of jets (pt>30 GeV)
+void modify_jet_pt(vector<float> const & jet_pt, vector<float> & mod_jet_pt) {
+  mod_jet_pt.resize(jet_pt.size());
+  for(unsigned iJet = 0; iJet < jet_pt.size(); ++iJet) {
+    mod_jet_pt[iJet] = jet_pt[iJet] / 1.02;
+    //mod_jet_pt[iJet] = jet_pt[iJet];
+    //cout<<"jet_pt["<<iJet<<"]: "<<jet_pt[iJet]<<" mod_jet_pt: "<<mod_jet_pt[iJet]<<endl;
+  }
+}
+Double_t DeltaR(const ROOT::Math::PtEtaPhiMVector & v1, const ROOT::Math::PtEtaPhiMVector & v2)
+{
+   Double_t deta = v1.Eta()-v2.Eta();
+   Double_t dphi = TVector2::Phi_mpi_pi(v1.Phi()-v2.Phi());
+   return TMath::Sqrt( deta*deta+dphi*dphi );
+}
+int count_njets(vector<float> const & jet_pt, vector<float> const & jet_eta, vector<bool> const & jet_isgood) {
+  int njet = 0;
+  for (unsigned ijet = 0; ijet < jet_pt.size(); ijet++) {
+    if (jet_pt[ijet]<=30) continue;
+    if (fabs(jet_eta[ijet])>2.4) continue;
+    if (!jet_isgood[ijet]) continue;
+    njet++;
+  }
+  return njet;
+}
+// mod_hig_cand_drmax, mod_hig_cand_am, mod_hig_cand_dm
+const NamedFunc mod_hig_cand_drmax("mod_hig_cand_drmax", [](const Baby &b) -> NamedFunc::ScalarType{
+  vector<float> mod_jet_pt;
+  modify_jet_pt(*b.jet_pt(), mod_jet_pt);
+  int njet = count_njets(mod_jet_pt, *b.jet_eta(), *b.jet_isgood());
+  if (njet<=3) return 999.;
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), mod_jet_pt, *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
+  ROOT::Math::PtEtaPhiMVector h1b1 (mod_jet_pt[bbjet_indices.at(0)], (*b.jet_eta())[bbjet_indices.at(0)], (*b.jet_phi())[bbjet_indices.at(0)], (*b.jet_m())[bbjet_indices.at(0)]);
+  ROOT::Math::PtEtaPhiMVector h1b2 (mod_jet_pt[bbjet_indices.at(1)], (*b.jet_eta())[bbjet_indices.at(1)], (*b.jet_phi())[bbjet_indices.at(1)], (*b.jet_m())[bbjet_indices.at(1)]);
+  ROOT::Math::PtEtaPhiMVector h2b1 (mod_jet_pt[bbjet_indices.at(2)], (*b.jet_eta())[bbjet_indices.at(2)], (*b.jet_phi())[bbjet_indices.at(2)], (*b.jet_m())[bbjet_indices.at(2)]);
+  ROOT::Math::PtEtaPhiMVector h2b2 (mod_jet_pt[bbjet_indices.at(3)], (*b.jet_eta())[bbjet_indices.at(3)], (*b.jet_phi())[bbjet_indices.at(3)], (*b.jet_m())[bbjet_indices.at(3)]);
+  float dr1 = DeltaR(h1b1, h1b2);
+  float dr2 = DeltaR(h2b1, h2b2);
+  if (dr1>dr2) return dr1;
+  return dr2;
+});
+const NamedFunc mod_hig_cand_am("mod_hig_cand_am", [](const Baby &b) -> NamedFunc::ScalarType{
+  vector<float> mod_jet_pt;
+  modify_jet_pt(*b.jet_pt(), mod_jet_pt);
+  int njet = count_njets(mod_jet_pt, *b.jet_eta(), *b.jet_isgood());
+  if (njet<=3) return 999.;
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), mod_jet_pt, *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
+  ROOT::Math::PtEtaPhiMVector h1b1 (mod_jet_pt[bbjet_indices.at(0)], (*b.jet_eta())[bbjet_indices.at(0)], (*b.jet_phi())[bbjet_indices.at(0)], (*b.jet_m())[bbjet_indices.at(0)]);
+  ROOT::Math::PtEtaPhiMVector h1b2 (mod_jet_pt[bbjet_indices.at(1)], (*b.jet_eta())[bbjet_indices.at(1)], (*b.jet_phi())[bbjet_indices.at(1)], (*b.jet_m())[bbjet_indices.at(1)]);
+  ROOT::Math::PtEtaPhiMVector h2b1 (mod_jet_pt[bbjet_indices.at(2)], (*b.jet_eta())[bbjet_indices.at(2)], (*b.jet_phi())[bbjet_indices.at(2)], (*b.jet_m())[bbjet_indices.at(2)]);
+  ROOT::Math::PtEtaPhiMVector h2b2 (mod_jet_pt[bbjet_indices.at(3)], (*b.jet_eta())[bbjet_indices.at(3)], (*b.jet_phi())[bbjet_indices.at(3)], (*b.jet_m())[bbjet_indices.at(3)]);
+  return ((h1b1+h1b2).M()+(h2b1+h2b2).M())/2.0;
+});
+const NamedFunc mod_hig_cand_dm("mod_hig_cand_dm", [](const Baby &b) -> NamedFunc::ScalarType{
+  vector<float> mod_jet_pt;
+  modify_jet_pt(*b.jet_pt(), mod_jet_pt);
+  int njet = count_njets(mod_jet_pt, *b.jet_eta(), *b.jet_isgood());
+  if (njet<=3) return 999.;
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), mod_jet_pt, *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
+  ROOT::Math::PtEtaPhiMVector h1b1 (mod_jet_pt[bbjet_indices.at(0)], (*b.jet_eta())[bbjet_indices.at(0)], (*b.jet_phi())[bbjet_indices.at(0)], (*b.jet_m())[bbjet_indices.at(0)]);
+  ROOT::Math::PtEtaPhiMVector h1b2 (mod_jet_pt[bbjet_indices.at(1)], (*b.jet_eta())[bbjet_indices.at(1)], (*b.jet_phi())[bbjet_indices.at(1)], (*b.jet_m())[bbjet_indices.at(1)]);
+  ROOT::Math::PtEtaPhiMVector h2b1 (mod_jet_pt[bbjet_indices.at(2)], (*b.jet_eta())[bbjet_indices.at(2)], (*b.jet_phi())[bbjet_indices.at(2)], (*b.jet_m())[bbjet_indices.at(2)]);
+  ROOT::Math::PtEtaPhiMVector h2b2 (mod_jet_pt[bbjet_indices.at(3)], (*b.jet_eta())[bbjet_indices.at(3)], (*b.jet_phi())[bbjet_indices.at(3)], (*b.jet_m())[bbjet_indices.at(3)]);
+  return TMath::Abs((h1b1+h1b2).M()-(h2b1+h2b2).M());
+});
 
 const NamedFunc goodJet_phi("goodJet_phi", [](const Baby &b) -> NamedFunc::VectorType{
   vector<double> jet_phi;
@@ -416,8 +484,8 @@ int main(int argc, char *argv[]){
   axis_dict.insert("h1b2_pt",Axis(16, 0, 480., h1b2_pt, "p_{T} lead higgs low-tag b jet [GeV]", {}));
   axis_dict.insert("h2b1_pt",Axis(16, 0, 480., h2b1_pt, "p_{T} sublead higgs high-tag b jet [GeV]", {}));
   axis_dict.insert("h2b2_pt",Axis(16, 0, 480., h2b2_pt, "p_{T} sublead higgs low-tag b jet [GeV]", {}));
-  axis_dict.insert("h1_dr",Axis(20,0,4,h1_dr, "Lead higgs #DeltaR", {1.1, 2.2}));
-  axis_dict.insert("h2_dr",Axis(20,0,4,h2_dr, "Sublead higgs #DeltaR", {1.1, 2.2}));
+  axis_dict.insert("h1_dr",Axis(20,0,3.2,h1_dr, "Lead higgs #DeltaR", {1.1, 2.2}));
+  axis_dict.insert("h2_dr",Axis(20,0,3.2,h2_dr, "Sublead higgs #DeltaR", {1.1, 2.2}));
   axis_dict.insert("h1_mass",Axis(10, 0, 200, h1_mass, "Lead m_{bb} [GeV]", {100, 140}));
   axis_dict.insert("h2_mass",Axis(10, 0, 200, h2_mass, "Sublead m_{bb} [GeV]", {100, 140}));
   axis_dict.insert("jet_pt[0]",Axis(20, 0, 600., "jet_pt[0]", "p_{T} jet [0] [GeV]", {}));
@@ -446,6 +514,9 @@ int main(int argc, char *argv[]){
   axis_dict.insert("hig_cand_drmax",Axis(20,0,4,"hig_cand_drmax[0]", "#DeltaR_{max}", {1.1, 2.2}));
   axis_dict.insert("hig_cand_am",Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}));
   axis_dict.insert("hig_cand_dm",Axis(10,0,100,"hig_cand_dm[0]", "#Deltam [GeV]", {40.}));
+  axis_dict.insert("mod_hig_cand_drmax",Axis(40,0,4, mod_hig_cand_drmax, "#DeltaR_{max}", {1.1, 2.2}));
+  axis_dict.insert("mod_hig_cand_am",Axis(40, 0, 200, mod_hig_cand_am, "<m_{bb}> [GeV]", {100, 140}));
+  axis_dict.insert("mod_hig_cand_dm",Axis(40,0,100,mod_hig_cand_dm, "#Deltam [GeV]", {40.}));
   axis_dict.insert("btags",Axis(3, 1.5, 4.5, Higfuncs::hig_bcat, "N_{b}", {2.5}));
   //axis_dict.insert("lep_pt",Axis(10, 0, 300., "lep_pt[0]", "p_{l} [GeV]", {30}));
   axis_dict.insert("lep_pt",Axis(10, 0, 300., Higfuncs::lead_signal_lepton_pt, "p_{t}^{l} [GeV]", {30}));
@@ -517,6 +588,9 @@ int main(int argc, char *argv[]){
     target_variables.insert("h2_mass");
     target_variables.insert("mht_filter");
     target_variables.insert("jet_pt[0]");
+    target_variables.insert("mod_hig_cand_drmax");
+    target_variables.insert("mod_hig_cand_am");
+    target_variables.insert("mod_hig_cand_dm");
   }
 
   NamedFunc basic_cut = "1";
@@ -544,6 +618,9 @@ int main(int argc, char *argv[]){
         if (cut_item.key() == "mt") continue;
         if (cut_item.key() == "lep_pt") continue;
       }
+      if (target_var == "mod_hig_cand_drmax" && cut_item.key() == "hig_cand_drmax") continue;
+      if (target_var == "mod_hig_cand_am" && cut_item.key() == "hig_cand_am") continue;
+      if (target_var == "mod_hig_cand_dm" && cut_item.key() == "hig_cand_dm") continue;
       if (target_var == "sig_el_pt") {
         n_minus_1_cut = n_minus_1_cut && "nel>=1";
       }
@@ -588,6 +665,16 @@ int main(int argc, char *argv[]){
   NamedFunc resolved_cuts = basic_cut;
   for (auto & item : map_resolved_cuts) {
     resolved_cuts = resolved_cuts && item.value();
+  }
+
+  if (HigUtilities::is_in_string_options(string_options, "plot_dr")) {
+    NamedFunc resolved_cuts_nodrmax = basic_cut;
+    for (auto & item : map_resolved_cuts) {
+      if (item.key() == "hig_cand_drmax") continue;
+      resolved_cuts_nodrmax = resolved_cuts_nodrmax && item.value();
+    }
+    pm.Push<Hist2D>(axis_dict["h1_dr"], axis_dict["h2_dr"],
+      base_filters&&resolved_cuts_nodrmax, procs, plt_2D).Weight(weight).Tag("FixName:fig_n-1_"+sample_name+"_dr1_vs_dr2__mc__"+CopyReplaceAll(year_string, ",","_")).LuminosityTag(total_luminosity_string);
   }
 
   bool plot_ht_correlation = HigUtilities::is_in_string_options(string_options, "plot_ht_correlation");
@@ -745,7 +832,7 @@ void GetOptions(int argc, char *argv[]){
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "so:uy:", long_options, &option_index);
+    opt = getopt_long(argc, argv, "so:uay:", long_options, &option_index);
 
     if( opt == -1) break;
 

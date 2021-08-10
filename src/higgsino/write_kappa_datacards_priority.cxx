@@ -18,6 +18,8 @@
 #include "TMath.h"
 #include "TError.h" // Controls error level reporting
 #include "TVector2.h"
+#include "Math/Vector4D.h"
+#include "TMath.h"
 
 #include "core/utilities.hpp"
 #include "core/baby.hpp"
@@ -63,6 +65,77 @@ namespace
   bool do_fullsim = false;
   bool do_inverse_datacard = false;
 }
+
+
+// Returns number of jets (pt>30 GeV)
+void modify_jet_pt(vector<float> const & jet_pt, vector<float> & mod_jet_pt) {
+  mod_jet_pt.resize(jet_pt.size());
+  for(unsigned iJet = 0; iJet < jet_pt.size(); ++iJet) {
+    mod_jet_pt[iJet] = jet_pt[iJet] / 1.02;
+    //mod_jet_pt[iJet] = jet_pt[iJet];
+    //cout<<"jet_pt["<<iJet<<"]: "<<jet_pt[iJet]<<" mod_jet_pt: "<<mod_jet_pt[iJet]<<endl;
+  }
+}
+Double_t DeltaR(const ROOT::Math::PtEtaPhiMVector & v1, const ROOT::Math::PtEtaPhiMVector & v2)
+{
+   Double_t deta = v1.Eta()-v2.Eta();
+   Double_t dphi = TVector2::Phi_mpi_pi(v1.Phi()-v2.Phi());
+   return TMath::Sqrt( deta*deta+dphi*dphi );
+}
+int count_njets(vector<float> const & jet_pt, vector<float> const & jet_eta, vector<bool> const & jet_isgood) {
+  int njet = 0;
+  for (unsigned ijet = 0; ijet < jet_pt.size(); ijet++) {
+    if (jet_pt[ijet]<=30) continue;
+    if (fabs(jet_eta[ijet])>2.4) continue;
+    if (!jet_isgood[ijet]) continue;
+    njet++;
+  }
+  return njet;
+}
+// mod_hig_cand_drmax, mod_hig_cand_am, mod_hig_cand_dm
+const NamedFunc mod_hig_cand_drmax("mod_hig_cand_drmax", [](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.SampleType()<0 || b.SampleType()==2016) return b.hig_cand_drmax()->at(0);
+  vector<float> mod_jet_pt;
+  modify_jet_pt(*b.jet_pt(), mod_jet_pt);
+  int njet = count_njets(mod_jet_pt, *b.jet_eta(), *b.jet_isgood());
+  if (njet<=3) return 999.;
+  vector<unsigned> bbjet_indices = Higfuncs::get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), mod_jet_pt, *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
+  ROOT::Math::PtEtaPhiMVector h1b1 (mod_jet_pt[bbjet_indices.at(0)], (*b.jet_eta())[bbjet_indices.at(0)], (*b.jet_phi())[bbjet_indices.at(0)], (*b.jet_m())[bbjet_indices.at(0)]);
+  ROOT::Math::PtEtaPhiMVector h1b2 (mod_jet_pt[bbjet_indices.at(1)], (*b.jet_eta())[bbjet_indices.at(1)], (*b.jet_phi())[bbjet_indices.at(1)], (*b.jet_m())[bbjet_indices.at(1)]);
+  ROOT::Math::PtEtaPhiMVector h2b1 (mod_jet_pt[bbjet_indices.at(2)], (*b.jet_eta())[bbjet_indices.at(2)], (*b.jet_phi())[bbjet_indices.at(2)], (*b.jet_m())[bbjet_indices.at(2)]);
+  ROOT::Math::PtEtaPhiMVector h2b2 (mod_jet_pt[bbjet_indices.at(3)], (*b.jet_eta())[bbjet_indices.at(3)], (*b.jet_phi())[bbjet_indices.at(3)], (*b.jet_m())[bbjet_indices.at(3)]);
+  float dr1 = DeltaR(h1b1, h1b2);
+  float dr2 = DeltaR(h2b1, h2b2);
+  if (dr1>dr2) return dr1;
+  return dr2;
+});
+const NamedFunc mod_hig_cand_am("mod_hig_cand_am", [](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.SampleType()<0 || b.SampleType()==2016) return b.hig_cand_am()->at(0);
+  vector<float> mod_jet_pt;
+  modify_jet_pt(*b.jet_pt(), mod_jet_pt);
+  int njet = count_njets(mod_jet_pt, *b.jet_eta(), *b.jet_isgood());
+  if (njet<=3) return 999.;
+  vector<unsigned> bbjet_indices = Higfuncs::get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), mod_jet_pt, *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
+  ROOT::Math::PtEtaPhiMVector h1b1 (mod_jet_pt[bbjet_indices.at(0)], (*b.jet_eta())[bbjet_indices.at(0)], (*b.jet_phi())[bbjet_indices.at(0)], (*b.jet_m())[bbjet_indices.at(0)]);
+  ROOT::Math::PtEtaPhiMVector h1b2 (mod_jet_pt[bbjet_indices.at(1)], (*b.jet_eta())[bbjet_indices.at(1)], (*b.jet_phi())[bbjet_indices.at(1)], (*b.jet_m())[bbjet_indices.at(1)]);
+  ROOT::Math::PtEtaPhiMVector h2b1 (mod_jet_pt[bbjet_indices.at(2)], (*b.jet_eta())[bbjet_indices.at(2)], (*b.jet_phi())[bbjet_indices.at(2)], (*b.jet_m())[bbjet_indices.at(2)]);
+  ROOT::Math::PtEtaPhiMVector h2b2 (mod_jet_pt[bbjet_indices.at(3)], (*b.jet_eta())[bbjet_indices.at(3)], (*b.jet_phi())[bbjet_indices.at(3)], (*b.jet_m())[bbjet_indices.at(3)]);
+  return ((h1b1+h1b2).M()+(h2b1+h2b2).M())/2.0;
+});
+const NamedFunc mod_hig_cand_dm("mod_hig_cand_dm", [](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.SampleType()<0 || b.SampleType()==2016) return b.hig_cand_dm()->at(0);
+  vector<float> mod_jet_pt;
+  modify_jet_pt(*b.jet_pt(), mod_jet_pt);
+  int njet = count_njets(mod_jet_pt, *b.jet_eta(), *b.jet_isgood());
+  if (njet<=3) return 999.;
+  vector<unsigned> bbjet_indices = Higfuncs::get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), mod_jet_pt, *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
+  ROOT::Math::PtEtaPhiMVector h1b1 (mod_jet_pt[bbjet_indices.at(0)], (*b.jet_eta())[bbjet_indices.at(0)], (*b.jet_phi())[bbjet_indices.at(0)], (*b.jet_m())[bbjet_indices.at(0)]);
+  ROOT::Math::PtEtaPhiMVector h1b2 (mod_jet_pt[bbjet_indices.at(1)], (*b.jet_eta())[bbjet_indices.at(1)], (*b.jet_phi())[bbjet_indices.at(1)], (*b.jet_m())[bbjet_indices.at(1)]);
+  ROOT::Math::PtEtaPhiMVector h2b1 (mod_jet_pt[bbjet_indices.at(2)], (*b.jet_eta())[bbjet_indices.at(2)], (*b.jet_phi())[bbjet_indices.at(2)], (*b.jet_m())[bbjet_indices.at(2)]);
+  ROOT::Math::PtEtaPhiMVector h2b2 (mod_jet_pt[bbjet_indices.at(3)], (*b.jet_eta())[bbjet_indices.at(3)], (*b.jet_phi())[bbjet_indices.at(3)], (*b.jet_m())[bbjet_indices.at(3)]);
+  return TMath::Abs((h1b1+h1b2).M()-(h2b1+h2b2).M());
+});
+
 
 const NamedFunc min_jet_dphi("min_jet_dphi", [](const Baby &b) -> NamedFunc::ScalarType{
   float min_dphi = 4;
@@ -657,14 +730,62 @@ int main(int argc, char *argv[])
   systematics_vector_genmet.push_back(make_pair(string("SignalJER"),
       vector<NamedFunc>({weight_genmet,weight_genmet})));
 
+  // Shift jet pT down by 2% on signal
+  bool shiftPtDownOnSignal = false;
+  // namedFuncSampleBins = { {label, cut} }
+  vector<pair<string, NamedFunc> > namedFuncSampleBins;
+  vector<pair<string, NamedFunc> > namedFuncSampleBins_genmet;
+  NamedFunc namedFuncBaseline = "!low_dphi_met && nvlep==0 && ntk==0&&njet>=4 && njet<=5 && nbt>=2"&&mod_hig_cand_drmax<=2.2 && mod_hig_cand_dm <= 40 && mod_hig_cand_am<=200 && "met/mht<2 && met/met_calo<2&& weight<1.5";
+  NamedFunc baseline_genmet = "!low_dphi_met && nvlep==0 && ntk==0&&njet>=4 && njet<=5 && nbt>=2"&&mod_hig_cand_drmax<=2.2 && mod_hig_cand_dm <= 40 && mod_hig_cand_am<=200 && "met_tru/mht<2 && met/met_calo<2&& weight<1.5";
+  if (shiftPtDownOnSignal) {
+    // Set namedFuncSampleBins
+    map<string, NamedFunc> namedFuncXBins;
+    namedFuncXBins.insert({"bkg","nbm==2"});
+    namedFuncXBins.insert({"sig0","nbm==3&&nbl==3"});
+    namedFuncXBins.insert({"sig1", "nbm>=3&&nbl>=4"});
+    map<string, NamedFunc> namedFuncYBins;
+    //namedFuncYBins.insert({"sig", "hig_cand_am[0]>100 && hig_cand_am[0]<=140"});
+    namedFuncYBins.insert({"sig", mod_hig_cand_am>100 && mod_hig_cand_am<=140});
+    namedFuncYBins.insert({"bkg", "!("+yBins["sig"]+")"});
+    map<string, vector<pair<string, NamedFunc> > > namedFuncDimensionBins;
+    namedFuncDimensionBins["met"].push_back({"met0", "met>150 && met<=200"});
+    namedFuncDimensionBins["met"].push_back({"met1", "met>200 && met<=300"});
+    namedFuncDimensionBins["met"].push_back({"met2", "met>300 && met<=400"});
+    namedFuncDimensionBins["met"].push_back({"met3", "met>400"});
+    namedFuncDimensionBins["drmax"].push_back({"drmax0", mod_hig_cand_drmax<=1.1});
+    namedFuncDimensionBins["drmax"].push_back({"drmax1", mod_hig_cand_drmax>1.1});
+    HigUtilities::setABCDBinsPriority(namedFuncXBins, namedFuncYBins, namedFuncDimensionBins, namedFuncSampleBins, priority);
+    //for (unsigned iBin = 0; iBin < namedFuncSampleBins.size(); ++iBin) {
+    //  cout<<namedFuncSampleBins[iBin].first<<" "<<namedFuncSampleBins[iBin].second.Name()<<endl;
+    //}
+
+    // Set namedFuncSampleBins for genMET
+    map<string, vector<pair<string, NamedFunc> > > namedFuncDimensionBins_genmet;
+    namedFuncDimensionBins_genmet["met"].push_back({"met0", "met_tru>150 && met_tru<=200"});
+    namedFuncDimensionBins_genmet["met"].push_back({"met1", "met_tru>200 && met_tru<=300"});
+    namedFuncDimensionBins_genmet["met"].push_back({"met2", "met_tru>300 && met_tru<=400"});
+    namedFuncDimensionBins_genmet["met"].push_back({"met3", "met_tru>400"});
+    namedFuncDimensionBins_genmet["drmax"].push_back({"drmax0", mod_hig_cand_drmax<=1.1});
+    namedFuncDimensionBins_genmet["drmax"].push_back({"drmax1", mod_hig_cand_drmax>1.1});
+    HigUtilities::setABCDBinsPriority(namedFuncXBins, namedFuncYBins, namedFuncDimensionBins_genmet, namedFuncSampleBins_genmet, priority);
+  }
+
   //---------------------------------------------------------------------------
   //                           book tables and plots
   //---------------------------------------------------------------------------
-  // cuts[mc,data,signal] = RowInformation(labels, tableRows, yields)
+  // cutTable[mc,data,signal] = RowInformation(labels, tableRows, yields)
   map<string, HigUtilities::RowInformation > cutTable;
   if(unblind) HigUtilities::addBinCuts(sampleBins, baseline, weight, "data", cutTable["data"]);
-  HigUtilities::addBinCuts(sampleBins, baseline, weight, "signal", cutTable["signal"]);
-  HigUtilities::addBinCuts(sampleBins, baseline, weight_genmet, "signalGenMet", HigUtilities::nom2genmet, cutTable["signal"]);
+
+  if (shiftPtDownOnSignal) {
+    HigUtilities::addBinCuts(namedFuncSampleBins, namedFuncBaseline, weight, "signal", cutTable["signal"]);
+    HigUtilities::addBinCuts(namedFuncSampleBins_genmet, baseline_genmet, weight_genmet, "signalGenMet", cutTable["signal"]);
+  } else {
+    // Original
+    HigUtilities::addBinCuts(sampleBins, baseline, weight, "signal", cutTable["signal"]);
+    HigUtilities::addBinCuts(sampleBins, baseline, weight_genmet, "signalGenMet", HigUtilities::nom2genmet, cutTable["signal"]);
+  }
+
   HigUtilities::addBinCuts(sampleBins, baseline, weight, "mc", cutTable["mc"]);
   for (unsigned sys_idx = 0; sys_idx < systematics_vector.size(); sys_idx++) {
     pair<string, vector<NamedFunc>> sys = systematics_vector[sys_idx];
@@ -856,56 +977,7 @@ namespace HigWriteDataCards{
   }
 
   void setControlSystematics(map<string, map<string, float> > & controlSystematics) {
-    controlSystematics["xsig0_ybkg_met0_drmax0"]["ttbar"] = 1.12; 
-    controlSystematics["xsig1_ybkg_met0_drmax0"]["ttbar"] = 1.17;
-    controlSystematics["xsig0_ybkg_met0_drmax1"]["ttbar"] = 1.02;
-    controlSystematics["xsig1_ybkg_met0_drmax1"]["ttbar"] = 1.09;
-    controlSystematics["xsig0_ybkg_met1_drmax0"]["ttbar"] = 1.10;
-    controlSystematics["xsig1_ybkg_met1_drmax0"]["ttbar"] = 1.16;
-    controlSystematics["xsig0_ybkg_met1_drmax1"]["ttbar"] = 1.02;
-    controlSystematics["xsig1_ybkg_met1_drmax1"]["ttbar"] = 1.09;
-    controlSystematics["xsig0_ybkg_met2_drmax0"]["ttbar"] = 1.06;
-    controlSystematics["xsig1_ybkg_met2_drmax0"]["ttbar"] = 1.12;
-    controlSystematics["xsig0_ybkg_met2_drmax1"]["ttbar"] = 1.01;
-    controlSystematics["xsig1_ybkg_met2_drmax1"]["ttbar"] = 1.08;
-    controlSystematics["xsig0_ybkg_met3_drmax0"]["ttbar"] = 1.06;
-    controlSystematics["xsig1_ybkg_met3_drmax0"]["ttbar"] = 1.08;
-    controlSystematics["xsig0_ybkg_met3_drmax1"]["ttbar"] = 1.01;
-    controlSystematics["xsig1_ybkg_met3_drmax1"]["ttbar"] = 1.08;
-
-    controlSystematics["xsig0_ybkg_met0_drmax0"]["vjets"] = 1.01; 
-    controlSystematics["xsig1_ybkg_met0_drmax0"]["vjets"] = 1.01;
-    controlSystematics["xsig0_ybkg_met0_drmax1"]["vjets"] = 1.00;
-    controlSystematics["xsig1_ybkg_met0_drmax1"]["vjets"] = 1.00;
-    controlSystematics["xsig0_ybkg_met1_drmax0"]["vjets"] = 1.04;
-    controlSystematics["xsig1_ybkg_met1_drmax0"]["vjets"] = 1.05;
-    controlSystematics["xsig0_ybkg_met1_drmax1"]["vjets"] = 1.01;
-    controlSystematics["xsig1_ybkg_met1_drmax1"]["vjets"] = 1.00;
-    controlSystematics["xsig0_ybkg_met2_drmax0"]["vjets"] = 1.10;
-    controlSystematics["xsig1_ybkg_met2_drmax0"]["vjets"] = 1.06;
-    controlSystematics["xsig0_ybkg_met2_drmax1"]["vjets"] = 1.01;
-    controlSystematics["xsig1_ybkg_met2_drmax1"]["vjets"] = 1.01;
-    controlSystematics["xsig0_ybkg_met3_drmax0"]["vjets"] = 1.06;
-    controlSystematics["xsig1_ybkg_met3_drmax0"]["vjets"] = 1.10;
-    controlSystematics["xsig0_ybkg_met3_drmax1"]["vjets"] = 1.02;
-    controlSystematics["xsig1_ybkg_met3_drmax1"]["vjets"] = 1.02;
-
-    controlSystematics["xsig0_ybkg_met0_drmax0"]["qcd"] = 1.00; 
-    controlSystematics["xsig1_ybkg_met0_drmax0"]["qcd"] = 1.00;
-    controlSystematics["xsig0_ybkg_met0_drmax1"]["qcd"] = 1.00;
-    controlSystematics["xsig1_ybkg_met0_drmax1"]["qcd"] = 1.00;
-    controlSystematics["xsig0_ybkg_met1_drmax0"]["qcd"] = 1.00;
-    controlSystematics["xsig1_ybkg_met1_drmax0"]["qcd"] = 1.02;
-    controlSystematics["xsig0_ybkg_met1_drmax1"]["qcd"] = 1.00;
-    controlSystematics["xsig1_ybkg_met1_drmax1"]["qcd"] = 1.00;
-    controlSystematics["xsig0_ybkg_met2_drmax0"]["qcd"] = 1.00;
-    controlSystematics["xsig1_ybkg_met2_drmax0"]["qcd"] = 1.00;
-    controlSystematics["xsig0_ybkg_met2_drmax1"]["qcd"] = 1.00;
-    controlSystematics["xsig1_ybkg_met2_drmax1"]["qcd"] = 1.00;
-    controlSystematics["xsig0_ybkg_met3_drmax0"]["qcd"] = 1.00;
-    controlSystematics["xsig1_ybkg_met3_drmax0"]["qcd"] = 1.00;
-    controlSystematics["xsig0_ybkg_met3_drmax1"]["qcd"] = 1.00;
-    controlSystematics["xsig1_ybkg_met3_drmax1"]["qcd"] = 1.01;
+    HigUtilities::getControlSystematics(controlSystematics);
   }
 
   void readDimensionFile(std::string const & dimensionFilePath, std::map<std::string, std::vector<std::pair<std::string, std::string> > > & dimensionBins){

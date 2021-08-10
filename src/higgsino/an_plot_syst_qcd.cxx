@@ -68,7 +68,7 @@ int main(int argc, char *argv[]){
 
   // Set options
   string mc_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
-  //string mc_base_folder = "/net/cms25/cms25r0/pico/NanoAODv5/higgsino_humboldt/";
+  //string mc_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt/";
   //string mc_base_folder = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado";
   string mc_skim_folder = "mc/merged_higmc_higloose/";
   string ttbar_mc_skim_folder = "mc/merged_higmc_higlep1T/";
@@ -76,7 +76,7 @@ int main(int argc, char *argv[]){
   string qcd_mc_skim_folder = "mc/merged_higmc_higqcd/";
 
   string data_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
-  //string data_base_folder = "/net/cms25/cms25r0/pico/NanoAODv5/higgsino_humboldt";
+  //string data_base_folder = "/net/cms25/cms25r5/pico/NanoAODv5/higgsino_humboldt";
   string data_skim_folder = "data/merged_higdata_higloose/";
   string ttbar_data_skim_folder = "data/merged_higdata_higlep1T/";
   string zll_data_skim_folder = "data/merged_higdata_higlep2T/";

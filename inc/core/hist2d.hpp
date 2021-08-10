@@ -68,6 +68,7 @@ public:
 
   TH2D GetDataHist() const;
   TH2D GetBkgHist(bool bkg_is_hist) const;
+  double GetLuminosity() const {return luminosity_;};
 
 private:
   std::vector<std::unique_ptr<SingleHist2D> > backgrounds_;

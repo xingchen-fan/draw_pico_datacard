@@ -552,6 +552,62 @@ namespace HigUtilities {
     return combineDimensionBins(dimensionBins);
   }
 
+  void setABCDBinsPriority(map<string, NamedFunc> xBins, map<string, NamedFunc> yBins, map<string, vector<pair<string, NamedFunc> > > dimensionBins, vector<pair<string, NamedFunc> > & sampleBins, int priority)
+  {
+    // Combine dimensions to one list of dimensions.
+    combineDimensionBins(dimensionBins);
+  
+    auto dimension = dimensionBins.begin();
+    for (unsigned iBin = 0; iBin < dimension->second.size(); ++iBin)
+    {
+      for (auto yBin: yBins)
+      {
+        for (auto xBin : xBins)
+        {
+          string label = "x"+xBin.first+"_y"+yBin.first+"_"+(dimension->second)[iBin].first;
+          // Check if label is signal region or sideband region
+          bool isSignalRegion = false;
+          if (label.find("xsig")!=string::npos && label.find("ysig")!=string::npos) isSignalRegion = true;
+          // Apply cut according to SR,CR and priority
+          NamedFunc cut = xBin.second&&yBin.second&&(dimension->second)[iBin].second;
+          if (priority==1) cut = cut;
+          else if (priority==2) cut = cut&&"!boostSignalRegion&&!boostControlRegion";
+          else if (priority==3) {
+            if (isSignalRegion) cut = cut;
+            else cut = cut&&"!boostSignalRegion";
+          } else if (priority==4) {
+            if (isSignalRegion) cut = cut&&"!boostSignalRegion";
+            else cut = cut&&"!boostSignalRegion&&!boostControlRegion";
+          }
+          //cout<<"bins: "<<label<<" "<<cut<<endl;
+          sampleBins.push_back({label, cut});
+        }
+      }
+    }
+  }
+
+  void combineDimensionBins(map<string, vector<pair<string, NamedFunc> > > & dimensionBins)
+  {
+    unsigned nDimensions = dimensionBins.size();
+    if (nDimensions == 1) return;
+    auto dimension1 = dimensionBins.begin();
+    auto dimension2 = dimension1++;
+    // Combine dimensions
+    dimensionBins[dimension1->first+"_"+dimension2->first];
+    for (unsigned iDimension1 = 0; iDimension1 < dimension1->second.size(); ++iDimension1)
+    {
+      for (unsigned iDimension2 = 0; iDimension2 < dimension2->second.size(); ++iDimension2)
+      {
+        dimensionBins[dimension1->first+"_"+dimension2->first].push_back({dimension1->second[iDimension1].first+"_"+dimension2->second[iDimension2].first,dimension1->second[iDimension1].second&&dimension2->second[iDimension2].second});
+        //cout<<dimension1->first+"_"+dimension2->first<<":"<<dimension1->second[iDimension1].first+"_"+dimension2->second[iDimension2].first<<" "<<dimension1->second[iDimension1].second+"&&"+dimension2->second[iDimension2].second<<endl;
+      }
+    }
+    dimensionBins.erase(dimension1);
+    dimensionBins.erase(dimension2);
+    return combineDimensionBins(dimensionBins);
+  }
+
+
   void setMcProcesses(set<int> years, map<string, string> samplePaths, NamedFunc filters, map<string, vector<shared_ptr<Process> > > & sampleProcesses)
   {
     // mcTag['ttx'] = {*.root,*.root}
@@ -683,6 +739,16 @@ namespace HigUtilities {
     }
   }
   
+  void addBinCuts(vector<pair<string, NamedFunc> > sampleBins, NamedFunc baseline, NamedFunc weight, string tag, RowInformation & cutRows)
+  {
+    for (auto binCut : sampleBins)
+    {
+      cutRows.labels.push_back(tag +"_" + binCut.first);
+      cutRows.tableRows.push_back(TableRow("", baseline&&binCut.second,0,0,weight));
+      //cout<<cutRows.labels.back()<<" "<<cutRows.tableRows.back().cut_.Name()<<endl;
+    }
+  }
+
   void makePlots(map<string, RowInformation > & cutTable, map<string, vector<shared_ptr<Process> > > & sampleProcesses, float luminosity, PlotMaker & pm, bool verbose)
   {
     int tableIndex = 0;
@@ -847,6 +913,7 @@ namespace HigUtilities {
     set<int> years;
     HigUtilities::parseYears(year_string, years);
     float total_luminosity = 0;
+    // Search region luminosity
     for (auto const & year : years) {
       if (year == 2016) total_luminosity += 36.22;
       if (year == 2017) total_luminosity += 41.49;
