@@ -1305,9 +1305,11 @@ int main(/* int argc, char *argv[] */){
   // Load data
   // counts[iplane][0=mc/1=data][0=A,1=B,2=C,3=D] = GammaParams
   vector<vector<vector<GammaParams> > > counts;
-  // From scripts/datacard_to_counts.py, or from plot_kappas
-  string count_in_bins_filename = "counts_in_bins.txt";
-  //string count_in_bins_filename = "counts_in_bins_mc.txt";
+  // Can generate counts_in_bins.txt by two methods
+  // 1. scripts/datacard_to_counts.py
+  // 2. ./run/higgsino/plot_kappas.exe --sample search --year run2 --unblind --scen data --string_options save_entries_weights_to_file 
+  string count_in_bins_filename = "./txt/counts_in_bins/counts_in_bins.txt";
+  //string count_in_bins_filename = "./txt/counts_in_bins/counts_in_bins_mc.txt";
   load_counts(count_in_bins_filename, counts);
   //print_counts(counts);
 

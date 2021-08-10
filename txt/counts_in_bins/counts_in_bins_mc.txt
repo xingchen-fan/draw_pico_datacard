@@ -1,0 +1,81 @@
+iplane: 0 ibin: 0
+MC eff. entries: 2690.01 1074.58 362.443 145.343
+MC eff. weights: 0.223703 0.0490828 0.135439 0.036967
+Data entries: 602 58 50 9
+Data weights: 1 1 1 1
+iplane: 0 ibin: 1
+MC eff. entries: 2690.01 391.769 362.443 51.7176
+MC eff. weights: 0.223703 0.0549276 0.135439 0.0417271
+Data entries: 602 25 50 1
+Data weights: 1 1 1 1
+iplane: 1 ibin: 0
+MC eff. entries: 21827.5 3986.19 10792.8 820.744
+MC eff. weights: 0.141298 0.0652377 0.161755 0.191916
+Data entries: 2999 260 1711 141
+Data weights: 1 1 1 1
+iplane: 1 ibin: 1
+MC eff. entries: 21827.5 918.865 10792.8 578.364
+MC eff. weights: 0.141298 0.0983562 0.161755 0.0946951
+Data entries: 2999 83 1711 51
+Data weights: 1 1 1 1
+iplane: 2 ibin: 0
+MC eff. entries: 3525.49 255.806 314.274 111.621
+MC eff. weights: 0.10077 0.126204 0.132612 0.0367156
+Data entries: 385 25 28 2
+Data weights: 1 1 1 1
+iplane: 2 ibin: 1
+MC eff. entries: 3525.49 181.809 314.274 42.8237
+MC eff. weights: 0.10077 0.0797456 0.132612 0.043846
+Data entries: 385 12 28 3
+Data weights: 1 1 1 1
+iplane: 3 ibin: 0
+MC eff. entries: 19511.9 762.66 18619.6 2166.49
+MC eff. weights: 0.0938111 0.223716 0.0646852 0.0476427
+Data entries: 1677 150 1111 91
+Data weights: 1 1 1 1
+iplane: 3 ibin: 1
+MC eff. entries: 19511.9 257.584 18619.6 646.904
+MC eff. weights: 0.0938111 0.225611 0.0646852 0.0549259
+Data entries: 1677 45 1111 37
+Data weights: 1 1 1 1
+iplane: 4 ibin: 0
+MC eff. entries: 397.879 16.225 163.65 17.3993
+MC eff. weights: 0.122331 0.392492 0.0381799 0.0400608
+Data entries: 48 6 6 4
+Data weights: 1 1 1 1
+iplane: 4 ibin: 1
+MC eff. entries: 397.879 30.1928 163.65 12.5138
+MC eff. weights: 0.122331 0.0610279 0.0381799 0.0454262
+Data entries: 46 4 2 1
+Data weights: 1 1 1 1
+iplane: 5 ibin: 0
+MC eff. entries: 2171.33 295.795 2419.34 230.085
+MC eff. weights: 0.0883077 0.0607967 0.0628013 0.0582155
+Data entries: 198 20 117 14
+Data weights: 1 1 1 1
+iplane: 5 ibin: 1
+MC eff. entries: 2171.33 130.401 2419.34 51.5848
+MC eff. weights: 0.0883077 0.0574802 0.0628013 0.104274
+Data entries: 198 5 117 4
+Data weights: 1 1 1 1
+iplane: 6 ibin: 0
+MC eff. entries: 97.6345 13.456 79.6272 10.0916
+MC eff. weights: 0.133402 0.0666162 0.0429207 0.0285727
+Data entries: 14 2 5 0
+Data weights: 1 1 1 1
+iplane: 6 ibin: 1
+MC eff. entries: 97.6345 11.2996 79.6272 8.21327
+MC eff. weights: 0.133402 0.0228457 0.0429207 0.00795773
+Data entries: 14 2 5 1
+Data weights: 1 1 1 1
+iplane: 7 ibin: 0
+MC eff. entries: 597.64 70.2547 454.592 64.491
+MC eff. weights: 0.0607006 0.0441228 0.0635734 0.0378532
+Data entries: 35 3 33 3
+Data weights: 1 1 1 1
+iplane: 7 ibin: 1
+MC eff. entries: 597.64 32.833 454.592 22.2618
+MC eff. weights: 0.0607006 0.0409703 0.0635734 0.0495584
+Data entries: 35 3 33 0
+Data weights: 1 1 1 1
+

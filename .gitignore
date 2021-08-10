@@ -42,12 +42,14 @@ run/
 !txt/variables/*
 !txt/colors.txt
 !txt/plot_styles.txt
+!txt/counts_in_bins/*
 *.#*
 sftp-config.json
 .DS_Store
 datacard_*
 datacards_*
 datacards/*
+!scripts/datacard*
 cards_*
 sys_*.txt
 scan_point/
