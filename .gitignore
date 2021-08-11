@@ -43,6 +43,7 @@ run/
 !txt/colors.txt
 !txt/plot_styles.txt
 !txt/counts_in_bins/*
+!txt/golden/*
 *.#*
 sftp-config.json
 .DS_Store
