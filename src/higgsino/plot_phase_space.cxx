@@ -168,7 +168,7 @@ int main(int argc, char *argv[]){
   PlotOpt lin_shapes_info = lin_shapes().Title(TitleType::info).Bottom(BottomType::off);
 
   PlotOpt style("txt/plot_styles.txt", "Scatter");
-  vector<PlotOpt> plt_2D = {style().Stack(StackType::data_norm).Title(TitleType::data)};
+  vector<PlotOpt> plt_2D = {style().Stack(StackType::data_norm).Title(TitleType::info)};
 
   vector<PlotOpt> plt_norm_info = {lin_norm_info, log_norm_info};
   vector<PlotOpt> plt_lin = {lin_norm};
@@ -181,16 +181,14 @@ int main(int argc, char *argv[]){
   string mc_skim_folder = "mc/merged_higmc_higloose/";
 
   //string sig_base_folder = "/net/cms29/cms29r0/pico/NanoAODv5/higgsino_eldorado/";
-  string sig_base_folder = "/net/cms25/cms25r0/pico/NanoAODv5/higgsino_humboldt/";
-  string sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higloose/";
+  string sig_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
+  string sig_skim_folder = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_preselect/";
 
   set<int> years;
-  //years = {2016, 2017, 2018};
-  years = {2016};
+  years = {2016, 2017, 2018};
+  //years = {2016};
 
-  NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig;
-  if (years.size()==1 && *years.begin()==2016) weight *= "137.";
-  else weight *= w_years;
+  NamedFunc weight = Higfuncs::final_weight;
 
   vector<shared_ptr<Process> > procs;
 
@@ -233,22 +231,22 @@ int main(int argc, char *argv[]){
 
   // Set signal mc
   //vector<string> signal_mass = {"200", "450", "700", "950"}; 
-  //vector<string> signal_mass = {"950"}; 
-  vector<string> signal_mass = {}; 
+  vector<string> signal_mass = {"950"}; 
+  //vector<string> signal_mass = {}; 
   vector<int> sig_colors = {kGreen+1, kRed, kBlue, kOrange}; // need signal_mass.size() >= sig_colors.size()
   // 1D signal
   for (unsigned isig(0); isig<signal_mass.size(); isig++){
     procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+signal_mass[isig]+",1)", Process::Type::background, 
       sig_colors[isig], attach_folder(sig_base_folder, years, sig_skim_folder, {"*TChiHH_mChi-"+signal_mass[isig]+"_mLSP-0*.root"}), "1"));
   }
-  // 2D signal
-  //procs.push_back(Process::MakeShared<Baby_pico>("TChiHH(500,150)", Process::Type::background, 
-  //  sig_colors[0], attach_folder(sig_base_folder, years, sig_skim_folder, {"*TChiHH_mChi-500_mLSP-150*.root"}), "1"));
-  procs.push_back(Process::MakeShared<Baby_pico>("TChiHH(300,150)", Process::Type::background, 
-    //sig_colors[0], attach_folder(sig_base_folder, years, sig_skim_folder, {"*TChiHH_mChi-950_mLSP-600*.root"}), "1"));
-    sig_colors[0], attach_folder(sig_base_folder, years, sig_skim_folder, {"*TChiHH_mChi-*.root"}), "1"));
+  //// 2D signal
+  ////procs.push_back(Process::MakeShared<Baby_pico>("TChiHH(500,150)", Process::Type::background, 
+  ////  sig_colors[0], attach_folder(sig_base_folder, years, sig_skim_folder, {"*TChiHH_mChi-500_mLSP-150*.root"}), "1"));
+  //procs.push_back(Process::MakeShared<Baby_pico>("TChiHH(300,150)", Process::Type::background, 
+  //  //sig_colors[0], attach_folder(sig_base_folder, years, sig_skim_folder, {"*TChiHH_mChi-950_mLSP-600*.root"}), "1"));
+  //  sig_colors[0], attach_folder(sig_base_folder, years, sig_skim_folder, {"*TChiHH_mChi-*.root"}), "1"));
 
-  NamedFunc base_filters = HigUtilities::pass_2016 && "met/met_calo<5"; //since pass_fsjets is not quite usable...
+  NamedFunc base_filters = Higfuncs::final_pass_filters;
 
   // resolved cuts
   NamedFunc base_resolved = "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
@@ -269,9 +267,12 @@ int main(int argc, char *argv[]){
   //// Plot average mc_true deltaR_bb
   ////pm.Push<Hist1D>(Axis(16, 0, 3.2, mc_true_avg_dr, "true avg. \\Delta R_{bb}", {}),
   ////  base_filters&&base_resolved&&signal_resolved, procs, plt_lin).Weight(weight).Tag("ShortName:ResolvedSignalRegion");
-  pm.Push<Hist2D>(Axis(16, 0, 3.2, mc_true_leadH_dr, "Leading H \\Delta R_{bb}", {}),
-    Axis(20, 0, 500, mc_true_leadH_pt, "Leading H pT [GeV]", {}),
-    base_filters, procs, plt_2D).Weight(weight);
+  //pm.Push<Hist2D>(Axis(16, 0, 3.2, mc_true_leadH_dr, "Leading H \\Delta R_{bb}", {}),
+  //  Axis(20, 0, 500, mc_true_leadH_pt, "Leading H pT [GeV]", {}),
+  //  base_filters, procs, plt_2D).Weight(weight);
+  pm.Push<Hist2D>(Axis(16, 0, 3.2, mc_true_leadH_dr, "Leading H \\DeltaR_{bb}", {}),
+    Axis(16, 0, 3.2, mc_true_subleadH_dr, "Sub-leading H \\DeltaR_{bb}", {}),
+    base_filters, procs, plt_2D).Weight(weight).Tag("FixName:leadHDeltaR_vs_subleadHDeltaR");
   //pm.Push<Hist2D>(Axis(11, 0, 2.2, mc_true_leadH_dr, "Leading H \\Delta R_{bb}", {}),
   //  Axis(11, 0, 2.2, mc_true_subleadH_dr, "Subleading H \\Delta R_{bb}", {}),
   //  base_filters&&base_resolved&&signal_resolved, procs, plt_2D).Weight(weight).Tag("ShortName:ResolvedSignalRegion");
@@ -279,15 +280,15 @@ int main(int argc, char *argv[]){
   //  Axis(11, 0, 2.2, mc_true_subleadH_dr, "Subleading H \\Delta R_{bb}", {}),
   //  base_filters&&base_boosted&&signal_boosted, procs, plt_2D).Weight(weight).Tag("ShortName:BoostedSignalRegion");
 
-  // Plot drmax vs met
-  pm.Push<Hist2D>(
-    Axis(20, 0, 1000, "met", "p_{T}^{miss} [GeV]", {150, 200, 300, 400}),
-    Axis(16, 0, 3.2, "hig_cand_drmax[0]", "Max \\Delta R_{bb}", {1.1, 2.2}),
-    base_filters&&
-    "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
-    "hig_cand_drmax[0]<3.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
-    "((nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4)||(nbt==2&&nbm==2))"&&
-    signal_resolved, procs, plt_2D).Weight(weight).Tag("FixName:drmax_vs_met");
+  //// Plot drmax vs met
+  //pm.Push<Hist2D>(
+  //  Axis(20, 0, 1000, "met", "p_{T}^{miss} [GeV]", {150, 200, 300, 400}),
+  //  Axis(16, 0, 3.2, "hig_cand_drmax[0]", "Max \\Delta R_{bb}", {1.1, 2.2}),
+  //  base_filters&&
+  //  "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
+  //  "hig_cand_drmax[0]<3.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40&&"
+  //  "((nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4)||(nbt==2&&nbm==2))"&&
+  //  signal_resolved, procs, plt_2D).Weight(weight).Tag("FixName:drmax_vs_met");
 
   ////string signalName = "*TChiHH_mChi-450_mLSP-0*.root";
   ////string signalName = "*TChiHH_mChi-900_mLSP-0*.root";
@@ -335,6 +336,86 @@ int main(int argc, char *argv[]){
   pm.multithreaded_ = !single_thread;
   pm.min_print_ = true;
   pm.MakePlots(1.);
+
+  // Make custom pretty plot
+  float leftMargin = 0.13;
+  float rightMargin = 0.175;
+  float bottomMargin = 0.14;
+  float topMargin = 0.075;
+  TCanvas canvas("canvas", "canvas", 850, 600);
+  canvas.SetTicks(1,1);
+  canvas.SetFillStyle(4000);
+  canvas.SetMargin(leftMargin, rightMargin, bottomMargin, topMargin);
+  // Draw histogram
+  Hist2D * drPhaseSpace = static_cast<Hist2D*>(pm.GetFigure("leadHDeltaR_vs_subleadHDeltaR").get());
+  TH2D hist_drPhaseSpace = drPhaseSpace->GetBkgHist(1);
+  hist_drPhaseSpace.Draw("colz");
+  // Draw labels
+  TLatex cmsLabel(leftMargin+0.03-0.013, 1-topMargin-0.03+0.005+0.08,"#font[62]{CMS}");
+  cmsLabel.SetNDC();
+  cmsLabel.SetTextAlign(13);
+  cmsLabel.Draw();
+  TLatex supplementaryLabel(leftMargin+0.03+0.07, 1-topMargin-0.03-0.005+0.08, "#scale[0.69]{#font[52]{Simulation Supplementary}}");
+  supplementaryLabel.SetNDC();
+  supplementaryLabel.SetTextAlign(13);
+  supplementaryLabel.Draw();
+  TLatex luminosityLabel(1-rightMargin-0.03+0.02, 1-topMargin-0.03+0.005+0.08, "137 fb^{-1} (13 TeV)");
+  luminosityLabel.SetNDC();
+  luminosityLabel.SetTextAlign(33);
+  luminosityLabel.SetTextFont(42);
+  luminosityLabel.SetTextSize(0.043);
+  luminosityLabel.Draw();
+  TLatex physicsLabel(1-rightMargin-0.03, 1-topMargin-0.03+0.005, "TChiHH-G(950,1)");
+  physicsLabel.SetNDC();
+  physicsLabel.SetTextAlign(33);
+  physicsLabel.SetTextFont(42);
+  physicsLabel.SetTextSize(0.043);
+  physicsLabel.Draw();
+  // Draw boxes
+  TBox resolvedBox(0.4,0.4,2.2,2.2);
+  resolvedBox.SetLineColor(kBlue);
+  resolvedBox.SetFillStyle(0);
+  resolvedBox.SetLineWidth(5);
+  resolvedBox.Draw();
+  TLatex resolvedLabel(0.8, 1.4, "Resolved");
+  resolvedLabel.SetTextColor(kBlue);
+  resolvedLabel.SetTextFont(42);
+  resolvedLabel.SetTextSize(0.06);
+  resolvedLabel.Draw();
+  TBox boostedBox(0,0,0.8,0.8);
+  boostedBox.SetLineColor(kRed);
+  boostedBox.SetFillStyle(0);
+  boostedBox.SetLineWidth(5);
+  boostedBox.Draw();
+  TLatex boostedLabel(0.07, 0.15, "Boosted");
+  boostedLabel.SetTextColor(kRed);
+  boostedLabel.SetTextFont(42);
+  boostedLabel.SetTextSize(0.06);
+  boostedLabel.Draw();
+  TLine background_left1(0,2.3,0,3.2);
+  background_left1.SetLineWidth(5);
+  background_left1.Draw();
+  TLine background_left2(2.3,0,2.3,2.3);
+  background_left2.SetLineWidth(5);
+  background_left2.Draw();
+  TLine background_top(0,3.18,3.18,3.18);
+  background_top.SetLineWidth(5);
+  background_top.Draw();
+  TLine background_right(3.18,3.18,3.19,0);
+  background_right.SetLineWidth(5);
+  background_right.Draw();
+  TLine background_bottom1(2.3,0,3.19,0);
+  background_bottom1.SetLineWidth(5);
+  background_bottom1.Draw();
+  TLine background_bottom2(0,2.3,2.3,2.3);
+  background_bottom2.SetLineWidth(5);
+  background_bottom2.Draw();
+  TLatex backgroundLabel(1.3, 2.6, "#splitline{Background}{Dominated}");
+  backgroundLabel.SetTextFont(42);
+  backgroundLabel.SetTextSize(0.06);
+  backgroundLabel.Draw();
+  // Save canvas
+  canvas.Print("plots/leadHDeltaR_vs_subleadHDeltaR.pdf");
 
   time(&endtime); 
   cout<<endl<<"Took "<<difftime(endtime, begtime)<<" seconds"<<endl<<endl;
