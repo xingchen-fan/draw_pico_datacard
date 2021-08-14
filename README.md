@@ -97,6 +97,13 @@ cat datacards/t5hh_twodim/scan_point*/limit*txt | sort >> t5hh_twodim_resolved_l
 ./scripts/plot_ra4style_results.py
 ~~~~
 
+### To generate supplementary plots:
+
+~~~~bash
+./run/higgsino/plot_phase_space.exe
+./run/higgsino/plot_search_unblind.exe -o supplementary
+~~~~
+
 ## Getting Higgsino cross-section (CN to N1N2) scale factors.
 
 ### Step 1. Download cross-section files

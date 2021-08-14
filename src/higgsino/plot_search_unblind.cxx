@@ -40,7 +40,7 @@ namespace{
   // string_options is split by comma. ex) option1,option2 
   // Use HigUtilities::is_in_string_options(string_options, "option2") to check if in string_options.
   string string_options = "plot_in_btags,plot_in_btags_with_met_split,plot_baseline";
-  // Other options: plot_in_btags_for_mc,plot_in_btags_split,plot_in_planes,paper_style
+  // Other options: plot_in_btags_for_mc,plot_in_btags_split,plot_in_planes,paper_style,supplementary
   // paper_style - sets plot style and MC categories to match boosted
 }
 
@@ -300,12 +300,21 @@ void setProcsDict(string const & production, string const & nanoAodFolder, strin
 
   // Set mc btag procs
   procsDict["mc_btag"];
-  procsDict["mc_btag"].push_back(Process::MakeShared<Baby_pico>("All bkg. (2b)", Process::Type::background,colors("2b"),
-                  attach_folder(mc_production_folder, years, mc_skim_folder, mc_filenames["all"]),"stitch&&(nbt==2&&nbm==2)"));
-  procsDict["mc_btag"].push_back(Process::MakeShared<Baby_pico>("All bkg. (3b)", Process::Type::background,colors("3b"),
-                  attach_folder(mc_production_folder, years, mc_skim_folder, mc_filenames["all"]),"stitch&&(nbt>=2&&nbm==3&&nbl==3)"));
-  procsDict["mc_btag"].push_back(Process::MakeShared<Baby_pico>("All bkg. (4b)", Process::Type::background,colors("4b"),
-                  attach_folder(mc_production_folder, years, mc_skim_folder, mc_filenames["all"]),"stitch&&(nbt>=2&&nbm>=3&&nbl>=4)"));
+  if (HigUtilities::is_in_string_options(string_options, "supplementary")) {
+    procsDict["mc_btag"].push_back(Process::MakeShared<Baby_pico>("2b", Process::Type::background,kGreen,
+                    attach_folder(mc_production_folder, years, mc_skim_folder, mc_filenames["all"]),"stitch&&(nbt==2&&nbm==2)"));
+    procsDict["mc_btag"].push_back(Process::MakeShared<Baby_pico>("3b", Process::Type::background,kViolet+2,
+                    attach_folder(mc_production_folder, years, mc_skim_folder, mc_filenames["all"]),"stitch&&(nbt>=2&&nbm==3&&nbl==3)"));
+    procsDict["mc_btag"].push_back(Process::MakeShared<Baby_pico>("4b", Process::Type::background,kRed,
+                    attach_folder(mc_production_folder, years, mc_skim_folder, mc_filenames["all"]),"stitch&&(nbt>=2&&nbm>=3&&nbl>=4)"));
+  } else {
+    procsDict["mc_btag"].push_back(Process::MakeShared<Baby_pico>("All bkg. (2b)", Process::Type::background,colors("2b"),
+                    attach_folder(mc_production_folder, years, mc_skim_folder, mc_filenames["all"]),"stitch&&(nbt==2&&nbm==2)"));
+    procsDict["mc_btag"].push_back(Process::MakeShared<Baby_pico>("All bkg. (3b)", Process::Type::background,colors("3b"),
+                    attach_folder(mc_production_folder, years, mc_skim_folder, mc_filenames["all"]),"stitch&&(nbt>=2&&nbm==3&&nbl==3)"));
+    procsDict["mc_btag"].push_back(Process::MakeShared<Baby_pico>("All bkg. (4b)", Process::Type::background,colors("4b"),
+                    attach_folder(mc_production_folder, years, mc_skim_folder, mc_filenames["all"]),"stitch&&(nbt>=2&&nbm>=3&&nbl>=4)"));
+  }
 
   // Set mc isr procs
   procsDict["mc_nisr"];
@@ -483,6 +492,10 @@ int main(int argc, char *argv[]){
       plt_log = {log_norm_data_paper};
       plt_log_nb = {log_norm_data_paper_nb};
     }
+  }
+  if (HigUtilities::is_in_string_options(string_options, "supplementary")) {
+    PlotOpt lin_shapes_supplementary = lin_norm().Title(TitleType::simulation_supplementary).Stack(StackType::shapes).Bottom(BottomType::ratio);
+    plt_shapes = {lin_shapes_supplementary};
   }
 
   set<int> years;
@@ -1059,6 +1072,12 @@ int main(int argc, char *argv[]){
     }
   }
 
+  if (HigUtilities::is_in_string_options(string_options, "supplementary")) {
+    // average mass (mc 2bvs3bvs4b); [search] 
+    pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {}, {100, 140}),
+      search_filters&&search_resolved_cuts&&extra_cut, procs_search["mc_btag"], plt_shapes).RatioTitle("3b/4b", "2b").LeftLabel({"          CSB,SB           CSR,SR    CSB,SB"}).Weight(weight).Tag("FixName:amjj_2b3b4b__search"+prelim_string).LuminosityTag(total_luminosity_string);
+  }
+
   pm.multithreaded_ = !single_thread;
   pm.min_print_ = true;
   pm.MakePlots(1.);
@@ -1070,6 +1089,7 @@ int main(int argc, char *argv[]){
   //  cout<<figure->Name()<<endl;
   //  // Processes
   //}
+
 
   time(&endtime); 
   cout<<endl<<"Took "<<difftime(endtime, begtime)<<" seconds"<<endl<<endl;
