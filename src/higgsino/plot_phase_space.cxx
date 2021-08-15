@@ -270,8 +270,8 @@ int main(int argc, char *argv[]){
   //pm.Push<Hist2D>(Axis(16, 0, 3.2, mc_true_leadH_dr, "Leading H \\Delta R_{bb}", {}),
   //  Axis(20, 0, 500, mc_true_leadH_pt, "Leading H pT [GeV]", {}),
   //  base_filters, procs, plt_2D).Weight(weight);
-  pm.Push<Hist2D>(Axis(16, 0, 3.2, mc_true_leadH_dr, "Leading H \\DeltaR_{bb}", {}),
-    Axis(16, 0, 3.2, mc_true_subleadH_dr, "Sub-leading H \\DeltaR_{bb}", {}),
+  pm.Push<Hist2D>(Axis(16, 0, 3.2, mc_true_leadH_dr, "Leading H \\DeltaR_{b\\bar{b}}", {}),
+    Axis(16, 0, 3.2, mc_true_subleadH_dr, "Sub-leading H \\DeltaR_{b\\bar{b}}", {}),
     base_filters, procs, plt_2D).Weight(weight).Tag("FixName:leadHDeltaR_vs_subleadHDeltaR");
   //pm.Push<Hist2D>(Axis(11, 0, 2.2, mc_true_leadH_dr, "Leading H \\Delta R_{bb}", {}),
   //  Axis(11, 0, 2.2, mc_true_subleadH_dr, "Subleading H \\Delta R_{bb}", {}),
