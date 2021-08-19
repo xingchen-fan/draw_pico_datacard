@@ -1231,7 +1231,9 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
       float kap = k_ordered[iplane][ibin][0], kap_mm = k_ordered_mm[iplane][ibin][0];
       TString text = ""; 
       //if(alt_scen=="data") text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-1)*100,0,1)+"%"; // with respect to kappa being 1
-      if(alt_scen=="data") text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-kap)*100,0,kap)+"%"; // with respect to kap because mc is value that will be used.
+      if(alt_scen=="data") {
+        text = "#Delta_{#kappa} = "+RoundNumber((kap_mm-kap)*100,0,kap)+"%"; // with respect to kap because mc is value that will be used.
+      }
       else if (alt_scen=="mc_as_data" || alt_scen=="mc") {
         text = "#Delta_{#kappa}="+RoundNumber((kap-1)*100,0,1)+"%";
         if (HigUtilities::is_in_string_options(string_options, "paper_style")) text = "#Delta="+RoundNumber((kap-1)*100,0,1)+"%";
@@ -1240,7 +1242,10 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
         /*if fake mismeasure*/ text = "#Delta_{#kappa}="+RoundNumber((kap_mm-kap)*100,0,kap)+"%";
         cout<<"bin["<<ibin<<"] plane["<<iplane<<"] Delta kappa: "<<RoundNumber((kap_mm-kap)*100,0,kap)+"%"<<endl;
       }
-      klabel.SetTextSize(abcd.planecuts.size()>=10 ? 0.025 : 0.035);
+      if (HigUtilities::is_in_string_options(string_options, "paper_style") && (sample != "search"))
+        klabel.SetTextSize(0.032);
+      else
+        klabel.SetTextSize(abcd.planecuts.size()>=10 ? 0.025 : 0.035);
       klabel.DrawLatex(bin, 0.85*maxy, text);
       //// Printing stat uncertainty of kappa_mm/kappa
       float kapUp = k_ordered[iplane][ibin][1], kapDown = k_ordered[iplane][ibin][2];
@@ -1273,7 +1278,10 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
       }
       klabel.DrawLatex(bin, 0.78*maxy, text);
       // adding label to indicate the ABCD corresponding to each kappa value
-      klabel.SetTextSize(abcd.planecuts.size()>=10 ? 0.025 : 0.035);
+      if (HigUtilities::is_in_string_options(string_options, "paper_style") && (sample != "search"))
+        klabel.SetTextSize(0.032);
+      else
+        klabel.SetTextSize(abcd.planecuts.size()>=10 ? 0.025 : 0.035);
       
       if (sample=="search" || sample=="ttbar") text = ibin%2==0 ? "3b/2b" : "4b/2b"; 
       else if (sample=="zll") text = do_midnb ? "2b/1b" : "1b/0b"; 
@@ -1290,7 +1298,11 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
 
     // All the labels on the X-axis...
     TLatex label; label.SetTextSize(0.05); label.SetTextFont(42); label.SetTextAlign(23);
-    label.SetTextSize(abcd.planecuts.size()>=10 ? 0.025 : 0.045);
+    if (HigUtilities::is_in_string_options(string_options, "paper_style") && sample != "search")
+      label.SetTextSize(0.04);
+    else
+      label.SetTextSize(abcd.planecuts.size()>=10 ? 0.025 : 0.045);
+
     string metdef = "met";
     if (sample=="zll") metdef = "ll_pt";
     double lmargin(opts.LeftMargin()+0.025), rmargin(opts.RightMargin()+0.025), bmargin(opts.BottomMargin());
@@ -1299,7 +1311,10 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
       string plabel = abcd.planecuts[iplane].Data();
       string drlabel = plabel.substr(plabel.find("hig_cand_drmax"), plabel.length());
       drlabel = CodeToRootTex(drlabel);
-      label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/abcd.planecuts.size()*(iplane+0.5), 0.25, drlabel.c_str());
+      if ((sample == "zll" || sample == "qcd")) //1 bin per plane
+        label.DrawLatex(iplane+1.0, 0.4, drlabel.c_str());
+      else
+        label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/abcd.planecuts.size()*(iplane+0.5), 0.25, drlabel.c_str());
 
       if (iplane%2==0) { // write the MET bin only once per each pair of drmax bins
         ReplaceAll(plabel," ", "");
@@ -1368,6 +1383,8 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
   TString cmsPrel = "#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}";
   TString cmsSim = "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation}}";
   TString cmsSimPrel = "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation Preliminary}}";
+  TString cmsSup = "#font[62]{CMS} #scale[0.8]{#font[52]{Supplementary}}";
+  TString cmsSimSup = "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation Supplementary}}";
   //if (!HigUtilities::is_in_string_options(string_options, "paper_style")) cmsSim = "#font[62]{CMS} #scale[0.8]{#font[52]{Simulation Preliminary}}";
   TLatex cmslabel;
   cmslabel.SetTextSize(0.06);
@@ -1378,8 +1395,14 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
     else cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,cmsPrel);
   }
   else {
-    if(alt_scen != "data") cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,cmsSim);
-    else cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,cmsText);
+    if (sample.Contains("zll") || sample.Contains("qcd") || sample.Contains("ttbar")) {
+     if(alt_scen != "data") cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,cmsSimSup);
+     else cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,cmsSup);
+    }
+    else {
+     if(alt_scen != "data") cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,cmsSim);
+     else cmslabel.DrawLatex(opts.LeftMargin()+0.005, 1-opts.TopMargin()+0.015,cmsText);
+    }
   }
   cmslabel.SetTextAlign(31);
   //cmslabel.DrawLatex(1-opts.RightMargin()-0.005, 1-opts.TopMargin()+0.015,"#font[42]{13 TeV}");

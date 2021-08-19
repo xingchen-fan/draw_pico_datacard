@@ -39,8 +39,8 @@ namespace{
   bool unblind_signalregion = false;
   // string_options is split by comma. ex) option1,option2 
   // Use HigUtilities::is_in_string_options(string_options, "option2") to check if in string_options.
-  string string_options = "plot_in_btags,plot_in_btags_with_met_split,plot_baseline";
-  // Other options: plot_in_btags_for_mc,plot_in_btags_split,plot_in_planes,paper_style
+  string string_options = "plot_in_btags,plot_in_btags_with_met_split,plot_baseline,supplementary";
+  // Other options: plot_in_btags_for_mc,plot_in_btags_split,plot_in_planes,paper_style,preliminary,supplementary
   // paper_style - sets plot style and MC categories to match boosted
 }
 
@@ -442,6 +442,9 @@ int main(int argc, char *argv[]){
   TitleType cms_title = TitleType::data;
   if (HigUtilities::is_in_string_options(string_options, "preliminary")) {
     cms_title = TitleType::preliminary;
+  }
+  if (HigUtilities::is_in_string_options(string_options, "supplementary")) {
+    cms_title = TitleType::supplementary;
   }
 
   PlotOpt lin_norm_info("txt/plot_styles.txt", "CMSPaper");

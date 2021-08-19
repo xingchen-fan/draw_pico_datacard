@@ -370,7 +370,7 @@ def decorate_graph2d(graph):
   can.SetMargin(0.13, 0.17, 0.15, 0.15);
   #can.SetFillStyle(4000);
   hdummy = ROOT.TH2D('hdummy2','',26,150,800,43,0,675)
-  hdummy.GetZaxis().SetTitle('Resolved Signal Efficiency')
+  #hdummy.GetZaxis().SetTitle('Resolved Signal Efficiency')
   #NOTE!! drawing multiple COLZ plots only works if the z-axis range is the same
   hdummy.GetZaxis().SetRangeUser(5.0e-6,1.0)
   hdummy.GetYaxis().SetTitle('m('+STR_CHI10+') [GeV]')
@@ -522,7 +522,7 @@ if __name__ == "__main__":
 
   #make 2D plot
   #twodim_tchihh_efficiency = ROOT.TH2D('twodim_tchihh_efficiency','',26,150,800,43,0,675)
-  num_2d_points = len([name for name in os.listdir(twodim_datacard_dir) if os.path.isfile(twodim_datacard_dir+'/'+name)])
+  num_2d_points = len([name for name in os.listdir(twodim_datacard_dir) if (os.path.isfile(twodim_datacard_dir+'/'+name) and (not 'mChi-127' in name))])-1
   twodim_tchihh_efficiency = ROOT.TGraph2D(num_2d_points)
   higgsino_mass = 150
   xbin = 1

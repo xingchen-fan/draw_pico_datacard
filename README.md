@@ -97,6 +97,22 @@ cat datacards/t5hh_twodim/scan_point*/limit*txt | sort >> t5hh_twodim_resolved_l
 ./scripts/plot_ra4style_results.py
 ~~~~
 
+### To generate supplementary plots:
+
+~~~~bash
+./run/higgsino/an_plot_triggers.exe --unblind --year run2 --string_options plots,paper_style
+./run/higgsino/plot_kappas.exe --sample ttbar --scen data --unblind --year run2 -o paper_style
+./run/higgsino/plot_kappas.exe --sample zll --scen data --unblind --year run2 -o paper_style
+./run/higgsino/plot_kappas.exe --sample qcd --scen data --unblind --year run2 -o paper_style
+./run/higgsino/an_plot_triggers.exe -u -o plot,paper_style
+./run/higgsino/an_plot_syst_zll.exe --year run2 --unblind -o paper_style
+./run/higgsino/an_plot_syst_qcd.exe --year run2 --unblind -o paper_style
+./run/higgsino/an_plot_syst_ttbar.exe --year run2 --unblind -o plot_data_vs_mc,paper_style
+./run/higgsino/plot_search_unblind.exe --year run2 -u --unblind_signal -o plot_in_btags,plot_in_btags_with_met_split,paper_style,supplementary
+./run/higgsino/plot_supplementary_pies.exe --year run2
+./scripts/plot_signal_efficiency.py
+~~~~
+
 ## Getting Higgsino cross-section (CN to N1N2) scale factors.
 
 ### Step 1. Download cross-section files
