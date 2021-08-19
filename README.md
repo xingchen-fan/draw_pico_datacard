@@ -111,6 +111,8 @@ cat datacards/t5hh_twodim/scan_point*/limit*txt | sort >> t5hh_twodim_resolved_l
 ./run/higgsino/plot_search_unblind.exe --year run2 -u --unblind_signal -o plot_in_btags,plot_in_btags_with_met_split,paper_style,supplementary
 ./run/higgsino/plot_supplementary_pies.exe --year run2
 ./scripts/plot_signal_efficiency.py
+./run/higgsino/plot_phase_space.exe
+./run/higgsino/plot_search_unblind.exe -o supplementary
 ~~~~
 
 ## Getting Higgsino cross-section (CN to N1N2) scale factors.
