@@ -47,7 +47,7 @@ namespace{
   string lepton_type = "";
   // string_options is split by comma. ex) option1,option2 
   // Use HigUtilities::is_in_string_options(string_options, "option2") to check if in string_options.
-  // Options: plot_additional_variables,plot_ht_correlation,plot_eta_vs_phi,plot_in_bins, cut_3b4b, plot_dr
+  // Options: plot_additional_variables,plot_ht_correlation,plot_eta_vs_phi,plot_in_bins, cut_3b4b, plot_dr, use_dm_sideband
   string string_options = "";
 }
 
@@ -360,7 +360,8 @@ int main(int argc, char *argv[]){
   search_resolved_cuts.insert("njet", "njet>=4&&njet<=5");
   search_resolved_cuts.insert("hig_cand_drmax", "hig_cand_drmax[0]<2.2");
   search_resolved_cuts.insert("hig_cand_am", "hig_cand_am[0]<200");
-  search_resolved_cuts.insert("hig_cand_dm", "hig_cand_dm[0]<40");
+  if (HigUtilities::is_in_string_options(string_options, "use_dm_sideband")) search_resolved_cuts.insert("hig_cand_dm", "hig_cand_dm[0]>0");
+  else search_resolved_cuts.insert("hig_cand_dm", "hig_cand_dm[0]<40");
   search_resolved_cuts.insert("btags", "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))");
   search_resolved_cuts.insert("mht_filter", "met/mht<2");
   search_resolved_cuts.insert("met_calo_filter", "met/met_calo<2");
@@ -520,6 +521,7 @@ int main(int argc, char *argv[]){
   axis_dict.insert("btags",Axis(3, 1.5, 4.5, Higfuncs::hig_bcat, "N_{b}", {2.5}));
   //axis_dict.insert("lep_pt",Axis(10, 0, 300., "lep_pt[0]", "p_{l} [GeV]", {30}));
   axis_dict.insert("lep_pt",Axis(10, 0, 300., Higfuncs::lead_signal_lepton_pt, "p_{t}^{l} [GeV]", {30}));
+  axis_dict.insert("noniso_lep_pt",Axis(11, -30, 300, Higfuncs::lead_lepton_pt, "p_{t}^{l} [GeV]", {}));
   axis_dict.insert("mt",Axis(10, 0, 200., "mt", "m_{T} [GeV]", {100}));
   axis_dict.insert("dbtags",Axis(5, -0.5, 4.5, "nbm", "N_{b medium}", {}));
   axis_dict.insert("ll_pt",Axis(16, 0, 400., "ll_pt[0]", "p_{T}^{ll} [GeV]", {75., 150., 200., 300}));
@@ -527,7 +529,7 @@ int main(int argc, char *argv[]){
   axis_dict.insert("mht_filter",Axis(10, 0, 10, "met/mht", "MET/MHT", {2}));
   axis_dict.insert("met_calo_filter",Axis(10, 0, 10, "met/met_calo", "MET/MET_calo", {2,5}));
   axis_dict.insert("weight",Axis(80, 0, 20, "weight", "weight", {1.5}));
-  vector<string> log_plots = {"met", "btags", "weight", "h1b1_jetid", "h1b2_jetid", "h2b1_jetid", "h1b2_jetid"};
+  vector<string> log_plots = {"met", "btags", "weight", "h1b1_jetid", "h1b2_jetid", "h2b1_jetid", "h1b2_jetid", "noniso_lep_pt"};
 
 
   // Draw n-1
@@ -588,16 +590,17 @@ int main(int argc, char *argv[]){
     target_variables.insert("h2_mass");
     target_variables.insert("mht_filter");
     target_variables.insert("jet_pt[0]");
-    target_variables.insert("mod_hig_cand_drmax");
-    target_variables.insert("mod_hig_cand_am");
-    target_variables.insert("mod_hig_cand_dm");
+    //target_variables.insert("mod_hig_cand_drmax");
+    //target_variables.insert("mod_hig_cand_am");
+    //target_variables.insert("mod_hig_cand_dm");
+    target_variables.insert("noniso_lep_pt");
   }
 
   NamedFunc basic_cut = "1";
   if (sample_name == "search") basic_cut = "(nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4)";
   if (HigUtilities::is_in_string_options(string_options, "cut_3b4b")) basic_cut = "(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4)";
+  else if (HigUtilities::is_in_string_options(string_options, "use_dm_sideband")) basic_cut = "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))&&njet>=4&&njet<=5&&hig_cand_dm[0]>40";
   //basic_cut = "njet>=4&&hig_cand_am[0]>100&&hig_cand_am[0]<=140&&hig_cand_drmax[0]<=1.1";
-
   // Loop over variables
   for (auto const & target_var : target_variables) {
 
