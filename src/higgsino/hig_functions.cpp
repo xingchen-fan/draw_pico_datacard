@@ -1553,70 +1553,133 @@ const NamedFunc h2_mass("h2_mass",[](const Baby &b) -> NamedFunc::ScalarType{
 
 const NamedFunc lead_signal_lepton_pt("lead_signal_lepton_pt",[](const Baby &b) -> NamedFunc::ScalarType{
   // Search for signal electrons
-  float lead_electron_pt = -1;
+  float lead_electron_pt_event = -1;
   for (unsigned iEl = 0; iEl < b.el_sig()->size(); ++iEl) {
     if (b.el_sig()->at(iEl)) {
-      lead_electron_pt = b.el_pt()->at(iEl); 
+      lead_electron_pt_event = b.el_pt()->at(iEl); 
       break;
     }
   }
   // Search for signal muons
-  float lead_muon_pt = -1;
+  float lead_muon_pt_event = -1;
   for (unsigned iMu = 0; iMu < b.mu_sig()->size(); ++iMu) {
     if (b.mu_sig()->at(iMu)) {
-      lead_muon_pt = b.mu_pt()->at(iMu); 
+      lead_muon_pt_event = b.mu_pt()->at(iMu); 
       break;
     }
   }
   // Warnings
-  if (lead_electron_pt==-1 && lead_muon_pt==-1) {
+  if (lead_electron_pt_event==-1 && lead_muon_pt_event==-1) {
     //cout<<"[Warning] Higfuncs::lead_signal_lepton_pt => There are no signal leptons. Returning -1. nlep: "<<b.nlep()<<" nel: "<<b.nel()<<" nmu: "<<b.nmu()<<" nvmu: "<<b.nvmu()<<endl;
     return -1;
-  } else if (lead_electron_pt != -1 && lead_muon_pt != -1) {
+  } else if (lead_electron_pt_event != -1 && lead_muon_pt_event != -1) {
     // Return max pt
-    return max(lead_electron_pt, lead_muon_pt);
-  } else if (lead_electron_pt != -1 && lead_muon_pt == -1) { // Electron case
-    return lead_electron_pt;
+    return max(lead_electron_pt_event, lead_muon_pt_event);
+  } else if (lead_electron_pt_event != -1 && lead_muon_pt_event == -1) { // Electron case
+    return lead_electron_pt_event;
   } else { // Muon case
-    return lead_muon_pt;
+    return lead_muon_pt_event;
   }
 });
 
 const NamedFunc lead_signal_muon_pt("lead_signal_muon_pt",[](const Baby &b) -> NamedFunc::ScalarType{
   // Search for signal muons
-  float lead_muon_pt = -1;
+  float lead_muon_pt_event = -1;
   for (unsigned iMu = 0; iMu < b.mu_sig()->size(); ++iMu) {
     if (b.mu_sig()->at(iMu)) {
-      lead_muon_pt = b.mu_pt()->at(iMu); 
+      lead_muon_pt_event = b.mu_pt()->at(iMu); 
       break;
     }
   }
   // Warnings
-  if (lead_muon_pt==-1) {
+  if (lead_muon_pt_event==-1) {
     cout<<"[Warning] Higfuncs::lead_signal_muon_pt => There is no signal muons. Returning -1. nlep: "<<b.nlep()<<" nel: "<<b.nel()<<" nmu: "<<b.nmu()<<" nvmu: "<<b.nvmu()<<endl;
     return -1;
   } else { // Muon case
-    return lead_muon_pt;
+    return lead_muon_pt_event;
   }
 });
 
 const NamedFunc lead_signal_electron_pt("lead_signal_electron_pt",[](const Baby &b) -> NamedFunc::ScalarType{
   // Search for signal electrons
-  float lead_electron_pt = -1;
+  float lead_electron_pt_event = -1;
   for (unsigned iEl = 0; iEl < b.el_sig()->size(); ++iEl) {
     if (b.el_sig()->at(iEl)) {
-      lead_electron_pt = b.el_pt()->at(iEl); 
+      lead_electron_pt_event = b.el_pt()->at(iEl); 
       break;
     }
   }
   // Warnings
-  if (lead_electron_pt==-1) {
+  if (lead_electron_pt_event==-1) {
     cout<<"[Warning] Higfuncs::lead_signal_electron_pt => There is no electron leptons. Returning -1. nlep: "<<b.nlep()<<" nel: "<<b.nel()<<" nmu: "<<b.nmu()<<" nvmu: "<<b.nvmu()<<endl;
     return -1;
   } else {
-    return lead_electron_pt;
+    return lead_electron_pt_event;
   }
 });
+
+const NamedFunc lead_lepton_pt("lead_lepton_pt",[](const Baby &b) -> NamedFunc::ScalarType{
+  // Search for electrons
+  float lead_electron_pt_event = -1;
+  for (unsigned iEl = 0; iEl < b.el_pt()->size(); ++iEl) {
+    //if (b.el_miniso()->at(iEl) >= 0.1) continue;
+    lead_electron_pt_event = b.el_pt()->at(iEl); 
+    break;
+  }
+  // Search for muons
+  float lead_muon_pt_event = -1;
+  for (unsigned iMu = 0; iMu < b.mu_pt()->size(); ++iMu) {
+    //if (b.mu_miniso()->at(iMu) >= 0.2) continue;
+    lead_muon_pt_event = b.mu_pt()->at(iMu); 
+    break;
+  }
+  // Warnings
+  if (lead_electron_pt_event==-1 && lead_muon_pt_event==-1) {
+    //cout<<"[Warning] Higfuncs::lead_signal_lepton_pt => There are no signal leptons. Returning -1. nlep: "<<b.nlep()<<" nel: "<<b.nel()<<" nmu: "<<b.nmu()<<" nvmu: "<<b.nvmu()<<endl;
+    return -1;
+  } else if (lead_electron_pt_event != -1 && lead_muon_pt_event != -1) {
+    // Return max pt
+    return max(lead_electron_pt_event, lead_muon_pt_event);
+  } else if (lead_electron_pt_event != -1 && lead_muon_pt_event == -1) { // Electron case
+    return lead_electron_pt_event;
+  } else { // Muon case
+    return lead_muon_pt_event;
+  }
+});
+
+const NamedFunc lead_muon_pt("lead_muon_pt",[](const Baby &b) -> NamedFunc::ScalarType{
+  // Search for signal muons
+  float lead_muon_pt_event = -1;
+  for (unsigned iMu = 0; iMu < b.mu_pt()->size(); ++iMu) {
+    lead_muon_pt_event = b.mu_pt()->at(iMu); 
+    break;
+  }
+  // Warnings
+  if (lead_muon_pt_event==-1) {
+    cout<<"[Warning] Higfuncs::lead_signal_muon_pt => There is no signal muons. Returning -1. nlep: "<<b.nlep()<<" nel: "<<b.nel()<<" nmu: "<<b.nmu()<<" nvmu: "<<b.nvmu()<<endl;
+    return -1;
+  } else { // Muon case
+    return lead_muon_pt_event;
+  }
+});
+
+const NamedFunc lead_electron_pt("lead_electron_pt",[](const Baby &b) -> NamedFunc::ScalarType{
+  // Search for signal electrons
+  float lead_electron_pt_event = -1;
+  for (unsigned iEl = 0; iEl < b.el_pt()->size(); ++iEl) {
+    lead_electron_pt_event = b.el_pt()->at(iEl); 
+    break;
+  }
+  // Warnings
+  if (lead_electron_pt_event==-1) {
+    cout<<"[Warning] Higfuncs::lead_signal_electron_pt => There is no electron leptons. Returning -1. nlep: "<<b.nlep()<<" nel: "<<b.nel()<<" nmu: "<<b.nmu()<<" nvmu: "<<b.nvmu()<<endl;
+    return -1;
+  } else {
+    return lead_electron_pt_event;
+  }
+});
+
+
 
 const NamedFunc pass_ecalnoisejet("pass_ecalnoisejet", [](const Baby &b) -> NamedFunc::ScalarType{
   //check top two highest pt jets in eta 2.4 to 5.0 region, if either has pt>250 and is closely aligned or anti-aligned with MET, then the event is vetoed
