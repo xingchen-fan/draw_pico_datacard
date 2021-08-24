@@ -91,7 +91,7 @@ namespace{
   string year_string = "2016,2017,2018";
   // string_options is split by comma. ex) option1,option2 
   // Use HigUtilities::is_in_string_options(string_options, "option2") to check if in string_options.
-  // Options: use_old_trigger,split_ttbar_met,search_ttbar_same_bins,save_entries_weights_to_file,print_entries_weights,do_zbi,do_zbi_signal,use_datacard_results,preliminary
+  // Options: use_old_trigger,split_ttbar_met,search_ttbar_same_bins,save_entries_weights_to_file,print_entries_weights,do_zbi,do_zbi_signal,use_datacard_results,preliminary,lepton_pt_split,use_dm_sideband
   // use_datacard_results expects txt/datacard_results.json made from script/process_datacard.py
   string string_options = "paper_style";
 }
@@ -211,7 +211,9 @@ int main(int argc, char *argv[]){
   
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Defining baseline cuts ///////////////////////////////////////
-  TString c_hig_trim = "hig_cand_drmax[0]<2.2  && hig_cand_dm[0]<40 && hig_cand_am[0]<200";
+  TString c_hig_trim;
+  if (HigUtilities::is_in_string_options(string_options, "use_dm_sideband")) c_hig_trim = "hig_cand_drmax[0]<2.2  && hig_cand_dm[0]>=40 && hig_cand_am[0]<200";
+  else c_hig_trim = "hig_cand_drmax[0]<2.2  && hig_cand_dm[0]<40 && hig_cand_am[0]<200";
   string baseline_s = "njet>=4 && njet<=5";
   if (sample=="search") baseline_s += " && nvlep==0 && ntk==0 && !low_dphi_met &&"+c_hig_trim;
   else if (sample=="ttbar") baseline_s += " && nlep==1 && mt<100 &&"+c_hig_trim;
@@ -374,6 +376,8 @@ int main(int argc, char *argv[]){
       metcuts.push_back(metdef+">150&&"+metdef+"<=200");
       metcuts.push_back(metdef+">200&&"+metdef+"<=300");
       metcuts.push_back(metdef+">300");
+    } else if (HigUtilities::is_in_string_options(string_options, "use_dm_sideband")) {
+      metcuts.push_back(metdef+">150");
     } else {
       metcuts.push_back(metdef+">150&&"+metdef+"<=200");
       metcuts.push_back(metdef+">200&&"+metdef+"<=300");
@@ -397,6 +401,11 @@ int main(int argc, char *argv[]){
       metcuts.push_back(metdef+">150&&"+metdef+"<=200");
       metcuts.push_back(metdef+">200&&"+metdef+"<=300");
       metcuts.push_back(metdef+">300");
+    } else if (HigUtilities::is_in_string_options(string_options, "lepton_pt_split")) {
+      metcuts.push_back("leadingSignalLeptonPt>30&&leadingSignalLeptonPt<=60");
+      metcuts.push_back("leadingSignalLeptonPt>60&&leadingSignalLeptonPt<=90");
+      metcuts.push_back("leadingSignalLeptonPt>90&&leadingSignalLeptonPt<=150");
+      metcuts.push_back("leadingSignalLeptonPt>150");
     }else {
       metcuts.push_back(metdef+">0&&"+metdef+"<=75");
       metcuts.push_back(metdef+">75&&"+metdef+"<=150");
@@ -407,7 +416,8 @@ int main(int argc, char *argv[]){
     if (sample=="qcd" || sample=="search") { // add an inclusive bin
       metcuts.push_back(metdef+">150");
     } else if (sample=="ttbar" ) {
-      if (!split_ttbar_met || !HigUtilities::is_in_string_options(string_options, "search_ttbar_same_bins")) {
+      if (HigUtilities::is_in_string_options(string_options, "lepton_pt_split")) {
+      } else if (!split_ttbar_met || !HigUtilities::is_in_string_options(string_options, "search_ttbar_same_bins") || !HigUtilities::is_in_string_options(string_options, "lepton_pt_split")) {
         metcuts.push_back(metdef+">0");
       }
     } else if (sample=="zll"){
