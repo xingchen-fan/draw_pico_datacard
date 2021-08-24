@@ -343,4 +343,71 @@ namespace Functions{
     return regionCut(b, 1);
   });
 
+  const NamedFunc leadingSignalLeptonPt("leadingSignalLeptonPt",[](const Baby &b) -> NamedFunc::ScalarType{
+    // Search for signal electrons
+    float lead_electron_pt = -1;
+    for (unsigned iEl = 0; iEl < b.el_sig()->size(); ++iEl) {
+      if (b.el_sig()->at(iEl)) {
+        lead_electron_pt = b.el_pt()->at(iEl); 
+        break;
+      }
+    }
+    // Search for signal muons
+    float lead_muon_pt = -1;
+    for (unsigned iMu = 0; iMu < b.mu_sig()->size(); ++iMu) {
+      if (b.mu_sig()->at(iMu)) {
+        lead_muon_pt = b.mu_pt()->at(iMu); 
+        break;
+      }
+    }
+    // Warnings
+    if (lead_electron_pt==-1 && lead_muon_pt==-1) {
+      //cout<<"[Warning] Functions::leadSignalLeptonPt => There are no signal leptons. Returning -1. nlep: "<<b.nlep()<<" nel: "<<b.nel()<<" nmu: "<<b.nmu()<<" nvmu: "<<b.nvmu()<<endl;
+      return -1;
+    } else if (lead_electron_pt != -1 && lead_muon_pt != -1) {
+      // Return max pt
+      return max(lead_electron_pt, lead_muon_pt);
+    } else if (lead_electron_pt != -1 && lead_muon_pt == -1) { // Electron case
+      return lead_electron_pt;
+    } else { // Muon case
+      return lead_muon_pt;
+    }
+  });
+  
+  const NamedFunc leadingSignalMuonPt("leadingSignalMuonPt",[](const Baby &b) -> NamedFunc::ScalarType{
+    // Search for signal muons
+    float lead_muon_pt = -1;
+    for (unsigned iMu = 0; iMu < b.mu_sig()->size(); ++iMu) {
+      if (b.mu_sig()->at(iMu)) {
+        lead_muon_pt = b.mu_pt()->at(iMu); 
+        break;
+      }
+    }
+    // Warnings
+    if (lead_muon_pt==-1) {
+      cout<<"[Warning] Functions::leadingSignalMuonPt => There is no signal muons. Returning -1. nlep: "<<b.nlep()<<" nel: "<<b.nel()<<" nmu: "<<b.nmu()<<" nvmu: "<<b.nvmu()<<endl;
+      return -1;
+    } else { // Muon case
+      return lead_muon_pt;
+    }
+  });
+  
+  const NamedFunc leadingSignalElectronPt("leadingSignalElectronPt",[](const Baby &b) -> NamedFunc::ScalarType{
+    // Search for signal electrons
+    float lead_electron_pt = -1;
+    for (unsigned iEl = 0; iEl < b.el_sig()->size(); ++iEl) {
+      if (b.el_sig()->at(iEl)) {
+        lead_electron_pt = b.el_pt()->at(iEl); 
+        break;
+      }
+    }
+    // Warnings
+    if (lead_electron_pt==-1) {
+      cout<<"[Warning] Functions::leadingSignalElectronPt => There is no electron leptons. Returning -1. nlep: "<<b.nlep()<<" nel: "<<b.nel()<<" nmu: "<<b.nmu()<<" nvmu: "<<b.nvmu()<<endl;
+      return -1;
+    } else {
+      return lead_electron_pt;
+    }
+  });
+
 }

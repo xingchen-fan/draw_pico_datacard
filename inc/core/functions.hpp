@@ -31,6 +31,9 @@ namespace Functions{
 
   extern const NamedFunc boostSignalRegion;
   extern const NamedFunc boostControlRegion;
+  extern const NamedFunc leadingSignalLeptonPt;
+  extern const NamedFunc leadingSignalMuonPt;
+  extern const NamedFunc leadingSignalElectronPt;
 }
 
 #endif
