@@ -2,6 +2,7 @@
 #script to generate efficiency plots and tables from datacards
 import ROOT
 import os
+import math
 
 STR_CHI1PM = '#lower[-0.12]{#tilde{#chi}}#kern[+0.2]{#lower[-0.2]{#scale[0.99]{^{#pm}}}}#kern[-1.3]{#scale[0.99]{_{1}}}'
 STR_CHII = '#lower[-0.12]{#tilde{#chi}}#kern[+0.1]{#lower[0.2]{#scale[0.99]{^{0,#kern[+0.2]{#lower[-0.15]{#pm}}}}}}#kern[-4]{#scale[0.99]{_{i}}}'
@@ -418,8 +419,8 @@ def make_efficiency_table(datacard_dir, higgsino_mass, lsp_mass):
   datacard = open(datacard_filename,'r')
   datacard_lines = datacard.read().split('\n')
   rates_line = datacard_lines[11].split()
-  datacard.close()
   total_events = get_cn_higgsino_xsec(higgsino_mass)*137.35167*1000.0
+  hist2d = ROOT.TH2D('signal_efficiency_'+str(higgsino_mass)+'_'+str(lsp_mass),'',7,0.5,7.5,9,0.5,9.5)
   table_file = open('tables/signal_eff_'+str(higgsino_mass)+'.tex','w')
   table_file.write('\\documentclass[10pt,oneside]{report}\n')
   table_file.write('\\usepackage{graphicx,xspace,amssymb,amsmath,colordvi,colortbl,verbatim,multicol}\n')
@@ -436,27 +437,44 @@ def make_efficiency_table(datacard_dir, higgsino_mass, lsp_mass):
   #write integrated yields
   table_file.write(' \\multicolumn{2}{c}{Integrated} ')
   integrated_row_yields = [0.0,0.0,0.0,0.0,0.0,0.0,0.0]
+  integrated_row_uncertainties = [0.0,0.0,0.0,0.0,0.0,0.0,0.0]
   for rate_idx in range(len(rates_line)):
     if (rate_idx % 12 == 1):
       integrated_row_yields[1] += float(rates_line[rate_idx])
       integrated_row_yields[0] += float(rates_line[rate_idx])
+      integrated_row_uncertainties[1] += (float(rates_line[rate_idx])*(float(datacard_lines[12+(rate_idx+1)/2].split()[rate_idx+1])-1.0))**2
+      integrated_row_uncertainties[0] += (float(rates_line[rate_idx])*(float(datacard_lines[12+(rate_idx+1)/2].split()[rate_idx+1])-1.0))**2
     elif (rate_idx % 12 == 7):
       integrated_row_yields[2] += float(rates_line[rate_idx])
       integrated_row_yields[0] += float(rates_line[rate_idx])
+      integrated_row_uncertainties[2] += (float(rates_line[rate_idx])*(float(datacard_lines[12+(rate_idx+1)/2].split()[rate_idx+1])-1.0))**2
+      integrated_row_uncertainties[0] += (float(rates_line[rate_idx])*(float(datacard_lines[12+(rate_idx+1)/2].split()[rate_idx+1])-1.0))**2
     elif (rate_idx % 12 == 3):
       integrated_row_yields[3] += float(rates_line[rate_idx])
       integrated_row_yields[0] += float(rates_line[rate_idx])
+      integrated_row_uncertainties[3] += (float(rates_line[rate_idx])*(float(datacard_lines[12+(rate_idx+1)/2].split()[rate_idx+1])-1.0))**2
+      integrated_row_uncertainties[0] += (float(rates_line[rate_idx])*(float(datacard_lines[12+(rate_idx+1)/2].split()[rate_idx+1])-1.0))**2
     elif (rate_idx % 12 == 9):
       integrated_row_yields[4] += float(rates_line[rate_idx])
       integrated_row_yields[0] += float(rates_line[rate_idx])
+      integrated_row_uncertainties[4] += (float(rates_line[rate_idx])*(float(datacard_lines[12+(rate_idx+1)/2].split()[rate_idx+1])-1.0))**2
+      integrated_row_uncertainties[0] += (float(rates_line[rate_idx])*(float(datacard_lines[12+(rate_idx+1)/2].split()[rate_idx+1])-1.0))**2
     elif (rate_idx % 12 == 5):
       integrated_row_yields[5] += float(rates_line[rate_idx])
       integrated_row_yields[0] += float(rates_line[rate_idx])
+      integrated_row_uncertainties[5] += (float(rates_line[rate_idx])*(float(datacard_lines[12+(rate_idx+1)/2].split()[rate_idx+1])-1.0))**2
+      integrated_row_uncertainties[0] += (float(rates_line[rate_idx])*(float(datacard_lines[12+(rate_idx+1)/2].split()[rate_idx+1])-1.0))**2
     elif (rate_idx % 12 == 11):
       integrated_row_yields[6] += float(rates_line[rate_idx])
       integrated_row_yields[0] += float(rates_line[rate_idx])
+      integrated_row_uncertainties[6] += (float(rates_line[rate_idx])*(float(datacard_lines[12+(rate_idx+1)/2].split()[rate_idx+1])-1.0))**2
+      integrated_row_uncertainties[0] += (float(rates_line[rate_idx])*(float(datacard_lines[12+(rate_idx+1)/2].split()[rate_idx+1])-1.0))**2
+  bin_idx = 1
   for abcd_cat_events in integrated_row_yields:
     table_file.write(' & '+str(round(abcd_cat_events/total_events*100.0,2)))
+    hist2d.SetBinContent(bin_idx,1,abcd_cat_events/total_events*100.0)
+    hist2d.SetBinError(bin_idx,1,math.sqrt(integrated_row_uncertainties[bin_idx-1])/total_events*100.0)
+    bin_idx += 1
   table_file.write('\\\\\n')
   for drmax_idx in range(2):
     for met_idx in range(4):
@@ -484,18 +502,50 @@ def make_efficiency_table(datacard_dir, higgsino_mass, lsp_mass):
       bin_offset += 24*met_idx
       #write event numbers
       baseline_events = 0.0
+      baseline_uncertainties = 0.0
       abcd_events = []
+      abcd_uncertainties = []
       for abcd_offset in [0,6,2,8,4,10]:
         baseline_events += float(rates_line[bin_offset+abcd_offset])
         abcd_events.append(float(rates_line[bin_offset+abcd_offset]))
+        baseline_uncertainties += (float(rates_line[bin_offset+abcd_offset])*(float(datacard_lines[12+(bin_offset+abcd_offset+1)/2].split()[bin_offset+abcd_offset+1])-1.0))**2
+        abcd_uncertainties.append((float(rates_line[bin_offset+abcd_offset])*(float(datacard_lines[12+(bin_offset+abcd_offset+1)/2].split()[bin_offset+abcd_offset+1])-1.0))**2)
       table_file.write(str(round(baseline_events/total_events*100.0,2)))
+      hist2d.SetBinContent(1,met_idx+drmax_idx*4+2,baseline_events/total_events*100.0)
+      hist2d.SetBinError(1,met_idx+drmax_idx*4+2,math.sqrt(baseline_uncertainties)/total_events*100.0)
+      bin_idx = 2
       for abcd_cat_events in abcd_events:
         table_file.write(' & '+str(round(abcd_cat_events/total_events*100.0,2)))
+        hist2d.SetBinContent(bin_idx,met_idx+drmax_idx*4+2,abcd_cat_events/total_events*100.0)
+        hist2d.SetBinError(bin_idx,met_idx+drmax_idx*4+2,math.sqrt(abcd_uncertainties[bin_idx-2])/total_events*100.0)
+        bin_idx += 1
       table_file.write('\\\\\n')
   table_file.write('\\end{tabular}\n')
   table_file.write('\\end{preview}\n')
   table_file.write('\\end{document}')
   table_file.close()
+  datacard.close()
+  hist2d.GetXaxis().SetBinLabel(1,'Plane total');
+  hist2d.GetXaxis().SetBinLabel(2,'$N_{\\mathrm{b}}=2$ CSB');
+  hist2d.GetXaxis().SetBinLabel(3,'$N_{\\mathrm{b}}=2$ CSR');
+  hist2d.GetXaxis().SetBinLabel(4,'$N_{\\mathrm{b}}=3$ SB');
+  hist2d.GetXaxis().SetBinLabel(5,'$N_{\\mathrm{b}}=3$ SR');
+  hist2d.GetXaxis().SetBinLabel(6,'$N_{\\mathrm{b}}=4$ SB');
+  hist2d.GetXaxis().SetBinLabel(7,'$N_{\\mathrm{b}}=4$ SR');
+  hist2d.GetYaxis().SetBinLabel(1,'Integrated');
+  hist2d.GetYaxis().SetBinLabel(2,'$1.1<\\drmax<2.2$, $150<\\ptmiss<200$');
+  hist2d.GetYaxis().SetBinLabel(3,'$1.1<\\drmax<2.2$, $200<\\ptmiss<300$');
+  hist2d.GetYaxis().SetBinLabel(4,'$1.1<\\drmax<2.2$, $300<\\ptmiss<400$');
+  hist2d.GetYaxis().SetBinLabel(5,'$1.1<\\drmax<2.2$, $\\ptmiss>400$');
+  hist2d.GetYaxis().SetBinLabel(6,'$\\drmax<1.1$, $150<\\ptmiss<200$');
+  hist2d.GetYaxis().SetBinLabel(7,'$\\drmax<1.1$, $200<\\ptmiss<300$');
+  hist2d.GetYaxis().SetBinLabel(8,'$\\drmax<1.1$, $300<\\ptmiss<400$');
+  hist2d.GetYaxis().SetBinLabel(9,'$\\drmax<1.1$, $\\ptmiss>400$');
+  print('open tables/signal_eff_'+str(higgsino_mass)+'.tex')
+  output_root_file = ROOT.TFile.Open('tables/CMS-SUS-20-004_aux_Table_001.root','RECREATE')
+  hist2d.Write()
+  output_root_file.Close()
+  print('open tables/CMS-SUS-20-004_aux_Table_001.root')
 
 if __name__ == "__main__":
   onedim_datacard_dir = 'datacards/tchihh_onedim_lumifix'

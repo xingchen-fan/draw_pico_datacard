@@ -91,7 +91,7 @@ namespace{
   string year_string = "2016,2017,2018";
   // string_options is split by comma. ex) option1,option2 
   // Use HigUtilities::is_in_string_options(string_options, "option2") to check if in string_options.
-  // Options: use_old_trigger,split_ttbar_met,search_ttbar_same_bins,save_entries_weights_to_file,print_entries_weights,do_zbi,do_zbi_signal,use_datacard_results,preliminary
+  // Options: use_old_trigger,split_ttbar_met,search_ttbar_same_bins,save_entries_weights_to_file,print_entries_weights,do_zbi,do_zbi_signal,use_datacard_results,preliminary,extendaxis
   // use_datacard_results expects txt/datacard_results.json made from script/process_datacard.py
   string string_options = "paper_style";
 }
@@ -1174,6 +1174,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
 
   float minx = 0, maxx = nbins+1.0, miny = 0;
   float maxy = 3;
+  if (HigUtilities::is_in_string_options(string_options, "extendaxis")) maxy=5;
   TH1D histo("histo", "", nbins+1, minx, maxx);
   histo.SetMinimum(miny);
   histo.SetMaximum(maxy);
@@ -1314,13 +1315,17 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
       if ((sample == "zll" || sample == "qcd")) //1 bin per plane
         label.DrawLatex(iplane+1.0, 0.4, drlabel.c_str());
       else
-        label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/abcd.planecuts.size()*(iplane+0.5), 0.25, drlabel.c_str());
+        if (HigUtilities::is_in_string_options(string_options, "extendaxis"))
+          label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/abcd.planecuts.size()*(iplane+0.5), 0.23, drlabel.c_str());
+        else
+          label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/abcd.planecuts.size()*(iplane+0.5), 0.25, drlabel.c_str());
 
       if (iplane%2==0) { // write the MET bin only once per each pair of drmax bins
         ReplaceAll(plabel," ", "");
         string metlabel = plabel.substr(0, plabel.find("&&hig_cand_drmax"));
         metlabel = CodeToRootTex(metlabel); 
-        ReplaceAll(metlabel, "<"+metdef+"#leq","#minus"); 
+        ReplaceAll(metlabel,"#leq","<"); 
+        ReplaceAll(metlabel, "<"+metdef+"<","#minus"); 
         if (HigUtilities::is_in_string_options(string_options, "paper_style")) metlabel += " [GeV]";
         if(metlabel == "> 0") metlabel = "Inclusive";
         //if (iplane==0) label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/abcd.planecuts.size()*(iplane+1), 0.13, metlabel.c_str());
@@ -1330,7 +1335,8 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
       }
     } else { // if not binning in dRmax
       string plabel = CodeToRootTex(abcd.planecuts[iplane].Data());
-      ReplaceAll(plabel, "<"+metdef+"#leq","#minus"); 
+      ReplaceAll(plabel,"#leq","<"); 
+      ReplaceAll(plabel, "<"+metdef+"<","#minus"); 
       if(plabel == "> 0") plabel = "Inclusive";
       label.DrawLatex((2*bin-k_ordered[iplane].size()+1.)/2., -0.03*maxy, plabel.c_str());
     }

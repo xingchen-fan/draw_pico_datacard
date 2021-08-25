@@ -909,6 +909,19 @@ namespace HigUtilities {
     return r_signal_lepton_pt;
   }
 
+  float getLuminosity(string const & year_string) {
+    set<int> years;
+    HigUtilities::parseYears(year_string, years);
+    float total_luminosity = 0;
+    // Search region luminosity
+    for (auto const & year : years) {
+      if (year == 2016) total_luminosity += 36.21863; 
+      if (year == 2017) total_luminosity += 41.48629;
+      if (year == 2018) total_luminosity += 59.64675;
+    }
+    return total_luminosity;
+  }
+
   string getLuminosityString(string const & year_string, int const & decimals) {
     set<int> years;
     HigUtilities::parseYears(year_string, years);
