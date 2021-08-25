@@ -193,6 +193,12 @@ void FunctionParser::ResolveVariables() const{
         token = Functions::boostSignalRegion;
       } else if(token.string_rep_ == "boostControlRegion"){
         token = Functions::boostControlRegion;
+      } else if(token.string_rep_ == "leadingSignalLeptonPt"){
+        token = Functions::leadingSignalLeptonPt;
+      } else if(token.string_rep_ == "leadingSignalMuonPt"){
+        token = Functions::leadingSignalMuonPt;
+      } else if(token.string_rep_ == "leadingSignalElectronPt"){
+        token = Functions::leadingSignalElectronPt;
       }
       else {
         token.function_ = Baby::GetFunction(token.string_rep_);

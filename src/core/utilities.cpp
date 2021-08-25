@@ -209,6 +209,9 @@ string CodeToRootTex(string code){
   ReplaceAll(code, "!low_dphi_met", "hi-#Delta#phi");
   ReplaceAll(code, "low_dphi_met", "low #Delta#phi");
   ReplaceAll(code, "hig_drmax", "#DeltaR^{max}_{bb}");
+  ReplaceAll(code, "leadingSignalLeptonPt", "lep. p_{T}");
+  ReplaceAll(code, "leadingSignalMuonPt", "#mu p_{T}");
+  ReplaceAll(code, "leadingSignalElectronPt", "e p_{T}");
   ReplaceAll(code, "ntk==0", "0 trk");
   ReplaceAll(code, "ntk", "N_{tks}");
   ReplaceAll(code, "nlep", "N_{lep}");
