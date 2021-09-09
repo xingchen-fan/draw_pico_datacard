@@ -79,6 +79,7 @@ namespace{
   bool do_highnb = false;
   bool do_midnb = false;
   bool unblind = false;
+  bool extend_axis = true;
   int digits_table = 2;
   TString sample = "search";
   string alt_scen = "mc_as_data"; //e.g. "mc", "data", "mc_as_data" or any systematic defined in sys_weights.cfg or in the defining scenarios section below
@@ -91,7 +92,7 @@ namespace{
   string year_string = "2016,2017,2018";
   // string_options is split by comma. ex) option1,option2 
   // Use HigUtilities::is_in_string_options(string_options, "option2") to check if in string_options.
-  // Options: use_old_trigger,split_ttbar_met,search_ttbar_same_bins,save_entries_weights_to_file,print_entries_weights,do_zbi,do_zbi_signal,use_datacard_results,preliminary,extendaxis,lepton_pt_split,use_dm_sideband
+  // Options: use_old_trigger,split_ttbar_met,search_ttbar_same_bins,save_entries_weights_to_file,print_entries_weights,do_zbi,do_zbi_signal,use_datacard_results,preliminary,noextendaxis,lepton_pt_split,use_dm_sideband
   // use_datacard_results expects txt/datacard_results.json made from script/process_datacard.py
   string string_options = "paper_style";
 }
@@ -175,6 +176,8 @@ int main(int argc, char *argv[]){
   }
   string total_luminosity_string = RoundNumber(total_luminosity, 1, 1).Data();
 
+  if (HigUtilities::is_in_string_options(string_options, "noextendaxis")) extend_axis = false;
+
   string higgsino_version = "";
   // trigger_version: 0: old, 1: new
   int trigger_version = !HigUtilities::is_in_string_options(string_options, "use_old_trigger");
@@ -215,7 +218,12 @@ int main(int argc, char *argv[]){
   if (HigUtilities::is_in_string_options(string_options, "use_dm_sideband")) c_hig_trim = "hig_cand_drmax[0]<2.2  && hig_cand_dm[0]>=40 && hig_cand_am[0]<200";
   else c_hig_trim = "hig_cand_drmax[0]<2.2  && hig_cand_dm[0]<40 && hig_cand_am[0]<200";
   string baseline_s = "njet>=4 && njet<=5";
-  if (sample=="search") baseline_s += " && nvlep==0 && ntk==0 && !low_dphi_met &&"+c_hig_trim;
+  if (sample=="search") {
+    if(alt_scen == "isotk")
+      baseline_s += " && nvlep==0 && !low_dphi_met &&"+c_hig_trim;
+    else
+      baseline_s += " && nvlep==0 && ntk==0 && !low_dphi_met &&"+c_hig_trim;
+  }
   else if (sample=="ttbar") baseline_s += " && nlep==1 && mt<100 &&"+c_hig_trim;
   else if (sample=="zll") baseline_s += " && nlep==2 && met<50 &&"+c_hig_trim;
   else if (sample=="qcd") baseline_s += " && nvlep==0 && ntk==0 && low_dphi_met &&"+c_hig_trim;
@@ -353,6 +361,9 @@ int main(int argc, char *argv[]){
   } else if(alt_scen == "mc_as_data"){
     scenarios = vector<string>{"mc_as_data"}; 
     weights.emplace("mc_as_data", nom_wgt);
+  } else if(alt_scen == "isotk"){
+    scenarios = vector<string>{"isotk"}; 
+    weights.emplace("isotk", nom_wgt*"(ntk==0)");
   } else {
     // run on all scenarios from the sys_cfg file
     scenarios = vector<string>{alt_scen}; 
@@ -1184,7 +1195,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
 
   float minx = 0, maxx = nbins+1.0, miny = 0;
   float maxy = 3;
-  if (HigUtilities::is_in_string_options(string_options, "extendaxis")) maxy=5;
+  if (extend_axis) maxy=5;
   TH1D histo("histo", "", nbins+1, minx, maxx);
   histo.SetMinimum(miny);
   histo.SetMaximum(maxy);
@@ -1230,7 +1241,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
       vexl_mm.push_back(0);
       vexh_mm.push_back(0);
       vy_mm.push_back(k_ordered_mm[iplane][ibin][0]);
-      if(alt_scen=="data" || alt_scen=="mc_as_data") {
+      if(alt_scen=="data" || alt_scen=="mc_as_data" || alt_scen=="isotk") {
         veyh_mm.push_back(k_ordered_mm[iplane][ibin][1]);
         veyl_mm.push_back(k_ordered_mm[iplane][ibin][2]);         
       } else {     
@@ -1248,6 +1259,10 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
       else if (alt_scen=="mc_as_data" || alt_scen=="mc") {
         text = "#Delta_{#kappa}="+RoundNumber((kap-1)*100,0,1)+"%";
         if (HigUtilities::is_in_string_options(string_options, "paper_style")) text = "#Delta="+RoundNumber((kap-1)*100,0,1)+"%";
+      }
+      else if (alt_scen=="isotk") {
+        /*if fake mismeasure*/ text = "#Delta_{#kappa}="+RoundNumber((kap-kap_mm)*100,0,kap_mm)+"%";
+        cout<<"bin["<<ibin<<"] plane["<<iplane<<"] Delta kappa: "<<RoundNumber((kap-kap_mm)*100,0,kap_mm)+"%"<<endl;
       }
       else {
         /*if fake mismeasure*/ text = "#Delta_{#kappa}="+RoundNumber((kap_mm-kap)*100,0,kap)+"%";
@@ -1281,6 +1296,11 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
         TString unc_ = RoundNumber(kap_mmUp*100,0, kap_mm)>RoundNumber(kap_mmDown*100,0, kap_mm) ? RoundNumber(kap_mmUp*100,0, kap_mm) : RoundNumber(kap_mmDown*100,0, kap_mm);
         text = "#sigma_{st}^{dat}="+unc_+"%";
         cout<<"bin["<<ibin<<"] plane["<<iplane<<"] unc kappa: "<<unc_+"%"<<endl;
+      } else if (alt_scen=="isotk") {
+        TString unc_ = RoundNumber(kap_mmUp*100,0, kap_mm)>RoundNumber(kap_mmDown*100,0, kap_mm) ? RoundNumber(kap_mmUp*100,0, kap_mm) : RoundNumber(kap_mmDown*100,0, kap_mm);
+        // text = "#sigma_{stat}=^{+"+RoundNumber(kapUp*100,0, 1)+"%}_{-"+RoundNumber(kapDown*100,0, 1)+"%}";
+        text = "#sigma_{st}^{mc}="+unc_+"%";
+        if (HigUtilities::is_in_string_options(string_options, "paper_style")) text = "#sigma="+unc_+"%";
       } else {
         TString unc_ = RoundNumber(kapUp*100,0, kap)>RoundNumber(kapDown*100,0, kap) ? RoundNumber(kapUp*100,0, kap) : RoundNumber(kapDown*100,0, kap);
         // text = "#sigma_{stat}=^{+"+RoundNumber(kapUp*100,0, 1)+"%}_{-"+RoundNumber(kapDown*100,0, 1)+"%}";
@@ -1309,10 +1329,22 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
 
     // All the labels on the X-axis...
     TLatex label; label.SetTextSize(0.05); label.SetTextFont(42); label.SetTextAlign(23);
-    if (HigUtilities::is_in_string_options(string_options, "paper_style") && sample != "search")
+    double met_label_text_size = 0.05;
+    double drmax_label_text_size = 0.035;
+    if (HigUtilities::is_in_string_options(string_options, "paper_style") && sample != "search") {
       label.SetTextSize(0.04);
-    else
+      met_label_text_size = 0.04;
+    }
+    else {
       label.SetTextSize(abcd.planecuts.size()>=10 ? 0.025 : 0.045);
+      met_label_text_size = (abcd.planecuts.size()>=10 ? 0.025 : 0.045);
+    }
+    if (HigUtilities::is_in_string_options(string_options, "paper_style") && sample == "zll") {
+      drmax_label_text_size = 0.025;
+    }
+    if (HigUtilities::is_in_string_options(string_options, "paper_style") && sample == "qcd") {
+      drmax_label_text_size = 0.025;
+    }
 
     string metdef = "met";
     if (sample=="zll") metdef = "ll_pt";
@@ -1322,10 +1354,11 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
       string plabel = abcd.planecuts[iplane].Data();
       string drlabel = plabel.substr(plabel.find("hig_cand_drmax"), plabel.length());
       drlabel = CodeToRootTex(drlabel);
+      label.SetTextSize(drmax_label_text_size);
       if ((sample == "zll" || sample == "qcd")) //1 bin per plane
         label.DrawLatex(iplane+1.0, 0.4, drlabel.c_str());
       else
-        if (HigUtilities::is_in_string_options(string_options, "extendaxis"))
+        if (extend_axis)
           label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/abcd.planecuts.size()*(iplane+0.5), 0.23, drlabel.c_str());
         else
           label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/abcd.planecuts.size()*(iplane+0.5), 0.25, drlabel.c_str());
@@ -1341,6 +1374,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
         //if (iplane==0) label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/abcd.planecuts.size()*(iplane+1), 0.13, metlabel.c_str());
         //else if (iplane == k_ordered.size()) label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/abcd.planecuts.size()*(iplane+1), 0.13, metlabel.c_str());
         //else label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/abcd.planecuts.size()*(iplane+1), 0.13, metlabel.c_str());
+        label.SetTextSize(met_label_text_size);
         label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/abcd.planecuts.size()*(iplane+1), 0.13, metlabel.c_str());
       }
     } else { // if not binning in dRmax
@@ -1363,6 +1397,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
   if (debug) cout<<"Building up TGraphs"<<endl;
   double legX(0.595), legY(1-0.035), legH(0.05), legW(0.15);
   if(alt_scen != "data") legX = 0.65;
+  if(alt_scen == "isotk") legW = 0.30;
   TLegend leg(legX, legY-legH, legX+legW, legY);
   leg.SetTextSize(opts.LegendEntryHeight()*1.15); leg.SetFillColor(0);leg.SetFillStyle(0); leg.SetBorderSize(0);
   leg.SetTextFont(42);
@@ -1387,8 +1422,9 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
   graph_mm.SetLineColor(1); graph_mm.SetLineWidth(2);
   if(alt_scen!="mc_as_data" && alt_scen!="mc") graph_mm.Draw("p0 same");
 
-  if (alt_scen != "mc") leg.AddEntry(&graph, "MC", "ep");
-  TString data_s = (alt_scen=="data"?"Data":"Pseudodata");
+  if (alt_scen != "mc" && alt_scen != "isotk") leg.AddEntry(&graph, "MC", "ep");
+  if (alt_scen == "isotk") leg.AddEntry(&graph, "MC (N_{tk}#geq 0)", "ep");
+  TString data_s = (alt_scen!="isotk"?(alt_scen=="data"?"Data":"Pseudodata"):"MC (N_{tk}=0)");
   if(alt_scen!="mc_as_data" && alt_scen!="mc") 
     leg.AddEntry(&graph_mm, data_s, "ep");
 
@@ -1815,8 +1851,14 @@ vector<vector<float> > findPreds(abcd_def &abcd, vector<vector<GammaParams> > &a
         // Yields for kappas on pseudodata
         kentries_mm.push_back(vector<float>());
         kweights_mm.push_back(vector<float>());
-        kentries_mm.back().push_back(allyields[0][index].Yield());
-        kweights_mm.back().push_back(1.);
+        if (alt_scen=="isotk") {
+          kentries_mm.back().push_back(allyields[0][index].NEffective());
+          kweights_mm.back().push_back(allyields[0][index].Weight());
+        }
+        else {
+          kentries_mm.back().push_back(allyields[0][index].Yield());
+          kweights_mm.back().push_back(1.);
+        }
         // Yields for kappas_mc normalized to data
         kkentries.push_back(vector<float>());
         kkweights.push_back(vector<float>());

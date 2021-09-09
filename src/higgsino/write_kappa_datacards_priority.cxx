@@ -424,6 +424,10 @@ int main(int argc, char *argv[])
   samplePaths["mc_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/mc/merged_higmc_preselect/";
   samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/SMS-TChiHH_2D_fastSimJmeCorrection/skim_higsys/";
   samplePaths["data_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/data/merged_higdata_preselect/";
+  //temporary for isotk studies (higsys skim has track veto)
+  samplePaths["signal_2016"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath/2016/SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/";
+  samplePaths["signal_2017"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath/2017/SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/";
+  samplePaths["signal_2018"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath/2018/SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/";
   if (higgsino_model=="T5HH") {
     if (do_fullsim) {
       samplePaths["signal_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2016/SMS-T5qqqqZH_FullSimJmeVariations/skim_higsys/";
@@ -551,11 +555,17 @@ int main(int argc, char *argv[])
     weight_genmet *= HigUtilities::w_CNToN1N2;
   }
   string baseline = "!low_dphi_met && nvlep==0 && ntk==0";
+  string baseline_notk = "!low_dphi_met && nvlep==0";
   string higtrim = "hig_cand_drmax[0]<=2.2 && hig_cand_dm[0] <= 40 && hig_cand_am[0]<=200 && met/mht<2 && met/met_calo<2&& weight<1.5";
-  if (tag=="resolved") baseline += "&& njet>=4 && njet<=5 && nbt>=2 && "+higtrim;
+  if (tag=="resolved") {
+    baseline += "&& njet>=4 && njet<=5 && nbt>=2 && "+higtrim;
+    baseline_notk += "&& njet>=4 && njet<=5 && nbt>=2 && "+higtrim;
+  }
   else if (tag=="boosted") {
     baseline += " && ht>600 && nfjet>1 && fjet_pt[0]>300 && fjet_pt[1]>300";
     baseline += " && fjet_msoftdrop[0]>50 && fjet_msoftdrop[0]<=250 && fjet_msoftdrop[1]>50 && fjet_msoftdrop[1]<=250";
+    baseline_notk += " && ht>600 && nfjet>1 && fjet_pt[0]>300 && fjet_pt[1]>300";
+    baseline_notk += " && fjet_msoftdrop[0]>50 && fjet_msoftdrop[0]<=250 && fjet_msoftdrop[1]>50 && fjet_msoftdrop[1]<=250";
   }
 
   // Set ABCDbins
@@ -687,14 +697,20 @@ int main(int argc, char *argv[])
   systematics_vector.push_back(make_pair(string("SignalPU"),
       vector<NamedFunc>({weight/Functions::w_pileup*Functions::w_syst_pileup_up,
       weight/Functions::w_pileup*Functions::w_syst_pileup_down})));
+  //murf indices
+  // mur0.5muf0.5 mur0.5muf1.0 mur0.5muf2.0
+  // mur1.0muf0.5 mur1.0muf1.0 mur1.0muf2.0
+  // mur2.0muf0.5 mur2.0muf1.0 mur2.0muf2.0
   systematics_vector.push_back(make_pair(string("SignalScale"),
-      vector<NamedFunc>({weight*"sys_murf[0]", weight*"sys_murf[1]", weight*"sys_murf[2]", 
-      weight*"sys_murf[3]",weight*"sys_murf[5]",weight*"sys_murf[6]",weight*"sys_murf[7]",
+      vector<NamedFunc>({weight*"sys_murf[0]", weight*"sys_murf[1]", 
+      weight*"sys_murf[3]",weight*"sys_murf[5]",weight*"sys_murf[7]",
       weight*"sys_murf[8]"})));
   systematics_vector.push_back(make_pair(string("SignalJEC"),
       vector<NamedFunc>({weight,weight})));
   systematics_vector.push_back(make_pair(string("SignalJER"),
       vector<NamedFunc>({weight,weight})));
+  systematics_vector.push_back(make_pair(string("IsoTk"),
+      vector<NamedFunc>({weight})));
 
   vector<pair<string, vector<NamedFunc>>> systematics_vector_genmet;
   systematics_vector_genmet.push_back(make_pair(string("LumiSyst"),
@@ -722,13 +738,15 @@ int main(int argc, char *argv[])
       vector<NamedFunc>({weight_genmet/Functions::w_pileup*Functions::w_syst_pileup_up, 
       weight_genmet/Functions::w_pileup*Functions::w_syst_pileup_down})));
   systematics_vector_genmet.push_back(make_pair(string("SignalScale"),
-      vector<NamedFunc>({weight_genmet*"sys_murf[0]", weight_genmet*"sys_murf[1]", weight_genmet*"sys_murf[2]", 
-      weight_genmet*"sys_murf[3]",weight_genmet*"sys_murf[5]",weight_genmet*"sys_murf[6]",weight_genmet*"sys_murf[7]",
+      vector<NamedFunc>({weight_genmet*"sys_murf[0]", weight_genmet*"sys_murf[1]", 
+      weight_genmet*"sys_murf[3]",weight_genmet*"sys_murf[5]",weight_genmet*"sys_murf[7]",
       weight_genmet*"sys_murf[8]"})));
   systematics_vector_genmet.push_back(make_pair(string("SignalJEC"),
       vector<NamedFunc>({weight_genmet,weight_genmet})));
   systematics_vector_genmet.push_back(make_pair(string("SignalJER"),
       vector<NamedFunc>({weight_genmet,weight_genmet})));
+  systematics_vector_genmet.push_back(make_pair(string("IsoTk"),
+      vector<NamedFunc>({weight_genmet})));
 
   // Shift jet pT down by 2% on signal
   bool shiftPtDownOnSignal = false;
@@ -736,7 +754,7 @@ int main(int argc, char *argv[])
   vector<pair<string, NamedFunc> > namedFuncSampleBins;
   vector<pair<string, NamedFunc> > namedFuncSampleBins_genmet;
   NamedFunc namedFuncBaseline = "!low_dphi_met && nvlep==0 && ntk==0&&njet>=4 && njet<=5 && nbt>=2"&&mod_hig_cand_drmax<=2.2 && mod_hig_cand_dm <= 40 && mod_hig_cand_am<=200 && "met/mht<2 && met/met_calo<2&& weight<1.5";
-  NamedFunc baseline_genmet = "!low_dphi_met && nvlep==0 && ntk==0&&njet>=4 && njet<=5 && nbt>=2"&&mod_hig_cand_drmax<=2.2 && mod_hig_cand_dm <= 40 && mod_hig_cand_am<=200 && "met_tru/mht<2 && met/met_calo<2&& weight<1.5";
+  NamedFunc baseline_genmet = "!low_dphi_met && nvlep==0 && ntk==0&&njet>=4 && njet<=5 && nbt>=2"&&mod_hig_cand_drmax<=2.2 && mod_hig_cand_dm <= 40 && mod_hig_cand_am<=200 && "met_tru/mht<2 && met_tru/met_calo<2&& weight<1.5";
   if (shiftPtDownOnSignal) {
     // Set namedFuncSampleBins
     map<string, NamedFunc> namedFuncXBins;
@@ -808,6 +826,14 @@ int main(int argc, char *argv[])
                                  "signal_"+sys_name, cutTable["signal"]);
         HigUtilities::addBinCuts(HigUtilities::nom2sys_bins(sampleBins, to_string(wgt_idx)), 
                                  HigUtilities::nom2sys_string(baseline,to_string(wgt_idx)), weight_genmet, 
+                                 "signalGenMet_"+sys_name, HigUtilities::nom2genmet,
+                                 cutTable["signal"]);
+      }
+      else if (sys.first == "IsoTk") {
+        string sys_name = sys.first+to_string(wgt_idx);
+        HigUtilities::addBinCuts(sampleBins, baseline_notk, weight, 
+                                 "signal_"+sys_name, cutTable["signal"]);
+        HigUtilities::addBinCuts(sampleBins, baseline_notk, weight_genmet, 
                                  "signalGenMet_"+sys_name, HigUtilities::nom2genmet,
                                  cutTable["signal"]);
       }
@@ -1225,6 +1251,24 @@ namespace HigWriteDataCards{
             if (max_variation_up > 1.0) max_variation_up = 1.0;
             if (max_variation_down <= -1.0) max_variation_down = -0.99;
             row[2+2*bin_idx] = to_string(max_variation_down+1.0)+"/"+to_string(max_variation_up+1.0);
+          }
+        }
+        else if (sys.first == "IsoTk") {
+          //normal up/down systematic
+          string label = processName + "_" + signalAverageGenMetTag + "_" + sampleBins[bin_idx].first;
+          float nominal_value = mYields.at(label).first.Yield();
+          if (nominal_value == 0 || std::isnan(nominal_value) || std::isinf(nominal_value)) {
+            //no signal, poor stats
+            row[2+2*bin_idx] = "2.00/2.00";
+          }
+          else {
+            label = processName + "_" + signalAverageGenMetTag + "_" + sys.first + "0_" + sampleBins[bin_idx].first;
+            float value_up = mYields.at(label).first.Yield();
+            float syst_up = ((value_up-nominal_value)/nominal_value)/2.0;
+            if (syst_up > 1.0 || std::isnan(syst_up) || std::isinf(syst_up)) syst_up = 1.0;
+            if (syst_up <= -1.0) syst_up = -0.99;
+            float syst_down = -1.0*syst_up;
+            row[2+2*bin_idx] = to_string(syst_down+1.0)+"/"+to_string(syst_up+1.0);
           }
         }
         else {

@@ -176,14 +176,14 @@ int main(int argc, char *argv[]){
 
   NamedFunc metnbbin("metnbbin",[](const Baby &b) -> NamedFunc::ScalarType{
     if (b.nbm()<3) {
-      if (b.met() < 300) return 1;
+      if (b.met() < 200) return 1;
       else return 2;
     }
     else if (b.nbm()==3 && b.nbl()<4) {
-      if (b.met() < 300) return 3;
+      if (b.met() < 200) return 3;
       else return 4;
     }
-    if (b.met() < 300) return 5;
+    if (b.met() < 200) return 5;
     return 6;
   });
 
@@ -335,10 +335,57 @@ int main(int argc, char *argv[]){
           "nvlep==0",0,0,mixed_model_weight),
       TableRow("Track veto", 
           "ntk==0",0,0,mixed_model_weight),
-      TableRow("Lepton+Track veto", 
-          "nvlep==0&&ntk==0",0,0,mixed_model_weight),
-      TableRow("Baseline except lepton/track veto",        
-          Higfuncs::pass_filters && "met>150 && njet >= 4 && njet <= 5 && nbt >= 2 && met/mht<2 && met/met_calo<2 && !low_dphi_met && hig_cand_dm[0]<40 && hig_cand_am[0]<200 && hig_cand_drmax[0]<2.2",
+      TableRow("<2b", 
+          "nbt<2",0,0,mixed_model_weight),
+      TableRow("2b", 
+          "nbt>=2&&nbm==2",0,0,mixed_model_weight),
+      TableRow("3b", 
+          "nbt>=2&&nbm>=3&&nbl==3",0,0,mixed_model_weight),
+      TableRow("4b", 
+          "nbt>=2&&nbm>=3&&nbl>=4",0,0,mixed_model_weight),
+      TableRow("$N_\\mathrm{j}\\geq 4$", 
+          "njet>=4",0,0,mixed_model_weight),
+      TableRow("$N_\\mathrm{j}\\leq 5$", 
+          "njet<=5",0,0,mixed_model_weight),
+      TableRow("$p_\\mathrm{T}^\\mathrm{miss}>150$ GeV", 
+          "met>=150",0,0,mixed_model_weight),
+      TableRow("$N_\\mathrm{j}\\geq 4$ and $\\Delta m_\\mathrm{bb}<40$ GeV", 
+          "njet>=4&&hig_cand_dm[0]<40",0,0,mixed_model_weight),
+      TableRow("$N_\\mathrm{j}\\geq 4$ and $\\langle m_\\mathrm{bb}\\rangle<200$ GeV", 
+          "njet>=4&&hig_cand_am[0]<200",0,0,mixed_model_weight),
+      TableRow("$N_\\mathrm{j}\\geq 4$ and $\\Delta R_\\mathrm{max}<2.2$", 
+          "njet>=4&&hig_cand_drmax[0]<2.2",0,0,mixed_model_weight),
+
+
+      TableRow("Baseline except with 4b",        
+          Higfuncs::pass_filters && "met>150 && nvlep==0 && ntk==0 && nbt>=2 && nbm>=3 && nbl>=4 && njet >= 4 && njet <= 5 && met/mht<2 && met/met_calo<2 && !low_dphi_met && hig_cand_dm[0]<40 && hig_cand_am[0]<200 && hig_cand_drmax[0]<2.2",
+          0,0,mixed_model_weight),
+      TableRow("Baseline except with 3b",        
+          Higfuncs::pass_filters && "met>150 && nvlep==0 && ntk==0 && nbt>=2 && nbm>=3 && nbl==3 && njet >= 4 && njet <= 5 && met/mht<2 && met/met_calo<2 && !low_dphi_met && hig_cand_dm[0]<40 && hig_cand_am[0]<200 && hig_cand_drmax[0]<2.2",
+          0,0,mixed_model_weight),
+      TableRow("Baseline except with 2b",        
+          Higfuncs::pass_filters && "met>150 && nvlep==0 && ntk==0 && nbt>=2 && nbm==2 && njet >= 4 && njet <= 5 && met/mht<2 && met/met_calo<2 && !low_dphi_met && hig_cand_dm[0]<40 && hig_cand_am[0]<200 && hig_cand_drmax[0]<2.2",
+          0,0,mixed_model_weight),
+      TableRow("Baseline except with <2b",        
+          Higfuncs::pass_filters && "met>150 && nvlep==0 && ntk==0 && nbt<2 && njet >= 4 && njet <= 5 && met/mht<2 && met/met_calo<2 && !low_dphi_met && hig_cand_dm[0]<40 && hig_cand_am[0]<200 && hig_cand_drmax[0]<2.2",
+          0,0,mixed_model_weight),
+      TableRow("Baseline except 2b cut",        
+          Higfuncs::pass_filters && "met>150 && nvlep==0 && ntk==0 && njet >= 4 && njet <= 5 && met/mht<2 && met/met_calo<2 && !low_dphi_met && hig_cand_dm[0]<40 && hig_cand_am[0]<200 && hig_cand_drmax[0]<2.2",
+          0,0,mixed_model_weight),
+      TableRow("Baseline except $p_\\mathrm{T}^\\mathrm{miss}>150$ GeV cut",        
+          Higfuncs::pass_filters && "nvlep==0 && ntk==0 && njet >= 4 && njet <= 5 && nbt >= 2 && met/mht<2 && met/met_calo<2 && !low_dphi_met && hig_cand_dm[0]<40 && hig_cand_am[0]<200 && hig_cand_drmax[0]<2.2",
+          0,0,mixed_model_weight),
+      TableRow("Baseline except $N_\\mathrm{j}\\leq 5$ cut",        
+          Higfuncs::pass_filters && "met>150 && nvlep==0 && ntk==0 && njet >= 4 && nbt >= 2 && met/mht<2 && met/met_calo<2 && !low_dphi_met && hig_cand_dm[0]<40 && hig_cand_am[0]<200 && hig_cand_drmax[0]<2.2",
+          0,0,mixed_model_weight),
+      TableRow("Baseline except $\\Delta R_\\mathrm{max}<2.2$ cut",        
+          Higfuncs::pass_filters && "met>150 && nvlep==0 && ntk==0 && njet >= 4 && njet <= 5 && nbt >= 2 && met/mht<2 && met/met_calo<2 && !low_dphi_met && hig_cand_dm[0]<40 && hig_cand_am[0]<200",
+          0,0,mixed_model_weight),
+      TableRow("Baseline except $\\langle m_\\mathrm{bb}\\rangle<200$ GeV cut",        
+          Higfuncs::pass_filters && "met>150 && nvlep==0 && ntk==0 && njet >= 4 && njet <= 5 && nbt >= 2 && met/mht<2 && met/met_calo<2 && !low_dphi_met && hig_cand_dm[0]<40 && hig_cand_drmax[0]<2.2",
+          0,0,mixed_model_weight),
+      TableRow("Baseline except $\\Delta m_\\mathrm{bb}<40$ GeV cut",        
+          Higfuncs::pass_filters && "met>150 && nvlep==0 && ntk==0 && njet >= 4 && njet <= 5 && nbt >= 2 && met/mht<2 && met/met_calo<2 && !low_dphi_met && hig_cand_am[0]<200 && hig_cand_drmax[0]<2.2",
           0,0,mixed_model_weight),
       TableRow("Baseline except track veto",        
           Higfuncs::pass_filters && "met>150 && nvlep==0 && njet >= 4 && njet <= 5 && nbt >= 2 && met/mht<2 && met/met_calo<2 && !low_dphi_met && hig_cand_dm[0]<40 && hig_cand_am[0]<200 && hig_cand_drmax[0]<2.2",
@@ -400,7 +447,7 @@ int main(int argc, char *argv[]){
     for (unsigned int proc_idx = 0; proc_idx < search_procs.size(); proc_idx++) {
       lowmet_2b_proc_comp.push_back(metnb_proc_hist[proc_idx]->GetBinContent(1));
     }
-    TPie lowmet_2b_pie("lowmet_2b_pie","2b Low p_{T}^{miss}",5,&lowmet_2b_proc_comp[0],&proc_colors[0]);
+    TPie lowmet_2b_pie("lowmet_2b_pie","2b, 150 < p_{T}^{miss} < 200 GeV",5,&lowmet_2b_proc_comp[0],&proc_colors[0]);
     lowmet_2b_pie.SetLabelFormat("%perc");
     lowmet_2b_pie.SetCircle(0.5, 0.48, 0.35);
     lowmet_2b_pie.Draw();
@@ -413,7 +460,7 @@ int main(int argc, char *argv[]){
     for (unsigned int proc_idx = 0; proc_idx < search_procs.size(); proc_idx++) {
       lowmet_3b_proc_comp.push_back(metnb_proc_hist[proc_idx]->GetBinContent(3));
     }
-    TPie lowmet_3b_pie("lowmet_3b_pie","3b Low p_{T}^{miss}",5,&lowmet_3b_proc_comp[0],&proc_colors[0]);
+    TPie lowmet_3b_pie("lowmet_3b_pie","3b, 150 < p_{T}^{miss} < 200 GeV",5,&lowmet_3b_proc_comp[0],&proc_colors[0]);
     lowmet_3b_pie.SetLabelFormat("%perc");
     lowmet_3b_pie.SetCircle(0.5, 0.48, 0.35);
     lowmet_3b_pie.Draw();
@@ -426,7 +473,7 @@ int main(int argc, char *argv[]){
     for (unsigned int proc_idx = 0; proc_idx < search_procs.size(); proc_idx++) {
       lowmet_4b_proc_comp.push_back(metnb_proc_hist[proc_idx]->GetBinContent(5));
     }
-    TPie lowmet_4b_pie("lowmet_4b_pie","4b Low p_{T}^{miss}",5,&lowmet_4b_proc_comp[0],&proc_colors[0]);
+    TPie lowmet_4b_pie("lowmet_4b_pie","4b, 150 < p_{T}^{miss} < 200 GeV",5,&lowmet_4b_proc_comp[0],&proc_colors[0]);
     lowmet_4b_pie.SetLabelFormat("%perc");
     lowmet_4b_pie.SetCircle(0.5, 0.48, 0.35);
     lowmet_4b_pie.Draw();
@@ -450,7 +497,7 @@ int main(int argc, char *argv[]){
     for (unsigned int proc_idx = 0; proc_idx < search_procs.size(); proc_idx++) {
       highmet_2b_proc_comp.push_back(metnb_proc_hist[proc_idx]->GetBinContent(2));
     }
-    TPie highmet_2b_pie("highmet_2b_pie","2b High p_{T}^{miss}",5,&highmet_2b_proc_comp[0],&proc_colors[0]);
+    TPie highmet_2b_pie("highmet_2b_pie","2b, p_{T}^{miss} > 200 GeV",5,&highmet_2b_proc_comp[0],&proc_colors[0]);
     highmet_2b_pie.SetLabelFormat("%perc");
     highmet_2b_pie.SetCircle(0.5, 0.48, 0.35);
     highmet_2b_pie.Draw();
@@ -463,7 +510,7 @@ int main(int argc, char *argv[]){
     for (unsigned int proc_idx = 0; proc_idx < search_procs.size(); proc_idx++) {
       highmet_3b_proc_comp.push_back(metnb_proc_hist[proc_idx]->GetBinContent(4));
     }
-    TPie highmet_3b_pie("highmet_3b_pie","3b High p_{T}^{miss}",5,&highmet_3b_proc_comp[0],&proc_colors[0]);
+    TPie highmet_3b_pie("highmet_3b_pie","3b, p_{T}^{miss} > 200 GeV",5,&highmet_3b_proc_comp[0],&proc_colors[0]);
     highmet_3b_pie.SetLabelFormat("%perc");
     highmet_3b_pie.SetCircle(0.5, 0.48, 0.35);
     highmet_3b_pie.Draw();
@@ -476,7 +523,7 @@ int main(int argc, char *argv[]){
     for (unsigned int proc_idx = 0; proc_idx < search_procs.size(); proc_idx++) {
       highmet_4b_proc_comp.push_back(metnb_proc_hist[proc_idx]->GetBinContent(6));
     }
-    TPie highmet_4b_pie("highmet_4b_pie","4b High p_{T}^{miss}",5,&highmet_4b_proc_comp[0],&proc_colors[0]);
+    TPie highmet_4b_pie("highmet_4b_pie","4b, p_{T}^{miss} > 200 GeV",5,&highmet_4b_proc_comp[0],&proc_colors[0]);
     highmet_4b_pie.SetLabelFormat("%perc");
     highmet_4b_pie.SetCircle(0.5, 0.48, 0.35);
     highmet_4b_pie.Draw();
@@ -489,7 +536,7 @@ int main(int argc, char *argv[]){
     for (unsigned int proc_idx = 0; proc_idx < search_procs.size(); proc_idx++) {
       highdrmax_2b_proc_comp.push_back(drmaxnb_proc_hist[proc_idx]->GetBinContent(1));
     }
-    TPie highdrmax_2b_pie("highdrmax_2b_pie","2b High #DeltaR_{max}",5,&highdrmax_2b_proc_comp[0],&proc_colors[0]);
+    TPie highdrmax_2b_pie("highdrmax_2b_pie","2b, 1.1 < #DeltaR_{max} < 2.2",5,&highdrmax_2b_proc_comp[0],&proc_colors[0]);
     highdrmax_2b_pie.SetLabelFormat("%perc");
     highdrmax_2b_pie.SetCircle(0.5, 0.48, 0.35);
     highdrmax_2b_pie.Draw();
@@ -502,7 +549,7 @@ int main(int argc, char *argv[]){
     for (unsigned int proc_idx = 0; proc_idx < search_procs.size(); proc_idx++) {
       highdrmax_3b_proc_comp.push_back(drmaxnb_proc_hist[proc_idx]->GetBinContent(3));
     }
-    TPie highdrmax_3b_pie("highdrmax_3b_pie","3b High #DeltaR_{max}",5,&highdrmax_3b_proc_comp[0],&proc_colors[0]);
+    TPie highdrmax_3b_pie("highdrmax_3b_pie","3b, 1.1 < #DeltaR_{max} < 2.2",5,&highdrmax_3b_proc_comp[0],&proc_colors[0]);
     highdrmax_3b_pie.SetLabelFormat("%perc");
     highdrmax_3b_pie.SetCircle(0.5, 0.48, 0.35);
     highdrmax_3b_pie.Draw();
@@ -515,7 +562,7 @@ int main(int argc, char *argv[]){
     for (unsigned int proc_idx = 0; proc_idx < search_procs.size(); proc_idx++) {
       highdrmax_4b_proc_comp.push_back(drmaxnb_proc_hist[proc_idx]->GetBinContent(5));
     }
-    TPie highdrmax_4b_pie("highdrmax_4b_pie","4b High #DeltaR_{max}",5,&highdrmax_4b_proc_comp[0],&proc_colors[0]);
+    TPie highdrmax_4b_pie("highdrmax_4b_pie","4b, 1.1 < #DeltaR_{max} < 2.2",5,&highdrmax_4b_proc_comp[0],&proc_colors[0]);
     highdrmax_4b_pie.SetLabelFormat("%perc");
     highdrmax_4b_pie.SetCircle(0.5, 0.48, 0.35);
     highdrmax_4b_pie.Draw();
@@ -528,7 +575,7 @@ int main(int argc, char *argv[]){
     for (unsigned int proc_idx = 0; proc_idx < search_procs.size(); proc_idx++) {
       lowdrmax_2b_proc_comp.push_back(drmaxnb_proc_hist[proc_idx]->GetBinContent(2));
     }
-    TPie lowdrmax_2b_pie("lowdrmax_2b_pie","2b Low #DeltaR_{max}",5,&lowdrmax_2b_proc_comp[0],&proc_colors[0]);
+    TPie lowdrmax_2b_pie("lowdrmax_2b_pie","2b, #DeltaR_{max} < 1.1",5,&lowdrmax_2b_proc_comp[0],&proc_colors[0]);
     lowdrmax_2b_pie.SetLabelFormat("%perc");
     lowdrmax_2b_pie.SetCircle(0.5, 0.48, 0.35);
     lowdrmax_2b_pie.Draw();
@@ -541,7 +588,7 @@ int main(int argc, char *argv[]){
     for (unsigned int proc_idx = 0; proc_idx < search_procs.size(); proc_idx++) {
       lowdrmax_3b_proc_comp.push_back(drmaxnb_proc_hist[proc_idx]->GetBinContent(4));
     }
-    TPie lowdrmax_3b_pie("lowdrmax_3b_pie","3b Low #DeltaR_{max}",5,&lowdrmax_3b_proc_comp[0],&proc_colors[0]);
+    TPie lowdrmax_3b_pie("lowdrmax_3b_pie","3b, #DeltaR_{max} < 1.1",5,&lowdrmax_3b_proc_comp[0],&proc_colors[0]);
     lowdrmax_3b_pie.SetLabelFormat("%perc");
     lowdrmax_3b_pie.SetCircle(0.5, 0.48, 0.35);
     lowdrmax_3b_pie.Draw();
@@ -554,7 +601,7 @@ int main(int argc, char *argv[]){
     for (unsigned int proc_idx = 0; proc_idx < search_procs.size(); proc_idx++) {
       lowdrmax_4b_proc_comp.push_back(drmaxnb_proc_hist[proc_idx]->GetBinContent(6));
     }
-    TPie lowdrmax_4b_pie("lowdrmax_4b_pie","4b Low #DeltaR_{max}",5,&lowdrmax_4b_proc_comp[0],&proc_colors[0]);
+    TPie lowdrmax_4b_pie("lowdrmax_4b_pie","4b, #DeltaR_{max} < 1.1",5,&lowdrmax_4b_proc_comp[0],&proc_colors[0]);
     lowdrmax_4b_pie.SetLabelFormat("%perc");
     lowdrmax_4b_pie.SetCircle(0.5, 0.48, 0.35);
     lowdrmax_4b_pie.Draw();

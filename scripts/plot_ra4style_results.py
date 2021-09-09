@@ -104,9 +104,6 @@ data = []
 signal_500_raw = []
 read_datacard_results(bkg_pre, ebkg_pre_up, ebkg_pre_dn, bkg_post, ebkg_post_up, ebkg_post_dn, data, signal_500_raw)
 
-print('Debug 0')
-print(bkg_pre)
-
 #14 - D met0 low drmax      20 - D met0 hidrmax
 #15 - B nb3 met0 low drmax  21 - B nb3 met0 hidrmax
 #16 - B nb4 met0 low drmax  22 - B nb4 met0 hidrmax
@@ -134,8 +131,6 @@ pull_sig = []
 pull_post = []
 #pulls as likelihood ratio significances
 #pull_pre = [-0.9, 0.0, 0.6, 0.1,   0.0, 1.1, 0.6, -1.9,   0.9, 0.0, 3.5, -1.1,   -1.0, 1.5, 0.6, 0.3,   0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-print('Debug 1')
-print(bkg_pre)
 for ibin in range(len(data)):
   #calculate expected signal+bkg
   signal_500.append(signal_500_raw[ibin] + bkg_pre[ibin])
@@ -186,10 +181,8 @@ for ibin in range(len(data)):
   #  pull_pre.append(math.sqrt(2)*TMath.ErfInverse(-1.0+2.0*ROOT.Math.poisson_cdf(int(data[ibin]),bkg_pre[ibin])))
   #  pull_post.append(math.sqrt(2)*TMath.ErfInverse(-1.0+2.0*ROOT.Math.poisson_cdf(int(data[ibin]),bkg_post[ibin])))
 
-print('Debug 2')
-print(bkg_pre)
-print(pull_pre)
-print(pull_post)
+#print(pull_pre)
+#print(pull_post)
 
 nbins = len(data)
 nhbins = len(data)
@@ -212,14 +205,9 @@ grpull_sig = TGraph(nhbins)
 histdata = TH1D('histdata','data',22,0.5,22.5)
 i = 0
 print(nbins)
-print('Debug 3')
-print(bkg_pre)
 for ibin in range(nbins):
   #if 'r4' not in bins[ibin]: continue
   i +=1
-  if i == 1:
-    print('Debug 4')
-    print(bkg_pre)
   grbkg_pre.SetPoint(i-1, i,bkg_pre[ibin])
   grbkg_pre.SetPointEYhigh(i-1, ebkg_pre_up[ibin])    
   grbkg_pre.SetPointEYlow(i-1, ebkg_pre_dn[ibin])    
@@ -376,7 +364,7 @@ if not plot_pulls:
     htopdummy.GetXaxis().SetBinLabel(20,'300<'+ptmiss+'<500 GeV')
     htopdummy.GetXaxis().SetBinLabel(21,'500<'+ptmiss+'<700 GeV')
     htopdummy.GetXaxis().SetBinLabel(22,ptmiss+'>700 GeV')
-    htopdummy.LabelsOption('v')
+    hgopdummy.LabelsOption('v')
 
 leg = TLegend(0.4, 0.9, 0.7, 0.98)
 #leg = TLegend(0.3, 0.9, 0.7, 0.98) #w/ signal
@@ -450,8 +438,8 @@ binlabel = TLatex()
 binlabel.SetTextSize(an_region_size)
 # binlabel.SetNDC(kTRUE)
 binlabel.SetTextAlign(21)
-binlabel.DrawLatex(4.5, merge_category_y,"Resolved, High #DeltaR#lower[-0.1]{_{max}}")
-binlabel.DrawLatex(12.5, merge_category_y,"Resolved, Low #DeltaR#lower[-0.1]{_{max}}")
+binlabel.DrawLatex(4.5, merge_category_y,"Resolved, #DeltaR#lower[-0.1]{_{max}} < 1.1")
+binlabel.DrawLatex(12.5, merge_category_y,"Resolved, 1.1 < #DeltaR#lower[-0.1]{_{max}} < 2.2")
 binlabel.DrawLatex(19.5, merge_category_y,"Boosted")
 binlabel.SetTextSize(nb_title_size)
 
@@ -596,22 +584,22 @@ print('open '+pname)
 output_file = TFile.Open('tables/CMS-SUS-20-004_Figure_010.root','RECREATE')
 grbkg_pre.Write('background_prefit')
 grbkg_post.Write('background_postfit')
-histdata.GetXaxis().SetBinLabel(1,'Resolved, High #DeltaR#lower[-0.1]{_{max}}, 3b, 150<'+ptmiss+'<200 GeV')
-histdata.GetXaxis().SetBinLabel(2,'Resolved, High #DeltaR#lower[-0.1]{_{max}}, 3b, 200<'+ptmiss+'<300 GeV')
-histdata.GetXaxis().SetBinLabel(3,'Resolved, High #DeltaR#lower[-0.1]{_{max}}, 3b, 300<'+ptmiss+'<400 GeV')
-histdata.GetXaxis().SetBinLabel(4,'Resolved, High #DeltaR#lower[-0.1]{_{max}}, 3b, '+ptmiss+'>400 GeV')
-histdata.GetXaxis().SetBinLabel(5,'Resolved, High #DeltaR#lower[-0.1]{_{max}}, 4b, 150<'+ptmiss+'<200 GeV')
-histdata.GetXaxis().SetBinLabel(6,'Resolved, High #DeltaR#lower[-0.1]{_{max}}, 4b, 200<'+ptmiss+'<300 GeV')
-histdata.GetXaxis().SetBinLabel(7,'Resolved, High #DeltaR#lower[-0.1]{_{max}}, 4b, 300<'+ptmiss+'<400 GeV')
-histdata.GetXaxis().SetBinLabel(8,'Resolved, High #DeltaR#lower[-0.1]{_{max}}, 4b, '+ptmiss+'>400 GeV')
-histdata.GetXaxis().SetBinLabel(9,'Resolved, Low #DeltaR#lower[-0.1]{_{max}}, 3b, 150<'+ptmiss+'<200 GeV')
-histdata.GetXaxis().SetBinLabel(10,'Resolved, Low #DeltaR#lower[-0.1]{_{max}}, 3b, 200<'+ptmiss+'<300 GeV')
-histdata.GetXaxis().SetBinLabel(11,'Resolved, Low #DeltaR#lower[-0.1]{_{max}}, 3b, 300<'+ptmiss+'<400 GeV')
-histdata.GetXaxis().SetBinLabel(12,'Resolved, Low #DeltaR#lower[-0.1]{_{max}}, 3b, '+ptmiss+'>400 GeV')
-histdata.GetXaxis().SetBinLabel(13,'Resolved, Low #DeltaR#lower[-0.1]{_{max}}, 4b, 150<'+ptmiss+'<200 GeV')
-histdata.GetXaxis().SetBinLabel(14,'Resolved, Low #DeltaR#lower[-0.1]{_{max}}, 4b, 200<'+ptmiss+'<300 GeV')
-histdata.GetXaxis().SetBinLabel(15,'Resolved, Low #DeltaR#lower[-0.1]{_{max}}, 4b, 300<'+ptmiss+'<400 GeV')
-histdata.GetXaxis().SetBinLabel(16,'Resolved, Low #DeltaR#lower[-0.1]{_{max}}, 4b, '+ptmiss+'>400 GeV')
+histdata.GetXaxis().SetBinLabel(1,'Resolved, 1.1 < #DeltaR#lower[-0.1]{_{max}} < 2.2, 3b, 150<'+ptmiss+'<200 GeV')
+histdata.GetXaxis().SetBinLabel(2,'Resolved, 1.1 < #DeltaR#lower[-0.1]{_{max}} < 2.2, 3b, 200<'+ptmiss+'<300 GeV')
+histdata.GetXaxis().SetBinLabel(3,'Resolved, 1.1 < #DeltaR#lower[-0.1]{_{max}} < 2.2, 3b, 300<'+ptmiss+'<400 GeV')
+histdata.GetXaxis().SetBinLabel(4,'Resolved, 1.1 < #DeltaR#lower[-0.1]{_{max}} < 2.2, 3b, '+ptmiss+'>400 GeV')
+histdata.GetXaxis().SetBinLabel(5,'Resolved, 1.1 < #DeltaR#lower[-0.1]{_{max}} < 2.2, 4b, 150<'+ptmiss+'<200 GeV')
+histdata.GetXaxis().SetBinLabel(6,'Resolved, 1.1 < #DeltaR#lower[-0.1]{_{max}} < 2.2, 4b, 200<'+ptmiss+'<300 GeV')
+histdata.GetXaxis().SetBinLabel(7,'Resolved, 1.1 < #DeltaR#lower[-0.1]{_{max}} < 2.2, 4b, 300<'+ptmiss+'<400 GeV')
+histdata.GetXaxis().SetBinLabel(8,'Resolved, 1.1 < #DeltaR#lower[-0.1]{_{max}} < 2.2, 4b, '+ptmiss+'>400 GeV')
+histdata.GetXaxis().SetBinLabel(9,'Resolved, Low #DeltaR#lower[-0.1]{_{max}} < 1.1, 3b, 150<'+ptmiss+'<200 GeV')
+histdata.GetXaxis().SetBinLabel(10,'Resolved, Low #DeltaR#lower[-0.1]{_{max}} < 1.1, 3b, 200<'+ptmiss+'<300 GeV')
+histdata.GetXaxis().SetBinLabel(11,'Resolved, Low #DeltaR#lower[-0.1]{_{max}} < 1.1, 3b, 300<'+ptmiss+'<400 GeV')
+histdata.GetXaxis().SetBinLabel(12,'Resolved, Low #DeltaR#lower[-0.1]{_{max}} < 1.1, 3b, '+ptmiss+'>400 GeV')
+histdata.GetXaxis().SetBinLabel(13,'Resolved, Low #DeltaR#lower[-0.1]{_{max}} < 1.1, 4b, 150<'+ptmiss+'<200 GeV')
+histdata.GetXaxis().SetBinLabel(14,'Resolved, Low #DeltaR#lower[-0.1]{_{max}} < 1.1, 4b, 200<'+ptmiss+'<300 GeV')
+histdata.GetXaxis().SetBinLabel(15,'Resolved, Low #DeltaR#lower[-0.1]{_{max}} < 1.1, 4b, 300<'+ptmiss+'<400 GeV')
+histdata.GetXaxis().SetBinLabel(16,'Resolved, Low #DeltaR#lower[-0.1]{_{max}} < 1.1, 4b, '+ptmiss+'>400 GeV')
 histdata.GetXaxis().SetBinLabel(17,'Boosted, 1H, 300<'+ptmiss+'<500 GeV')
 histdata.GetXaxis().SetBinLabel(18,'Boosted, 1H, 500<'+ptmiss+'<700 GeV')
 histdata.GetXaxis().SetBinLabel(19,'Boosted, 1H, '+ptmiss+'>700 GeV')

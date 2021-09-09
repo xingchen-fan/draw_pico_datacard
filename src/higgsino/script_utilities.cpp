@@ -102,8 +102,10 @@ namespace script_utilities {
         .YAxis(PlotOptTypes::YAxisType::linear)
         .Stack(PlotOptTypes::StackType::signal_overlay)
         .LegendColumns(3);
-    if (unblind)
+    if (unblind) {
+      lin_norm.Stack(PlotOptTypes::StackType::data_norm);
       lin_norm.Bottom(PlotOptTypes::BottomType::ratio);
+    }
     return {lin_norm};
   }
 
@@ -115,8 +117,10 @@ namespace script_utilities {
         .LogMinimum(.2)
         .Stack(PlotOptTypes::StackType::signal_overlay)
         .LegendColumns(3);
-    if (unblind)
+    if (unblind) {
+      log_norm.Stack(PlotOptTypes::StackType::data_norm);
       log_norm.Bottom(PlotOptTypes::BottomType::ratio);
+    }
     return {log_norm};
   }
 
