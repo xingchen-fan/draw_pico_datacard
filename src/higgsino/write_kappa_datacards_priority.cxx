@@ -550,6 +550,11 @@ int main(int argc, char *argv[])
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
   //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*Higfuncs::w_years;
 
+  if (false) {
+    //for now, apply isolated track SFs
+    weight *= Higfuncs::isotkwgt;
+    weight_genmet *= Higfuncs::isotkwgt;
+  }
   if (higgsino_model=="N1N2") {
     weight *= HigUtilities::w_CNToN1N2;
     weight_genmet *= HigUtilities::w_CNToN1N2;
@@ -709,8 +714,13 @@ int main(int argc, char *argv[])
       vector<NamedFunc>({weight,weight})));
   systematics_vector.push_back(make_pair(string("SignalJER"),
       vector<NamedFunc>({weight,weight})));
-  systematics_vector.push_back(make_pair(string("IsoTk"),
-      vector<NamedFunc>({weight})));
+  //systematics_vector.push_back(make_pair(string("IsoTk"),
+  //    vector<NamedFunc>({weight})));
+  if (true) {
+    //apply isolated track systematic
+    systematics_vector.push_back(make_pair(string("IsoTk"),
+        vector<NamedFunc>({weight*Higfuncs::isotkwgt_syst_up,weight*Higfuncs::isotkwgt_syst_down})));
+  }
 
   vector<pair<string, vector<NamedFunc>>> systematics_vector_genmet;
   systematics_vector_genmet.push_back(make_pair(string("LumiSyst"),
@@ -745,8 +755,13 @@ int main(int argc, char *argv[])
       vector<NamedFunc>({weight_genmet,weight_genmet})));
   systematics_vector_genmet.push_back(make_pair(string("SignalJER"),
       vector<NamedFunc>({weight_genmet,weight_genmet})));
-  systematics_vector_genmet.push_back(make_pair(string("IsoTk"),
-      vector<NamedFunc>({weight_genmet})));
+  //systematics_vector.push_back(make_pair(string("IsoTk"),
+  //    vector<NamedFunc>({weight_genmet})));
+  if (true) {
+    //apply isolated track systematic
+    systematics_vector_genmet.push_back(make_pair(string("IsoTk"),
+        vector<NamedFunc>({weight_genmet*Higfuncs::isotkwgt_syst_up,weight_genmet*Higfuncs::isotkwgt_syst_down})));
+  }
 
   // Shift jet pT down by 2% on signal
   bool shiftPtDownOnSignal = false;
@@ -829,14 +844,14 @@ int main(int argc, char *argv[])
                                  "signalGenMet_"+sys_name, HigUtilities::nom2genmet,
                                  cutTable["signal"]);
       }
-      else if (sys.first == "IsoTk") {
-        string sys_name = sys.first+to_string(wgt_idx);
-        HigUtilities::addBinCuts(sampleBins, baseline_notk, weight, 
-                                 "signal_"+sys_name, cutTable["signal"]);
-        HigUtilities::addBinCuts(sampleBins, baseline_notk, weight_genmet, 
-                                 "signalGenMet_"+sys_name, HigUtilities::nom2genmet,
-                                 cutTable["signal"]);
-      }
+      //else if (sys.first == "IsoTk") {
+      //  string sys_name = sys.first+to_string(wgt_idx);
+      //  HigUtilities::addBinCuts(sampleBins, baseline_notk, weight, 
+      //                           "signal_"+sys_name, cutTable["signal"]);
+      //  HigUtilities::addBinCuts(sampleBins, baseline_notk, weight_genmet, 
+      //                           "signalGenMet_"+sys_name, HigUtilities::nom2genmet,
+      //                           cutTable["signal"]);
+      //}
       else {
         string sys_name = sys.first+to_string(wgt_idx);
         HigUtilities::addBinCuts(sampleBins, baseline, sys.second[wgt_idx], 
@@ -1253,24 +1268,24 @@ namespace HigWriteDataCards{
             row[2+2*bin_idx] = to_string(max_variation_down+1.0)+"/"+to_string(max_variation_up+1.0);
           }
         }
-        else if (sys.first == "IsoTk") {
-          //normal up/down systematic
-          string label = processName + "_" + signalAverageGenMetTag + "_" + sampleBins[bin_idx].first;
-          float nominal_value = mYields.at(label).first.Yield();
-          if (nominal_value == 0 || std::isnan(nominal_value) || std::isinf(nominal_value)) {
-            //no signal, poor stats
-            row[2+2*bin_idx] = "2.00/2.00";
-          }
-          else {
-            label = processName + "_" + signalAverageGenMetTag + "_" + sys.first + "0_" + sampleBins[bin_idx].first;
-            float value_up = mYields.at(label).first.Yield();
-            float syst_up = ((value_up-nominal_value)/nominal_value)/2.0;
-            if (syst_up > 1.0 || std::isnan(syst_up) || std::isinf(syst_up)) syst_up = 1.0;
-            if (syst_up <= -1.0) syst_up = -0.99;
-            float syst_down = -1.0*syst_up;
-            row[2+2*bin_idx] = to_string(syst_down+1.0)+"/"+to_string(syst_up+1.0);
-          }
-        }
+        //else if (sys.first == "IsoTk") {
+        //  //normal up/down systematic
+        //  string label = processName + "_" + signalAverageGenMetTag + "_" + sampleBins[bin_idx].first;
+        //  float nominal_value = mYields.at(label).first.Yield();
+        //  if (nominal_value == 0 || std::isnan(nominal_value) || std::isinf(nominal_value)) {
+        //    //no signal, poor stats
+        //    row[2+2*bin_idx] = "2.00/2.00";
+        //  }
+        //  else {
+        //    label = processName + "_" + signalAverageGenMetTag + "_" + sys.first + "0_" + sampleBins[bin_idx].first;
+        //    float value_up = mYields.at(label).first.Yield();
+        //    float syst_up = ((value_up-nominal_value)/nominal_value)/2.0;
+        //    if (syst_up > 1.0 || std::isnan(syst_up) || std::isinf(syst_up)) syst_up = 1.0;
+        //    if (syst_up <= -1.0) syst_up = -0.99;
+        //    float syst_down = -1.0*syst_up;
+        //    row[2+2*bin_idx] = to_string(syst_down+1.0)+"/"+to_string(syst_up+1.0);
+        //  }
+        //}
         else {
           //normal up/down systematic
           string label = processName + "_" + signalAverageGenMetTag + "_" + sampleBins[bin_idx].first;

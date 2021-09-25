@@ -1346,6 +1346,133 @@ const NamedFunc pico_weight_higd("pico_weight_hig_deep",[](const Baby &b) -> Nam
   return b.weight()/b.w_btag()*b.w_bhig();
 });
 
+const NamedFunc isotkwgt("isotkwgt",[](const Baby &b) -> NamedFunc::ScalarType{
+  //returns scale factors to make MC and data agree for isotk veto in tt2l region - only for nj=4 and 5
+  if (b.SampleType() < 0) return 1.0; //data
+  if ((b.type()/1000 != 106)) return 1.0; //not fastSIM
+  if (b.SampleType() == 2017) {
+    if (b.njet() <= 4) {
+      if (b.ntk()>0)
+        return 1.1161442;
+      return 0.9748500; 
+    }
+    else {
+      if (b.ntk()>0)
+        return 1.1486036;
+      return 0.96168727;
+    }
+  }
+  if (b.SampleType() == 2018) {
+    if (b.njet() <= 4) {
+      if (b.ntk()>0)
+        return 1.2384423;
+      return 0.95016720;
+    }
+    else {
+      if (b.ntk()>0)
+        return 1.2741405;
+      return 0.93088741;
+    }
+  }
+  else { //2016
+    if (b.njet() <= 4) {
+      if (b.ntk()>0)
+        return 1.2534025;
+      return 0.94940550;
+    }
+    else {
+      if (b.ntk()>0)
+        return 1.2953800;
+      return 0.93144094;
+    }
+  }
+  return 1.0;
+});
+
+const NamedFunc isotkwgt_syst_up("isotkwgt_syst_up",[](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.SampleType() < 0) return 1.0; //data
+  if ((b.type()/1000 != 106)) return 1.0; //not fastSIM
+  if (b.SampleType() == 2017) {
+    if (b.njet() <= 4) {
+      if (b.ntk()>0)
+        return 0.89594158;
+      return 1.0257988; 
+    }
+    else {
+      if (b.ntk()>0)
+        return 0.87062238;
+      return 1.0398391;
+    }
+  }
+  if (b.SampleType() == 2018) {
+    if (b.njet() <= 4) {
+      if (b.ntk()>0)
+        return 0.80746596;
+      return 1.0524463;
+    }
+    else {
+      if (b.ntk()>0)
+        return 0.78484280;
+      return 1.0742438;
+    }
+  }
+  else { //2016
+    if (b.njet() <= 4) {
+      if (b.ntk()>0)
+        return 0.79782831;
+      return 1.0532907;
+    }
+    else {
+      if (b.ntk()>0)
+        return 0.77197424;
+      return 1.0736054;
+    }
+  }
+  return 1.0;
+});
+
+const NamedFunc isotkwgt_syst_down("isotkwgt_syst_down",[](const Baby &b) -> NamedFunc::ScalarType{
+  //scale factors are small enough we can just use that fact that squaring approximately doubles them
+  if (b.SampleType() < 0) return 1.0; //data
+  if ((b.type()/1000 != 106)) return 1.0; //not fastSIM
+  if (b.SampleType() == 2017) {
+    if (b.njet() <= 4) {
+      if (b.ntk()>0)
+        return 1.1161442;
+      return 0.9748500; 
+    }
+    else {
+      if (b.ntk()>0)
+        return 1.1486036;
+      return 0.96168727;
+    }
+  }
+  if (b.SampleType() == 2018) {
+    if (b.njet() <= 4) {
+      if (b.ntk()>0)
+        return 1.2384423;
+      return 0.95016720;
+    }
+    else {
+      if (b.ntk()>0)
+        return 1.2741405;
+      return 0.93088741;
+    }
+  }
+  else { //2016
+    if (b.njet() <= 4) {
+      if (b.ntk()>0)
+        return 1.2534025;
+      return 0.94940550;
+    }
+    else {
+      if (b.ntk()>0)
+        return 1.2953800;
+      return 0.93144094;
+    }
+  }
+  return 1.0;
+});
 
 const NamedFunc mhig("mhig",[](const Baby &b) -> NamedFunc::ScalarType{
   float mass = -999;

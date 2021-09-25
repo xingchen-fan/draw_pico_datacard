@@ -87,10 +87,12 @@ for arg in sys.argv:
   if (arg == '--binlabels'):
     bin_labels = True
 
-tag1_lbl = 'Pre-fit'
+#tag1_lbl = 'Pre-fit'
+tag1_lbl = 'Pred'
 tag1_color = kPink+2
 
-tag2_lbl = 'Post-fit'
+#tag2_lbl = 'Post-fit'
+tag2_lbl = 'Fit'
 tag2_color = kAzure+1
 tag2_color_2 = kAzure+2
 
@@ -267,7 +269,7 @@ top_axis_title_size = 0.075
 top_axis_title_offset = 0.5
 if not plot_pulls:
   an_region_size = 0.041
-  nb_title_size = 0.04
+  nb_title_size = 0.038
   met_title_size = 0.037
   met_range_size = 0.0325
   tpad_bottom = 0.0
@@ -443,12 +445,12 @@ binlabel.DrawLatex(12.5, merge_category_y,"Resolved, 1.1 < #DeltaR#lower[-0.1]{_
 binlabel.DrawLatex(19.5, merge_category_y,"Boosted")
 binlabel.SetTextSize(nb_title_size)
 
-binlabel.DrawLatex(2.5, merge_category_y/1.944,"#font[42]{3b}")
-binlabel.DrawLatex(6.5, merge_category_y/1.944,"#font[42]{4b}")
-binlabel.DrawLatex(10.5, merge_category_y/1.944,"#font[42]{3b}")
-binlabel.DrawLatex(14.5, merge_category_y/1.944,"#font[42]{4b}")
-binlabel.DrawLatex(18, merge_category_y/1.944,"#font[42]{1H}")
-binlabel.DrawLatex(21, merge_category_y/1.944,"#font[42]{2H}")
+binlabel.DrawLatex(2.5, merge_category_y/1.944,"#font[42]{N_{b}=3}")
+binlabel.DrawLatex(6.5, merge_category_y/1.944,"#font[42]{N_{b}=4}")
+binlabel.DrawLatex(10.5, merge_category_y/1.944,"#font[42]{N_{b}=3}")
+binlabel.DrawLatex(14.5, merge_category_y/1.944,"#font[42]{N_{b}=4}")
+binlabel.DrawLatex(18, merge_category_y/1.944,"#font[42]{N_{H}=1}")
+binlabel.DrawLatex(21, merge_category_y/1.944,"#font[42]{N_{H}=2}")
 
 if not bin_labels:
   for i in range(4):

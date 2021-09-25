@@ -66,6 +66,10 @@ namespace Higfuncs{
   extern const NamedFunc weight_higd;
   extern const NamedFunc pico_weight_higd;
 
+  extern const NamedFunc isotkwgt;
+  extern const NamedFunc isotkwgt_syst_up;
+  extern const NamedFunc isotkwgt_syst_down;
+
   extern const NamedFunc mhig;
   extern const NamedFunc nb_exci;
   extern const NamedFunc nb_gs;

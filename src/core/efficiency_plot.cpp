@@ -419,7 +419,7 @@ void EfficiencyPlot::Print(double luminosity,
   if (this_opt_.Title() == TitleType::preliminary)
     t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}");
   else if (this_opt_.Title() == TitleType::simulation_preliminary)
-    t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Simulation Preliminiary}}");
+    t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Simulation Preliminary}}");
   else if (this_opt_.Title() == TitleType::simulation)
     t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Simulation}}");
   else if (this_opt_.Title() == TitleType::supplementary)
@@ -430,7 +430,7 @@ void EfficiencyPlot::Print(double luminosity,
     t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS}");
   else if (this_opt_.Title() == TitleType::info) {
     if (datas_.size() == 0) {
-      t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Simulation Preliminiary}}");
+      t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Simulation Preliminary}}");
     }
     else {
       t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}");
