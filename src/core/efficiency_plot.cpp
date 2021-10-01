@@ -134,24 +134,24 @@ void EfficiencyPlot::SingleEfficiencyPlot::RecordEvent(const Baby &baby){
   }else{
     for(size_t i = 0; i < min_vec_size; ++i){
       if(cut.IsVector() && !cut_vector_.at(i)) continue;
-      //avoid negative weight events failing numerator since these might make numerator > denominator
+      //previously avoid negative weight events failing numerator since these might make numerator > denominator
       //TODO: is there some alternative to deal with negative weights?
-      if(wgt.IsScalar()) {
-        if (numerator_cut_.IsScalar()) {
-          if (wgt_scalar < 0 && !numerator_cut_.GetScalar(baby)) continue;
-        }
-        else {
-          if (wgt_scalar < 0 && !numerator_cut_vector_.at(i)) continue;
-        }
-      }
-      else {
-        if (numerator_cut_.IsScalar()) {
-          if (wgt_vector_.at(i) < 0 && !numerator_cut_.GetScalar(baby)) continue;
-        }
-        else {
-          if (wgt_vector_.at(i) < 0 && !numerator_cut_vector_.at(i)) continue;
-        }
-      }
+      //if(wgt.IsScalar()) {
+      //  if (numerator_cut_.IsScalar()) {
+      //    if (wgt_scalar < 0 && !numerator_cut_.GetScalar(baby)) continue;
+      //  }
+      //  else {
+      //    if (wgt_scalar < 0 && !numerator_cut_vector_.at(i)) continue;
+      //  }
+      //}
+      //else {
+      //  if (numerator_cut_.IsScalar()) {
+      //    if (wgt_vector_.at(i) < 0 && !numerator_cut_.GetScalar(baby)) continue;
+      //  }
+      //  else {
+      //    if (wgt_vector_.at(i) < 0 && !numerator_cut_vector_.at(i)) continue;
+      //  }
+      //}
       //fill denominator and maybe numerator histograms
       raw_denominator_hist_.Fill(val.IsScalar() ? val_scalar : val_vector_.at(i),
                                  wgt.IsScalar() ? wgt_scalar : wgt_vector_.at(i));

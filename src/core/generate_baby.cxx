@@ -40,8 +40,9 @@ int main(int argc, char *argv[]){
   WriteBaseHeader(vars, files);
   WriteBaseSource(vars);
   for(const auto &file: files){
+    string tree_name = GetTreeName(file);
     WriteSpecializedHeader(vars, file);
-    WriteSpecializedSource(vars, file);
+    WriteSpecializedSource(vars, file, tree_name);
   }
 }
 
@@ -91,7 +92,7 @@ std::string & Variable::Name(){
 string Variable::Type() const{
   if(ImplementInBase() || VirtualInBase()){
     for(const auto &var: type_map_){
-      if(var.second != "") return var.second;
+      if(var.second != "") return ArrayToVector(var.second);
     }
   }
   return "";
@@ -108,6 +109,50 @@ string Variable::Type() const{
 */
 string Variable::Type(const string &baby_type) const{
   if(HasEntry(baby_type)){
+    return ArrayToVector(type_map_.at(baby_type));
+  }else{
+    return "";
+  }
+}
+
+/*!\brief Get one type for variable across all Baby classes, with array treated
+ * separate from vector
+
+  \return If type is the same in all derived Baby classes, return that
+  type. Otherwise, returns empty string.
+
+  \see Variable::RawType()
+*/
+string Variable::RawType() const{
+  string raw_type = "";
+  if(ImplementInBase() || VirtualInBase()){
+    for(const auto &var: type_map_){
+      if(var.second != "") {
+        if (raw_type == "") {
+          raw_type = var.second;
+        }
+        else if (raw_type != var.second) {
+          return "";
+        }
+      }
+    }
+  }
+  return raw_type;
+}
+
+
+/*!\brief Get type of variable for a derived Baby class, with array treated
+ * separate from vector
+
+  \param[in] baby_type Name of derived Baby class (e.g., basic, full) for which
+  to get type
+
+  \return Type of variable as used in the derived Baby class
+
+  \see Variable::DecoratedType(const std::string &baby_type) const
+*/
+string Variable::RawType(const string &baby_type) const{
+  if(HasEntry(baby_type)){
     return type_map_.at(baby_type);
   }else{
     return "";
@@ -118,11 +163,16 @@ string Variable::Type(const string &baby_type) const{
 
   \return If type is the same in all Baby classes, returns that type with
   "std::" and "*" added if needed. Otherwise, returns empty string.
+  
+  \param[in] use_raw determines whether arrays are converted to vectors or not
 
   \see Variable::Type()
 */
-string Variable::DecoratedType() const{
+string Variable::DecoratedType(const bool use_raw) const{
   string type = Type();
+  if (use_raw) {
+    type = RawType();
+  }
   if(type.find("std::") != string::npos){
     type = type+"*";
   }
@@ -134,13 +184,18 @@ string Variable::DecoratedType() const{
   \param[in] baby_type Name of derived Baby class (e.g., basic, full) for which
   to get type
 
+  \param[in] use_raw determines whether arrays are converted to vectors or not
+
   \return Type of variable as used in the derived Baby class, with "std::" and
   "*" if needed
 
   \see Variable::Type(const std::string &baby_type) const
 */
-string Variable::DecoratedType(const string &baby_type) const{
+string Variable::DecoratedType(const string &baby_type, const bool use_raw) const{
   string type = Type(baby_type);
+  if (use_raw) {
+    type = RawType(baby_type);
+  }
   if(type.find("std::") != string::npos){
     type = type+"*";
   }
@@ -185,12 +240,13 @@ bool Variable::ImplementInBase() const{
 
   Pure virtual accessor is needed if and only if the variable has exactly one
   type across all derived Baby classes, but does is only present in a subset of
-  the classes.
+  the classes. Note that std::vector and std::array count as the same type for
+  this purpose.
 
   \return True if variable should have virtual accessor in Baby
 */
 bool Variable::VirtualInBase() const{
-  set<string> type_set = GetTypeSet();
+  set<string> type_set = GetTypeSet(true);
 
   //type_set should contain one real type and an empty type indicating absence
   //from some Baby classes
@@ -223,7 +279,7 @@ bool Variable::ImplementIn(const std::string &baby_type) const{
   Baby
 */
 bool Variable::NotInBase() const{
-  set<string> type_set = GetTypeSet();
+  set<string> type_set = GetTypeSet(true);
   if(type_set.size() == 2){
     auto iter = type_set.cbegin();
     string first_type = *iter;
@@ -264,13 +320,25 @@ bool Variable::operator<(const Variable &other) const{
 
   May include an empty string if variable is absent from some derived Baby
   classes
+  
+  \param[in] array_to_vector controls whether or not arrays are replaced by vectors
 
   \return List of types used in all derived Baby classes
 */
-set<string> Variable::GetTypeSet() const{
+set<string> Variable::GetTypeSet(bool array_to_vector) const{
   set<string> types;
   for(const auto &type: type_map_){
-    types.insert(type.second);
+    if (type.second.find("array") != string::npos) {
+      if (array_to_vector) {
+        types.insert(ArrayToVector(type.second));
+      }
+      else {
+        types.insert(type.second);
+      }
+    }
+    else {
+      types.insert(type.second);
+    }
   }
   return types;
 }
@@ -314,6 +382,23 @@ set<Variable> GetVariables(const set<string> &files){
   return {vars.cbegin(), vars.cend()};
 }
 
+/*!/brief Reads file to check for TTree name meta-information
+
+  \param[in] file File to be read.
+
+  \return Special treename if applicable, otherwise "tree".
+*/
+string GetTreeName(const string &file) {
+  vector<Variable> vars;
+  ifstream ifs("txt/variables/"+file);
+  for(string line; std::getline(ifs, line); ){
+    size_t pos = line.find("#METATREENAME:");
+    if (pos != string::npos) 
+      return line.substr(pos+14);
+  }
+  return "tree";
+}
+
 /*!\brief Check if line in variable list file is a comment (blank)
 
   Not very robust. Currently, a line is a "comment" if is is less than 3
@@ -335,6 +420,41 @@ bool IsComment(const string &line){
   return true;
 }
 
+/*!\brief Gives a size for arrays of a given NanoAOD branch
+
+  \param[in] var_name the name of the branch
+
+  \return size of array to be generated
+*/
+int GetArrayLength(const std::string var_name){
+  const string var_type = var_name.substr(0,var_name.find_first_of('_'));
+  if      (var_type == "Electron") return 40;
+  else if (var_type == "Muon") return 40;
+  else if (var_type == "Tau") return 30;
+  else if (var_type == "IsoTrack") return 30;
+  else if (var_type == "Photon") return 200;
+  else if (var_type == "Jet") return 200;
+  else if (var_type == "SoftActivityJet") return 30;
+  else if (var_type == "FatJet") return 30;
+  else if (var_type == "SubJet") return 60;
+  else if (var_type == "CorrT1METJet") return 40;
+  else if (var_type == "GenPart") return 500;
+  else if (var_type == "GenDressedLepton") return 20;
+  else if (var_type == "GenVisTau") return 20;
+  else if (var_type == "GenJet") return 50;
+  else if (var_type == "GenJetAK8") return 50;
+  else if (var_type == "SubGenJetAK8") return 100;
+  else if (var_type == "LHEPart") return 40;
+  else if (var_type == "LHEPdfWeight") return 100;
+  else if (var_type == "LHEReweightingWeight") return 100;
+  else if (var_type == "LHEScaleWeight") return 10;
+  else if (var_type == "PSWeight") return 20;
+  else if (var_type == "OtherPV") return 20;
+  else if (var_type == "SV") return 40;
+  else if (var_type == "TrigObj") return 40;
+  else return -1;
+}
+
 /*!\brief Extracts variable type and name from line from variable text files
 
   \param[in] line The line to be parsed
@@ -350,7 +470,12 @@ SimpleVariable GetVariable(string line){
     ERROR("Could not separate type and variable in "+line);
     return SimpleVariable("", line);
   }else{
-    return SimpleVariable(line.substr(0,loc), line.substr(loc+1));
+    string name = line.substr(loc+1);
+    string type = line.substr(0,loc);
+    if (line.find("array")!=string::npos) {
+      type = type.substr(0,type.length()-1) + "," + to_string(GetArrayLength(name))+">";
+    }
+    return SimpleVariable(type, name);
   }
 }
 
@@ -413,6 +538,7 @@ void WriteBaseHeader(const set<Variable> &vars,
   file << "#ifndef H_BABY\n";
   file << "#define H_BABY\n\n";
 
+  file << "#include <array>\n";
   file << "#include <vector>\n";
   file << "#include <set>\n";
   file << "#include <memory>\n";
@@ -485,7 +611,8 @@ void WriteBaseHeader(const set<Variable> &vars,
   file << "  virtual void Initialize();\n\n";
 
   file << "  std::unique_ptr<TChain> chain_;//!<Chain to load variables from\n";
-  file << "  long entry_;//!<Current entry\n\n";
+  file << "  long entry_;//!<Current entry\n";
+  file << "  std::string tree_name_;//!<Name of TTree in files\n\n";
 
   file << "private:\n";
   file << "  friend class Activator;\n\n";
@@ -507,9 +634,22 @@ void WriteBaseHeader(const set<Variable> &vars,
 
   for(const auto &var: vars){
     if(!var.ImplementInBase()) continue;
-    file << "  "
-         << var.DecoratedType() << " "
-         << var.Name() << "_;//!<Cached value of " << var.Name() << '\n';
+    if (var.RawType().find("std::array") != string::npos) {
+      file << "  mutable "
+           << var.DecoratedType() << " "
+           << var.Name() << "_;//!<Cached value of " << var.Name() << '\n';
+      file << "  mutable "
+           << var.Type() << " vec_"
+           << var.Name() << "_;//!<Cached vector value of " << var.Name() << '\n';
+      file << "  "
+           << var.RawType() << " arr_"
+           << var.Name() << "_;//!<Cached array value of " << var.Name() << '\n';
+    }
+    else {
+      file << "  "
+           << var.DecoratedType() << " "
+           << var.Name() << "_;//!<Cached value of " << var.Name() << '\n';
+    }
     file << "  TBranch *b_" << var.Name() << "_;//!<Branch from which "
          << var.Name() << " is read\n";
     file << "  mutable bool c_" << var.Name() << "_;//!<Flag if cached "
@@ -666,10 +806,18 @@ void WriteBaseSource(const set<Variable> &vars){
     for(auto var = vars.cbegin(); var != last_base; ++var){
       if(!var->ImplementInBase()) continue;
       file << "  " << var->Name() << "_{},\n";
+      if (var->RawType().find("std::array") != string::npos) {
+        file << "  vec_" << var->Name() << "_(" << var->Type() << "{}),\n";
+        file << "  arr_" << var->Name() << "_(" << var->RawType() << "{}),\n";
+      }
       file << "  b_" << var->Name() << "_(nullptr),\n";
       file << "  c_" << var->Name() << "_(false),\n";
     }
     file << "  " << last_base->Name() << "_{},\n";
+    if (last_base->RawType().find("std::array") != string::npos) {
+      file << "  vec_" << last_base->Name() << "_(" << last_base->Type() << "{}),\n";
+      file << "  arr_" << last_base->Name() << "_(" << last_base->RawType() << "{}),\n";
+    }
     file << "  b_" << last_base->Name() << "_(nullptr),\n";
     file << "  c_" << last_base->Name() << "_(false){\n";
   }
@@ -803,14 +951,19 @@ void WriteBaseSource(const set<Variable> &vars){
   file << "  chain_->SetMakeClass(1);\n";
   for(const auto &var: vars){
     if(!var.ImplementInBase()) continue;
-    file << "  chain_->SetBranchAddress(\"" << var.Name() << "\", &" << var.Name() << "_, &b_" << var.Name() << "_);\n";
+    if (var.RawType().find("std::array") != string::npos) {
+      file << "  chain_->SetBranchAddress(\"" << var.Name() << "\", &arr_" << var.Name() << "_[0], &b_" << var.Name() << "_);\n";
+    }
+    else {
+      file << "  chain_->SetBranchAddress(\"" << var.Name() << "\", &" << var.Name() << "_, &b_" << var.Name() << "_);\n";
+    }
   }
   file << "}\n\n";
 
   file << "void Baby::ActivateChain(){\n";
   file << "  if(chain_) ERROR(\"Chain has already been initialized\");\n";
   file << "  lock_guard<mutex> lock(Multithreading::root_mutex);\n";
-  file << "  chain_ = unique_ptr<TChain>(new TChain(\"tree\"));\n";
+  file << "  chain_ = unique_ptr<TChain>(new TChain(tree_name_.c_str()));\n";
   file << "  for(const auto &file: file_names_){\n";
   file << "    chain_->Add(file.c_str());\n";
   file << "  }\n";
@@ -830,7 +983,16 @@ void WriteBaseSource(const set<Variable> &vars){
     file << "*/\n";
     file << var.DecoratedType() << " const & Baby::" << var.Name() << "() const{\n";
     file << "  if(!c_" << var.Name() << "_ && b_" << var.Name() << "_){\n";
-    file << "    b_" << var.Name() << "_->GetEntry(entry_);\n";
+    if (var.RawType().find("std::array") != string::npos) {
+      file << "    int bytes = b_" << var.Name() << "_->GetEntry(entry_);\n";
+      file << "    vec_" << var.Name() << "_ = " << var.Type() << "(arr_" 
+           << var.Name() << "_.begin(), arr_" << var.Name() << "_.begin()"
+           << "+bytes/sizeof(arr_" << var.Name() << "_[0]));\n";
+      file << "    " << var.Name() << "_ = const_cast<" << var.Type() << "* const>(&vec_" << var.Name() << "_);\n";
+    }
+    else {
+      file << "    b_" << var.Name() << "_->GetEntry(entry_);\n";
+    }
     file << "    c_" << var.Name() << "_ = true;\n";
     file << "  }\n";
     file << "  return " << var.Name() << "_;\n";
@@ -885,8 +1047,20 @@ void WriteSpecializedHeader(const set<Variable> &vars, const string &type){
 
   for(const auto &var: vars){
     if(var.ImplementIn(type) || var.EverythingIn(type)){
-      file << "  " << var.DecoratedType(type) << " "
-           << var.Name() << "_;//!<Cached value of " << var.Name() << '\n';
+      if (var.RawType(type).find("std::array") != string::npos) {
+        file << "  mutable " << var.DecoratedType(type) << " "
+             << var.Name() << "_;//!<Cached value of " << var.Name() << '\n';
+        file << "  mutable "
+             << var.Type(type) << " vec_"
+             << var.Name() << "_;//!<Cached vector value of " << var.Name() << '\n';
+        file << "  "
+             << var.RawType(type) << " arr_"
+             << var.Name() << "_;//!<Cached array value of " << var.Name() << '\n';
+      }
+      else {
+        file << "  " << var.DecoratedType(type) << " "
+             << var.Name() << "_;//!<Cached value of " << var.Name() << '\n';
+      }
       file << "  TBranch *b_" << var.Name() << "_;\n//!<Branch from which "
            << var.Name() << " is read\n";
       file << "  mutable bool c_" << var.Name() << "_;//!<Flag if cached "
@@ -904,9 +1078,11 @@ void WriteSpecializedHeader(const set<Variable> &vars, const string &type){
   \param[in] vars All variables for all Baby classes, with type information
 
   \param[in] type Name of derived Baby class (basic, full, etc.)
+
+  \param[in] tree_name Name of TTree in root file
 */
 
-void WriteSpecializedSource(const set<Variable> &vars, const string &type){
+void WriteSpecializedSource(const set<Variable> &vars, const string &type, const string &tree_name){
   ofstream file("src/core/baby_"+type+".cpp");
   file << "/*! \\class Baby_" << type << "\n\n";
 
@@ -934,7 +1110,7 @@ void WriteSpecializedSource(const set<Variable> &vars, const string &type){
     if(var.ImplementIn(type) || var.EverythingIn(type)) ++implemented_here;
   }
   if(implemented_here == 0){
-    file << "  Baby(file_names, processes){\n";
+    file << "  Baby(file_names, processes),{\n";
   }else{
     file << "  Baby(file_names, processes),\n";
     set<Variable>::const_iterator last = vars.cend();
@@ -946,6 +1122,10 @@ void WriteSpecializedSource(const set<Variable> &vars, const string &type){
     for(auto var = vars.cbegin(); var != vars.cend(); ++var){
       if(var->ImplementIn(type) || var->EverythingIn(type)){
         file << "  " << var->Name() << "_{},\n";
+        if (var->RawType(type).find("std::array") != string::npos) {
+          file << "  vec_" << var->Name() << "_(" << var->Type() << "{}),\n";
+          file << "  arr_" << var->Name() << "_(" << var->RawType(type) << "{}),\n";
+        }
         file << "  b_" << var->Name() << "_(nullptr),\n";
         if(var != last){
           file << "  c_" << var->Name() << "_(false),\n";
@@ -955,6 +1135,7 @@ void WriteSpecializedSource(const set<Variable> &vars, const string &type){
       }
     }
   }
+  file << "  tree_name_ = \""+tree_name+"\";\n";
   file << "}\n\n";
 
   file << "/*!\\brief Change current entry\n\n";
@@ -976,8 +1157,13 @@ void WriteSpecializedSource(const set<Variable> &vars, const string &type){
   file << "  Baby::Initialize();\n";
   for(const auto &var: vars){
     if(var.ImplementIn(type) || var.EverythingIn(type)){
-      file << "  chain_->SetBranchAddress(\"" << var.Name() << "\", &"
-           << var.Name() << "_, &b_" << var.Name() << "_);\n";
+      if (var.RawType(type).find("std::array") != string::npos) {
+        file << "  chain_->SetBranchAddress(\"" << var.Name() << "\", &arr_" << var.Name() << "_[0], &b_" << var.Name() << "_);\n";
+      }
+      else {
+        file << "  chain_->SetBranchAddress(\"" << var.Name() << "\", &"
+             << var.Name() << "_, &b_" << var.Name() << "_);\n";
+      }
     }
   }
   file << "}\n";
@@ -990,7 +1176,16 @@ void WriteSpecializedSource(const set<Variable> &vars, const string &type){
       file << "*/\n";
       file << var.DecoratedType(type) << " const & Baby_" << type << "::" << var.Name() << "() const{\n";
       file << "  if(!c_" << var.Name() << "_ && b_" << var.Name() << "_){\n";
-      file << "    b_" << var.Name() << "_->GetEntry(entry_);\n";
+      if (var.RawType(type).find("std::array") != string::npos) {
+        file << "    int bytes = b_" << var.Name() << "_->GetEntry(entry_);\n";
+        file << "    vec_" << var.Name() << "_ = " << var.Type(type) << "(arr_" 
+             << var.Name() << "_.begin(), arr_" << var.Name() << "_.begin()"
+             << "+bytes/sizeof(arr_" << var.Name() << "_[0]));\n";
+        file << "    " << var.Name() << "_ = const_cast<" << var.Type(type) << "* const>(&vec_" << var.Name() << "_);\n";
+      }
+      else {
+        file << "    b_" << var.Name() << "_->GetEntry(entry_);\n";
+      }
       file << "    c_" << var.Name() << "_ = true;\n";
       file << "  }\n";
       file << "  return " << var.Name() << "_;\n";
@@ -1010,3 +1205,22 @@ void WriteSpecializedSource(const set<Variable> &vars, const string &type){
   file << flush;
   file.close();
 }
+
+/*!\brief Converts a string with std::array into one with std::vector
+
+  Converts a string of the format "std::array<T,len>" to "std::vector<T>"
+
+  \param[in] arr_str string to be converted
+
+  \return string with std::array switched out for std::vector
+*/
+string ArrayToVector(const string arr_str) {
+  if (arr_str.find("array") != string::npos) {
+    size_t comma_pos = arr_str.find(",");
+    if (comma_pos != string::npos) {
+      return "std::vector<"+arr_str.substr(11,comma_pos-11)+">";
+    }
+  }
+  return arr_str;
+}
+

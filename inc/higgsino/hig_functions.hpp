@@ -66,6 +66,8 @@ namespace Higfuncs{
   extern const NamedFunc weight_higd;
   extern const NamedFunc pico_weight_higd;
 
+  extern const NamedFunc jet_has_isotk;
+  extern const NamedFunc isotkwgt_new;
   extern const NamedFunc isotkwgt;
   extern const NamedFunc isotkwgt_syst_up;
   extern const NamedFunc isotkwgt_syst_down;

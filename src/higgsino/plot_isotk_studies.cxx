@@ -1,4 +1,4 @@
-//This script generates the following supplementary plots and tables: pie charts, cutflows
+//This script is used to perform various studies on isolated tracks targeted by a veto in the HH+MET analysis
 //
 //Arguments
 // --single_thread (-s) to run single thread for debugging
@@ -75,6 +75,10 @@ int main(int argc, char *argv[]){
   HigUtilities::parseYears(options.year_string, years);
   int lumi_precision = 0;
   string total_luminosity_string = HigUtilities::getLuminosityString(options.year_string, lumi_precision);
+
+  std::vector<std::shared_ptr<Process>> search_procs = 
+      script_utilities::getall_processes(
+      years, {}, "search", false);
 
   std::vector<std::shared_ptr<Process>> ttbar_procs = 
       script_utilities::getall_processes(
@@ -244,9 +248,209 @@ int main(int argc, char *argv[]){
                          "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40"
                          &&filters; //also missing met cut since this differs between fastSIM and fullSIM
 
+
+  const NamedFunc jet_has_isotk("jet_has_isotk",[](const Baby &b) -> NamedFunc::VectorType{
+    std::vector<double> jet_has_isotk_;
+    for (unsigned ijet = 0; ijet < b.jet_pt()->size(); ijet++) {
+      bool found_tk = false;
+      for (unsigned itk = 0; itk < b.tk_pt()->size(); itk++) {
+        float tk_jet_dr = deltaR(b.tk_eta()->at(itk),b.tk_phi()->at(itk),b.jet_eta()->at(ijet),b.jet_phi()->at(ijet));
+        if (tk_jet_dr < 0.4) {
+          found_tk = true;
+        }
+      }
+      if (found_tk) {
+        jet_has_isotk_.push_back(1);
+      }
+      else {
+        jet_has_isotk_.push_back(0);
+      }
+    }
+    return jet_has_isotk_;
+  });
+
   const NamedFunc ntruleptot("ntruleptot",[](const Baby &b) -> NamedFunc::ScalarType{
     //returns number of truth leptons including hadronic taus
     return b.ntrulep()+b.ntrutauh();
+  });
+
+  const NamedFunc isotkwgt_new("isotkwgt_new",[jet_has_isotk](const Baby &b) -> NamedFunc::ScalarType{
+    if (b.SampleType() < 0) return 1.0; //data
+    //new isotk sfs: 2016
+    std::vector<double> jet_has_isotk_ = jet_has_isotk.GetVector(b);
+    bool nonjet_isotk = false;
+    if (b.ntk()>0) nonjet_isotk = true;
+    float sf = 1.0;
+    for (unsigned ijet = 0; ijet<b.jet_pt()->size(); ijet++) {
+      if (!(b.jet_isgood()->at(ijet))) continue;
+      if (jet_has_isotk_[ijet] > 0.5) nonjet_isotk = false;
+      float dcsvmwp = 1.0;
+      if (abs(b.SampleType())==2016) dcsvmwp = 0.6321;
+      if (abs(b.SampleType())==2017) dcsvmwp = 0.4941;
+      if (abs(b.SampleType())==2018) dcsvmwp = 0.4148;
+      bool is_b = (b.jet_deepcsv()->at(ijet)>dcsvmwp);
+      float pt = b.jet_pt()->at(ijet);
+      if (abs(b.SampleType())==2016) {
+        if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=30&&pt<60)) sf *= 0.987949;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=60&&pt<90)) sf *= 0.992924;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=90&&pt<120)) sf *= 0.991273;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=120&&pt<150)) sf *= 0.996162;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=150&&pt<250)) sf *= 0.99273;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=250&&pt<9999.0)) sf *= 0.998874;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=30&&pt<60)) sf *= 0.993096;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=60&&pt<90)) sf *= 0.994477;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=90&&pt<120)) sf *= 0.991008;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=120&&pt<150)) sf *= 0.996098;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=150&&pt<250)) sf *= 0.991569;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=250&&pt<9999.0)) sf *= 0.99908;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=30&&pt<60)) sf *= 1.20174;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=60&&pt<90)) sf *= 1.208;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=90&&pt<120)) sf *= 1.40904;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=120&&pt<150)) sf *= 1.26908;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=150&&pt<250)) sf *= 1.86818;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=250&&pt<9999.0)) sf *= 1.27395;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=30&&pt<60)) sf *= 1.09692;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=60&&pt<90)) sf *= 1.15057;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=90&&pt<120)) sf *= 1.4038;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=120&&pt<150)) sf *= 1.26259;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=150&&pt<250)) sf *= 1.94433;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=250&&pt<9999.0)) sf *= 1.19661;
+      }
+      else if (abs(b.SampleType())==2017) {
+        if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=30&&pt<60)) sf *= 0.994873;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=60&&pt<90)) sf *= 1.0005;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=90&&pt<120)) sf *= 0.995164;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=120&&pt<150)) sf *= 0.997693;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=150&&pt<250)) sf *= 0.995211;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=250&&pt<9999.0)) sf *= 0.998194;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=30&&pt<60)) sf *= 1.00284;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=60&&pt<90)) sf *= 1.00332;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=90&&pt<120)) sf *= 0.995773;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=120&&pt<150)) sf *= 0.997343;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=150&&pt<250)) sf *= 0.994794;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=250&&pt<9999.0)) sf *= 0.9986;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=30&&pt<60)) sf *= 1.07672;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=60&&pt<90)) sf *= 0.987972;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=90&&pt<120)) sf *= 1.18702;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=120&&pt<150)) sf *= 1.13165;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=150&&pt<250)) sf *= 1.50718;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=250&&pt<9999.0)) sf *= 1.31995;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=30&&pt<60)) sf *= 0.965735;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=60&&pt<90)) sf *= 0.928357;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=90&&pt<120)) sf *= 1.14894;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=120&&pt<150)) sf *= 1.1379;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=150&&pt<250)) sf *= 1.48881;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=250&&pt<9999.0)) sf *= 1.16937;
+      }
+      else if (abs(b.SampleType())==2018) {
+        if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=30&&pt<60)) sf *= 0.990637;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=60&&pt<90)) sf *= 0.996963;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=90&&pt<120)) sf *= 0.994828;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=120&&pt<150)) sf *= 0.992855;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=150&&pt<250)) sf *= 0.994328;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=250&&pt<9999.0)) sf *= 0.998497;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=30&&pt<60)) sf *= 0.995294;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=60&&pt<90)) sf *= 0.999124;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=90&&pt<120)) sf *= 0.994703;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=120&&pt<150)) sf *= 0.992042;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=150&&pt<250)) sf *= 0.993308;
+        else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=250&&pt<9999.0)) sf *= 0.997792;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=30&&pt<60)) sf *= 1.14531;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=60&&pt<90)) sf *= 1.07676;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=90&&pt<120)) sf *= 1.20435;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=120&&pt<150)) sf *= 1.41748;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=150&&pt<250)) sf *= 1.51097;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=250&&pt<9999.0)) sf *= 1.29265;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=30&&pt<60)) sf *= 1.0601;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=60&&pt<90)) sf *= 1.0198;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=90&&pt<120)) sf *= 1.19043;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=120&&pt<150)) sf *= 1.42707;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=150&&pt<250)) sf *= 1.53061;
+        else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=250&&pt<9999.0)) sf *= 1.33105;
+      }
+    }
+    if (abs(b.SampleType())==2016) {
+      if (b.njet() <= 2) {
+        if (nonjet_isotk) {
+          sf *= 1.38087;
+        } else {
+          sf *= 0.990393;
+        }
+      } else if (b.njet() == 3) {
+        if (nonjet_isotk) {
+          sf *= 1.39492;
+        } else {
+          sf *= 0.987977;
+        }
+      } else if (b.njet() == 4) {
+        if (nonjet_isotk) {
+          sf *= 1.33345;
+        } else {
+          sf *= 0.988068;
+        }
+      } else {
+        if (nonjet_isotk) {
+          sf *= 1.18028;
+        } else {
+          sf *= 0.992574;
+        }
+      }
+    }
+    else if (abs(b.SampleType())==2017) {
+      if (b.njet() <= 2) {
+        if (nonjet_isotk) {
+          sf *= 1.3157;
+        } else {
+          sf *= 0.9922;
+        }
+      } else if (b.njet() == 3) {
+        if (nonjet_isotk) {
+          sf *= 1.32952;
+        } else {
+          sf *= 0.990666;
+        }
+      } else if (b.njet() == 4) {
+        if (nonjet_isotk) {
+          sf *= 1.162;
+        } else {
+          sf *= 0.994671;
+        }
+      } else {
+        if (nonjet_isotk) {
+          sf *= 1.16833;
+        } else {
+          sf *= 0.993896;
+        }
+      }
+    }
+    else if (abs(b.SampleType())==2018) {
+      if (b.njet() <= 2) {
+        if (nonjet_isotk) {
+          sf *= 1.53728;
+        } else {
+          sf *= 0.987156;
+        }
+      } else if (b.njet() == 3) {
+        if (nonjet_isotk) {
+          sf *= 1.43281;
+        } else {
+          sf *= 0.987155;
+        }
+      } else if (b.njet() == 4) {
+        if (nonjet_isotk) {
+          sf *= 1.42807;
+        } else {
+          sf *= 0.985739;
+        }
+      } else {
+        if (nonjet_isotk) {
+          sf *= 1.23447;
+        } else {
+          sf *= 0.990622;
+        }
+      }
+    }
+    return sf;
   });
 
   const NamedFunc isotkwgt("isotkwgt",[](const Baby &b) -> NamedFunc::ScalarType{
@@ -322,6 +526,43 @@ int main(int argc, char *argv[]){
   });
 
   NamedFunc weight_isotk = weight*isotkwgt;
+  NamedFunc weight_isotk_new = weight*isotkwgt_new;
+
+  const NamedFunc isotk_is_lepton("isotk_is_lepton",[](const Baby &b) -> NamedFunc::ScalarType{
+    //returns true if isolated track is close to a truth lepton
+    if (b.ntk()==0) {
+      return 0;
+    }
+    for (unsigned itk = 0; itk < b.tk_pt()->size(); itk++) {
+      for (unsigned imc = 0; imc < b.mc_pt()->size(); imc++) {
+        int pdgid = abs(b.mc_id()->at(imc));
+        if(pdgid == 11 || pdgid == 13 || pdgid == 15) {
+          float tk_lep_dr = deltaR(b.tk_eta()->at(itk),b.tk_phi()->at(itk),b.mc_eta()->at(imc),b.mc_phi()->at(imc));
+          if (tk_lep_dr < 0.4)
+           return 1;
+        }
+      }
+    }
+    return 0;
+  });
+
+  const NamedFunc nonjet_isotk("nonjet_isotk",[](const Baby &b) -> NamedFunc::ScalarType{
+    //returns true if there is an isolated track not associated with a jet
+    if (b.ntk()==0) {
+      return false;
+    }
+    bool nonjet_isotk_ = true;
+    for (unsigned itk = 0; itk < b.tk_pt()->size(); itk++) {
+      for (unsigned ijet = 0; ijet < b.jet_pt()->size(); ijet++) {
+        if (b.jet_isgood()->at(ijet)) {
+          float tk_jet_dr = deltaR(b.tk_eta()->at(itk),b.tk_phi()->at(itk),b.jet_eta()->at(ijet),b.jet_phi()->at(ijet));
+          if (tk_jet_dr < 0.4)
+            return nonjet_isotk_ = false;
+        }
+      }
+    }
+    return nonjet_isotk_;
+  });
 
   const NamedFunc dr_tk_jet("dr_tk_jet",[](const Baby &b) -> NamedFunc::ScalarType{
     //returns min delta-r between isolated track and jet in an event
@@ -339,6 +580,23 @@ int main(int argc, char *argv[]){
       }
     }
     return min_dr;
+  });
+
+  const NamedFunc jet_is_bm("jet_is_bm",[](const Baby &b) -> NamedFunc::VectorType{
+    std::vector<double> jet_is_bm_;
+    for (unsigned ijet = 0; ijet < b.jet_pt()->size(); ijet++) {
+      float dcsvmwp = 1.0;
+      if (abs(b.SampleType())==2016) dcsvmwp = 0.6321;
+      if (abs(b.SampleType())==2017) dcsvmwp = 0.4941;
+      if (abs(b.SampleType())==2018) dcsvmwp = 0.4148;
+      if (b.jet_deepcsv()->at(ijet)>dcsvmwp) {
+        jet_is_bm_.push_back(1);
+      }
+      else {
+        jet_is_bm_.push_back(0);
+      }
+    }
+    return jet_is_bm_;
   });
 
   const NamedFunc dr_tk_bjet("dr_tk_bjet",[](const Baby &b) -> NamedFunc::ScalarType{
@@ -619,6 +877,7 @@ int main(int argc, char *argv[]){
   });
 
   const std::vector<double> avjetpt_bins = {0,75,100,150,250,750};
+  const std::vector<double> jetpt_bins = {30,60,90,120,150,250,500};
 
   //------------------------------------------------------------------------------------
   //                                     make plots and pie charts
@@ -639,6 +898,7 @@ int main(int argc, char *argv[]){
   }
 
   if(HigUtilities::is_in_string_options(options.string_options, "cr_isotkeff")) {
+    //1l & 2l CR(DY) plots
     pm.Push<EfficiencyPlot>(Axis({0,20,40,60,80,100,150,200,400}, avr_jet_pt, "Average jet p_{T} [GeV]", {}),
         zll_resolved,
         "ntk==0",
@@ -683,6 +943,81 @@ int main(int argc, char *argv[]){
       TableRow("0 Iso.Tk.", 
           ttbar_resolved&&"ntk==0",0,0,weight),
     },ttbar_procs,false,true,false,true,false,true).LuminosityTag(total_luminosity_string).Precision(1);
+    if (options.unblind == false) {
+      pm.Push<Hist1D>(Axis(15, 0.0, 3.0, dr_tk_jet, "min #Delta R(tk,jet)", {0.4}),
+          ttbar_resolved&&"ntrutauh>0&&ntk>0",
+          ttbar_procs, plt_lin).Weight(weight)
+          .Tag("FixName:isotk__1lcr_mindr_"+options.year_string)
+          .LuminosityTag(total_luminosity_string);
+      pm.Push<Hist1D>(Axis(15, 0.0, 3.0, dr_tk_bjet, "min #Delta R(tk,b-jet)", {0.4}),
+          ttbar_resolved&&"ntrutauh>0&&ntk>0",
+          ttbar_procs, plt_lin).Weight(weight)
+          .Tag("FixName:isotk__1lcr_mindrb_"+options.year_string)
+          .LuminosityTag(total_luminosity_string);
+    }
+  }
+
+  if(HigUtilities::is_in_string_options(options.string_options, "sr_isotkeff")) {
+    //some MC plots from the search region
+    pm.Push<Hist1D>(Axis(10, 5.0, 30.0, "tk_pt[0]", "Track p_{T} [GeV]", {}),
+        baseline_notkveto&&isotk_is_lepton&&"met>150&&ntrutah==0&&ntk==1",
+        search_procs, plt_lin).Weight(weight)
+        .Tag("FixName:isotk__sr_leptkpt_"+options.year_string)
+        .LuminosityTag(total_luminosity_string);
+    pm.Push<Hist1D>(Axis(10, 0.0, 0.3, "tk_reliso_chg[0]", "Track I_{rel}", {}),
+        baseline_notkveto&&isotk_is_lepton&&"met>150&&ntrutah==0&&ntk==1",
+        search_procs, plt_lin).Weight(weight)
+        .Tag("FixName:isotk__sr_leptkreliso_"+options.year_string)
+        .LuminosityTag(total_luminosity_string);
+    pm.Push<Hist1D>(Axis(10, 0.0, 0.3, "tk_miniso_chg[0]", "Track I_{mini}", {}),
+        baseline_notkveto&&isotk_is_lepton&&"met>150&&ntrutah==0&&ntk==1",
+        search_procs, plt_lin).Weight(weight)
+        .Tag("FixName:isotk__sr_leptkminiso_"+options.year_string)
+        .LuminosityTag(total_luminosity_string);
+    pm.Push<Hist1D>(Axis(15, 0.0, 3.0, dr_tk_jet, "min #Delta R(tk,jet)", {0.4}),
+        baseline_notkveto&&"met>150&&ntrutauh>0&&ntk>0",
+        search_procs, plt_lin).Weight(weight)
+        .Tag("FixName:isotk__sr_mindr_"+options.year_string)
+        .LuminosityTag(total_luminosity_string);
+    pm.Push<Hist1D>(Axis(15, 0.0, 3.0, dr_tk_bjet, "min #Delta R(tk,b-jet)", {0.4}),
+        baseline_notkveto&&"met>150&&ntrutauh>0&&ntk>0",
+        search_procs, plt_lin).Weight(weight)
+        .Tag("FixName:isotk__sr_mindrb_"+options.year_string)
+        .LuminosityTag(total_luminosity_string);
+    pm.Push<Hist1D>(Axis(15, 0.0, 3.0, dr_tk_jet, "min #Delta R(tk,jet)", {0.4}),
+        baseline_notkveto&&isotk_is_lepton&&"met>150&&ntk>0",
+        search_procs, plt_lin).Weight(weight)
+        .Tag("FixName:isotk__sr_mindr_leptks_"+options.year_string)
+        .LuminosityTag(total_luminosity_string);
+    pm.Push<Hist1D>(Axis(15, 0.0, 3.0, dr_tk_jet, "min #Delta R(tk,jet)", {0.4}),
+        baseline_notkveto&&!isotk_is_lepton&&"met>150&&ntk>0",
+        search_procs, plt_lin).Weight(weight)
+        .Tag("FixName:isotk__sr_mindr_nonleptks_"+options.year_string)
+        .LuminosityTag(total_luminosity_string);
+    pm.Push<Table>("isotk__sr_isotktable_"+options.year_string, vector<TableRow>{
+      TableRow("SR baseline except track veto - events with had. $\\tau$s", 
+          baseline_notkveto&&"met>150&&ntrutauh>0",0,0,weight),
+      TableRow("SR baseline except track veto - events with had. $\\tau$s and track", 
+          baseline_notkveto&&"met>150&&ntrutauh>0&&ntk>0",0,0,weight),
+      TableRow("SR baseline except track veto - events without had. $\\tau$s", 
+          baseline_notkveto&&"met>150&&ntrutauh==0",0,0,weight),
+      TableRow("SR baseline except track veto - events without had. $\\tau$s and with track", 
+          baseline_notkveto&&"met>150&&ntrutauh==0&&ntk>0",0,0,weight),
+      TableRow("SR baseline except track veto - events with lep. $\\tau$s", 
+          baseline_notkveto&&"met>150&&ntrutauh==0&&ntrutaul>0",0,0,weight),
+      TableRow("SR baseline except track veto - events with lep. $\\tau$s and with track", 
+          baseline_notkveto&&"met>150&&ntrutauh==0&&ntrutaul>0&&ntk>0",0,0,weight),
+      TableRow("SR baseline except track veto - events with track", 
+          baseline_notkveto&&"met>150&&ntk>0",0,0,weight),
+      TableRow("SR baseline except track veto - events with track that is lepton", 
+          baseline_notkveto&&isotk_is_lepton&&"met>150&&ntk>0",0,0,weight),
+      TableRow("SR baseline except track veto - events with track that is lepton (had tau)", 
+          baseline_notkveto&&isotk_is_lepton&&"met>150&&ntk>0&&ntrutauh>0",0,0,weight),
+      TableRow("SR baseline except track veto - events with track that is lepton (lep tau)", 
+          baseline_notkveto&&isotk_is_lepton&&"met>150&&ntk>0&&ntrutaul>0",0,0,weight),
+      TableRow("SR baseline except track veto - events with track that is lepton (not tau)", 
+          baseline_notkveto&&isotk_is_lepton&&"met>150&&ntk>0&&ntrutauh==0&&ntrutaul==0",0,0,weight),
+    },search_procs,false,true,false,true,false,true).LuminosityTag(total_luminosity_string).Precision(1);
   }
   
   if(HigUtilities::is_in_string_options(options.string_options, "signal_isotkeff")) {
@@ -822,14 +1157,93 @@ int main(int argc, char *argv[]){
   }
 
   if(HigUtilities::is_in_string_options(options.string_options, "ttbar2l")) {
-    pm.Push<EfficiencyPlot>(Axis(16, 0.0, 400.0, min_jet_pt, "Minimum jet p_{T} [GeV]", {}),
+    //Keith scheme - efficiency per jet and for non-jet tracks
+    pm.Push<EfficiencyPlot>(Axis(jetpt_bins, "jet_pt", "Jet p_{T} [GeV]", {}),
+        ttbar2lcr&&"jet_isgood",
+        !jet_has_isotk,
+        tt2l_procs,true,plt_lin).Weight(weight).Tag("FixName:isotk__tt2lcr__tkeff_jetpt_"+options.year_string).YTitle("No Iso. Track").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(jetpt_bins, "jet_pt", "b-Jet p_{T} [GeV]", {}),
+        ttbar2lcr&&jet_is_bm&&"jet_isgood",
+        !jet_has_isotk,
+        tt2l_procs,true,plt_lin).Weight(weight).Tag("FixName:isotk__tt2lcr__tkeff_bjetpt_"+options.year_string).YTitle("No Iso. Track").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(4, 1.5, 5.5, "njet", "N_{j}", {}),
+        ttbar2lcr,
+        !nonjet_isotk,
+        tt2l_procs,true,plt_lin).Weight(weight).Tag("FixName:isotk__tt2lcr__nonjettkeff_njet_"+options.year_string).YTitle("N_{njtk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(16, 0, 400.0, avr_jet_pt, "Average jet p_{T}", {}),
+        ttbar2lcr,
+        !nonjet_isotk,
+        tt2l_procs,true,plt_lin).Weight(weight).Tag("FixName:isotk__tt2lcr__nonjettkeff_avrpt_"+options.year_string).YTitle("N_{njtk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(5, 50.0, 200.0, "hig_cand_am[0]", "<m_{bb}> [GeV]", {}),
+        ttbar2lcr&&"njet>=4",
+        !nonjet_isotk,
+        tt2l_procs,true,plt_lin).Weight(weight).Tag("FixName:isotk__tt2lcr__nonjettkeff_am_"+options.year_string).YTitle("N_{njtk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(5, 0.0, 100.0, "hig_cand_dm[0]", "#Delta m_{bb} [GeV]", {}),
+        ttbar2lcr&&"njet>=4",
+        !nonjet_isotk,
+        tt2l_procs,true,plt_lin).Weight(weight).Tag("FixName:isotk__tt2lcr__nonjettkeff_dm_"+options.year_string).YTitle("N_{njtk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(5, 0.0, 4.4, "hig_cand_drmax[0]", "#Delta R_{max}", {}),
+        ttbar2lcr&&"njet>=4",
+        !nonjet_isotk,
+        tt2l_procs,true,plt_lin).Weight(weight).Tag("FixName:isotk__tt2lcr__nonjettkeff_drmax_"+options.year_string).YTitle("N_{njtk}=0").LuminosityTag(total_luminosity_string);
+    //verification plots for Keith's scheme
+    pm.Push<EfficiencyPlot>(Axis(jetpt_bins, "jet_pt", "Jet p_{T} [GeV]", {}),
+        ttbar2lcr&&"jet_isgood",
+        !jet_has_isotk,
+        tt2l_procs,true,plt_lin).Weight(weight_isotk_new).Tag("FixName:isotk__tt2lcr__tkeff_corrnew_jetpt_"+options.year_string).YTitle("No Iso. Track").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(jetpt_bins, "jet_pt", "b-Jet p_{T} [GeV]", {}),
+        ttbar2lcr&&jet_is_bm&&"jet_isgood",
+        !jet_has_isotk,
+        tt2l_procs,true,plt_lin).Weight(weight_isotk_new).Tag("FixName:isotk__tt2lcr__tkeff_corrnew_bjetpt_"+options.year_string).YTitle("No Iso. Track").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(4, 1.5, 5.5, "njet", "N_{j}", {}),
+        ttbar2lcr,
+        !nonjet_isotk,
+        tt2l_procs,true,plt_lin).Weight(weight_isotk_new).Tag("FixName:isotk__tt2lcr__nonjettkeff_corrnew_njet_"+options.year_string).YTitle("N_{njtk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(16, 0, 400.0, avr_jet_pt, "Average jet p_{T}", {}),
+        ttbar2lcr,
+        !nonjet_isotk,
+        tt2l_procs,true,plt_lin).Weight(weight_isotk_new).Tag("FixName:isotk__tt2lcr__nonjettkeff_corrnew_avrpt_"+options.year_string).YTitle("N_{njtk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(5, 50.0, 200.0, "hig_cand_am[0]", "<m_{bb}> [GeV]", {}),
+        ttbar2lcr&&"njet>=4",
+        !nonjet_isotk,
+        tt2l_procs,true,plt_lin).Weight(weight_isotk_new).Tag("FixName:isotk__tt2lcr__nonjettkeff_corrnew_am_"+options.year_string).YTitle("N_{njtk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(5, 0.0, 100.0, "hig_cand_dm[0]", "#Delta m_{bb} [GeV]", {}),
+        ttbar2lcr&&"njet>=4",
+        !nonjet_isotk,
+        tt2l_procs,true,plt_lin).Weight(weight_isotk_new).Tag("FixName:isotk__tt2lcr__nonjettkeff_corrnew_dm_"+options.year_string).YTitle("N_{njtk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(5, 0.0, 4.4, "hig_cand_drmax[0]", "#Delta R_{max}", {}),
+        ttbar2lcr&&"njet>=4",
+        !nonjet_isotk,
+        tt2l_procs,true,plt_lin).Weight(weight_isotk_new).Tag("FixName:isotk__tt2lcr__nonjettkeff_corrnew_drmax_"+options.year_string).YTitle("N_{njtk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(16, 0.0, 400.0, avr_jet_pt, "Average jet p_{T} [GeV]", {}),
         ttbar2lcr,
         "ntk==0",
-        tt2l_procs,true,plt_lin).Weight(weight).Tag("FixName:isotk__tt2lcr__tkeff_minpt_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
-    pm.Push<EfficiencyPlot>(Axis(16, 0.0, 400.0, min_jet_pt, "Minimum jet p_{T} [GeV]", {}),
+        tt2l_procs,true,plt_lin).Weight(weight_isotk_new).Tag("FixName:isotk__tt2lcr__tkeff_corrnew_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(5, 50.0, 200.0, "hig_cand_am[0]", "<m_{bb}> [GeV]", {}),
+        ttbar2lcr && "njet>=4&&njet<=5&&hig_cand_drmax[0]<2.2&&hig_cand_dm[0]<40",
+        "ntk==0",
+        tt2l_procs,true,plt_lin).Weight(weight_isotk_new).Tag("FixName:isotk__tt2ljetscr__tkeff_corrnew_am_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(5, 0.0, 100.0, "hig_cand_dm[0]", "#Delta m_{bb} [GeV]", {40.0}),
+        ttbar2lcr && "njet>=4&&njet<=5&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200",
+        "ntk==0",
+        tt2l_procs,true,plt_lin).Weight(weight_isotk_new).Tag("FixName:isotk__tt2ljetscr__tkeff_corrnew_dm_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(5, 0.0, 4.4, "hig_cand_drmax[0]", "#Delta R_{max}", {}),
+        ttbar2lcr && "njet>=4&&njet<=5&&hig_cand_am[0]<200&&hig_cand_dm[0]<40",
+        "ntk==0",
+        tt2l_procs,true,plt_lin).Weight(weight_isotk_new).Tag("FixName:isotk__tt2ljetscr__tkeff_corrnew_drmax_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(4, 1.5, 5.5, "njet", "N_{j}", {}),
         ttbar2lcr,
         "ntk==0",
-        tt2l_procs,true,plt_lin).Weight(weight_isotk).Tag("FixName:isotk__tt2lcr__tkeff_corr_minpt_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
+        tt2l_procs,true,plt_lin).Weight(weight_isotk_new).Tag("FixName:isotk__tt2ljetscr__tkeff_corrnew_njet_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
+    //previous nj scheme
+    //pm.Push<EfficiencyPlot>(Axis(16, 0.0, 400.0, min_jet_pt, "Minimum jet p_{T} [GeV]", {}),
+    //    ttbar2lcr,
+    //    "ntk==0",
+    //    tt2l_procs,true,plt_lin).Weight(weight).Tag("FixName:isotk__tt2lcr__tkeff_minpt_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
+    //pm.Push<EfficiencyPlot>(Axis(16, 0.0, 400.0, min_jet_pt, "Minimum jet p_{T} [GeV]", {}),
+    //    ttbar2lcr,
+    //    "ntk==0",
+    //    tt2l_procs,true,plt_lin).Weight(weight_isotk).Tag("FixName:isotk__tt2lcr__tkeff_corr_minpt_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
     pm.Push<EfficiencyPlot>(Axis(16, 0.0, 400.0, avr_jet_pt, "Average jet p_{T} [GeV]", {}),
         ttbar2lcr,
         "ntk==0",
@@ -970,66 +1384,166 @@ int main(int argc, char *argv[]){
 
   if(HigUtilities::is_in_string_options(options.string_options, "ttbar2l")) {
     std::string eff_plot_name = "isotk__tt2ljetscr__tkeff_njet_"+options.year_string;
-    EfficiencyPlot * eff_isotk_tt2l = static_cast<EfficiencyPlot*>(pm.GetFigure(eff_plot_name).get());
-    TGraphAsymmErrors* eff_isotk_tt2l_data = static_cast<TGraphAsymmErrors*>((eff_isotk_tt2l->data_ratio_plots_[0]).get()->Clone());
-    TGraphAsymmErrors* eff_isotk_tt2l_mc = static_cast<TGraphAsymmErrors*>((eff_isotk_tt2l->background_ratio_plot_).get()->Clone());
+    //EfficiencyPlot * eff_isotk_tt2l = static_cast<EfficiencyPlot*>(pm.GetFigure(eff_plot_name).get());
+    //TGraphAsymmErrors* eff_isotk_tt2l_data = static_cast<TGraphAsymmErrors*>((eff_isotk_tt2l->data_ratio_plots_[0]).get()->Clone());
+    //TGraphAsymmErrors* eff_isotk_tt2l_mc = static_cast<TGraphAsymmErrors*>((eff_isotk_tt2l->background_ratio_plot_).get()->Clone());
 
-    std::vector<TGraphAsymmErrors*> data_effplots;
-    std::vector<TGraphAsymmErrors*> mc_effplots;
-    eff_plot_name = "isotk__tt2ljetscr_nj2__tkeff_"+options.year_string;
-    EfficiencyPlot * eff_isotk_tt2lnj2 = static_cast<EfficiencyPlot*>(pm.GetFigure(eff_plot_name).get());
-    data_effplots.push_back(static_cast<TGraphAsymmErrors*>((eff_isotk_tt2lnj2->data_ratio_plots_[0]).get()->Clone()));
-    mc_effplots.push_back(static_cast<TGraphAsymmErrors*>((eff_isotk_tt2lnj2->background_ratio_plot_).get()->Clone()));
+    eff_plot_name = "isotk__tt2lcr__tkeff_jetpt_"+options.year_string;
+    EfficiencyPlot * eff_isotk_jetpt = static_cast<EfficiencyPlot*>(pm.GetFigure(eff_plot_name).get());
+    TGraphAsymmErrors* eff_isotk_jetpt_data = static_cast<TGraphAsymmErrors*>((eff_isotk_jetpt->data_ratio_plots_[0]).get()->Clone());
+    TGraphAsymmErrors* eff_isotk_jetpt_mc = static_cast<TGraphAsymmErrors*>((eff_isotk_jetpt->background_ratio_plot_).get()->Clone());
 
-    eff_plot_name = "isotk__tt2ljetscr_nj3__tkeff_"+options.year_string;
-    EfficiencyPlot * eff_isotk_tt2lnj3 = static_cast<EfficiencyPlot*>(pm.GetFigure(eff_plot_name).get());
-    data_effplots.push_back(static_cast<TGraphAsymmErrors*>((eff_isotk_tt2lnj3->data_ratio_plots_[0]).get()->Clone()));
-    mc_effplots.push_back(static_cast<TGraphAsymmErrors*>((eff_isotk_tt2lnj3->background_ratio_plot_).get()->Clone()));
+    eff_plot_name = "isotk__tt2lcr__tkeff_bjetpt_"+options.year_string;
+    EfficiencyPlot * eff_isotk_bjetpt = static_cast<EfficiencyPlot*>(pm.GetFigure(eff_plot_name).get());
+    TGraphAsymmErrors* eff_isotk_bjetpt_data = static_cast<TGraphAsymmErrors*>((eff_isotk_bjetpt->data_ratio_plots_[0]).get()->Clone());
+    TGraphAsymmErrors* eff_isotk_bjetpt_mc = static_cast<TGraphAsymmErrors*>((eff_isotk_bjetpt->background_ratio_plot_).get()->Clone());
 
-    eff_plot_name = "isotk__tt2ljetscr_nj4__tkeff_"+options.year_string;
-    EfficiencyPlot * eff_isotk_tt2lnj4 = static_cast<EfficiencyPlot*>(pm.GetFigure(eff_plot_name).get());
-    data_effplots.push_back(static_cast<TGraphAsymmErrors*>((eff_isotk_tt2lnj4->data_ratio_plots_[0]).get()->Clone()));
-    mc_effplots.push_back(static_cast<TGraphAsymmErrors*>((eff_isotk_tt2lnj4->background_ratio_plot_).get()->Clone()));
+    eff_plot_name = "isotk__tt2lcr__nonjettkeff_njet_"+options.year_string;
+    EfficiencyPlot * eff_isotk_njet = static_cast<EfficiencyPlot*>(pm.GetFigure(eff_plot_name).get());
+    TGraphAsymmErrors* eff_isotk_njet_data = static_cast<TGraphAsymmErrors*>((eff_isotk_njet->data_ratio_plots_[0]).get()->Clone());
+    TGraphAsymmErrors* eff_isotk_njet_mc = static_cast<TGraphAsymmErrors*>((eff_isotk_njet->background_ratio_plot_).get()->Clone());
 
-    eff_plot_name = "isotk__tt2ljetscr_nj5__tkeff_"+options.year_string;
-    EfficiencyPlot * eff_isotk_tt2lnj5 = static_cast<EfficiencyPlot*>(pm.GetFigure(eff_plot_name).get());
-    data_effplots.push_back(static_cast<TGraphAsymmErrors*>((eff_isotk_tt2lnj5->data_ratio_plots_[0]).get()->Clone()));
-    mc_effplots.push_back(static_cast<TGraphAsymmErrors*>((eff_isotk_tt2lnj5->background_ratio_plot_).get()->Clone()));
+    //std::vector<TGraphAsymmErrors*> data_effplots;
+    //std::vector<TGraphAsymmErrors*> mc_effplots;
+    //eff_plot_name = "isotk__tt2ljetscr_nj2__tkeff_"+options.year_string;
+    //EfficiencyPlot * eff_isotk_tt2lnj2 = static_cast<EfficiencyPlot*>(pm.GetFigure(eff_plot_name).get());
+    //data_effplots.push_back(static_cast<TGraphAsymmErrors*>((eff_isotk_tt2lnj2->data_ratio_plots_[0]).get()->Clone()));
+    //mc_effplots.push_back(static_cast<TGraphAsymmErrors*>((eff_isotk_tt2lnj2->background_ratio_plot_).get()->Clone()));
 
-    TFile * isotkeff_file = TFile::Open(("tables/isotkeff"+options.year_string+".root").c_str(),"RECREATE");
-    eff_isotk_tt2l_data->Write("isotkeff_tt2lcr_data");
-    eff_isotk_tt2l_mc->Write("isotkeff_tt2lcr_mc");
+    //eff_plot_name = "isotk__tt2ljetscr_nj3__tkeff_"+options.year_string;
+    //EfficiencyPlot * eff_isotk_tt2lnj3 = static_cast<EfficiencyPlot*>(pm.GetFigure(eff_plot_name).get());
+    //data_effplots.push_back(static_cast<TGraphAsymmErrors*>((eff_isotk_tt2lnj3->data_ratio_plots_[0]).get()->Clone()));
+    //mc_effplots.push_back(static_cast<TGraphAsymmErrors*>((eff_isotk_tt2lnj3->background_ratio_plot_).get()->Clone()));
+
+    //eff_plot_name = "isotk__tt2ljetscr_nj4__tkeff_"+options.year_string;
+    //EfficiencyPlot * eff_isotk_tt2lnj4 = static_cast<EfficiencyPlot*>(pm.GetFigure(eff_plot_name).get());
+    //data_effplots.push_back(static_cast<TGraphAsymmErrors*>((eff_isotk_tt2lnj4->data_ratio_plots_[0]).get()->Clone()));
+    //mc_effplots.push_back(static_cast<TGraphAsymmErrors*>((eff_isotk_tt2lnj4->background_ratio_plot_).get()->Clone()));
+
+    //eff_plot_name = "isotk__tt2ljetscr_nj5__tkeff_"+options.year_string;
+    //EfficiencyPlot * eff_isotk_tt2lnj5 = static_cast<EfficiencyPlot*>(pm.GetFigure(eff_plot_name).get());
+    //data_effplots.push_back(static_cast<TGraphAsymmErrors*>((eff_isotk_tt2lnj5->data_ratio_plots_[0]).get()->Clone()));
+    //mc_effplots.push_back(static_cast<TGraphAsymmErrors*>((eff_isotk_tt2lnj5->background_ratio_plot_).get()->Clone()));
+
+    TFile * isotkeff_file = TFile::Open(("tables/isotk__effnew_"+options.year_string+".root").c_str(),"RECREATE");
+    eff_isotk_jetpt_data->Write("eff_isotk_jetpt_data");
+    eff_isotk_jetpt_mc->Write("eff_isotk_jetpt_mc");
+    eff_isotk_bjetpt_data->Write("eff_isotk_bjetpt_data");
+    eff_isotk_bjetpt_mc->Write("eff_isotk_bjetpt_mc");
+    eff_isotk_njet_data->Write("eff_isotk_njet_data");
+    eff_isotk_njet_mc->Write("eff_isotk_njet_mc");
 
     std::cout << "Printing code for scale factors" << std::endl;
-    for (unsigned inj = 0; inj < 4; inj++) {
-      if (inj==0)
-        std::cout << "      if (b.njet() <= 2) {" << std::endl;
-      else if (inj==1)
-        std::cout << "      else if (b.njet() == 3) {" << std::endl;
-      else if (inj==2)
-        std::cout << "      else if (b.njet() == 4) {" << std::endl;
-      else
-        std::cout << "      else {" << std::endl;
-      double * mc_frac = mc_effplots[inj]->GetY();
-      double * data_frac = data_effplots[inj]->GetY();
-      mc_effplots[inj]->Write(("isotkeff_tt2lcr_mc_nj"+std::to_string(inj+2)).c_str());
-      data_effplots[inj]->Write(("isotkeff_tt2lcr_data_nj"+std::to_string(inj+2)).c_str());
-      for (unsigned iavpt = 0; iavpt < (avjetpt_bins.size()-1); iavpt++) {
-        float pass_sf = data_frac[iavpt]/mc_frac[iavpt];
-        float fail_sf = mc_frac[iavpt]/(1.0-mc_frac[iavpt])*(1.0-pass_sf)+1.0;
-        if (iavpt == 0)
-          std::cout << "        if (avr_jet_pt >= " << avjetpt_bins[iavpt] << " && avr_jet_pt < " << avjetpt_bins[iavpt+1] << ") {" << std::endl;
-        else if (iavpt != (avjetpt_bins.size()-1))
-          std::cout << "        else if (avr_jet_pt >= " << avjetpt_bins[iavpt] << " && avr_jet_pt < " << avjetpt_bins[iavpt+1] << ") {" << std::endl;
-        else 
-          std::cout << "        else {" << std::endl;
-        std::cout << "          if (b.ntk()>0)" << std::endl;
-        std::cout << "            return " << fail_sf << ";" << std::endl;
-        std::cout << "          return " << pass_sf << ";" << std::endl;
-        std::cout << "        }" << std::endl;
+    std::cout << "  std::vector<double> jet_has_isotk_ = jet_has_isotk.GetVector(b);" << std::endl;
+    std::cout << "  bool nonjet_isotk = false;" << std::endl;
+    std::cout << "  if (b.ntk()>0) nonjet_isotk = true;" << std::endl;
+    std::cout << "  float sf = 1.0;" << std::endl;
+    std::cout << "  for (unsigned ijet = 0; ijet<b.jet_pt()->size(); ijet++) {" << std::endl;
+    std::cout << "    if (!(b.jet_isgood()->at(ijet))) continue;" << std::endl;
+    std::cout << "    if (jet_has_isotk_[ijet] > 0.5) nonjet_isotk = false;" << std::endl;
+    std::cout << "    float dcsvmwp = 1.0;" << std::endl;
+    std::cout << "    if (abs(b.SampleType())==2016) dcsvmwp = 0.6321;" << std::endl;
+    std::cout << "    if (abs(b.SampleType())==2017) dcsvmwp = 0.4941;" << std::endl;
+    std::cout << "    if (abs(b.SampleType())==2018) dcsvmwp = 0.4148;" << std::endl;
+    std::cout << "    bool is_b = (b.jet_deepcsv()->at(ijet)>dcsvmwp);" << std::endl;
+    std::cout << "    float pt = b.jet_pt()->at(ijet);" << std::endl;
+    bool first = true;
+    double * nonb_mc_frac = eff_isotk_jetpt_mc->GetY();
+    double * nonb_data_frac = eff_isotk_jetpt_data->GetY();
+    double * b_mc_frac = eff_isotk_bjetpt_mc->GetY();
+    double * b_data_frac = eff_isotk_bjetpt_data->GetY();
+    double * njet_mc_frac = eff_isotk_njet_mc->GetY();
+    double * njet_data_frac = eff_isotk_njet_data->GetY();
+    for (unsigned ijet_tk = 0; ijet_tk < 2; ijet_tk++) { //0 means no track, 1 means track
+      for (unsigned ijet_b = 0; ijet_b < 2; ijet_b++) { //0 means non-b, 1 means b-jet
+        for (unsigned ijet_pt = 0; ijet_pt < (jetpt_bins.size()-1); ijet_pt++) {
+          float sf = 1.0;
+          if (ijet_b==0) {
+            if (ijet_tk==0) {
+              //scale down
+              sf *= nonb_data_frac[ijet_pt]/nonb_mc_frac[ijet_pt];
+            }
+            else {
+              //scale up
+              sf *= nonb_mc_frac[ijet_pt]/(1.0-nonb_mc_frac[ijet_pt])*(1.0-nonb_data_frac[ijet_pt]/nonb_mc_frac[ijet_pt])+1.0;
+            }
+          }
+          else {
+            if (ijet_tk==0) {
+              //scale down
+              sf *= b_data_frac[ijet_pt]/b_mc_frac[ijet_pt];
+            }
+            else {
+              //scale up
+              sf *= b_mc_frac[ijet_pt]/(1.0-b_mc_frac[ijet_pt])*(1.0-b_data_frac[ijet_pt]/b_mc_frac[ijet_pt])+1.0;
+            }
+          }
+          if (first) {
+            std::cout << "    if (";
+            first = false;
+          }
+          else {
+            std::cout << "    else if (";
+          }
+          if (ijet_tk==0) std::cout << "(jet_has_isotk_[ijet]<0.5)";
+          else std::cout << "(jet_has_isotk_[ijet]>0.5)";
+          if (ijet_b==0) std::cout << "&&(!is_b)";
+          else std::cout << "&&(is_b)";
+          std::cout << "&&(pt>=" << jetpt_bins[ijet_pt];
+          if (ijet_pt != (jetpt_bins.size()-2)) std::cout << "&&pt<" << jetpt_bins[ijet_pt+1] << ")) ";
+          else std::cout << "&&pt<9999.0)) ";
+          std::cout << "sf *= " << sf << ";" << std::endl;
+        }
       }
-      std::cout << "      }" << std::endl;
     }
+    for (unsigned inj = 2; inj <= 5; inj++) {
+      if (inj==2) std::cout << "  if (b.njet() <= 2) {" << std::endl;
+      else if (inj==3) std::cout << "  } else if (b.njet() == 3) {" << std::endl;
+      else if (inj==4) std::cout << "  } else if (b.njet() == 4) {" << std::endl;
+      else std::cout << "  } else {" << std::endl;
+      std::cout << "    if (nonjet_isotk) {" << std::endl;
+      std::cout << "      sf *= " << (njet_mc_frac[inj-2]/(1.0-njet_mc_frac[inj-2])*(1.0-njet_data_frac[inj-2]/njet_mc_frac[inj-2])+1.0) << ";" << std::endl;
+      std::cout << "    } else {" << std::endl;
+      std::cout << "      sf *= " << njet_data_frac[inj-2]/njet_mc_frac[inj-2] << ";" << std::endl;
+      std::cout << "    }" << std::endl;;
+      
+    }
+    std::cout << "  }" << std::endl;
+    std::cout << "  return sf;" << std::endl;
+
+    //eff_isotk_tt2l_data->Write("isotkeff_tt2lcr_data");
+    //eff_isotk_tt2l_mc->Write("isotkeff_tt2lcr_mc");
+
+    //std::cout << "Printing code for scale factors" << std::endl;
+    //for (unsigned inj = 0; inj < 4; inj++) {
+    //  if (inj==0)
+    //    std::cout << "      if (b.njet() <= 2) {" << std::endl;
+    //  else if (inj==1)
+    //    std::cout << "      else if (b.njet() == 3) {" << std::endl;
+    //  else if (inj==2)
+    //    std::cout << "      else if (b.njet() == 4) {" << std::endl;
+    //  else
+    //    std::cout << "      else {" << std::endl;
+    //  double * mc_frac = mc_effplots[inj]->GetY();
+    //  double * data_frac = data_effplots[inj]->GetY();
+    //  mc_effplots[inj]->Write(("isotkeff_tt2lcr_mc_nj"+std::to_string(inj+2)).c_str());
+    //  data_effplots[inj]->Write(("isotkeff_tt2lcr_data_nj"+std::to_string(inj+2)).c_str());
+    //  for (unsigned iavpt = 0; iavpt < (avjetpt_bins.size()-1); iavpt++) {
+    //    float pass_sf = data_frac[iavpt]/mc_frac[iavpt];
+    //    float fail_sf = mc_frac[iavpt]/(1.0-mc_frac[iavpt])*(1.0-pass_sf)+1.0;
+    //    if (iavpt == 0)
+    //      std::cout << "        if (avr_jet_pt >= " << avjetpt_bins[iavpt] << " && avr_jet_pt < " << avjetpt_bins[iavpt+1] << ") {" << std::endl;
+    //    else if (iavpt != (avjetpt_bins.size()-1))
+    //      std::cout << "        else if (avr_jet_pt >= " << avjetpt_bins[iavpt] << " && avr_jet_pt < " << avjetpt_bins[iavpt+1] << ") {" << std::endl;
+    //    else 
+    //      std::cout << "        else {" << std::endl;
+    //    std::cout << "          if (b.ntk()>0)" << std::endl;
+    //    std::cout << "            return " << fail_sf << ";" << std::endl;
+    //    std::cout << "          return " << pass_sf << ";" << std::endl;
+    //    std::cout << "        }" << std::endl;
+    //  }
+    //  std::cout << "      }" << std::endl;
+    //}
     //EfficiencyPlot * eff_isotk_tt2lj = static_cast<EfficiencyPlot*>(pm.GetFigure(eff_plot_name).get());
     //TGraphAsymmErrors* eff_isotk_tt2lj_data = static_cast<TGraphAsymmErrors*>((eff_isotk_tt2lj->data_ratio_plots_[0]).get()->Clone());
     //TGraphAsymmErrors* eff_isotk_tt2lj_mc = static_cast<TGraphAsymmErrors*>((eff_isotk_tt2lj->background_ratio_plot_).get()->Clone());

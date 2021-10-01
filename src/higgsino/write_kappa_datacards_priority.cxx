@@ -550,10 +550,10 @@ int main(int argc, char *argv[])
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
   //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*Higfuncs::w_years;
 
-  if (false) {
+  if (true) {
     //for now, apply isolated track SFs
-    weight *= Higfuncs::isotkwgt;
-    weight_genmet *= Higfuncs::isotkwgt;
+    weight *= Higfuncs::isotkwgt_new;
+    weight_genmet *= Higfuncs::isotkwgt_new;
   }
   if (higgsino_model=="N1N2") {
     weight *= HigUtilities::w_CNToN1N2;

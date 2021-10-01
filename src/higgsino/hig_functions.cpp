@@ -1346,6 +1346,207 @@ const NamedFunc pico_weight_higd("pico_weight_hig_deep",[](const Baby &b) -> Nam
   return b.weight()/b.w_btag()*b.w_bhig();
 });
 
+
+//helper function
+const NamedFunc jet_has_isotk("jet_has_isotk",[](const Baby &b) -> NamedFunc::VectorType{
+  std::vector<double> jet_has_isotk_;
+  for (unsigned ijet = 0; ijet < b.jet_pt()->size(); ijet++) {
+    bool found_tk = false;
+    for (unsigned itk = 0; itk < b.tk_pt()->size(); itk++) {
+      float tk_jet_dr = deltaR(b.tk_eta()->at(itk),b.tk_phi()->at(itk),b.jet_eta()->at(ijet),b.jet_phi()->at(ijet));
+      if (tk_jet_dr < 0.4) {
+        found_tk = true;
+      }
+    }
+    if (found_tk) {
+      jet_has_isotk_.push_back(1);
+    }
+    else {
+      jet_has_isotk_.push_back(0);
+    }
+  }
+  return jet_has_isotk_;
+});
+
+const NamedFunc isotkwgt_new("isotkwgt_new",[](const Baby &b) -> NamedFunc::ScalarType{
+  if (b.SampleType() < 0) return 1.0; //data
+  //new isotk sfs: 2016
+  std::vector<double> jet_has_isotk_ = jet_has_isotk.GetVector(b);
+  bool nonjet_isotk = false;
+  if (b.ntk()>0) nonjet_isotk = true;
+  float sf = 1.0;
+  for (unsigned ijet = 0; ijet<b.jet_pt()->size(); ijet++) {
+    if (!(b.jet_isgood()->at(ijet))) continue;
+    if (jet_has_isotk_[ijet] > 0.5) nonjet_isotk = false;
+    float dcsvmwp = 1.0;
+    if (abs(b.SampleType())==2016) dcsvmwp = 0.6321;
+    if (abs(b.SampleType())==2017) dcsvmwp = 0.4941;
+    if (abs(b.SampleType())==2018) dcsvmwp = 0.4148;
+    bool is_b = (b.jet_deepcsv()->at(ijet)>dcsvmwp);
+    float pt = b.jet_pt()->at(ijet);
+    if (abs(b.SampleType())==2016) {
+      if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=30&&pt<60)) sf *= 0.987949;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=60&&pt<90)) sf *= 0.992924;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=90&&pt<120)) sf *= 0.991273;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=120&&pt<150)) sf *= 0.996162;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=150&&pt<250)) sf *= 0.99273;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=250&&pt<9999.0)) sf *= 0.998874;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=30&&pt<60)) sf *= 0.993096;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=60&&pt<90)) sf *= 0.994477;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=90&&pt<120)) sf *= 0.991008;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=120&&pt<150)) sf *= 0.996098;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=150&&pt<250)) sf *= 0.991569;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=250&&pt<9999.0)) sf *= 0.99908;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=30&&pt<60)) sf *= 1.20174;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=60&&pt<90)) sf *= 1.208;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=90&&pt<120)) sf *= 1.40904;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=120&&pt<150)) sf *= 1.26908;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=150&&pt<250)) sf *= 1.86818;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=250&&pt<9999.0)) sf *= 1.27395;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=30&&pt<60)) sf *= 1.09692;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=60&&pt<90)) sf *= 1.15057;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=90&&pt<120)) sf *= 1.4038;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=120&&pt<150)) sf *= 1.26259;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=150&&pt<250)) sf *= 1.94433;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=250&&pt<9999.0)) sf *= 1.19661;
+    }
+    else if (abs(b.SampleType())==2017) {
+      if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=30&&pt<60)) sf *= 0.994873;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=60&&pt<90)) sf *= 1.0005;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=90&&pt<120)) sf *= 0.995164;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=120&&pt<150)) sf *= 0.997693;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=150&&pt<250)) sf *= 0.995211;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=250&&pt<9999.0)) sf *= 0.998194;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=30&&pt<60)) sf *= 1.00284;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=60&&pt<90)) sf *= 1.00332;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=90&&pt<120)) sf *= 0.995773;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=120&&pt<150)) sf *= 0.997343;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=150&&pt<250)) sf *= 0.994794;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=250&&pt<9999.0)) sf *= 0.9986;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=30&&pt<60)) sf *= 1.07672;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=60&&pt<90)) sf *= 0.987972;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=90&&pt<120)) sf *= 1.18702;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=120&&pt<150)) sf *= 1.13165;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=150&&pt<250)) sf *= 1.50718;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=250&&pt<9999.0)) sf *= 1.31995;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=30&&pt<60)) sf *= 0.965735;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=60&&pt<90)) sf *= 0.928357;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=90&&pt<120)) sf *= 1.14894;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=120&&pt<150)) sf *= 1.1379;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=150&&pt<250)) sf *= 1.48881;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=250&&pt<9999.0)) sf *= 1.16937;
+    }
+    else if (abs(b.SampleType())==2018) {
+      if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=30&&pt<60)) sf *= 0.990637;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=60&&pt<90)) sf *= 0.996963;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=90&&pt<120)) sf *= 0.994828;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=120&&pt<150)) sf *= 0.992855;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=150&&pt<250)) sf *= 0.994328;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(!is_b)&&(pt>=250&&pt<9999.0)) sf *= 0.998497;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=30&&pt<60)) sf *= 0.995294;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=60&&pt<90)) sf *= 0.999124;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=90&&pt<120)) sf *= 0.994703;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=120&&pt<150)) sf *= 0.992042;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=150&&pt<250)) sf *= 0.993308;
+      else if ((jet_has_isotk_[ijet]<0.5)&&(is_b)&&(pt>=250&&pt<9999.0)) sf *= 0.997792;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=30&&pt<60)) sf *= 1.14531;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=60&&pt<90)) sf *= 1.07676;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=90&&pt<120)) sf *= 1.20435;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=120&&pt<150)) sf *= 1.41748;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=150&&pt<250)) sf *= 1.51097;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(!is_b)&&(pt>=250&&pt<9999.0)) sf *= 1.29265;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=30&&pt<60)) sf *= 1.0601;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=60&&pt<90)) sf *= 1.0198;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=90&&pt<120)) sf *= 1.19043;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=120&&pt<150)) sf *= 1.42707;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=150&&pt<250)) sf *= 1.53061;
+      else if ((jet_has_isotk_[ijet]>0.5)&&(is_b)&&(pt>=250&&pt<9999.0)) sf *= 1.33105;
+    }
+  }
+  if (abs(b.SampleType())==2016) {
+    if (b.njet() <= 2) {
+      if (nonjet_isotk) {
+        sf *= 1.38087;
+      } else {
+        sf *= 0.990393;
+      }
+    } else if (b.njet() == 3) {
+      if (nonjet_isotk) {
+        sf *= 1.39492;
+      } else {
+        sf *= 0.987977;
+      }
+    } else if (b.njet() == 4) {
+      if (nonjet_isotk) {
+        sf *= 1.33345;
+      } else {
+        sf *= 0.988068;
+      }
+    } else {
+      if (nonjet_isotk) {
+        sf *= 1.18028;
+      } else {
+        sf *= 0.992574;
+      }
+    }
+  }
+  else if (abs(b.SampleType())==2017) {
+    if (b.njet() <= 2) {
+      if (nonjet_isotk) {
+        sf *= 1.3157;
+      } else {
+        sf *= 0.9922;
+      }
+    } else if (b.njet() == 3) {
+      if (nonjet_isotk) {
+        sf *= 1.32952;
+      } else {
+        sf *= 0.990666;
+      }
+    } else if (b.njet() == 4) {
+      if (nonjet_isotk) {
+        sf *= 1.162;
+      } else {
+        sf *= 0.994671;
+      }
+    } else {
+      if (nonjet_isotk) {
+        sf *= 1.16833;
+      } else {
+        sf *= 0.993896;
+      }
+    }
+  }
+  else if (abs(b.SampleType())==2018) {
+    if (b.njet() <= 2) {
+      if (nonjet_isotk) {
+        sf *= 1.53728;
+      } else {
+        sf *= 0.987156;
+      }
+    } else if (b.njet() == 3) {
+      if (nonjet_isotk) {
+        sf *= 1.43281;
+      } else {
+        sf *= 0.987155;
+      }
+    } else if (b.njet() == 4) {
+      if (nonjet_isotk) {
+        sf *= 1.42807;
+      } else {
+        sf *= 0.985739;
+      }
+    } else {
+      if (nonjet_isotk) {
+        sf *= 1.23447;
+      } else {
+        sf *= 0.990622;
+      }
+    }
+  }
+  return sf;
+});
+
 const NamedFunc isotkwgt("isotkwgt",[](const Baby &b) -> NamedFunc::ScalarType{
   //returns scale factors to make MC and data agree for isotk veto in tt2l region - only for nj=4 and 5
   if (b.SampleType() < 0) return 1.0; //data
