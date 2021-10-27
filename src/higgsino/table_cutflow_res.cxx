@@ -25,9 +25,8 @@ using namespace std;
 using namespace PlotOptTypes;
 
 namespace{
-  float lumi = 35.9;
-  // vector<string> sigm = {}; 
-  vector<string> sigm = {"225","400","700"}; 
+  vector<string> sigm = {}; 
+  //vector<string> sigm = {"225","400","700"}; 
 }
   
 int main(){
@@ -36,19 +35,18 @@ int main(){
   time_t begtime, endtime;
   time(&begtime);
 
-  string bfolder("");
-  string hostname = execute("echo $HOSTNAME");
-  if(Contains(hostname, "cms") || Contains(hostname, "compute-"))
-    bfolder = "/net/cms29"; // In laptops, you can't create a /net folder
+  string bfolder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/";
+  if (string(getenv("LOCAL_PICO_DIR"))=="") bfolder = "/net/cms17/cms17r0/pico/NanoAODv7/";
 
   //string mc_production = "higgsino_angeles"; // higgsino_eldorado
   //string mc_production = "higgsino_eldorado";
-  string mc_production = "higgsino_humboldt";
-  string year = "2016"; // 2017, 2018
+  //string mc_production = "higgsino_humboldt";
+  string mc_production = "higgsino_klamath";
+  string year = "2017"; // 2017, 2018
 
-  string foldermc(bfolder+"/cms29r0/pico/NanoAODv5/"+mc_production+"/"+year+"/mc1/merged_higmc_higloose/");
+  string foldermc(bfolder+mc_production+"/"+year+"/mc/merged_higmc_higloose/");
   //string foldersig(bfolder+"/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/TChiHH/merged_higmc_unskimmed/");
-  string foldersig(bfolder+"/cms29r0/pico/NanoAODv5/"+mc_production+"/2016/SMS-TChiHH_2D/unskimmed/");
+  string foldersig(bfolder+mc_production+"/"+year+"/SMS-TChiHH_2D/unskimmed/");
 
   map<string, set<string>> mctags; 
   mctags["tt"]     = set<string>({"*TTJets_*Lep*"});
@@ -93,48 +91,60 @@ int main(){
   string sbd = "hig_cand_drmax[0]<=2.2 && hig_cand_am[0]<=200 && hig_cand_dm[0] <= 40 && !(hig_cand_am[0]>100 && hig_cand_am[0]<=140)";
 
   //NamedFunc wgt = "w_lumi*w_isr";//Higfuncs::weight_higd * Higfuncs::eff_higtrig;
-  NamedFunc wgt = "weight"* Higfuncs::eff_higtrig;
+  //NamedFunc wgt = "weight"* Higfuncs::eff_higtrig;
+  NamedFunc wgt = Higfuncs::final_weight;
 
-  string baseline = "nvlep==0 && njet>=4 && njet<=5"; //pass_muon_jet && met/met_calo<5
-  string sigonly = "type>100e3";
+  NamedFunc search_filters = Higfuncs::final_pass_filters; //pass_filters&& "met/mht<2 && met/met_calo<2&&weight<1.5"
+
+  NamedFunc baseline = "nvlep==0 && njet>=4 && njet<=5"; //pass_muon_jet && met/met_calo<5
+  NamedFunc same_cut = baseline && "met>150";
 
   string ncols = to_string(procs.size()+2);  
   PlotMaker pm;
   pm.Push<Table>("cutflow", vector<TableRow>{
   TableRow("1", 
-    "1",0,0, "weight"),
-  TableRow("MET>150", 
+    "1",0,0, wgt),
+  TableRow("MET$>$150", 
     "met>150",0,0, wgt),
   TableRow("$0\\ell$", 
     "nvlep==0&&met>150",0,0, wgt),
   TableRow("$\\text{4-5 jets}$", 
-    baseline+"&&met>150",0,0, wgt),
-  TableRow("nbt>=2", 
-    baseline+"&&met>150&&"+c_2bt,0,0, wgt),
-  TableRow("Track veto", 
-    baseline + " && ntk==0 && met>150 &&" + c_2bt,0,0, wgt),
-  TableRow("$\\Delta\\phi_{1,2}>0.5,\\Delta\\phi_{3,4}>0.3$",        
-    baseline + " && ntk==0 && met>150 &&"+c_2bt+"   && !lowDphiFix",0,0, wgt),
+    baseline&&"met>150",0,1, wgt),
+  TableRow("met over mht", 
+    baseline&&"met>150&&met/mht<2",0,0, wgt),
+  TableRow("met over met calo", 
+    baseline&&"met>150&&met/mht<2&&met/met_calo<2",0,0, wgt),
+  TableRow("nbt$>=$2", 
+    baseline&&"met>150&&met/mht<2&&met/met_calo<2&&"+c_2bt,0,0, wgt),
   TableRow("$|\\Delta m| < 40$ GeV",     
-    baseline + " && ntk==0 && met>150 &&"+c_2bt+"   && !lowDphiFix && "+c_hig_dm,0,0, wgt),
+    baseline&&"met>150&&met/mht<2&&met/met_calo<2&&"+c_2bt+"&&"+c_hig_dm,0,0, wgt),
   TableRow("$\\Delta R_{\\text{max}} < 2.2$",                    
-    baseline +"  && ntk==0 && met>150 &&"+c_2bt+"   && !lowDphiFix && "+c_hig_dm+" && "+c_drmax,0,1,wgt),
+    baseline&&"met>150&&met/mht<2&&met/met_calo<2&&"+c_2bt+"&&"+c_hig_dm+" && "+c_drmax,0,1,wgt),
+
+  TableRow("Track veto", 
+    same_cut &&"ntk==0",0,0, wgt),
+  TableRow("pass filter", 
+    same_cut&&Higfuncs::pass_filters,0,0, wgt),
+  TableRow("DeltaPhi",        
+    same_cut &&"!lowDphiFix",0,1, wgt),
+
+  // $\\Delta\\phi_{1,2}>0.5,\\Delta\\phi_{3,4}>0.3$
 
   TableRow("\\multicolumn{"+ncols+"}{c}{HIG: $100<\\left< m \\right>\\leq140$}\\\\%", 
     "met>1e6",0,1, wgt),
 
   TableRow("$100<\\left< m \\right>\\leq140$ GeV", 
-    baseline + " && ntk==0 && met>150 &&"+c_2bt+"   && !lowDphiFix &&"+hig,0,0, wgt),
+    baseline && "ntk==0 && met>150 &&"+c_2bt+"   && !lowDphiFix &&"+hig,0,0, wgt),
   TableRow("3b + 4b", 
-    baseline +"  && ntk==0 && met>150 &&"+c_ge3b+"&& !lowDphiFix &&"+hig,0,0,wgt),
+    baseline && "ntk==0 && met>150 &&"+c_ge3b+"&& !lowDphiFix &&"+hig,0,0,wgt),
   TableRow("4b", 
-    baseline + " && ntk==0 && met>150 &&"+c_4b+"  && !lowDphiFix &&"+hig,0,0, wgt),
+    baseline && "ntk==0 && met>150 &&"+c_4b+"  && !lowDphiFix &&"+hig,0,0, wgt),
   TableRow("$p_{\\rm T}^{\\rm miss}>200$ GeV", 
-    baseline + " && ntk==0 && met>200 &&"+c_4b+"  && !lowDphiFix &&"+hig,0,0,wgt),
+    baseline && "ntk==0 && met>200 &&"+c_4b+"  && !lowDphiFix &&"+hig,0,0,wgt),
   TableRow("$p_{\\rm T}^{\\rm miss}>300$ GeV", 
-    baseline + " && ntk==0 && met>300 &&"+c_4b+"  && !lowDphiFix &&"+hig,0,0,wgt),
-  TableRow("$p_{\\rm T}^{\\rm miss}>450$ GeV", 
-    baseline + " && ntk==0 && met>450 &&"+c_4b+"  && !lowDphiFix &&"+hig,0,1,wgt),
+    baseline && "ntk==0 && met>300 &&"+c_4b+"  && !lowDphiFix &&"+hig,0,0,wgt),
+  TableRow("$p_{\\rm T}^{\\rm miss}>400$ GeV", 
+    baseline && "ntk==0 && met>400 &&"+c_4b+"  && !lowDphiFix &&"+hig,0,1,wgt),
 
   // TableRow("\\multicolumn{"+ncols+"}{c}{SBD: $\\left< m\\right> <100$ or $140<\\left< m\\right>\\leq200$}\\\\%", 
   //   "met>1e6",0,1, wgt),
@@ -158,7 +168,7 @@ int main(){
 
 
   pm.min_print_ = true;
-  pm.MakePlots(lumi);
+  pm.MakePlots(1.);
 
   time(&endtime);
   cout<<endl<<"Making cutflow took "<<difftime(endtime, begtime)<<" seconds"<<endl<<endl;
