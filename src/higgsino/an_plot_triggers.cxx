@@ -14,6 +14,7 @@
 // systematic - generate systematics table
 // efficiency - generate trigger efficiency files
 // cr - also generate plots and efficiencies for control regions (much slower)
+// paper_style - changes formatting to match paper/auxillary plots style
 
 #include "core/test.hpp"
 
@@ -152,10 +153,17 @@ int main(int argc, char *argv[]){
   vector<PlotOpt> all_plot_types = {lin_lumi.Title(TitleType::info).Overflow(OverflowType::overflow)};
   PlotOpt style2D("txt/plot_styles.txt", "Scatter");
   vector<PlotOpt> twodim_plotopts = {style2D().Title(TitleType::info).Overflow(OverflowType::overflow)};
+  if (HigUtilities::is_in_string_options(options.string_options,"paper_style")) {
+    all_plot_types = {lin_lumi.Title(TitleType::supplementary).Overflow(OverflowType::overflow)};
+    twodim_plotopts = {style2D().Title(TitleType::supplementary).Overflow(OverflowType::overflow)};
+  }
   //samples
   std::set<int> years;
   HigUtilities::parseYears(options.year_string, years);
-  string total_luminosity_string = HigUtilities::getLuminosityString(options.year_string);
+  int lumi_precision = 1;
+  if (HigUtilities::is_in_string_options(options.string_options, "paper_style"))
+    lumi_precision = 0;
+  string total_luminosity_string = HigUtilities::getLuminosityString(options.year_string,lumi_precision);
   if (HigUtilities::is_in_string_options(options.string_options,"systematic")
       || HigUtilities::is_in_string_options(options.string_options,"efficiency")) {
     if (years.size() > 1) {
@@ -307,68 +315,68 @@ int main(int argc, char *argv[]){
         Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1" && 
         (Higfuncs::lead_signal_lepton_pt < 35) && Higfuncs::el_trigger, 
         Higfuncs::met_trigger,
-        procs_data_met150_allyears).Tag("FixName:trig__eff_0lrealmet_met").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
+        procs_data_met150_allyears,true,all_plot_types).Tag("FixName:trig__eff_0lrealmet_met").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
     pm.Push<EfficiencyPlot>(Axis(13, 0., 1300., "ht", "H_{T} [GeV]", {}),
         Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&150<met&&met<=200" &&
         (Higfuncs::lead_signal_lepton_pt < 35) && Higfuncs::el_trigger, 
         Higfuncs::met_trigger,
-        procs_data_met150_allyears).Tag("FixName:trig__eff_0lrealmet_ht_lowmet").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
+        procs_data_met150_allyears,true,all_plot_types).Tag("FixName:trig__eff_0lrealmet_ht_lowmet").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
     pm.Push<EfficiencyPlot>(Axis(13, 0., 1300., "ht", "H_{T} [GeV]", {}),
         Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&200<met&&met<=300" &&
         (Higfuncs::lead_signal_lepton_pt < 35) && Higfuncs::el_trigger, 
         Higfuncs::met_trigger,
-        procs_data_met150_allyears).Tag("FixName:trig__eff_0lrealmet_ht_highmet").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
+        procs_data_met150_allyears,true,all_plot_types).Tag("FixName:trig__eff_0lrealmet_ht_highmet").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
     //-------------6.3 table 1 plots (0l Fake MET: MET, HT(low MET), HT(high MET))-------------
     pm.Push<EfficiencyPlot>(Axis(100, 150., 550., "met", "Offline p_{T}^{miss} [GeV]", {}),
         Higfuncs::pass_filters && "low_dphi_met&&nvlep==0" && Higfuncs::jetht_trigger,
         Higfuncs::met_trigger,
-        procs_data_met150_allyears).Tag("FixName:trig__eff_0lfakemet_met").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
+        procs_data_met150_allyears,true,all_plot_types).Tag("FixName:trig__eff_0lfakemet_met").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
     pm.Push<EfficiencyPlot>(Axis(13, 0., 1300., "ht", "H_{T} [GeV]", {}),
         Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&150<met&&met<=200" && Higfuncs::jetht_trigger,
         Higfuncs::met_trigger,
-        procs_data_met150_allyears).Tag("FixName:trig__eff_0lfakmet_ht_lowmet").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
+        procs_data_met150_allyears,true,all_plot_types).Tag("FixName:trig__eff_0lfakmet_ht_lowmet").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
     pm.Push<EfficiencyPlot>(Axis(13, 0., 1300., "ht", "H_{T} [GeV]", {}),
         Higfuncs::pass_filters && "low_dphi_met&&nvlep==0&&200<met&&met<=300" && Higfuncs::jetht_trigger,
         Higfuncs::met_trigger,
-        procs_data_met150_allyears).Tag("FixName:trig__eff_0lfakmet_ht_highmet").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
+        procs_data_met150_allyears,true,all_plot_types).Tag("FixName:trig__eff_0lfakmet_ht_highmet").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
     //-------------9.3 table 1 plots (0l Real MET: Nj Nb DRmax, Ambb(not in AN))-------------
     pm.Push<EfficiencyPlot>(Axis(5, -0.5, 4.5, nb_higgsino, "N_{b}", {}),
         Higfuncs::pass_filters && "njet>=4&&njet<=5&&!low_dphi_met&&nel==1&&200<met" &&
         (Higfuncs::lead_signal_lepton_pt < 35) && Higfuncs::el_trigger, 
         Higfuncs::met_trigger,
-        procs_data_met150_allyears).Tag("FixName:trig__eff_0lrealmet_nb").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
+        procs_data_met150_allyears,true,all_plot_types).Tag("FixName:trig__eff_0lrealmet_nb").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
     pm.Push<EfficiencyPlot>(Axis(5, 2.5, 7.5, "njet", "N_{j}", {}),
         Higfuncs::pass_filters && "njet>=3&&!low_dphi_met&&nel==1&&200<met" &&
         (Higfuncs::lead_signal_lepton_pt < 35) && Higfuncs::el_trigger, 
         Higfuncs::met_trigger,
-        procs_data_met150_allyears).Tag("FixName:trig__eff_0lrealmet_njet").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
+        procs_data_met150_allyears,true,all_plot_types).Tag("FixName:trig__eff_0lrealmet_njet").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
     pm.Push<EfficiencyPlot>(Axis(20, 0.0, 4.0, "hig_cand_drmax[0]", "#Delta R_{max}", {}),
         Higfuncs::pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&200<met" &&
         (Higfuncs::lead_signal_lepton_pt < 35) && Higfuncs::el_trigger, 
         Higfuncs::met_trigger,
-        procs_data_met150_allyears).Tag("FixName:trig__eff_0lrealmet_drmax").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
+        procs_data_met150_allyears,true,all_plot_types).Tag("FixName:trig__eff_0lrealmet_drmax").YTitle("p_{T}^{miss} Triggers").LuminosityTag(total_luminosity_string);
     pm.Push<EfficiencyPlot>(Axis(20, 0., 300., "hig_cand_am[0]", "#LT m_{bb} #GT [GeV]", {}),
         Higfuncs::pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&200<met" &&
         (Higfuncs::lead_signal_lepton_pt < 35) && Higfuncs::el_trigger, 
         Higfuncs::met_trigger,
-        procs_data_met150_allyears).Tag("FixName:trig__eff_0lrealmet_ambb");
+        procs_data_met150_allyears,true,all_plot_types).Tag("FixName:trig__eff_0lrealmet_ambb");
     //-------------9.3 table 2 plots (0l Real MET: <mbb> dependence)-------------
     for (unsigned int year_index = 0; year_index < procs_data_ambb.size(); year_index++) {
       pm.Push<EfficiencyPlot>(Axis(30, 150., 300., "met", "Offline p_{T}^{miss} [GeV]", {}),
           Higfuncs::pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&250<=ht&&ht<300" &&
           (Higfuncs::lead_signal_lepton_pt < 35) && Higfuncs::el_trigger, 
           Higfuncs::met_trigger,
-          procs_data_ambb[year_index]).Tag("FixName:trig__eff_0lrealmet_met_ht250to300_ambbcuts_"+year_strings[year_index]).YTitle("p_{T}^{miss} Triggers").LuminosityTag(luminosity_year_string[year_index]);
+          procs_data_ambb[year_index],true,all_plot_types).Tag("FixName:trig__eff_0lrealmet_met_ht250to300_ambbcuts_"+year_strings[year_index]).YTitle("p_{T}^{miss} Triggers").LuminosityTag(luminosity_year_string[year_index]);
       pm.Push<EfficiencyPlot>(Axis(30, 150., 300., "met", "Offline p_{T}^{miss} [GeV]", {}),
           Higfuncs::pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&300<=ht&&ht<400" &&
           (Higfuncs::lead_signal_lepton_pt < 35) && Higfuncs::el_trigger, 
           Higfuncs::met_trigger,
-          procs_data_ambb[year_index]).Tag("FixName:trig__eff_0lrealmet_met_ht300to400_ambbcuts_"+year_strings[year_index]).YTitle("p_{T}^{miss} Triggers").LuminosityTag(luminosity_year_string[year_index]);
+          procs_data_ambb[year_index],true,all_plot_types).Tag("FixName:trig__eff_0lrealmet_met_ht300to400_ambbcuts_"+year_strings[year_index]).YTitle("p_{T}^{miss} Triggers").LuminosityTag(luminosity_year_string[year_index]);
       pm.Push<EfficiencyPlot>(Axis(30, 150., 300., "met", "Offline p_{T}^{miss} [GeV]", {}),
           Higfuncs::pass_filters && "njet>=4&&!low_dphi_met&&nel==1&&400<=ht&&ht<600" &&
           (Higfuncs::lead_signal_lepton_pt < 35) && Higfuncs::el_trigger, 
           Higfuncs::met_trigger,
-          procs_data_ambb[year_index]).Tag("FixName:trig__eff_0lrealmet_met_ht400to600_ambbcuts_"+year_strings[year_index]).YTitle("p_{T}^{miss} Triggers").LuminosityTag(luminosity_year_string[year_index]);
+          procs_data_ambb[year_index],true,all_plot_types).Tag("FixName:trig__eff_0lrealmet_met_ht400to600_ambbcuts_"+year_strings[year_index]).YTitle("p_{T}^{miss} Triggers").LuminosityTag(luminosity_year_string[year_index]);
     }
     if (HigUtilities::is_in_string_options(options.string_options,"cr")) {
       //-------------6.4 table 1 plots (1l CR: MET lep_pt HT(lowmet) HT(highmet))-------------
@@ -376,55 +384,55 @@ int main(int argc, char *argv[]){
       pm.Push<EfficiencyPlot>(Axis(55, 0., 550., "met", "Offline p_{T}^{miss} [GeV]", {}),
           Higfuncs::pass_filters && "njet>=2&&nel==1" && Higfuncs::jetht_trigger, 
           (Higfuncs::met_trigger||Higfuncs::el_trigger),
-          procs_data_1l2j_allyears).Tag("FixName:trig__eff__1el_met").YTitle("p_{T}^{miss} and Electron Triggers").LuminosityTag(total_luminosity_string);
+          procs_data_1l2j_allyears,true,all_plot_types).Tag("FixName:trig__eff__1el_met").YTitle("p_{T}^{miss} and Electron Triggers").LuminosityTag(total_luminosity_string);
       pm.Push<EfficiencyPlot>(Axis(30, 20., 170., Higfuncs::lead_signal_electron_pt, "Offline Electron p_{T} [GeV]", {}),
           Higfuncs::pass_filters && "njet>=2&&nel==1&&150<=met&&met<200" && Higfuncs::jetht_trigger, 
           (Higfuncs::met_trigger||Higfuncs::el_trigger),
-          procs_data_1l2j_allyears).Tag("FixName:trig__eff__1el_leppt").YTitle("p_{T}^{miss} and Electron Triggers").LuminosityTag(total_luminosity_string);
+          procs_data_1l2j_allyears,true,all_plot_types).Tag("FixName:trig__eff__1el_leppt").YTitle("p_{T}^{miss} and Electron Triggers").LuminosityTag(total_luminosity_string);
       pm.Push<EfficiencyPlot>(Axis(13, 0., 1300., "ht", "H_{T} [GeV]", {}),
           Higfuncs::pass_filters && "njet>=2&&nel==1&&150<=met&&met<200" && Higfuncs::jetht_trigger, 
           (Higfuncs::met_trigger||Higfuncs::el_trigger),
-          procs_data_1l2j_allyears).Tag("FixName:trig__eff__1el_ht_lowmet").YTitle("p_{T}^{miss} and Electron Triggers").LuminosityTag(total_luminosity_string);
+          procs_data_1l2j_allyears,true,all_plot_types).Tag("FixName:trig__eff__1el_ht_lowmet").YTitle("p_{T}^{miss} and Electron Triggers").LuminosityTag(total_luminosity_string);
       pm.Push<EfficiencyPlot>(Axis(13, 0., 1300., "ht", "H_{T} [GeV]", {}),
           Higfuncs::pass_filters && "njet>=2&&nel==1&&200<=met&&met<300" && Higfuncs::jetht_trigger, 
           (Higfuncs::met_trigger||Higfuncs::el_trigger),
-          procs_data_1l2j_allyears).Tag("FixName:trig__eff__1el_ht_highmet").YTitle("p_{T}^{miss} and Electron Triggers").LuminosityTag(total_luminosity_string);
+          procs_data_1l2j_allyears,true,all_plot_types).Tag("FixName:trig__eff__1el_ht_highmet").YTitle("p_{T}^{miss} and Electron Triggers").LuminosityTag(total_luminosity_string);
       //muons
       pm.Push<EfficiencyPlot>(Axis(55, 0., 550., "met", "Offline p_{T}^{miss} [GeV]", {}),
           Higfuncs::pass_filters && "njet>=2&&nmu==1" && Higfuncs::jetht_trigger, 
           (Higfuncs::met_trigger||Higfuncs::mu_trigger),
-          procs_data_1l2j_allyears).Tag("FixName:trig__eff__1mu_met").YTitle("p_{T}^{miss} and Muon Triggers").LuminosityTag(total_luminosity_string);
+          procs_data_1l2j_allyears,true,all_plot_types).Tag("FixName:trig__eff__1mu_met").YTitle("p_{T}^{miss} and Muon Triggers").LuminosityTag(total_luminosity_string);
       pm.Push<EfficiencyPlot>(Axis(30, 20., 170., Higfuncs::lead_signal_muon_pt, "Offline Muon p_{T} [GeV]", {}),
           Higfuncs::pass_filters && "njet>=2&&nmu==1&&150<=met&&met<200" && Higfuncs::jetht_trigger, 
           (Higfuncs::met_trigger||Higfuncs::mu_trigger),
-          procs_data_1l2j_allyears).Tag("FixName:trig__eff__1mu_leppt").YTitle("p_{T}^{miss} and Muon Triggers").LuminosityTag(total_luminosity_string);
+          procs_data_1l2j_allyears,true,all_plot_types).Tag("FixName:trig__eff__1mu_leppt").YTitle("p_{T}^{miss} and Muon Triggers").LuminosityTag(total_luminosity_string);
       pm.Push<EfficiencyPlot>(Axis(13, 0., 1300., "ht", "H_{T} [GeV]", {}),
           Higfuncs::pass_filters && "njet>=2&&nmu==1&&150<=met&&met<200" && Higfuncs::jetht_trigger, 
           (Higfuncs::met_trigger||Higfuncs::mu_trigger),
-          procs_data_1l2j_allyears).Tag("FixName:trig__eff__1mu_ht_lowmet").YTitle("p_{T}^{miss} and Muon Triggers").LuminosityTag(total_luminosity_string);
+          procs_data_1l2j_allyears,true,all_plot_types).Tag("FixName:trig__eff__1mu_ht_lowmet").YTitle("p_{T}^{miss} and Muon Triggers").LuminosityTag(total_luminosity_string);
       pm.Push<EfficiencyPlot>(Axis(13, 0., 1300., "ht", "H_{T} [GeV]", {}),
           Higfuncs::pass_filters && "njet>=2&&nmu==1&&200<=met&&met<300" && Higfuncs::jetht_trigger, 
           (Higfuncs::met_trigger||Higfuncs::mu_trigger),
-          procs_data_1l2j_allyears).Tag("FixName:trig__eff__1mu_ht_highmet").YTitle("p_{T}^{miss} and Muon Triggers").LuminosityTag(total_luminosity_string);
+          procs_data_1l2j_allyears,true,all_plot_types).Tag("FixName:trig__eff__1mu_ht_highmet").YTitle("p_{T}^{miss} and Muon Triggers").LuminosityTag(total_luminosity_string);
       //-------------6.5 table 1 plots (2l CR: lep_pt HT)-------------
       //electrons
       pm.Push<EfficiencyPlot>(Axis(30, 20., 170., Higfuncs::lead_signal_electron_pt, "Offline Max Electron p_{T} [GeV]", {}),
           Higfuncs::pass_filters && "njet>=2&&nel==2&&(80<ll_m[0]&&ll_m[0]<100)" && (Higfuncs::met_trigger||Higfuncs::jetht_trigger), 
           Higfuncs::el_trigger,
-          procs_data_1l2j_allyears).Tag("FixName:trig__eff__2el_leppt").YTitle("Electron Triggers").LuminosityTag(total_luminosity_string);
+          procs_data_1l2j_allyears,true,all_plot_types).Tag("FixName:trig__eff__2el_leppt").YTitle("Electron Triggers").LuminosityTag(total_luminosity_string);
       pm.Push<EfficiencyPlot>(Axis(10, 0., 1000., "ht", "H_{T} [GeV]", {}),
           Higfuncs::pass_filters && "njet>=2&&nel==2&&(80<ll_m[0]&&ll_m[0]<100)" && (Higfuncs::met_trigger||Higfuncs::jetht_trigger), 
           Higfuncs::el_trigger,
-          procs_data_1l2j_allyears).Tag("FixName:trig__eff__2el_ht").YTitle("Electron Triggers").LuminosityTag(total_luminosity_string);
+          procs_data_1l2j_allyears,true,all_plot_types).Tag("FixName:trig__eff__2el_ht").YTitle("Electron Triggers").LuminosityTag(total_luminosity_string);
       //muons
       pm.Push<EfficiencyPlot>(Axis(30, 20., 170., Higfuncs::lead_signal_muon_pt, "Offline Max Muon p_{T} [GeV]", {}),
           Higfuncs::pass_filters && "njet>=2&&nmu==2&&(80<ll_m[0]&&ll_m[0]<100)" && (Higfuncs::met_trigger||Higfuncs::jetht_trigger), 
           Higfuncs::mu_trigger,
-          procs_data_1l2j_allyears).Tag("FixName:trig__eff__2mu_leppt").YTitle("Muon Triggers").LuminosityTag(total_luminosity_string);
+          procs_data_1l2j_allyears,true,all_plot_types).Tag("FixName:trig__eff__2mu_leppt").YTitle("Muon Triggers").LuminosityTag(total_luminosity_string);
       pm.Push<EfficiencyPlot>(Axis(10, 0., 1000., "ht", "H_{T} [GeV]", {}),
           Higfuncs::pass_filters && "njet>=2&&nmu==2&&(80<ll_m[0]&&ll_m[0]<100)" && (Higfuncs::met_trigger||Higfuncs::jetht_trigger), 
           Higfuncs::mu_trigger,
-          procs_data_1l2j_allyears).Tag("FixName:trig__eff__2mu_ht").YTitle("Muon Triggers").LuminosityTag(total_luminosity_string);
+          procs_data_1l2j_allyears,true,all_plot_types).Tag("FixName:trig__eff__2mu_ht").YTitle("Muon Triggers").LuminosityTag(total_luminosity_string);
     }
     ////-------------Data vs MC comparison, not in AN-------------
     //pm.Push<EfficiencyPlot>(Axis(100, 150., 550., "met", "Offline p_{T}^{miss} [GeV]", {}),

@@ -20,8 +20,10 @@ public:
 
   std::string Type() const;
   std::string Type(const std::string &baby_type) const;
-  std::string DecoratedType() const;
-  std::string DecoratedType(const std::string &baby_type) const;
+  std::string RawType() const;
+  std::string RawType(const std::string &baby_type) const;
+  std::string DecoratedType(const bool use_raw=false) const;
+  std::string DecoratedType(const std::string &baby_type, const bool use_raw=false) const;
 
   bool HasEntry(const std::string &baby_type) const;
   void SetEntry(const std::string &baby_type,
@@ -36,7 +38,7 @@ public:
   bool operator<(const Variable& other) const;
 
 private:
-  std::set<std::string> GetTypeSet() const;
+  std::set<std::string> GetTypeSet(bool array_to_vector = false) const;
 
   std::string name_;//!<Name of variable (e.g., ht, met, etc.)
   std::map<std::string, std::string> type_map_;//!<Map from Baby type (basic, full, etc.) to variabl type (int, float, etc.)
@@ -45,6 +47,8 @@ private:
 std::set<Variable> GetVariables(const std::set<std::string> &files);
 
 bool IsComment(const std::string &line);
+
+int GetArrayLength(const std::string var_name);
 
 SimpleVariable GetVariable(std::string line);
 
@@ -59,9 +63,14 @@ void WriteSpecializedHeader(const std::set<Variable> &vars,
                             const std::string &type);
 
 void WriteSpecializedSource(const std::set<Variable> &vars,
-                            const std::string &type);
+                            const std::string &type,
+                            const std::string &tree_name);
 
 void WriteMergedHeader(const std::set<Variable> &vars,
                        const std::set<std::string> &types);
+
+std::string GetTreeName(const std::string &file);
+
+std::string ArrayToVector(const std::string arr_str);
 
 #endif

@@ -114,6 +114,7 @@ namespace HigUtilities {
 
   float signal_lepton_pt(std::vector<float>* const lep_pt, std::vector<bool>* const lep_sig);
 
+  float getLuminosity(std::string const & year_string);
   std::string getLuminosityString(std::string const & year_string, int const & decimals=1);
   void getControlSystematics(std::map<std::string, std::map<std::string, float> > & controlSystematics);
 

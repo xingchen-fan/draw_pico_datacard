@@ -87,7 +87,7 @@ namespace script_utilities {
   extern const NamedFunc hig_nb;
 
   //constants
-  const std::string mc_production_folder = std::string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/";
+  const std::string mc_production_folder = std::string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
   const std::string search_mc_skim_folder = "mc/merged_higmc_higloose/";
   const std::string met150_mc_skim_folder = "mc/skim_met150/";
   const std::string skim1l2j_mc_skim_folder = "mc/skim_1l2j/";
@@ -96,7 +96,7 @@ namespace script_utilities {
   const std::string qcd_mc_skim_folder = "mc/merged_higmc_higqcd/";
   const std::string mc_unskimmed_folder = "mc/unskimmed/";
 
-  const std::string data_production_folder = std::string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/";
+  const std::string data_production_folder = std::string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
   const std::string search_data_skim_folder = "data/merged_higdata_higloose/";
   const std::string met150_data_skim_folder = "data/skim_met150/";
   const std::string skim1l2j_data_skim_folder = "data/skim_1l2j/";
@@ -105,7 +105,7 @@ namespace script_utilities {
   const std::string qcd_data_skim_folder = "data/merged_higdata_higqcd/";
   const std::string data_unskimmed_folder = "data/raw_pico/";
 
-  const std::string signal_production_folder = std::string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/";
+  const std::string signal_production_folder = std::string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
   const std::string search_signal_skim_folder = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higloose/";
   const std::string met150_signal_skim_folder = "SMS-TChiHH_2D_fastSimJmeCorrection/skim_met150/";
   const std::string skim1l2j_signal_skim_folder = "SMS-TChiHH_2D_fastSimJmeCorrection/skim_1l2j/";
@@ -114,7 +114,7 @@ namespace script_utilities {
   const std::string qcd_signal_skim_folder = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higqcd/";
   const std::string signal_unskimmed_folder = "SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/";
 
-  const std::string gluinofast_production_folder = std::string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/";
+  const std::string gluinofast_production_folder = std::string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
   const std::string search_gluinofast_skim_folder = "SMS-T5qqqqZH_fastSimJmeCorrection/merged_higmc_higloose/";
   const std::string met150_gluinofast_skim_folder = "SMS-T5qqqqZH_fastSimJmeCorrection/skim_met150/";
   const std::string skim1l2j_gluinofast_skim_folder = "SMS-T5qqqqZH_fastSimJmeCorrection/skim_1l2j/";
@@ -123,7 +123,7 @@ namespace script_utilities {
   const std::string qcd_gluinofast_skim_folder = "SMS-T5qqqqZH_fastSimJmeCorrection/merged_higmc_higqcd/";
   const std::string gluinofast_unskimmed_folder = "SMS-T5qqqqZH_fastSimJmeCorrection/unskimmed/";
 
-  const std::string gluinofull_production_folder = std::string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_inyo/";
+  const std::string gluinofull_production_folder = std::string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
   const std::string search_gluinofull_skim_folder = "SMS-T5qqqqZH_FullSimJmeVariations/merged_higmc_higloose/";
   const std::string met150_gluinofull_skim_folder = "SMS-T5qqqqZH_FullSimJmeVariations/skim_met150/";
   const std::string skim1l2j_gluinofull_skim_folder = "SMS-T5qqqqZH_FullSimJmeVariations/skim_1l2j/";

@@ -35,6 +35,8 @@ namespace{
   bool single_thread = false;
   string year_string = "2016";
   bool unblind = false;
+  //possible string_options: paper_style
+  string string_options = "";
 }
 
 int main(int argc, char *argv[]){
@@ -57,14 +59,34 @@ int main(int argc, char *argv[]){
   PlotOpt lin_norm_data = lin_norm_info().YAxis(YAxisType::linear).Title(TitleType::info).Bottom(BottomType::ratio);
   PlotOpt lin_shapes = lin_norm().Stack(StackType::shapes).Bottom(BottomType::ratio);
   PlotOpt lin_shapes_info = lin_shapes().Title(TitleType::info).Bottom(BottomType::off);
+  PlotOpt lin_norm_paper = lin_norm_info().YAxis(YAxisType::linear).Title(TitleType::simulation_supplementary);
+  PlotOpt lin_norm_paper_data = lin_norm_info().YAxis(YAxisType::linear).Title(TitleType::supplementary).Bottom(BottomType::ratio);
+  PlotOpt log_norm_paper = lin_norm_info().YAxis(YAxisType::linear).Title(TitleType::simulation_supplementary);
+  PlotOpt log_norm_paper_data = lin_norm_info().YAxis(YAxisType::linear).Title(TitleType::supplementary).Bottom(BottomType::ratio);
+  PlotOpt lin_shapes_paper = lin_norm().Stack(StackType::shapes).Bottom(BottomType::ratio).Title(TitleType::simulation_supplementary);
+  PlotOpt lin_shapes_info_paper = lin_norm().Stack(StackType::shapes).Bottom(BottomType::off).Title(TitleType::simulation_supplementary);
+  PlotOpt lin_shapes_paper_data = lin_norm().Stack(StackType::shapes).Bottom(BottomType::ratio).Title(TitleType::supplementary);
 
   vector<PlotOpt> plt_norm_info = {lin_norm_info, log_norm_info};
   vector<PlotOpt> plt_lin = {lin_norm};
   vector<PlotOpt> plt_log = {log_norm};
   vector<PlotOpt> plt_shapes = {lin_shapes};
+  vector<PlotOpt> plt_shapes_data = {lin_shapes};
   vector<PlotOpt> plt_shapes_info = {lin_shapes_info};
   if (unblind) plt_lin = {lin_norm_data};
   if (unblind) plt_log = {log_norm_data};
+  if (HigUtilities::is_in_string_options(string_options, "paper_style")) {
+     plt_shapes = {lin_shapes_paper};
+     plt_shapes_data = {lin_shapes_paper_data};
+     if (!unblind) {
+       plt_lin = {lin_norm_paper};
+       plt_log = {log_norm_paper};
+     }
+     else {
+       plt_lin = {lin_norm_paper_data};
+       plt_log = {log_norm_paper_data};
+     }
+  }
 
   // Set options
   string mc_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
@@ -93,7 +115,10 @@ int main(int argc, char *argv[]){
   //years = {2016};
   set<int> years;
   HigUtilities::parseYears(year_string, years);
-  string total_luminosity_string = HigUtilities::getLuminosityString(year_string);
+  int lumi_precision = 1;
+  if (HigUtilities::is_in_string_options(string_options, "paper_style"))
+    lumi_precision = 0;
+  string total_luminosity_string = HigUtilities::getLuminosityString(year_string, lumi_precision);
 
   //NamedFunc weight = "w_lumi*w_isr"*Higfuncs::eff_higtrig*Higfuncs::w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*w_years*Functions::w_pileup;
@@ -118,6 +143,8 @@ int main(int argc, char *argv[]){
                                    "*_QCD_HT2000toInf_*"});
   mctags["other"]   = set<string>({"*_WH*.root", "*_ZH_HToBB*.root",
                                      "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root"});
+  mctags["other_and_single_t"]   = set<string>({"*_WH*.root", "*_ZH_HToBB*.root",
+                                     "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root","*_ST_*.root"});
   // Combine all tags
   mctags["all"] = set<string>({"*TTJets_SingleLept*",
                                "*TTJets_DiLept*",
@@ -132,25 +159,42 @@ int main(int argc, char *argv[]){
   });
 
   vector<shared_ptr<Process> > zll_procs;
-  // Set mc processes
-  //zll_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X", Process::Type::background,colors("tt_1l"),
-  //                attach_folder(mc_base_folder, years, zll_mc_skim_folder, mctags["tt"]),"stitch"));
-  zll_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X (#tau_{had}>0)", Process::Type::background,colors("tt_htau"),
-                  attach_folder(mc_base_folder, years, zll_mc_skim_folder, mctags["tt"]),"stitch&&ntrutauh>0"));
-  zll_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X (#tau_{had}=0)", Process::Type::background,colors("tt_1l"),
-                  attach_folder(mc_base_folder, years, zll_mc_skim_folder, mctags["tt"]),"stitch&&ntrutauh==0"));
-  //zll_procs.push_back(Process::MakeShared<Baby_pico>("V+jets", Process::Type::background, kOrange+1,
-  //                attach_folder(mc_base_folder, years, zll_mc_skim_folder,mctags["vjets"]),"stitch"));
-  zll_procs.push_back(Process::MakeShared<Baby_pico>("Z+jets", Process::Type::background, kOrange+1,
-                  attach_folder(mc_base_folder, years, zll_mc_skim_folder,mctags["zjets"]),"stitch"));
-  zll_procs.push_back(Process::MakeShared<Baby_pico>("W+jets", Process::Type::background, kGreen+1,
-                  attach_folder(mc_base_folder, years, zll_mc_skim_folder,mctags["wjets"]),"stitch"));
-  zll_procs.push_back(Process::MakeShared<Baby_pico>("Single t", Process::Type::background,colors("single_t"),
-                  attach_folder(mc_base_folder, years, zll_mc_skim_folder, mctags["single_t"]),"stitch"));
-  zll_procs.push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background, colors("other"),
-                  attach_folder(mc_base_folder, years, zll_mc_skim_folder, mctags["qcd"]),"stitch")); 
-  zll_procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGray+2,
-                  attach_folder(mc_base_folder, years, zll_mc_skim_folder, mctags["other"]),"stitch"));
+  if (HigUtilities::is_in_string_options(string_options, "paper_style")) {
+    // Set mc processes
+    zll_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X", Process::Type::background,colors("tt_htau"),
+                    attach_folder(mc_base_folder, years, zll_mc_skim_folder, mctags["tt"]),"stitch"));
+    //zll_procs.push_back(Process::MakeShared<Baby_pico>("V+jets", Process::Type::background, kOrange+1,
+    //                attach_folder(mc_base_folder, years, zll_mc_skim_folder,mctags["vjets"]),"stitch"));
+    zll_procs.push_back(Process::MakeShared<Baby_pico>("Z+jets", Process::Type::background, kOrange+1,
+                    attach_folder(mc_base_folder, years, zll_mc_skim_folder,mctags["zjets"]),"stitch"));
+    zll_procs.push_back(Process::MakeShared<Baby_pico>("W+jets", Process::Type::background, kGreen+1,
+                    attach_folder(mc_base_folder, years, zll_mc_skim_folder,mctags["wjets"]),"stitch"));
+    zll_procs.push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background, colors("other"),
+                    attach_folder(mc_base_folder, years, zll_mc_skim_folder, mctags["qcd"]),"stitch")); 
+    zll_procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGray+2,
+                    attach_folder(mc_base_folder, years, zll_mc_skim_folder, mctags["other_and_single_t"]),"stitch"));
+  }
+  else {
+    // Set mc processes
+    //zll_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X", Process::Type::background,colors("tt_1l"),
+    //                attach_folder(mc_base_folder, years, zll_mc_skim_folder, mctags["tt"]),"stitch"));
+    zll_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X (#tau_{had}>0)", Process::Type::background,colors("tt_htau"),
+                    attach_folder(mc_base_folder, years, zll_mc_skim_folder, mctags["tt"]),"stitch&&ntrutauh>0"));
+    zll_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X (#tau_{had}=0)", Process::Type::background,colors("tt_1l"),
+                    attach_folder(mc_base_folder, years, zll_mc_skim_folder, mctags["tt"]),"stitch&&ntrutauh==0"));
+    //zll_procs.push_back(Process::MakeShared<Baby_pico>("V+jets", Process::Type::background, kOrange+1,
+    //                attach_folder(mc_base_folder, years, zll_mc_skim_folder,mctags["vjets"]),"stitch"));
+    zll_procs.push_back(Process::MakeShared<Baby_pico>("Z+jets", Process::Type::background, kOrange+1,
+                    attach_folder(mc_base_folder, years, zll_mc_skim_folder,mctags["zjets"]),"stitch"));
+    zll_procs.push_back(Process::MakeShared<Baby_pico>("W+jets", Process::Type::background, kGreen+1,
+                    attach_folder(mc_base_folder, years, zll_mc_skim_folder,mctags["wjets"]),"stitch"));
+    zll_procs.push_back(Process::MakeShared<Baby_pico>("Single t", Process::Type::background,colors("single_t"),
+                    attach_folder(mc_base_folder, years, zll_mc_skim_folder, mctags["single_t"]),"stitch"));
+    zll_procs.push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background, colors("other"),
+                    attach_folder(mc_base_folder, years, zll_mc_skim_folder, mctags["qcd"]),"stitch")); 
+    zll_procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGray+2,
+                    attach_folder(mc_base_folder, years, zll_mc_skim_folder, mctags["other"]),"stitch"));
+  }
 
   //vector<string> sigm = {"175", "500", "950"};
   ////vector<string> sigm = {"400"};
@@ -409,10 +453,10 @@ int main(int argc, char *argv[]){
   // [<m> shapes (0b data, 1b data); (low, high) drmax]
   pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     base_filters&&zll_resolved&&"hig_cand_drmax[0]<1.1",
-    zll_data_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__zll_amjj_btag__lowdrmax__data").LuminosityTag(total_luminosity_string);
+    zll_data_procs_btag, plt_shapes_data).Weight(weight).Tag("FixName:syst__zll_amjj_btag__lowdrmax__data").LuminosityTag(total_luminosity_string);
   pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
     base_filters&&zll_resolved&&"hig_cand_drmax[0]>=1.1",
-    zll_data_procs_btag, plt_shapes).Weight(weight).Tag("FixName:syst__zll_amjj_btag__highdrmax__data").LuminosityTag(total_luminosity_string);
+    zll_data_procs_btag, plt_shapes_data).Weight(weight).Tag("FixName:syst__zll_amjj_btag__highdrmax__data").LuminosityTag(total_luminosity_string);
 
   // [<m> shapes (0b mc, 1b mc); (low, high) drmax]
   pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {100, 140}),
@@ -443,12 +487,13 @@ void GetOptions(int argc, char *argv[]){
       {"single_thread", no_argument, 0, 's'},
       {"year", required_argument, 0, 0},
       {"unblind", no_argument, 0, 0},
+      {"string_options", required_argument, 0, 'o'},
       {0, 0, 0, 0}
     };
 
     char opt = -1;
     int option_index;
-    opt = getopt_long(argc, argv, "s", long_options, &option_index);
+    opt = getopt_long(argc, argv, "so:", long_options, &option_index);
 
     if( opt == -1) break;
 
@@ -456,6 +501,9 @@ void GetOptions(int argc, char *argv[]){
     switch(opt){
     case 's':
       single_thread = true;
+      break;
+    case 'o':
+      string_options = optarg;
       break;
     case 0:
       optname = long_options[option_index].name;

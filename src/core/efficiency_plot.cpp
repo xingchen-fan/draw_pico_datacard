@@ -134,24 +134,24 @@ void EfficiencyPlot::SingleEfficiencyPlot::RecordEvent(const Baby &baby){
   }else{
     for(size_t i = 0; i < min_vec_size; ++i){
       if(cut.IsVector() && !cut_vector_.at(i)) continue;
-      //avoid negative weight events failing numerator since these might make numerator > denominator
+      //previously avoid negative weight events failing numerator since these might make numerator > denominator
       //TODO: is there some alternative to deal with negative weights?
-      if(wgt.IsScalar()) {
-        if (numerator_cut_.IsScalar()) {
-          if (wgt_scalar < 0 && !numerator_cut_.GetScalar(baby)) continue;
-        }
-        else {
-          if (wgt_scalar < 0 && !numerator_cut_vector_.at(i)) continue;
-        }
-      }
-      else {
-        if (numerator_cut_.IsScalar()) {
-          if (wgt_vector_.at(i) < 0 && !numerator_cut_.GetScalar(baby)) continue;
-        }
-        else {
-          if (wgt_vector_.at(i) < 0 && !numerator_cut_vector_.at(i)) continue;
-        }
-      }
+      //if(wgt.IsScalar()) {
+      //  if (numerator_cut_.IsScalar()) {
+      //    if (wgt_scalar < 0 && !numerator_cut_.GetScalar(baby)) continue;
+      //  }
+      //  else {
+      //    if (wgt_scalar < 0 && !numerator_cut_vector_.at(i)) continue;
+      //  }
+      //}
+      //else {
+      //  if (numerator_cut_.IsScalar()) {
+      //    if (wgt_vector_.at(i) < 0 && !numerator_cut_.GetScalar(baby)) continue;
+      //  }
+      //  else {
+      //    if (wgt_vector_.at(i) < 0 && !numerator_cut_vector_.at(i)) continue;
+      //  }
+      //}
       //fill denominator and maybe numerator histograms
       raw_denominator_hist_.Fill(val.IsScalar() ? val_scalar : val_vector_.at(i),
                                  wgt.IsScalar() ? wgt_scalar : wgt_vector_.at(i));
@@ -419,7 +419,7 @@ void EfficiencyPlot::Print(double luminosity,
   if (this_opt_.Title() == TitleType::preliminary)
     t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}");
   else if (this_opt_.Title() == TitleType::simulation_preliminary)
-    t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Simulation Preliminiary}}");
+    t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Simulation Preliminary}}");
   else if (this_opt_.Title() == TitleType::simulation)
     t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Simulation}}");
   else if (this_opt_.Title() == TitleType::supplementary)
@@ -430,7 +430,7 @@ void EfficiencyPlot::Print(double luminosity,
     t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS}");
   else if (this_opt_.Title() == TitleType::info) {
     if (datas_.size() == 0) {
-      t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Simulation Preliminiary}}");
+      t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Simulation Preliminary}}");
     }
     else {
       t.DrawLatexNDC(0.155,0.87,"#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}");
@@ -440,13 +440,15 @@ void EfficiencyPlot::Print(double luminosity,
 	t.SetTextAlign(31);
   TString lumi_string = RoundNumber(luminosity_,1) + " fb^{-1}";
   if (luminosity_tag_ != "")
-    lumi_string = luminosity_tag_ + " fb^{-1}";
+    lumi_string = luminosity_tag_ + " fb^{-1} (13 TeV)";
 	t.DrawLatexNDC(0.845,0.87,("#font[42]{"+lumi_string+"}").Data());
-	t.SetTextAlign(33);
-	t.SetTextSize(0.025);
-  if (Title().size() >= 66) t.SetTextSize(0.015);
-  if (Title().size() >= 120) t.SetTextSize(0.015*120.0/static_cast<float>(Title().size()));
-	t.DrawLatexNDC(0.825,0.83,("#font[42]{"+Title()+"}").c_str());
+  if (this_opt_.Title() == TitleType::info) {
+	  t.SetTextAlign(33);
+	  t.SetTextSize(0.025);
+    if (Title().size() >= 66) t.SetTextSize(0.015);
+    if (Title().size() >= 120) t.SetTextSize(0.015*120.0/static_cast<float>(Title().size()));
+	  t.DrawLatexNDC(0.825,0.83,("#font[42]{"+Title()+"}").c_str());
+  }
 	//if (Title().size() < 66) {
 	//	t.DrawLatexNDC(0.825,0.83,("#font[42]{"+Title()+"}").c_str());
 	//}
