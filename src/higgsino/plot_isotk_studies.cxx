@@ -8,7 +8,7 @@
 // --string_options (-o) to specify what to plot
 //
 //possible string options: 
-//ttbar_reco,signal_isotkeff,cr_isotkeff,pies,ttbar2l,fastsimverify,fastsimisotk
+//ttbar_reco,signal_isotkeff,cr_isotkeff,ttbar2l,fastsimverify,fastsimisotk,tt2lan
 
 #include "core/test.hpp"
 
@@ -149,7 +149,8 @@ int main(int argc, char *argv[]){
   std::vector<std::shared_ptr<Process>> tt2l_procs;
   std::vector<std::shared_ptr<Process>> tt2l_lep_procs;
 
-  if(HigUtilities::is_in_string_options(options.string_options, "ttbar2l")) {
+  if(HigUtilities::is_in_string_options(options.string_options, "ttbar2l")
+    ||HigUtilities::is_in_string_options(options.string_options, "tt2lan")) {
     //globbing cms17 takes ages, so only do it if necessary
     tt2l_procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X (#tau_{had}=0)", Process::Type::background,colors("tt_1l"),
                     attach_folder(new_base_folder, years, mc_2l_skim_folder, mctags["tt"]),"stitch&&(ntrutauh==0)"));
@@ -244,7 +245,7 @@ int main(int argc, char *argv[]){
                           "hig_cand_am[0]<200&&hig_cand_dm[0]<40";
   NamedFunc baseline_notkveto = 
                          "met/mht<2 && met/met_calo<2&&weight<1.5&&"
-                         "!low_dphi_met&&nvlep==0&&njet>=4&&njet<=5&&nbt>=2&&"
+                         "!low_dphi_met&&nlep==1&&njet>=4&&njet<=5&&nbt>=2&&"
                          "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40"
                          &&filters; //also missing met cut since this differs between fastSIM and fullSIM
 
@@ -800,6 +801,15 @@ int main(int argc, char *argv[]){
     return best_topmass;
   });
 
+  const NamedFunc nh("nh",[](const Baby &b) -> NamedFunc::ScalarType{
+    int nh_ = 0;
+    for (unsigned ifjet = 0; ifjet < b.fjet_deep_md_hbb_btv()->size(); ifjet++) {
+      if (ifjet > 1) break;
+      if (b.fjet_deep_md_hbb_btv()->at(ifjet) > 0.7) nh_++;
+    }
+    return nh_;
+  });
+
   const NamedFunc ttbar_reco_top("ttbar_reco_top",[](const Baby &b) -> NamedFunc::ScalarType{
     //tries to reconstruct a top quark from 1 b-jet and two other jets in the event
     if (b.njet() < 4) return false;
@@ -884,20 +894,50 @@ int main(int argc, char *argv[]){
   //------------------------------------------------------------------------------------
   
   PlotMaker pm;
-  if(HigUtilities::is_in_string_options(options.string_options, "pies")) {
-    //nlep pie chart for basic selection
-    pm.Push<Table>("FixName:isotk__pie__1lcrleps", vector<TableRow> ({TableRow("", ttbar_resolved, 0, 0, weight)}), lep_procs, true, true, true);
-    pm.Push<Table>("FixName:isotk__pie__1lcr2b_leps", vector<TableRow> ({TableRow("", ttbar_resolved&&"nbm==2", 0, 0, weight)}), lep_procs, true, true, true);
-    pm.Push<Table>("FixName:isotk__pie__2lprocs", vector<TableRow> ({TableRow("", ttbar_resolved&&"(ntrulep+ntrutauh>=2)", 0, 0, weight)}), ttbar_procs, true, true, true);
-    pm.Push<Table>("FixName:isotk__pie__1lprocs", vector<TableRow> ({TableRow("", ttbar_resolved&&"(ntrulep+ntrutauh==1)", 0, 0, weight)}), ttbar_procs, true, true, true);
-
-    pm.Push<Table>("FixName:isotk__pie__2lcrleps", vector<TableRow> ({TableRow("", zll_resolved, 0, 0, weight)}), zll_lep_procs, true, true, true);
-    pm.Push<Table>("FixName:isotk__pie__2l2bcrleps", vector<TableRow> ({TableRow("", zll_resolved&&"nbt==2", 0, 0, weight)}), zll_lep_procs, true, true, true);
-    pm.Push<Table>("FixName:isotk__pie__2lcrprocs", vector<TableRow> ({TableRow("", zll_resolved, 0, 0, weight)}), zll_procs, true, true, true);
-    pm.Push<Table>("FixName:isotk__pie__2l2bcrprocs", vector<TableRow> ({TableRow("", zll_resolved&&"nbt==2", 0, 0, weight)}), zll_procs, true, true, true);
-  }
-
   if(HigUtilities::is_in_string_options(options.string_options, "cr_isotkeff")) {
+    //nlep pie chart for basic selection
+    pm.Push<Table>("FixName:isotk__pie__1lcrleps_"+options.year_string, vector<TableRow> ({TableRow("", ttbar_resolved, 0, 0, weight)}), lep_procs, true, true, true);
+    pm.Push<Table>("FixName:isotk__pie__1lcr2b_leps_"+options.year_string, vector<TableRow> ({TableRow("", ttbar_resolved&&"nbm==2", 0, 0, weight)}), lep_procs, true, true, true);
+    pm.Push<Table>("FixName:isotk__pie__2lprocs_"+options.year_string, vector<TableRow> ({TableRow("", ttbar_resolved&&"(ntrulep+ntrutauh>=2)", 0, 0, weight)}), ttbar_procs, true, true, true);
+    pm.Push<Table>("FixName:isotk__pie__1lprocs_"+options.year_string, vector<TableRow> ({TableRow("", ttbar_resolved&&"(ntrulep+ntrutauh==1)", 0, 0, weight)}), ttbar_procs, true, true, true);
+
+    pm.Push<Table>("FixName:isotk__pie__2lcrleps_"+options.year_string, vector<TableRow> ({TableRow("", zll_resolved, 0, 0, weight)}), zll_lep_procs, true, true, true);
+    pm.Push<Table>("FixName:isotk__pie__2l2bcrleps_"+options.year_string, vector<TableRow> ({TableRow("", zll_resolved&&"nbt==2", 0, 0, weight)}), zll_lep_procs, true, true, true);
+    pm.Push<Table>("FixName:isotk__pie__2lcrprocs_"+options.year_string, vector<TableRow> ({TableRow("", zll_resolved, 0, 0, weight)}), zll_procs, true, true, true);
+    pm.Push<Table>("FixName:isotk__pie__2l2bcrprocs_"+options.year_string, vector<TableRow> ({TableRow("", zll_resolved&&"nbt==2", 0, 0, weight)}), zll_procs, true, true, true);
+    //vars
+    pm.Push<EfficiencyPlot>(Axis(3, 1.5, 4.5, Higfuncs::hig_bcat, "N_{b}", {}),
+        zll_resolved && "njet>=4",
+        "ntk==0",
+        zll_procs,true,plt_lin).Weight(weight).Tag("FixName:isotk__vars__2lcr_nb_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(8, 40.0, 200.0, "hig_cand_am[0]", "<m_{bb}> [GeV]", {}),
+        zll_resolved && "njet>=4",
+        "ntk==0",
+        zll_procs,true,plt_lin).Weight(weight).Tag("FixName:isotk__vars__2lcr_am_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(4, 0.0, 40.0, "hig_cand_dm[0]", "#Delta m_{bb} [GeV]", {}),
+        zll_resolved && "njet>=4",
+        "ntk==0",
+        zll_procs,true,plt_lin).Weight(weight).Tag("FixName:isotk__vars__2lcr_dm_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(4, 0.0, 2.2, "hig_cand_drmax[0]", "#DeltaR_{max}", {}),
+        zll_resolved && "njet>=4",
+        "ntk==0",
+        zll_procs,true,plt_lin).Weight(weight).Tag("FixName:isotk__vars__2lcr_drmax_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(8, 0, 400, "met", "p_{T}^{miss} [GeV]", {}),
+        zll_resolved && "njet>=4",
+        "ntk==0",
+        zll_procs,true,plt_lin).Weight(weight).Tag("FixName:isotk__vars__2lcr_met_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(3, -0.5, 2.5, nh, "N_{H}", {}),
+        zll_resolved,
+        "ntk==0",
+        zll_procs,true,plt_lin).Weight(weight).Tag("FixName:isotk__vars__2lcr_nh_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(8, 0, 200, "fjet_msoftdrop[0]", "m_{J1} [GeV]", {}),
+        zll_resolved&&"nfjet>0",
+        "ntk==0",
+        zll_procs,true,plt_lin).Weight(weight).Tag("FixName:isotk__vars__2lcr_mj1_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(8, 0, 200, "fjet_msoftdrop[1]", "m_{J2} [GeV]", {}),
+        zll_resolved&&"nfjet>1",
+        "ntk==0",
+        zll_procs,true,plt_lin).Weight(weight).Tag("FixName:isotk__vars__2lcr_mj2_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
     //1l & 2l CR(DY) plots
     pm.Push<EfficiencyPlot>(Axis({0,20,40,60,80,100,150,200,400}, avr_jet_pt, "Average jet p_{T} [GeV]", {}),
         zll_resolved,
@@ -1085,6 +1125,14 @@ int main(int argc, char *argv[]){
   }
 
   if(HigUtilities::is_in_string_options(options.string_options, "fastsimisotk")) {
+    pm.Push<Table>("isotk__fastfullsim_table_"+options.year_string, vector<TableRow>{
+      TableRow("tt 2l CR baseline", 
+          baseline_notkveto,0,0,weight),
+      TableRow("$\\geq 1$ Iso.Tk.", 
+          baseline_notkveto&&"ntk>=1",0,0,weight),
+      TableRow("0 Iso.Tk.", 
+          baseline_notkveto&&"ntk==0",0,0,weight),
+    },fastsim_procs,false,true,false,true,false,true).LuminosityTag(total_luminosity_string).Precision(1);
     pm.Push<EfficiencyPlot>(Axis(16, 0.0, 400.0, min_jet_pt, "Minimum jet p_{T} [GeV]", {}),
         baseline_notkveto,
         "ntk==0",
@@ -1101,6 +1149,10 @@ int main(int argc, char *argv[]){
         baseline_notkveto,
         "ntk==0",
         fastsim_procs,true,plt_lin).Weight(weight_isotk).Tag("FixName:isotk__fastfullsim__tkeff_corr_avrpt_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(6, 150.0, 300.0, "met", "p_{T}^{miss} [GeV]", {}),
+        baseline_notkveto,
+        "ntk==0",
+        fastsim_procs,true,plt_lin).Weight(weight).Tag("FixName:isotk__fastfullsim__tkeff_met_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
     pm.Push<EfficiencyPlot>(Axis(16, 0.0, 200.0, "hig_cand_am[0]", "<m_{bb}> [GeV]", {}),
         baseline_notkveto,
         "ntk==0",
@@ -1154,6 +1206,66 @@ int main(int argc, char *argv[]){
       TableRow("$\\Delta m_\\mathrm{bb}<40$ GeV", 
           filters&&(Higfuncs::lead_signal_lepton_pt>30)&&"met/met_calo<5&&met/mht<5&&weight<1.5&&nlep==1&&njet>=4&&njet<=5&&nbt>=2&&mt<=100&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<200&&hig_cand_dm[0]<40",0,0,weight),
     },fastsim_procs,false,true,false,true,false,true).LuminosityTag(total_luminosity_string).Precision(1);
+  }
+
+  if(HigUtilities::is_in_string_options(options.string_options, "tt2lan")) {
+    //numbers - tables
+    pm.Push<Table>("tt2lcr_isotkeff_"+options.year_string, vector<TableRow>{
+      TableRow("tt 2l CR baseline", 
+          ttbar2lcr,0,0,weight),
+      TableRow("$\\geq 1$ Iso.Tk.", 
+          ttbar2lcr&&"ntk>=1",0,0,weight),
+      TableRow("0 Iso.Tk.", 
+          ttbar2lcr&&"ntk==0",0,0,weight),
+      TableRow("tt 2l CR baseline + jets", 
+          ttbar2lcr&&ttbar2ljets,0,0,weight),
+      TableRow("$\\geq 1$ Iso.Tk.", 
+          ttbar2lcr&&ttbar2ljets&&"ntk>=1",0,0,weight),
+      TableRow("0 Iso.Tk.", 
+          ttbar2lcr&&ttbar2ljets&&"ntk==0",0,0,weight),
+    },tt2l_procs,false,true,false,true,false,true).LuminosityTag(total_luminosity_string).Precision(1);
+    //composition pie charts
+    pm.Push<Table>("FixName:isotk__pie__tt2lcrleps_"+options.year_string, vector<TableRow> (
+        {TableRow("", ttbar2lcr, 0, 0, weight)}), tt2l_lep_procs, true, true, true);
+    pm.Push<Table>("FixName:isotk__pie__tt2ljetscrleps_"+options.year_string, vector<TableRow> (
+        {TableRow("", ttbar2lcr&&ttbar2ljets, 0, 0, weight)}), tt2l_lep_procs, true, true, true);
+    pm.Push<Table>("FixName:isotk__pie__tt2lcrprocs_"+options.year_string, vector<TableRow> (
+        {TableRow("", ttbar2lcr, 0, 0, weight)}), tt2l_procs, true, true, true);
+    pm.Push<Table>("FixName:isotk__pie__tt2ljetscrprocs_"+options.year_string, vector<TableRow> (
+        {TableRow("", ttbar2lcr&&ttbar2ljets, 0, 0, weight)}), tt2l_procs, true, true, true);
+    //variables
+    pm.Push<EfficiencyPlot>(Axis(3, 1.5, 4.5, Higfuncs::hig_bcat, "N_{b}", {}),
+        ttbar2lcr && "njet>=4",
+        "ntk==0",
+        tt2l_procs,true,plt_lin).Weight(weight).Tag("FixName:isotk__vars__tt2lcr_nb_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(8, 40.0, 200.0, "hig_cand_am[0]", "<m_{bb}> [GeV]", {}),
+        ttbar2lcr && "njet>=4",
+        "ntk==0",
+        tt2l_procs,true,plt_lin).Weight(weight).Tag("FixName:isotk__vars__tt2lcr_am_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(8, 0.0, 100.0, "hig_cand_dm[0]", "#Delta m_{bb} [GeV]", {}),
+        ttbar2lcr && "njet>=4",
+        "ntk==0",
+        tt2l_procs,true,plt_lin).Weight(weight).Tag("FixName:isotk__vars__tt2lcr_dm_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(8, 0.0, 4.4, "hig_cand_drmax[0]", "#DeltaR_{max}", {}),
+        ttbar2lcr && "njet>=4",
+        "ntk==0",
+        tt2l_procs,true,plt_lin).Weight(weight).Tag("FixName:isotk__vars__tt2lcr_drmax_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(8, 0, 400, "met", "p_{T}^{miss} [GeV]", {}),
+        ttbar2lcr && "njet>=4",
+        "ntk==0",
+        tt2l_procs,true,plt_lin).Weight(weight).Tag("FixName:isotk__vars__tt2lcr_met_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(3, -0.5, 2.5, nh, "N_{H}", {}),
+        ttbar2lcr,
+        "ntk==0",
+        tt2l_procs,true,plt_lin).Weight(weight).Tag("FixName:isotk__vars__tt2lcr_nh_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(8, 0, 200, "fjet_msoftdrop[0]", "m_{J1} [GeV]", {}),
+        ttbar2lcr&&"nfjet>0",
+        "ntk==0",
+        tt2l_procs,true,plt_lin).Weight(weight).Tag("FixName:isotk__vars__tt2lcr_mj1_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
+    pm.Push<EfficiencyPlot>(Axis(8, 0, 200, "fjet_msoftdrop[1]", "m_{J2} [GeV]", {}),
+        ttbar2lcr&&"nfjet>1",
+        "ntk==0",
+        tt2l_procs,true,plt_lin).Weight(weight).Tag("FixName:isotk__vars__tt2lcr_mj2_"+options.year_string).YTitle("N_{tk}=0").LuminosityTag(total_luminosity_string);
   }
 
   if(HigUtilities::is_in_string_options(options.string_options, "ttbar2l")) {

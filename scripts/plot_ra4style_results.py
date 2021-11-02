@@ -299,7 +299,7 @@ top.cd()
 top.SetLogy()
 htopdummy.GetYaxis().SetLabelSize(top_axis_label_size)
 htopdummy.GetYaxis().SetRangeUser(miny,maxy)
-htopdummy.GetYaxis().SetTitle("Events / Bin")
+htopdummy.GetYaxis().SetTitle("Events / bin")
 htopdummy.GetYaxis().CenterTitle()
 htopdummy.GetYaxis().SetTitleSize(top_axis_title_size)
 htopdummy.GetYaxis().SetTitleOffset(top_axis_title_offset)
@@ -368,7 +368,7 @@ if not plot_pulls:
     htopdummy.GetXaxis().SetBinLabel(22,ptmiss+'>700 GeV')
     hgopdummy.LabelsOption('v')
 
-leg = TLegend(0.4, 0.9, 0.7, 0.98)
+leg = TLegend(0.35, 0.9, 0.75, 0.98)
 #leg = TLegend(0.3, 0.9, 0.7, 0.98) #w/ signal
 # leg.SetTextSize(30)
 leg.SetFillColor(0)
@@ -426,6 +426,8 @@ if not plot_pulls:
   cmslabel.SetTextSize(0.07)
 if preliminary:
   cmslabel.DrawLatex(top.GetLeftMargin()+0.005, 0.92,"#font[62]{CMS} #scale[0.8]{#font[52]{Preliminary}}")
+elif plot_sig:
+  cmslabel.DrawLatex(top.GetLeftMargin()+0.005, 0.92,"#font[62]{CMS} #scale[0.8]{#font[52]{Supplementary}}")
 else:
   cmslabel.DrawLatex(top.GetLeftMargin()+0.005, 0.92,"#font[62]{CMS}")
 cmslabel.SetTextAlign(31)
@@ -440,8 +442,8 @@ binlabel = TLatex()
 binlabel.SetTextSize(an_region_size)
 # binlabel.SetNDC(kTRUE)
 binlabel.SetTextAlign(21)
-binlabel.DrawLatex(4.5, merge_category_y,"Resolved, #DeltaR#lower[-0.1]{_{max}} < 1.1")
-binlabel.DrawLatex(12.5, merge_category_y,"Resolved, 1.1 < #DeltaR#lower[-0.1]{_{max}} < 2.2")
+binlabel.DrawLatex(4.5, merge_category_y,"Resolved, 1.1 < #DeltaR#lower[-0.1]{_{max}} < 2.2")
+binlabel.DrawLatex(12.5, merge_category_y,"Resolved, #DeltaR#lower[-0.1]{_{max}} < 1.1")
 binlabel.DrawLatex(19.5, merge_category_y,"Boosted")
 binlabel.SetTextSize(nb_title_size)
 
@@ -579,6 +581,8 @@ if plot_pulls:
 pname = 'plots/results_plot.pdf'
 if preliminary:
   pname = 'plots/results_plot_preliminary.pdf'
+if plot_sig:
+  pname = 'plots/results_plot_with_signal.pdf'
 can.Print(pname)
 
 print('open '+pname)

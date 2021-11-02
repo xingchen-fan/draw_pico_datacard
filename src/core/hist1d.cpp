@@ -1491,12 +1491,26 @@ vector<shared_ptr<TLegend> > Hist1D::GetLegends(){
   double left = this_opt_.LeftMargin()+this_opt_.LegendLeftPad()+this_opt_.LegendPad();
   double top = 1.-this_opt_.TopMargin()-this_opt_.LegendPad();
   double bottom = top-this_opt_.TrueLegendHeight(n_entries);
-  if (this_opt_.TitleInFrame()) left += 0.3;
+  double title_left_offset = 0;
+  if (this_opt_.TitleInFrame()) {
+    if (this_opt_.Title() == TitleType::data)
+      title_left_offset += 0.16;
+    else if (this_opt_.Title() == TitleType::preliminary)
+      title_left_offset += 0.3;
+    else if (this_opt_.Title() == TitleType::supplementary)
+      title_left_offset += 0.3;
+    else if (this_opt_.Title() == TitleType::simulation)
+      title_left_offset += 0.3;
+    else if (this_opt_.Title() == TitleType::simulation_preliminary)
+      title_left_offset += 0.5;
+    else if (this_opt_.Title() == TitleType::simulation_supplementary)
+      title_left_offset += 0.5;
+  }
 
   double delta_x = this_opt_.TrueLegendWidth(n_entries);
   vector<shared_ptr<TLegend> > legends(n_columns);
   for(size_t i = 0; i < n_columns; ++i){
-    double left_column_offset = (i == 0) ? this_opt_.LegendLeftColumnOffset() : 0;
+    double left_column_offset = (i == 0) ? (this_opt_.LegendLeftColumnOffset()+title_left_offset) : 0;
     double x = left+i*delta_x+left_column_offset;
     legends.at(i) = make_shared<TLegend>(x, bottom, x+this_opt_.LegendMarkerWidth(), top);
     legends.at(i)->SetFillStyle(0);
@@ -1554,7 +1568,8 @@ void Hist1D::AddEntries(vector<shared_ptr<TLegend> > &legends,
   for(auto h = hists.cbegin(); h != hists.cend(); ++h){
     size_t legend_index = GetLegendIndex(entries_added, n_entries, legends.size());
     TLegend &legend = *legends.at(legend_index);
-    string label = (*h)->process_->name_.c_str();
+    string label = " ";
+    label += (*h)->process_->name_.c_str();
     if(this_opt_.Title() == TitleType::info){
       double value;
       switch(this_opt_.Stack()){

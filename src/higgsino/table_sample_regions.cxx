@@ -67,7 +67,7 @@ string getPartialDatasetName(string filename) {
   string fullDatasetName = regSearch(baseFilename, "[A-Z].*|ttHTobb.*");
   //cout<<datasetName.substr(0,datasetName.find_last_of("Tune"))<<endl;;
   string datasetName = fullDatasetName;
-  if (datasetName.find("Run") != string::npos && datasetName.find("RunII") == string::npos) datasetName = "DATA";
+  if (datasetName.find("Run") != string::npos && datasetName.find("RunII") == string::npos) datasetName = "Data";
   if (datasetName.find("SMS-TChiHH") != string::npos) {
     if (datasetName.find("2D") != string::npos) datasetName = "TChiHH_HToBB_HToBB_2D_Tune";
     else datasetName = "TChiHH_HToBB_HToBB_Tune";
@@ -678,10 +678,10 @@ int main(int argc, char *argv[]){
 
     bool make_event_list = HigUtilities::is_in_string_options(string_options, "make_event_list");
     if (make_event_list) {
-      //pm.Push<EventScan>("resolved_list_SR", base_filters&&search_resolved_cuts&&signalRegion,vector<NamedFunc>{"SampleType","run","lumiblock","event", "met"}, procs_all, 10, true);
-      //pm.Push<EventScan>("resolved_list_CR", base_filters&&search_resolved_cuts&&!signalRegion,vector<NamedFunc>{"SampleType", "run","lumiblock","event", "met"}, procs_all, 10, true);
-      pm.Push<EventScan>("resolved_list_SR_met300", "met>300"&&base_filters&&search_resolved_cuts&&signalRegion,vector<NamedFunc>{"SampleType","run","lumiblock","event", "met"}, procs_all, 10, true);
-      pm.Push<EventScan>("resolved_list_CR_met300", "met>300"&&base_filters&&search_resolved_cuts&&!signalRegion,vector<NamedFunc>{"SampleType", "run","lumiblock","event", "met"}, procs_all, 10, true);
+      pm.Push<EventScan>("resolved_list_SR", base_filters&&search_resolved_cuts&&signalRegion,vector<NamedFunc>{"SampleType","run","lumiblock","event", "met"}, procs_all, 10, true);
+      pm.Push<EventScan>("resolved_list_CR", base_filters&&search_resolved_cuts&&!signalRegion,vector<NamedFunc>{"SampleType", "run","lumiblock","event", "met"}, procs_all, 10, true);
+      //pm.Push<EventScan>("resolved_list_SR_met300", "met>300"&&base_filters&&search_resolved_cuts&&signalRegion,vector<NamedFunc>{"SampleType","run","lumiblock","event", "met"}, procs_all, 10, true);
+      //pm.Push<EventScan>("resolved_list_CR_met300", "met>300"&&base_filters&&search_resolved_cuts&&!signalRegion,vector<NamedFunc>{"SampleType", "run","lumiblock","event", "met"}, procs_all, 10, true);
     }
 
     bool make_event_list_for_excess = HigUtilities::is_in_string_options(string_options, "make_event_list_for_excess");
@@ -697,28 +697,46 @@ int main(int argc, char *argv[]){
   bool process_event_list_signal = HigUtilities::is_in_string_options(string_options, "process_event_list_signal");
   set<string> eventListNames = {};
   if (process_event_list_data) {
-    eventListNames.insert("resolved_list_CR_met300_SCAN_DATA_2016.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_DATA_2016.txt");
-    eventListNames.insert("resolved_list_CR_met300_SCAN_DATA_2017.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_DATA_2017.txt");
-    eventListNames.insert("resolved_list_CR_met300_SCAN_DATA_2018.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_DATA_2018.txt");
+    //eventListNames.insert("resolved_list_CR_met300_SCAN_Data_2016.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_Data_2016.txt");
+    //eventListNames.insert("resolved_list_CR_met300_SCAN_Data_2017.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_Data_2017.txt");
+    //eventListNames.insert("resolved_list_CR_met300_SCAN_Data_2018.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_Data_2018.txt");
+    eventListNames.insert("resolved_list_CR_SCAN_Data_2016.txt");eventListNames.insert("resolved_list_SR_SCAN_Data_2016.txt");
+    eventListNames.insert("resolved_list_CR_SCAN_Data_2017.txt");eventListNames.insert("resolved_list_SR_SCAN_Data_2017.txt");
+    eventListNames.insert("resolved_list_CR_SCAN_Data_2018.txt");eventListNames.insert("resolved_list_SR_SCAN_Data_2018.txt");
   }
   if (process_event_list_mc) {
-    eventListNames.insert("resolved_list_CR_met300_SCAN_MC_2016.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_MC_2016.txt");
-    eventListNames.insert("resolved_list_CR_met300_SCAN_MC_2017.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_MC_2017.txt");
-    eventListNames.insert("resolved_list_CR_met300_SCAN_MC_2018.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_MC_2018.txt");
+    //eventListNames.insert("resolved_list_CR_met300_SCAN_MC_2016.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_MC_2016.txt");
+    //eventListNames.insert("resolved_list_CR_met300_SCAN_MC_2017.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_MC_2017.txt");
+    //eventListNames.insert("resolved_list_CR_met300_SCAN_MC_2018.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_MC_2018.txt");
+    eventListNames.insert("resolved_list_CR_SCAN_MC_2016.txt");eventListNames.insert("resolved_list_SR_SCAN_MC_2016.txt");
+    eventListNames.insert("resolved_list_CR_SCAN_MC_2017.txt");eventListNames.insert("resolved_list_SR_SCAN_MC_2017.txt");
+    eventListNames.insert("resolved_list_CR_SCAN_MC_2018.txt");eventListNames.insert("resolved_list_SR_SCAN_MC_2018.txt");
   }
   if (process_event_list_signal) {
-    eventListNames.insert("resolved_list_CR_met300_SCAN_TChiHH1D_2016.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_TChiHH1D_2016.txt");
-    eventListNames.insert("resolved_list_CR_met300_SCAN_TChiHH1D_2017.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_TChiHH1D_2017.txt");
-    eventListNames.insert("resolved_list_CR_met300_SCAN_TChiHH1D_2018.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_TChiHH1D_2018.txt");
-    eventListNames.insert("resolved_list_CR_met300_SCAN_TChiHH2D_2016.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_TChiHH2D_2016.txt");
-    eventListNames.insert("resolved_list_CR_met300_SCAN_TChiHH2D_2017.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_TChiHH2D_2017.txt");
-    eventListNames.insert("resolved_list_CR_met300_SCAN_TChiHH2D_2018.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_TChiHH2D_2018.txt");
-    eventListNames.insert("resolved_list_CR_met300_SCAN_T5HH1D_2016.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_T5HH1D_2016.txt");
-    eventListNames.insert("resolved_list_CR_met300_SCAN_T5HH1D_2017.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_T5HH1D_2017.txt");
-    eventListNames.insert("resolved_list_CR_met300_SCAN_T5HH1D_2018.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_T5HH1D_2018.txt");
-    eventListNames.insert("resolved_list_CR_met300_SCAN_T5HH2D_2016.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_T5HH2D_2016.txt");
-    eventListNames.insert("resolved_list_CR_met300_SCAN_T5HH2D_2017.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_T5HH2D_2017.txt");
-    eventListNames.insert("resolved_list_CR_met300_SCAN_T5HH2D_2018.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_T5HH2D_2018.txt");
+    //eventListNames.insert("resolved_list_CR_met300_SCAN_TChiHH1D_2016.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_TChiHH1D_2016.txt");
+    //eventListNames.insert("resolved_list_CR_met300_SCAN_TChiHH1D_2017.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_TChiHH1D_2017.txt");
+    //eventListNames.insert("resolved_list_CR_met300_SCAN_TChiHH1D_2018.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_TChiHH1D_2018.txt");
+    //eventListNames.insert("resolved_list_CR_met300_SCAN_TChiHH2D_2016.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_TChiHH2D_2016.txt");
+    //eventListNames.insert("resolved_list_CR_met300_SCAN_TChiHH2D_2017.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_TChiHH2D_2017.txt");
+    //eventListNames.insert("resolved_list_CR_met300_SCAN_TChiHH2D_2018.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_TChiHH2D_2018.txt");
+    //eventListNames.insert("resolved_list_CR_met300_SCAN_T5HH1D_2016.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_T5HH1D_2016.txt");
+    //eventListNames.insert("resolved_list_CR_met300_SCAN_T5HH1D_2017.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_T5HH1D_2017.txt");
+    //eventListNames.insert("resolved_list_CR_met300_SCAN_T5HH1D_2018.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_T5HH1D_2018.txt");
+    //eventListNames.insert("resolved_list_CR_met300_SCAN_T5HH2D_2016.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_T5HH2D_2016.txt");
+    //eventListNames.insert("resolved_list_CR_met300_SCAN_T5HH2D_2017.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_T5HH2D_2017.txt");
+    //eventListNames.insert("resolved_list_CR_met300_SCAN_T5HH2D_2018.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_T5HH2D_2018.txt");
+    eventListNames.insert("resolved_list_CR_SCAN_TChiHH1D_2016.txt");eventListNames.insert("resolved_list_SR_SCAN_TChiHH1D_2016.txt");
+    eventListNames.insert("resolved_list_CR_SCAN_TChiHH1D_2017.txt");eventListNames.insert("resolved_list_SR_SCAN_TChiHH1D_2017.txt");
+    eventListNames.insert("resolved_list_CR_SCAN_TChiHH1D_2018.txt");eventListNames.insert("resolved_list_SR_SCAN_TChiHH1D_2018.txt");
+    eventListNames.insert("resolved_list_CR_SCAN_TChiHH2D_2016.txt");eventListNames.insert("resolved_list_SR_SCAN_TChiHH2D_2016.txt");
+    eventListNames.insert("resolved_list_CR_SCAN_TChiHH2D_2017.txt");eventListNames.insert("resolved_list_SR_SCAN_TChiHH2D_2017.txt");
+    eventListNames.insert("resolved_list_CR_SCAN_TChiHH2D_2018.txt");eventListNames.insert("resolved_list_SR_SCAN_TChiHH2D_2018.txt");
+    eventListNames.insert("resolved_list_CR_SCAN_T5HH1D_2016.txt");eventListNames.insert("resolved_list_SR_SCAN_T5HH1D_2016.txt");
+    eventListNames.insert("resolved_list_CR_SCAN_T5HH1D_2017.txt");eventListNames.insert("resolved_list_SR_SCAN_T5HH1D_2017.txt");
+    eventListNames.insert("resolved_list_CR_SCAN_T5HH1D_2018.txt");eventListNames.insert("resolved_list_SR_SCAN_T5HH1D_2018.txt");
+    eventListNames.insert("resolved_list_CR_SCAN_T5HH2D_2016.txt");eventListNames.insert("resolved_list_SR_SCAN_T5HH2D_2016.txt");
+    eventListNames.insert("resolved_list_CR_SCAN_T5HH2D_2017.txt");eventListNames.insert("resolved_list_SR_SCAN_T5HH2D_2017.txt");
+    eventListNames.insert("resolved_list_CR_SCAN_T5HH2D_2018.txt");eventListNames.insert("resolved_list_SR_SCAN_T5HH2D_2018.txt");
   }
   for (string const & eventListName : eventListNames) {
     ifstream eventList(eventListName);

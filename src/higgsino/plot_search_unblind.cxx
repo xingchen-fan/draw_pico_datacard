@@ -399,7 +399,7 @@ void setProcsDict(string const & production, string const & nanoAodFolder, strin
 
   // Set data btag procs
   procsDict["data_3btag"];
-  procsDict["data_3btag"].push_back(Process::MakeShared<Baby_pico>("Norm. Data 2b", Process::Type::background,kAzure+10,
+  procsDict["data_3btag"].push_back(Process::MakeShared<Baby_pico>("Norm. data 2b", Process::Type::background,kAzure+10,
                   attach_folder(data_production_folder, years, data_skim_folder, {"*.root"}),triggers_data&&"(nbt==2&&nbm==2)"));
   procsDict["data_3btag"].back()->SetFillColor(kWhite);
   procsDict["data_3btag"].back()->SetLineColor(kAzure+10);
@@ -413,7 +413,7 @@ void setProcsDict(string const & production, string const & nanoAodFolder, strin
   }
 
   procsDict["data_4btag"];
-  procsDict["data_4btag"].push_back(Process::MakeShared<Baby_pico>("Norm. Data 2b", Process::Type::background,kAzure+10,
+  procsDict["data_4btag"].push_back(Process::MakeShared<Baby_pico>("Norm. data 2b", Process::Type::background,kAzure+10,
                   attach_folder(data_production_folder, years, data_skim_folder, {"*.root"}),triggers_data&&"(nbt==2&&nbm==2)"));
   procsDict["data_4btag"].back()->SetFillColor(kWhite);
   procsDict["data_4btag"].back()->SetLineColor(kAzure+10);
@@ -427,7 +427,7 @@ void setProcsDict(string const & production, string const & nanoAodFolder, strin
   }
 
   procsDict["data_3b4btag"];
-  procsDict["data_3b4btag"].push_back(Process::MakeShared<Baby_pico>("Norm. Data 2b", Process::Type::background,kAzure+10,
+  procsDict["data_3b4btag"].push_back(Process::MakeShared<Baby_pico>("Norm. data 2b", Process::Type::background,kAzure+10,
                   attach_folder(data_production_folder, years, data_skim_folder, {"*.root"}),triggers_data&&"(nbt==2&&nbm==2)"));
   procsDict["data_3b4btag"].back()->SetFillColor(kWhite);
   procsDict["data_3b4btag"].back()->SetLineColor(kAzure+10);
@@ -472,11 +472,22 @@ int main(int argc, char *argv[]){
   PlotOpt lin_norm_data = lin_norm_info().YAxis(YAxisType::linear).Title(TitleType::info).Bottom(BottomType::ratio).PrintVals(true);
   PlotOpt lin_lumi = lin_norm_info.Title(cms_title).Bottom(BottomType::ratio).YAxis(YAxisType::linear).Stack(StackType::data_norm).RatioMaximum(1.86);
   PlotOpt lin_lumi_paper = lin_norm_info.Title(cms_title).LegendColumns(2).Bottom(BottomType::ratio).YAxis(YAxisType::linear).Stack(StackType::data_norm).RatioMaximum(1.86);
-  PlotOpt lin_norm_paper = lin_norm().LegendLeftColumnOffset(0.16).Title(cms_title).LegendColumns(2).TitleInFrame(false);
-  PlotOpt lin_norm_data_paper = lin_norm_data().LegendLeftColumnOffset(0.16).Title(cms_title).LegendColumns(2).TitleInFrame(false).RatioMaximum(1.9).RatioMinimum(0.1);
-  PlotOpt log_norm_paper = log_norm().LegendLeftColumnOffset(0.16).Title(cms_title).LegendColumns(2).TitleInFrame(false);
-  PlotOpt log_norm_data_paper = log_norm_data().LegendLeftColumnOffset(0.16).Title(cms_title).LegendColumns(2).TitleInFrame(false).RatioMaximum(1.9).RatioMinimum(0.1);
-  PlotOpt log_norm_data_paper_nb = log_norm_data().LegendLeftColumnOffset(0.16).Title(cms_title).LegendColumns(2).TitleInFrame(false).RatioMaximum(1.9).RatioMinimum(0.1).NDivisions(3);
+  //PlotOpt lin_norm_paper = lin_norm().LegendLeftColumnOffset(0.16).Title(cms_title).LegendColumns(2).TitleInFrame(false);
+  //PlotOpt lin_norm_data_paper = lin_norm_data().LegendLeftColumnOffset(0.16).Title(cms_title).LegendColumns(2).TitleInFrame(false).RatioMaximum(1.9).RatioMinimum(0.1);
+  //PlotOpt log_norm_paper = log_norm().LegendLeftColumnOffset(0.16).Title(cms_title).LegendColumns(2).TitleInFrame(false);
+  //PlotOpt log_norm_data_paper = log_norm_data().LegendLeftColumnOffset(0.16).Title(cms_title).LegendColumns(2).TitleInFrame(false).RatioMaximum(1.9).RatioMinimum(0.1);
+  //PlotOpt log_norm_data_paper_nb = log_norm_data().LegendLeftColumnOffset(0.16).Title(cms_title).LegendColumns(2).TitleInFrame(true).RatioMaximum(1.09).RatioMinimum(0.91).NDivisions(3);
+  //PlotOpt lin_norm_data_paper_dm = lin_norm_data().LegendLeftColumnOffset(0.16).Title(cms_title).LegendColumns(2).TitleInFrame(true).RatioMaximum(1.34).RatioMinimum(0.66);
+  //PlotOpt log_norm_data_paper_titleinframe = log_norm_data().LegendLeftColumnOffset(0.16).Title(cms_title).TitleInFrame(true).LegendColumns(2).RatioMaximum(1.9).RatioMinimum(0.1);
+  //PlotOpt lin_norm_data_paper_titleinframe = lin_norm_data().LegendLeftColumnOffset(0.16).Title(cms_title).TitleInFrame(true).LegendColumns(2).RatioMaximum(1.9).RatioMinimum(0.1);
+  PlotOpt lin_norm_paper = lin_norm().LegendLeftColumnOffset(0.0).Title(cms_title).LegendColumns(2).TitleInFrame(false);
+  PlotOpt lin_norm_data_paper = lin_norm_data().LegendLeftColumnOffset(0.0).Title(cms_title).LegendColumns(2).TitleInFrame(false).RatioMaximum(1.9).RatioMinimum(0.1);
+  PlotOpt log_norm_paper = log_norm().LegendLeftColumnOffset(0.0).Title(cms_title).LegendColumns(2).TitleInFrame(false);
+  PlotOpt log_norm_data_paper = log_norm_data().LegendLeftColumnOffset(0.0).Title(cms_title).LegendColumns(2).TitleInFrame(false).RatioMaximum(1.9).RatioMinimum(0.1);
+  PlotOpt log_norm_data_paper_nb = log_norm_data().LegendLeftColumnOffset(0.0).Title(cms_title).LegendColumns(2).TitleInFrame(true).RatioMaximum(1.09).RatioMinimum(0.91).NDivisions(3);
+  PlotOpt lin_norm_data_paper_dm = lin_norm_data().LegendLeftColumnOffset(0.0).Title(cms_title).LegendColumns(2).TitleInFrame(true).RatioMaximum(1.34).RatioMinimum(0.66);
+  PlotOpt log_norm_data_paper_titleinframe = log_norm_data().LegendLeftColumnOffset(0.0).Title(cms_title).TitleInFrame(true).LegendColumns(2).RatioMaximum(1.9).RatioMinimum(0.1);
+  PlotOpt lin_norm_data_paper_titleinframe = lin_norm_data().LegendLeftColumnOffset(0.0).Title(cms_title).TitleInFrame(true).LegendColumns(2).RatioMaximum(1.9).RatioMinimum(0.1);
 
   vector<PlotOpt> plt_norm_info = {lin_norm_info, log_norm_info};
   vector<PlotOpt> plt_lin = {lin_norm};
@@ -485,6 +496,9 @@ int main(int argc, char *argv[]){
   vector<PlotOpt> plt_shapes_info = {lin_shapes_info};
   vector<PlotOpt> plt_lin_lumi = {lin_lumi};
   vector<PlotOpt> plt_log_nb = {log_norm};
+  vector<PlotOpt> plt_lin_dm = {lin_norm};
+  vector<PlotOpt> plt_lin_titleinframe = {lin_norm};
+  vector<PlotOpt> plt_log_titleinframe = {log_norm};
   if (unblind) plt_lin = {lin_norm_data};
   if (unblind) plt_log = {log_norm_data};
   if (HigUtilities::is_in_string_options(string_options, "paper_style")) {
@@ -492,10 +506,16 @@ int main(int argc, char *argv[]){
     plt_lin_lumi = {lin_lumi_paper};
     plt_log = {log_norm_paper};
     plt_log_nb = {log_norm_paper};
+    plt_lin_dm = {lin_norm_paper};
+    plt_log_titleinframe = {log_norm_paper};
+    plt_lin_titleinframe = {lin_norm_paper};
     if (unblind) {
       plt_lin = {lin_norm_data_paper};
       plt_log = {log_norm_data_paper};
       plt_log_nb = {log_norm_data_paper_nb};
+      plt_lin_dm = {lin_norm_data_paper_dm};
+      plt_log_titleinframe = {log_norm_data_paper_titleinframe};
+      plt_lin_titleinframe = {lin_norm_data_paper_titleinframe};
     }
   }
   if (HigUtilities::is_in_string_options(string_options, "supplementary")) {
@@ -652,53 +672,53 @@ int main(int argc, char *argv[]){
       // average mass (data 2bvs3b); low-drmax [search] 
       pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {}, {100, 140}),
         search_filters&&search_resolved_cuts&&"hig_cand_drmax[0]<=1.1"&&extra_cut, procs_search["data_3btag"], plt_lin_lumi).Weight(weight)
-        .Tag("FixName:amjj_data2b3b__lowdrmax__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 3b", "Norm. Data 2b").RightLabel({"#DeltaR_{max} < 1.1"}).YAxisZoom(0.85);
+        .Tag("FixName:amjj_data2b3b__lowdrmax__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 3b", "Norm. data 2b").RightLabel({"#DeltaR_{max} < 1.1"}).YAxisZoom(0.85);
       // average mass (data 2bvs3b); high-drmax [search] 
       pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {}, {100, 140}),
         search_filters&&search_resolved_cuts&&"hig_cand_drmax[0]>1.1"&&extra_cut, procs_search["data_3btag"], plt_lin_lumi).Weight(weight)
-        .Tag("FixName:amjj_data2b3b__highdrmax__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 3b", "Norm. Data 2b").RightLabel({"1.1 < #DeltaR_{max} < 2.2"}).YAxisZoom(0.85);
+        .Tag("FixName:amjj_data2b3b__highdrmax__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 3b", "Norm. data 2b").RightLabel({"1.1 < #DeltaR_{max} < 2.2"}).YAxisZoom(0.85);
       // average mass (data 2bvs4b); low-drmax [search] 
       pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {}, {100, 140}),
         search_filters&&search_resolved_cuts&&"hig_cand_drmax[0]<=1.1"&&extra_cut, procs_search["data_4btag"], plt_lin_lumi).Weight(weight)
-        .Tag("FixName:amjj_data2b4b__lowdrmax__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 4b", "Norm. Data 2b").RightLabel({"#DeltaR_{max} < 1.1"}).YAxisZoom(0.85);
+        .Tag("FixName:amjj_data2b4b__lowdrmax__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 4b", "Norm. data 2b").RightLabel({"#DeltaR_{max} < 1.1"}).YAxisZoom(0.85);
       // average mass (data 2bvs4b); high-drmax [search] 
       pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {}, {100, 140}),
         search_filters&&search_resolved_cuts&&"hig_cand_drmax[0]>1.1"&&extra_cut, procs_search["data_4btag"], plt_lin_lumi).Weight(weight)
-        .Tag("FixName:amjj_data2b4b__highdrmax__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 4b", "Norm. Data 2b").RightLabel({"1.1 < #DeltaR_{max} < 2.2"}).YAxisZoom(0.85);
+        .Tag("FixName:amjj_data2b4b__highdrmax__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 4b", "Norm. data 2b").RightLabel({"1.1 < #DeltaR_{max} < 2.2"}).YAxisZoom(0.85);
 
       // Kappa applied
       // average mass (data 2bvs3b); low-drmax [search] 
       pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {}, {100, 140}),
         search_filters&&search_resolved_cuts&&"hig_cand_drmax[0]<=1.1"&&extra_cut, procs_search["data_3btag"], plt_lin_lumi).Weight(weight*kappa_3b_wgt)
-        .Tag("FixName:amjj_data2b3b__lowdrmax__kappaApplied__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 3b", "Norm. Data 2b").RightLabel({"#DeltaR_{max} < 1.1"}).YAxisZoom(0.85);
+        .Tag("FixName:amjj_data2b3b__lowdrmax__kappaApplied__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 3b", "Norm. data 2b").RightLabel({"#DeltaR_{max} < 1.1"}).YAxisZoom(0.85);
       // average mass (data 2bvs3b); high-drmax [search] 
       pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {}, {100, 140}),
         search_filters&&search_resolved_cuts&&"hig_cand_drmax[0]>1.1"&&extra_cut, procs_search["data_3btag"], plt_lin_lumi).Weight(weight*kappa_3b_wgt)
-        .Tag("FixName:amjj_data2b3b__highdrmax__kappaApplied__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 3b", "Norm. Data 2b").RightLabel({"1.1 < #DeltaR_{max} < 2.2"}).YAxisZoom(0.85);
+        .Tag("FixName:amjj_data2b3b__highdrmax__kappaApplied__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 3b", "Norm. data 2b").RightLabel({"1.1 < #DeltaR_{max} < 2.2"}).YAxisZoom(0.85);
 
       // average mass (data 2bvs4b); low-drmax [search] 
       pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {}, {100, 140}),
         search_filters&&search_resolved_cuts&&"hig_cand_drmax[0]<=1.1"&&extra_cut, procs_search["data_4btag"], plt_lin_lumi).Weight(weight*kappa_4b_wgt)
-        .Tag("FixName:amjj_data2b4b__lowdrmax__kappaApplied__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 4b", "Norm. Data 2b").RightLabel({"#DeltaR_{max} < 1.1"}).YAxisZoom(0.85);
+        .Tag("FixName:amjj_data2b4b__lowdrmax__kappaApplied__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 4b", "Norm. data 2b").RightLabel({"#DeltaR_{max} < 1.1"}).YAxisZoom(0.85);
       // average mass (data 2bvs4b); high-drmax [search] 
       pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {}, {100, 140}),
         search_filters&&search_resolved_cuts&&"hig_cand_drmax[0]>1.1"&&extra_cut, procs_search["data_4btag"], plt_lin_lumi).Weight(weight*kappa_4b_wgt)
-        .Tag("FixName:amjj_data2b4b__highdrmax__kappaApplied__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 4b", "Norm. Data 2b").RightLabel({"1.1 < #DeltaR_{max} < 2.2"}).YAxisZoom(0.85);
+        .Tag("FixName:amjj_data2b4b__highdrmax__kappaApplied__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 4b", "Norm. data 2b").RightLabel({"1.1 < #DeltaR_{max} < 2.2"}).YAxisZoom(0.85);
     }
 
     if (unblind) {
       // average mass (data 2bvs3b|4b); low-drmax,met>200 [search] 
       pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {}, {100, 140}),
         search_filters&&search_resolved_cuts&&"hig_cand_drmax[0]<=1.1&&met>200"&&extra_cut, procs_search["data_3b4btag"], plt_lin_lumi).Weight(weight)
-        .Tag("FixName:amjj_data2b3b4b__lowdrmax_met200__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 3b|4b", "Norm. Data 2b").RightLabel({"#DeltaR_{max} < 1.1"}).YAxisZoom(0.85);
+        .Tag("FixName:amjj_data2b3b4b__lowdrmax_met200__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 3b|4b", "Norm. data 2b").RightLabel({"#DeltaR_{max} < 1.1"}).YAxisZoom(0.85);
       // average mass (data 2bvs3b); low-drmax,met>200 [search] 
       pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {}, {100, 140}),
         search_filters&&search_resolved_cuts&&"hig_cand_drmax[0]<=1.1&&met>200"&&extra_cut, procs_search["data_3btag"], plt_lin_lumi).Weight(weight)
-        .Tag("FixName:amjj_data2b3b__lowdrmax_met200__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 3b", "Norm. Data 2b").RightLabel({"#DeltaR_{max} < 1.1"}).YAxisZoom(0.85);
+        .Tag("FixName:amjj_data2b3b__lowdrmax_met200__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 3b", "Norm. data 2b").RightLabel({"#DeltaR_{max} < 1.1"}).YAxisZoom(0.85);
       // average mass (data 2bvs4b); low-drmax,met>200 [search] 
       pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {}, {100, 140}),
         search_filters&&search_resolved_cuts&&"hig_cand_drmax[0]<=1.1&&met>200"&&extra_cut, procs_search["data_4btag"], plt_lin_lumi).Weight(weight)
-        .Tag("FixName:amjj_data2b4b__lowdrmax_met200__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 4b", "Norm. Data 2b").RightLabel({"#DeltaR_{max} < 1.1"}).YAxisZoom(0.85);
+        .Tag("FixName:amjj_data2b4b__lowdrmax_met200__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 4b", "Norm. data 2b").RightLabel({"#DeltaR_{max} < 1.1"}).YAxisZoom(0.85);
     }
 
   }
@@ -798,39 +818,39 @@ int main(int argc, char *argv[]){
       // average mass (data 2bvs3b); low-met [search] 
       pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {}, {100, 140}),
         search_filters&&search_resolved_cuts&&"met<=200"&&extra_cut, procs_search["data_3btag"], plt_lin_lumi).Weight(weight)
-        .Tag("FixName:amjj_data2b3b__lowmet__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 3b", "Norm. Data 2b").RightLabel({"150 < p_{T}^{miss} < 200 GeV"}).YAxisZoom(0.85);
+        .Tag("FixName:amjj_data2b3b__lowmet__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 3b", "Norm. data 2b").RightLabel({"150 < p_{T}^{miss} < 200 GeV"}).YAxisZoom(0.85);
       // average mass (data 2bvs3b); high-met [search] 
       pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {}, {100, 140}),
         search_filters&&search_resolved_cuts&&"met>200"&&extra_cut, procs_search["data_3btag"], plt_lin_lumi).Weight(weight)
-        .Tag("FixName:amjj_data2b3b__highmet__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 3b", "Norm. Data 2b").RightLabel({"p_{T}^{miss} > 200 GeV"}).YAxisZoom(0.85);
+        .Tag("FixName:amjj_data2b3b__highmet__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 3b", "Norm. data 2b").RightLabel({"p_{T}^{miss} > 200 GeV"}).YAxisZoom(0.85);
 
       // average mass (data 2bvs4b); low-met [search] 
       pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {}, {100, 140}),
         search_filters&&search_resolved_cuts&&"met<=200"&&extra_cut, procs_search["data_4btag"], plt_lin_lumi).Weight(weight)
-        .Tag("FixName:amjj_data2b4b__lowmet__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 4b", "Norm. Data 2b").RightLabel({"150 < p_{T}^{miss} < 200 GeV"}).YAxisZoom(0.85);
+        .Tag("FixName:amjj_data2b4b__lowmet__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 4b", "Norm. data 2b").RightLabel({"150 < p_{T}^{miss} < 200 GeV"}).YAxisZoom(0.85);
       // average mass (data 2bvs4b); high-met [search] 
       pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {}, {100, 140}),
         search_filters&&search_resolved_cuts&&"met>200"&&extra_cut, procs_search["data_4btag"], plt_lin_lumi).Weight(weight)
-        .Tag("FixName:amjj_data2b4b__highmet__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 4b", "Norm. Data 2b").RightLabel({"p_{T}^{miss} > 200 GeV"}).YAxisZoom(0.85);
+        .Tag("FixName:amjj_data2b4b__highmet__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 4b", "Norm. data 2b").RightLabel({"p_{T}^{miss} > 200 GeV"}).YAxisZoom(0.85);
 
       // With kappa applied
       // average mass (data 2bvs3b); low-met [search] 
       pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {}, {100, 140}),
         search_filters&&search_resolved_cuts&&"met<=200"&&extra_cut, procs_search["data_3btag"], plt_lin_lumi).Weight(weight*kappa_3b_wgt)
-        .Tag("FixName:amjj_data2b3b__lowmet__kappaApplied__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 3b", "Norm. Data 2b").RightLabel({"150 < p_{T}^{miss} < 200 GeV"}).YAxisZoom(0.85);
+        .Tag("FixName:amjj_data2b3b__lowmet__kappaApplied__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 3b", "Norm. data 2b").RightLabel({"150 < p_{T}^{miss} < 200 GeV"}).YAxisZoom(0.85);
       // average mass (data 2bvs3b); high-met [search] 
       pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {}, {100, 140}),
         search_filters&&search_resolved_cuts&&"met>200"&&extra_cut, procs_search["data_3btag"], plt_lin_lumi).Weight(weight*kappa_3b_wgt)
-        .Tag("FixName:amjj_data2b3b__highmet__kappaApplied__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 3b", "Norm. Data 2b").RightLabel({"p_{T}^{miss} > 200 GeV"}).YAxisZoom(0.85);
+        .Tag("FixName:amjj_data2b3b__highmet__kappaApplied__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 3b", "Norm. data 2b").RightLabel({"p_{T}^{miss} > 200 GeV"}).YAxisZoom(0.85);
 
       // average mass (data 2bvs4b); low-met [search] 
       pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {}, {100, 140}),
         search_filters&&search_resolved_cuts&&"met<=200"&&extra_cut, procs_search["data_4btag"], plt_lin_lumi).Weight(weight*kappa_4b_wgt)
-        .Tag("FixName:amjj_data2b4b__lowmet__kappaApplied__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 4b", "Norm. Data 2b").RightLabel({"150 < p_{T}^{miss} < 200 GeV"}).YAxisZoom(0.85);
+        .Tag("FixName:amjj_data2b4b__lowmet__kappaApplied__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 4b", "Norm. data 2b").RightLabel({"150 < p_{T}^{miss} < 200 GeV"}).YAxisZoom(0.85);
       // average mass (data 2bvs4b); high-met [search] 
       pm.Push<Hist1D>(Axis(20, 0, 200, "hig_cand_am[0]", "<m_{bb}> [GeV]", {}, {100, 140}),
         search_filters&&search_resolved_cuts&&"met>200"&&extra_cut, procs_search["data_4btag"], plt_lin_lumi).Weight(weight*kappa_4b_wgt)
-        .Tag("FixName:amjj_data2b4b__highmet__kappaApplied__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 4b", "Norm. Data 2b").RightLabel({"p_{T}^{miss} > 200 GeV"}).YAxisZoom(0.85);
+        .Tag("FixName:amjj_data2b4b__highmet__kappaApplied__search"+prelim_string).LuminosityTag(total_luminosity_string).RatioTitle("Data 4b", "Norm. data 2b").RightLabel({"p_{T}^{miss} > 200 GeV"}).YAxisZoom(0.85);
 
     }
   }
@@ -1055,25 +1075,25 @@ int main(int argc, char *argv[]){
         "met/mht<2 && met/met_calo<2&&weight<1.5&&"
         "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
         "hig_cand_drmax[0]<=2.2&&hig_cand_dm[0]<=40"&&nbCut
-        , procs_search[proc_name], plt_lin).Weight(weight).Tag("FixName:amjj__"+nbCutName+"__search"+prelim_string).LuminosityTag(total_luminosity_string);
+        , procs_search[proc_name], plt_lin_titleinframe).Weight(weight).Tag("FixName:amjj__"+nbCutName+"__search"+prelim_string).LuminosityTag(total_luminosity_string);
       // dm
       pm.Push<Hist1D>(Axis(10,0,100,"hig_cand_dm[0]", "#Deltam_{bb} [GeV]", {}, {40.}),
         search_filters&&
         "met/mht<2 && met/met_calo<2&&weight<1.5&&"
         "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
         "hig_cand_drmax[0]<=2.2&&hig_cand_am[0]<=200"&&nbCut
-        , procs_search[proc_name], plt_lin).Weight(weight).Tag("FixName:dmjj__"+nbCutName+"__search"+prelim_string).LuminosityTag(total_luminosity_string);
+        , procs_search[proc_name], plt_lin_dm).Weight(weight).Tag("FixName:dmjj__"+nbCutName+"__search"+prelim_string).LuminosityTag(total_luminosity_string);
       // Delta R max
       pm.Push<Hist1D>(Axis(20,0,4,"hig_cand_drmax[0]", "#DeltaR_{max}", {1.1}, {2.2}),
         search_filters&&
         "met/mht<2 && met/met_calo<2&&weight<1.5&&"
         "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
         "hig_cand_dm[0]<=40&&hig_cand_am[0]<=200"&&nbCut
-        ,procs_search[proc_name], plt_log).Weight(weight).Tag("FixName:drmax__"+nbCutName+"__search_log"+prelim_string).LuminosityTag(total_luminosity_string);
+        ,procs_search[proc_name], plt_log_titleinframe).Weight(weight).Tag("FixName:drmax__"+nbCutName+"__search_log"+prelim_string).LuminosityTag(total_luminosity_string);
       // met
       pm.Push<Hist1D>(Axis(14, 150, 850., "met", "p_{T}^{miss} [GeV]", {200., 300., 400.}),
       search_filters&&search_resolved_cuts&&nbCut
-      ,procs_search[proc_name], plt_log).Weight(weight).Tag("FixName:met__"+nbCutName+"__search"+prelim_string).LuminosityTag(total_luminosity_string);
+      ,procs_search[proc_name], plt_log_titleinframe).Weight(weight).Tag("FixName:met__"+nbCutName+"__search"+prelim_string).LuminosityTag(total_luminosity_string);
     }
   }
 

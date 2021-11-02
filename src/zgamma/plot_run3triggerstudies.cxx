@@ -90,6 +90,7 @@ int main(int argc, char *argv[]){
   NamedFunc hlt_mu_trigger = "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8||HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass8";
   NamedFunc hlt_el_trigger_plus = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL||HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ||HLT_Ele35_WPTight_Gsf||HLT_Ele32_WPTight_Gsf_L1DoubleEG";
   NamedFunc hlt_mu_trigger_plus = "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8||HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass8||HLT_IsoMu27||HLT_IsoMu24";
+  NamedFunc hlt_mu_trigger_plusplus = "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8||HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass8||HLT_IsoMu27||HLT_IsoMu24||HLT_Mu17_Photon30_IsoCaloId";
   NamedFunc l1_el_trigger = "L1_SingleEG24||L1_SingleEG34er2p1||L1_SingleIsoEG24er2p1||L1_SingleIsoEG24||L1_DoubleEG_18_17||L1_DoubleEG_22_10||L1_DoubleEG_LooseIso23_10||L1_DoubleEG_LooseIso24_10";
   NamedFunc l1_mu_trigger = "L1_DoubleMu_12_5||L1_DoubleMu_15_7_SQ||L1_DoubleMu_15_7_SQ_Mass_Min4";
 
@@ -231,41 +232,270 @@ int main(int argc, char *argv[]){
   });
 
   const NamedFunc el_hlt_fail_reason("el_hlt_fail_reason",[](const Baby &b) -> NamedFunc::ScalarType{
-      int n_pf_el = 0;
-      std::vector<float> hlt_el_pt;
-      for (unsigned itrig = 0; itrig < b.TrigObj_pt()->size(); itrig++) {
-        if (b.TrigObj_id()->at(itrig) == 11) {
-          n_pf_el++;
-          if ((b.TrigObj_filterBits()->at(itrig) & 0x1)==1) { //CaloIdL_TrackIdL_IsoVL
-            hlt_el_pt.push_back(b.TrigObj_pt()->at(itrig));
-          }
+    int n_pf_el = 0;
+    std::vector<float> hlt_el_pt;
+    for (unsigned itrig = 0; itrig < b.TrigObj_pt()->size(); itrig++) {
+      if (b.TrigObj_id()->at(itrig) == 11) {
+        n_pf_el++;
+        if ((b.TrigObj_filterBits()->at(itrig) & 0x1)==1) { //CaloIdL_TrackIdL_IsoVL
+          hlt_el_pt.push_back(b.TrigObj_pt()->at(itrig));
         }
       }
-      if (n_pf_el < 2) return 1; //electron not reconstructed at HLT
-      if (hlt_el_pt.size() < 2) return 2; //electron failed CaloIdL_TrackIdL_IsoVL
-      std::sort(hlt_el_pt.begin(), hlt_el_pt.end());
-      if (hlt_el_pt[hlt_el_pt.size()-1] < 23.0) return 3; //top leg failed pt cut
-      if (hlt_el_pt[hlt_el_pt.size()-2] < 12.0) return 4; //bottom leg failed pt cut
-      return 0; //unknown
+    }
+    if (n_pf_el < 2) return 1; //electron not reconstructed at HLT
+    if (hlt_el_pt.size() < 2) return 2; //electron failed CaloIdL_TrackIdL_IsoVL
+    std::sort(hlt_el_pt.begin(), hlt_el_pt.end());
+    if (hlt_el_pt[hlt_el_pt.size()-1] < 23.0) return 3; //top leg failed pt cut
+    if (hlt_el_pt[hlt_el_pt.size()-2] < 12.0) return 4; //bottom leg failed pt cut
+    return 0; //unknown
   });
 
-  const NamedFunc mu_hlt_fail_reason("mu_hlt_fail_reason",[](const Baby &b) -> NamedFunc::ScalarType{
-      int n_pf_mu = 0;
-      std::vector<float> hlt_mu_pt;
-      for (unsigned itrig = 0; itrig < b.TrigObj_pt()->size(); itrig++) {
-        if (b.TrigObj_id()->at(itrig) == 13) {
-          n_pf_mu++;
-          if ((b.TrigObj_filterBits()->at(itrig) & 0x1)==1) { //TkIsoVVL
-            hlt_mu_pt.push_back(b.TrigObj_pt()->at(itrig));
+  const NamedFunc nel_id_hlt("nel_id_hlt",[](const Baby &b) -> NamedFunc::ScalarType{
+    int nel_hlt = 0;
+    for (unsigned itrig = 0; itrig < b.TrigObj_pt()->size(); itrig++) {
+      if (b.TrigObj_id()->at(itrig) == 11) {
+        if ((b.TrigObj_filterBits()->at(itrig) & 0x1)==1) { //CaloIdL_TrackIdL_IsoVL
+          nel_hlt++;
+        }
+      }
+    }
+    return nel_hlt;
+  });
+
+  const NamedFunc nel_noid_hlt("nel_noid_hlt",[](const Baby &b) -> NamedFunc::ScalarType{
+    int nel_hlt = 0;
+    for (unsigned itrig = 0; itrig < b.TrigObj_pt()->size(); itrig++) {
+      if (b.TrigObj_id()->at(itrig) == 11) {
+        nel_hlt++;
+      }
+    }
+    return nel_hlt;
+  });
+
+  const NamedFunc hlt_max_el_pt("hlt_max_el_pt",[](const Baby &b) -> NamedFunc::ScalarType{
+    float hlt_max_el_pt_ = 0;
+    for (unsigned itrig = 0; itrig < b.TrigObj_pt()->size(); itrig++) {
+      if (b.TrigObj_id()->at(itrig) == 11) {
+        if ((b.TrigObj_filterBits()->at(itrig) & 0x1)==1) { //CaloIdL_TrackIdL_IsoVL
+          if (b.TrigObj_pt()->at(itrig) > hlt_max_el_pt_)
+            hlt_max_el_pt_ = b.TrigObj_pt()->at(itrig);
+        }
+      }
+    }
+    return hlt_max_el_pt_;
+  });
+
+  const NamedFunc HLT_Ele27_CaloIdL_TrackIdL_IsoVL_Photon30("HLT_Ele27_CaloIdL_TrackIdL_IsoVL_Photon30",[](const Baby &b) -> NamedFunc::ScalarType{
+    bool found_good_el = false;
+    bool found_good_ph = false;
+    for (unsigned itrig = 0; itrig < b.TrigObj_pt()->size(); itrig++) {
+      if (b.TrigObj_id()->at(itrig) == 11) {
+        if ((b.TrigObj_filterBits()->at(itrig) & 0x1)==1) { //CaloIdL_TrackIdL_IsoVL
+          if (b.TrigObj_pt()->at(itrig) > 27) {
+            found_good_el = true;
           }
         }
       }
-      if (n_pf_mu < 2) return 1; //muon not reconstructed at HLT
-      if (hlt_mu_pt.size() < 2) return 2; //muon fails Iso
-      std::sort(hlt_mu_pt.begin(), hlt_mu_pt.end());
-      if (hlt_mu_pt[hlt_mu_pt.size()-1] < 23.0) return 3; //top leg failed pt cut
-      if (hlt_mu_pt[hlt_mu_pt.size()-2] < 12.0) return 4; //bottom leg failed pt cut
-      return 0; //unknown
+      if (b.TrigObj_id()->at(itrig) == 22) {
+        if (b.TrigObj_pt()->at(itrig) > 30) {
+          found_good_ph = true;
+        }
+      }
+    }
+    return (found_good_el && found_good_ph);
+  });
+
+  const NamedFunc HLT_Ele27_CaloIdL_TrackIdL_IsoVL_Photon50("HLT_Ele27_CaloIdL_TrackIdL_IsoVL_Photon50",[](const Baby &b) -> NamedFunc::ScalarType{
+    bool found_good_el = false;
+    for (unsigned itrig = 0; itrig < b.TrigObj_pt()->size(); itrig++) {
+      if (b.TrigObj_id()->at(itrig) == 11) {
+        if ((b.TrigObj_filterBits()->at(itrig) & 0x1)==1) { //CaloIdL_TrackIdL_IsoVL
+          if (b.TrigObj_pt()->at(itrig) > 27) {
+            found_good_el = true;
+          }
+        }
+      }
+    }
+    return found_good_el && b.HLT_Photon50();
+  });
+
+  const NamedFunc HLT_Ele27_CaloIdL_TrackIdL_IsoVL_Photon33("HLT_Ele27_CaloIdL_TrackIdL_IsoVL_Photon33",[](const Baby &b) -> NamedFunc::ScalarType{
+    bool found_good_el = false;
+    for (unsigned itrig = 0; itrig < b.TrigObj_pt()->size(); itrig++) {
+      if (b.TrigObj_id()->at(itrig) == 11) {
+        if ((b.TrigObj_filterBits()->at(itrig) & 0x1)==1) { //CaloIdL_TrackIdL_IsoVL
+          if (b.TrigObj_pt()->at(itrig) > 27) {
+            found_good_el = true;
+          }
+        }
+      }
+    }
+    return found_good_el && b.HLT_Photon33();
+  });
+
+  const NamedFunc HLT_Ele27_CaloIdL_TrackIdL_IsoVL_Photon25("HLT_Ele27_CaloIdL_TrackIdL_IsoVL_Photon25",[](const Baby &b) -> NamedFunc::ScalarType{
+    bool found_good_el = false;
+    for (unsigned itrig = 0; itrig < b.TrigObj_pt()->size(); itrig++) {
+      if (b.TrigObj_id()->at(itrig) == 11) {
+        if ((b.TrigObj_filterBits()->at(itrig) & 0x1)==1) { //CaloIdL_TrackIdL_IsoVL
+          if (b.TrigObj_pt()->at(itrig) > 27) {
+            found_good_el = true;
+          }
+        }
+      }
+    }
+    return found_good_el && b.HLT_Photon25();
+  });
+  
+  const NamedFunc HLT_Ele27_CaloIdL_TrackIdL_IsoVL_Photon20_HoverELoose("HLT_Ele27_CaloIdL_TrackIdL_IsoVL_Photon20_HoverELoose",[](const Baby &b) -> NamedFunc::ScalarType{
+    bool found_good_el = false;
+    for (unsigned itrig = 0; itrig < b.TrigObj_pt()->size(); itrig++) {
+      if (b.TrigObj_id()->at(itrig) == 11) {
+        if ((b.TrigObj_filterBits()->at(itrig) & 0x1)==1) { //CaloIdL_TrackIdL_IsoVL
+          if (b.TrigObj_pt()->at(itrig) > 27) {
+            found_good_el = true;
+          }
+        }
+      }
+    }
+    return found_good_el && b.HLT_Photon20_HoverELoose();
+  });
+
+  const NamedFunc HLT_Ele22_CaloIdL_TrackIdL_IsoVL_Photon50("HLT_Ele22_CaloIdL_TrackIdL_IsoVL_Photon50",[](const Baby &b) -> NamedFunc::ScalarType{
+    bool found_good_el = false;
+    for (unsigned itrig = 0; itrig < b.TrigObj_pt()->size(); itrig++) {
+      if (b.TrigObj_id()->at(itrig) == 11) {
+        if ((b.TrigObj_filterBits()->at(itrig) & 0x1)==1) { //CaloIdL_TrackIdL_IsoVL
+          if (b.TrigObj_pt()->at(itrig) > 22) {
+            found_good_el = true;
+          }
+        }
+      }
+    }
+    return found_good_el && b.HLT_Photon50();
+  });
+
+  const NamedFunc HLT_Ele22_CaloIdL_TrackIdL_IsoVL_Photon33("HLT_Ele22_CaloIdL_TrackIdL_IsoVL_Photon33",[](const Baby &b) -> NamedFunc::ScalarType{
+    bool found_good_el = false;
+    for (unsigned itrig = 0; itrig < b.TrigObj_pt()->size(); itrig++) {
+      if (b.TrigObj_id()->at(itrig) == 11) {
+        if ((b.TrigObj_filterBits()->at(itrig) & 0x1)==1) { //CaloIdL_TrackIdL_IsoVL
+          if (b.TrigObj_pt()->at(itrig) > 22) {
+            found_good_el = true;
+          }
+        }
+      }
+    }
+    return found_good_el && b.HLT_Photon33();
+  });
+
+  const NamedFunc HLT_Ele22_CaloIdL_TrackIdL_IsoVL_Photon25("HLT_Ele22_CaloIdL_TrackIdL_IsoVL_Photon25",[](const Baby &b) -> NamedFunc::ScalarType{
+    bool found_good_el = false;
+    for (unsigned itrig = 0; itrig < b.TrigObj_pt()->size(); itrig++) {
+      if (b.TrigObj_id()->at(itrig) == 11) {
+        if ((b.TrigObj_filterBits()->at(itrig) & 0x1)==1) { //CaloIdL_TrackIdL_IsoVL
+          if (b.TrigObj_pt()->at(itrig) > 22) {
+            found_good_el = true;
+          }
+        }
+      }
+    }
+    return found_good_el && b.HLT_Photon25();
+  });
+
+  const NamedFunc HLT_Ele22_CaloIdL_TrackIdL_IsoVL_Photon20_HoverELoose("HLT_Ele22_CaloIdL_TrackIdL_IsoVL_Photon20_HoverELoose",[](const Baby &b) -> NamedFunc::ScalarType{
+    bool found_good_el = false;
+    for (unsigned itrig = 0; itrig < b.TrigObj_pt()->size(); itrig++) {
+      if (b.TrigObj_id()->at(itrig) == 11) {
+        if ((b.TrigObj_filterBits()->at(itrig) & 0x1)==1) { //CaloIdL_TrackIdL_IsoVL
+          if (b.TrigObj_pt()->at(itrig) > 22) {
+            found_good_el = true;
+          }
+        }
+      }
+    }
+    return found_good_el && b.HLT_Photon20_HoverELoose();
+  });
+
+  const NamedFunc HLT_Ele17_Ele8_CaloIdL_TrackIdL_IsoVL_Photon20_HoverELoose("HLT_Ele17_Ele8_CaloIdL_TrackIdL_IsoVL_Photon20_HoverELoose",[](const Baby &b) -> NamedFunc::ScalarType{
+    float max_el_pt = 0;
+    float subl_el_pt = 0;
+    for (unsigned itrig = 0; itrig < b.TrigObj_pt()->size(); itrig++) {
+      if (b.TrigObj_id()->at(itrig) == 11) {
+        if ((b.TrigObj_filterBits()->at(itrig) & 0x1)==1) { //CaloIdL_TrackIdL_IsoVL
+          if (b.TrigObj_pt()->at(itrig) > max_el_pt) {
+            subl_el_pt = max_el_pt;
+            max_el_pt = b.TrigObj_pt()->at(itrig);
+          }
+          else if (b.TrigObj_pt()->at(itrig) > subl_el_pt) {
+            subl_el_pt = b.TrigObj_pt()->at(itrig);
+          }
+        }
+      }
+    }
+    return (max_el_pt > 17) && (subl_el_pt > 8) && b.HLT_Photon20_HoverELoose();
+  });
+
+  const NamedFunc HLT_Ele17_Ele8_CaloIdL_TrackIdL_IsoVL_Photon25("HLT_Ele17_Ele8_CaloIdL_TrackIdL_IsoVL_Photon25",[](const Baby &b) -> NamedFunc::ScalarType{
+    float max_el_pt = 0;
+    float subl_el_pt = 0;
+    for (unsigned itrig = 0; itrig < b.TrigObj_pt()->size(); itrig++) {
+      if (b.TrigObj_id()->at(itrig) == 11) {
+        if ((b.TrigObj_filterBits()->at(itrig) & 0x1)==1) { //CaloIdL_TrackIdL_IsoVL
+          if (b.TrigObj_pt()->at(itrig) > max_el_pt) {
+            subl_el_pt = max_el_pt;
+            max_el_pt = b.TrigObj_pt()->at(itrig);
+          }
+          else if (b.TrigObj_pt()->at(itrig) > subl_el_pt) {
+            subl_el_pt = b.TrigObj_pt()->at(itrig);
+          }
+        }
+      }
+    }
+    return (max_el_pt > 17) && (subl_el_pt > 8) && b.HLT_Photon25();
+  });
+
+  NamedFunc hlt_el_trigger_plusplus = "HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL||HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ||HLT_Ele35_WPTight_Gsf||HLT_Ele32_WPTight_Gsf_L1DoubleEG" || HLT_Ele27_CaloIdL_TrackIdL_IsoVL_Photon33;
+
+  const NamedFunc mu_hlt_fail_reason("mu_hlt_fail_reason",[](const Baby &b) -> NamedFunc::ScalarType{
+    int n_pf_mu = 0;
+    std::vector<float> hlt_mu_pt;
+    for (unsigned itrig = 0; itrig < b.TrigObj_pt()->size(); itrig++) {
+      if (b.TrigObj_id()->at(itrig) == 13) {
+        n_pf_mu++;
+        if ((b.TrigObj_filterBits()->at(itrig) & 0x1)==1) { //TkIsoVVL
+          hlt_mu_pt.push_back(b.TrigObj_pt()->at(itrig));
+        }
+      }
+    }
+    if (n_pf_mu < 2) return 1; //muon not reconstructed at HLT
+    if (hlt_mu_pt.size() < 2) return 2; //muon fails Iso
+    std::sort(hlt_mu_pt.begin(), hlt_mu_pt.end());
+    if (hlt_mu_pt[hlt_mu_pt.size()-1] < 23.0) return 3; //top leg failed pt cut
+    if (hlt_mu_pt[hlt_mu_pt.size()-2] < 12.0) return 4; //bottom leg failed pt cut
+    return 0; //unknown
+  });
+
+  const NamedFunc nmu_id_hlt("nmu_id_hlt",[](const Baby &b) -> NamedFunc::ScalarType{
+    int n_pf_mu = 0;
+    for (unsigned itrig = 0; itrig < b.TrigObj_pt()->size(); itrig++) {
+      if (b.TrigObj_id()->at(itrig) == 13) {
+        if ((b.TrigObj_filterBits()->at(itrig) & 0x1)==1) { //TkIsoVVL
+          n_pf_mu++;
+        }
+      }
+    }
+    return n_pf_mu;
+  });
+
+  const NamedFunc nmu_noid_hlt("nmu_noid_hlt",[](const Baby &b) -> NamedFunc::ScalarType{
+    int n_pf_mu = 0;
+    for (unsigned itrig = 0; itrig < b.TrigObj_pt()->size(); itrig++) {
+      if (b.TrigObj_id()->at(itrig) == 13) {
+        n_pf_mu++;
+      }
+    }
+    return n_pf_mu;
   });
 
   //weights from data that should account for why things fail HLT
@@ -458,6 +688,11 @@ int main(int argc, char *argv[]){
   
   PlotMaker pm;
 
+    pm.Push<Hist1D>(Axis(20, 0.0, 100.0, hlt_max_el_pt, "HLT Electron p_{T}", {}),
+        (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&!hlt_el_trigger_plus,
+        procs, plt_lin).Weight(weight)
+        .Tag("FixName:zghlt__hltelpt__failhlt")
+        .LuminosityTag(total_luminosity_string);
     pm.Push<Hist1D>(Axis(27, 0.0, 90.0, "Electron_pt", "Electron p_{T}", {}),
         (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&hlt_el_trigger&&el_sig,
         procs, plt_lin).Weight(weight)
@@ -572,26 +807,60 @@ int main(int argc, char *argv[]){
           (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger,0,0,weight),
       TableRow("HLT Triggers", 
           (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&hlt_el_trigger,0,0,weight),
-      TableRow("HLT Triggers+", 
+      TableRow("HLT Triggers (incl el)", 
           (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&hlt_el_trigger_plus,0,0,weight),
+      TableRow("Events that fail HLT - $0\\gamma 0e$", 
+          (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&!hlt_el_trigger_plus&&(nel_id_hlt<1)&&"!(HLT_Photon25||HLT_Photon20_HoverELoose)",0,0,weight),
+      TableRow("Events that fail HLT - $0\\gamma 1e$", 
+          (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&!hlt_el_trigger_plus&&(nel_id_hlt==1)&&"!(HLT_Photon25||HLT_Photon20_HoverELoose)",0,0,weight),
+      TableRow("Events that fail HLT - $0\\gamma \\geq 1e$", 
+          (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&!hlt_el_trigger_plus&&(nel_id_hlt>=2)&&"!(HLT_Photon25||HLT_Photon20_HoverELoose)",0,0,weight),
+      TableRow("Events that fail HLT - $1\\gamma 0e$", 
+          (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&!hlt_el_trigger_plus&&(nel_id_hlt<1)&&"(HLT_Photon25||HLT_Photon20_HoverELoose)",0,0,weight),
+      TableRow("Events that fail HLT - $1\\gamma 1e$", 
+          (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&!hlt_el_trigger_plus&&(nel_id_hlt==1)&&"(HLT_Photon25||HLT_Photon20_HoverELoose)",0,0,weight),
+      TableRow("Events that fail HLT - $1\\gamma \\geq 1e$", 
+          (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&!hlt_el_trigger_plus&&(nel_id_hlt>=2)&&"(HLT_Photon25||HLT_Photon20_HoverELoose)",0,0,weight),
+      TableRow("HLT Triggers (incl Ele27Ph50)", 
+          (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&(hlt_el_trigger_plus||HLT_Ele27_CaloIdL_TrackIdL_IsoVL_Photon50),0,0,weight),
+      TableRow("HLT Triggers (incl Ele27Ph33)", 
+          (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&(hlt_el_trigger_plus||HLT_Ele27_CaloIdL_TrackIdL_IsoVL_Photon33),0,0,weight),
+      TableRow("HLT Triggers (incl Ele27Ph25)", 
+          (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&(hlt_el_trigger_plus||HLT_Ele27_CaloIdL_TrackIdL_IsoVL_Photon25),0,0,weight),
+      TableRow("HLT Triggers (incl Ele27Ph20)", 
+          (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&(hlt_el_trigger_plus||HLT_Ele27_CaloIdL_TrackIdL_IsoVL_Photon20_HoverELoose),0,0,weight),
+      TableRow("HLT Triggers (incl Ele22Ph50)", 
+          (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&(hlt_el_trigger_plus||HLT_Ele22_CaloIdL_TrackIdL_IsoVL_Photon50),0,0,weight),
+      TableRow("HLT Triggers (incl Ele22Ph33)", 
+          (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&(hlt_el_trigger_plus||HLT_Ele22_CaloIdL_TrackIdL_IsoVL_Photon33),0,0,weight),
+      TableRow("HLT Triggers (incl Ele22Ph25)", 
+          (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&(hlt_el_trigger_plus||HLT_Ele22_CaloIdL_TrackIdL_IsoVL_Photon25),0,0,weight),
+      TableRow("HLT Triggers (incl Ele22Ph20)", 
+          (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&(hlt_el_trigger_plus||HLT_Ele22_CaloIdL_TrackIdL_IsoVL_Photon20_HoverELoose),0,0,weight),
+      TableRow("HLT Triggers (incl Ele17Ele8Ph25)", 
+          (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&(hlt_el_trigger_plus||HLT_Ele17_Ele8_CaloIdL_TrackIdL_IsoVL_Photon25),0,0,weight),
+      TableRow("HLT Triggers (incl Ele17Ele8Ph20)", 
+          (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&(hlt_el_trigger_plus||HLT_Ele17_Ele8_CaloIdL_TrackIdL_IsoVL_Photon20_HoverELoose),0,0,weight),
+      //TableRow("HLT Triggers (incl el, el+ph)", 
+      //    (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&hlt_el_trigger_plusplus,0,0,weight),
       //TableRow("Electrons out of HLT p_{T} acceptance", 
       //    (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&el_oohltpt,0,0,weight),
       //TableRow("Electrons nearly out of HLT p_{T} acceptance", 
       //    (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&el_noohltpt,0,0,weight),
       //TableRow("Expected events with electrons failing HLT", 
       //    (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&el_oohltpt,0,0,weight*hlt_fail_weights),
-      TableRow("HLT fail reason: unknown", 
-          (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&!hlt_el_trigger&&(el_hlt_fail_reason==0.0),0,0,weight),
-      TableRow("HLT fail reason: reconstruction", 
-          (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&!hlt_el_trigger&&(el_hlt_fail_reason==1),0,0,weight),
-      TableRow("HLT fail reason: reconstruction, e in gap", 
-          (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&!hlt_el_trigger&&(el_hlt_fail_reason==1)&&el_gap,0,0,weight),
-      TableRow("HLT fail reason: id/iso", 
-          (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&!hlt_el_trigger&&(el_hlt_fail_reason==2),0,0,weight),
-      TableRow("HLT fail reason: top leg", 
-          (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&!hlt_el_trigger&&(el_hlt_fail_reason==3),0,0,weight),
-      TableRow("HLT fail reason: bottom leg", 
-          (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&!hlt_el_trigger&&(el_hlt_fail_reason==4),0,0,weight),
+      //TableRow("HLT fail reason: unknown", 
+      //    (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&!hlt_el_trigger&&(el_hlt_fail_reason==0.0),0,0,weight),
+      //TableRow("HLT fail reason: reconstruction", 
+      //    (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&!hlt_el_trigger&&(el_hlt_fail_reason==1),0,0,weight),
+      //TableRow("HLT fail reason: reconstruction, e in gap", 
+      //    (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&!hlt_el_trigger&&(el_hlt_fail_reason==1)&&el_gap,0,0,weight),
+      //TableRow("HLT fail reason: id/iso", 
+      //    (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&!hlt_el_trigger&&(el_hlt_fail_reason==2),0,0,weight),
+      //TableRow("HLT fail reason: top leg", 
+      //    (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&!hlt_el_trigger&&(el_hlt_fail_reason==3),0,0,weight),
+      //TableRow("HLT fail reason: bottom leg", 
+      //    (z_decay_pdgid==11)&&(offline_nel>=2)&&(offline_nph>=1)&&l1_el_trigger&&!hlt_el_trigger&&(el_hlt_fail_reason==4),0,0,weight),
 
       TableRow("$Z\\rightarrow \\mu^{+}\\mu^{-}$ decays", 
           (z_decay_pdgid==13),0,0,weight),
@@ -603,20 +872,34 @@ int main(int argc, char *argv[]){
           (z_decay_pdgid==13)&&(offline_nmu>=2)&&(offline_nph>=1)&&l1_mu_trigger,0,0,weight),
       TableRow("HLT Triggers", 
           (z_decay_pdgid==13)&&(offline_nmu>=2)&&(offline_nph>=1)&&l1_mu_trigger&&hlt_mu_trigger,0,0,weight),
-      TableRow("HLT Triggers+", 
+      TableRow("HLT Triggers (incl mu)", 
           (z_decay_pdgid==13)&&(offline_nmu>=2)&&(offline_nph>=1)&&l1_mu_trigger&&hlt_mu_trigger_plus,0,0,weight),
+      TableRow("Events that fail HLT - $0\\gamma 0 \\mu$", 
+          (z_decay_pdgid==13)&&(offline_nmu>=2)&&(offline_nph>=1)&&l1_mu_trigger&&!hlt_mu_trigger_plus&&nmu_id_hlt<1&&"!(HLT_Photon25||HLT_Photon20_HoverELoose)",0,0,weight),
+      TableRow("Events that fail HLT - $0\\gamma 1 \\mu$", 
+          (z_decay_pdgid==13)&&(offline_nmu>=2)&&(offline_nph>=1)&&l1_mu_trigger&&!hlt_mu_trigger_plus&&nmu_id_hlt==1&&"!(HLT_Photon25||HLT_Photon20_HoverELoose)",0,0,weight),
+      TableRow("Events that fail HLT - $0\\gamma 2 \\mu$", 
+          (z_decay_pdgid==13)&&(offline_nmu>=2)&&(offline_nph>=1)&&l1_mu_trigger&&!hlt_mu_trigger_plus&&nmu_id_hlt>=2&&"!(HLT_Photon25||HLT_Photon20_HoverELoose)",0,0,weight),
+      TableRow("Events that fail HLT - $1\\gamma 0 \\mu$", 
+          (z_decay_pdgid==13)&&(offline_nmu>=2)&&(offline_nph>=1)&&l1_mu_trigger&&!hlt_mu_trigger_plus&&nmu_id_hlt<1&&"(HLT_Photon25||HLT_Photon20_HoverELoose)",0,0,weight),
+      TableRow("Events that fail HLT - $1\\gamma 1 \\mu$", 
+          (z_decay_pdgid==13)&&(offline_nmu>=2)&&(offline_nph>=1)&&l1_mu_trigger&&!hlt_mu_trigger_plus&&nmu_id_hlt==1&&"(HLT_Photon25||HLT_Photon20_HoverELoose)",0,0,weight),
+      TableRow("Events that fail HLT - $1\\gamma 2 \\mu$", 
+          (z_decay_pdgid==13)&&(offline_nmu>=2)&&(offline_nph>=1)&&l1_mu_trigger&&!hlt_mu_trigger_plus&&nmu_id_hlt>=2&&"(HLT_Photon25||HLT_Photon20_HoverELoose)",0,0,weight),
+      TableRow("HLT Triggers (incl mu, mu+ph)", 
+          (z_decay_pdgid==13)&&(offline_nmu>=2)&&(offline_nph>=1)&&l1_mu_trigger&&hlt_mu_trigger_plusplus,0,0,weight),
       //TableRow("Muons out of HLT acceptance", 
       //    (z_decay_pdgid==13)&&(offline_nmu>=2)&&(offline_nph>=1)&&l1_mu_trigger&&hlt_mu_trigger&&mu_oohltpt,0,0,weight),
-      TableRow("HLT fail reason: unknown", 
-          (z_decay_pdgid==13)&&(offline_nmu>=2)&&(offline_nph>=1)&&l1_mu_trigger&&!hlt_mu_trigger&&(mu_hlt_fail_reason==0.0),0,0,weight),
-      TableRow("HLT fail reason: reconstruction", 
-          (z_decay_pdgid==13)&&(offline_nmu>=2)&&(offline_nph>=1)&&l1_mu_trigger&&!hlt_mu_trigger&&(mu_hlt_fail_reason==1),0,0,weight),
-      TableRow("HLT fail reason: iso", 
-          (z_decay_pdgid==13)&&(offline_nmu>=2)&&(offline_nph>=1)&&l1_mu_trigger&&!hlt_mu_trigger&&(mu_hlt_fail_reason==2),0,0,weight),
-      TableRow("HLT fail reason: top leg", 
-          (z_decay_pdgid==13)&&(offline_nmu>=2)&&(offline_nph>=1)&&l1_mu_trigger&&!hlt_mu_trigger&&(mu_hlt_fail_reason==3),0,0,weight),
-      TableRow("HLT fail reason: bottom leg", 
-          (z_decay_pdgid==13)&&(offline_nmu>=2)&&(offline_nph>=1)&&l1_mu_trigger&&!hlt_mu_trigger&&(mu_hlt_fail_reason==4),0,0,weight),
+      //TableRow("HLT fail reason: unknown", 
+      //    (z_decay_pdgid==13)&&(offline_nmu>=2)&&(offline_nph>=1)&&l1_mu_trigger&&!hlt_mu_trigger&&(mu_hlt_fail_reason==0.0),0,0,weight),
+      //TableRow("HLT fail reason: reconstruction", 
+      //    (z_decay_pdgid==13)&&(offline_nmu>=2)&&(offline_nph>=1)&&l1_mu_trigger&&!hlt_mu_trigger&&(mu_hlt_fail_reason==1),0,0,weight),
+      //TableRow("HLT fail reason: iso", 
+      //    (z_decay_pdgid==13)&&(offline_nmu>=2)&&(offline_nph>=1)&&l1_mu_trigger&&!hlt_mu_trigger&&(mu_hlt_fail_reason==2),0,0,weight),
+      //TableRow("HLT fail reason: top leg", 
+      //    (z_decay_pdgid==13)&&(offline_nmu>=2)&&(offline_nph>=1)&&l1_mu_trigger&&!hlt_mu_trigger&&(mu_hlt_fail_reason==3),0,0,weight),
+      //TableRow("HLT fail reason: bottom leg", 
+      //    (z_decay_pdgid==13)&&(offline_nmu>=2)&&(offline_nph>=1)&&l1_mu_trigger&&!hlt_mu_trigger&&(mu_hlt_fail_reason==4),0,0,weight),
 
       TableRow("$Z\\rightarrow e^{+}e^{-}$ decays", 
           (z_decay_pdgid==11),0,0,weight),
@@ -664,7 +947,7 @@ int main(int argc, char *argv[]){
       //    (z_decay_pdgid==11)&&offline_selection&&l1_el_trigger&&nel_oohltpt,0,0,weight),
       //TableRow("HLT Triggers", 
       //    (z_decay_pdgid==11)&&l1_el_trigger&&hlt_el_trigger,0,0,weight),
-    },procs,false,true,false,false,false,true).LuminosityTag(total_luminosity_string).Precision(1);
+    },procs,false,true,false,false,false,true).LuminosityTag(total_luminosity_string).Precision(2);
   
   pm.multithreaded_ = !options.single_thread;
   pm.min_print_ = true;

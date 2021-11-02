@@ -489,7 +489,27 @@ double PlotOpt::TrueLegendEntryHeight(size_t num_entries) const{
 
 double PlotOpt::TrueLegendWidth(size_t num_entries) const{
   double left = left_margin_ + legend_left_pad_ + legend_pad_;
-  if (title_in_frame_) left += 0.3;
+  //if (title_in_frame_) {
+  //  switch(title_type_) {
+  //  case TitleType::data:
+  //    left += 0.16;
+  //    break;
+  //  case TitleType::preliminary:
+  //    /* FALLTHRU */
+  //  case TitleType::supplementary:
+  //    /* FALLTHRU */
+  //  case TitleType::simulation:
+  //    left += 0.3;
+  //    break;
+  //  case TitleType::simulation_preliminary:
+  //    /* FALLTHRU */
+  //  case TitleType::simulation_supplementary:
+  //    left += 0.5;
+  //    break;
+  //  default:
+  //    break;
+  //  }
+  //}
   double right = 1. - right_margin_ - legend_pad_;
   return (right-left)/min(num_entries, static_cast<size_t>(legend_columns_));
 }

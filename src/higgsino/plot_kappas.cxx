@@ -1202,7 +1202,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
   histo.GetYaxis()->CenterTitle(true);
   TString ytitle = "#kappa";
   if(alt_scen!="data" && alt_scen!="mc") ytitle += " (Scen. = "+alt_scen+")";
-  histo.SetTitleOffset(0.55,"y");
+  histo.SetTitleOffset(0.35,"y");
   histo.SetTitleSize(0.07,"y");
   histo.SetYTitle(ytitle);
   histo.Draw();
@@ -1271,7 +1271,8 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
       if (HigUtilities::is_in_string_options(string_options, "paper_style") && (sample != "search"))
         klabel.SetTextSize(0.032);
       else
-        klabel.SetTextSize(abcd.planecuts.size()>=10 ? 0.025 : 0.035);
+        klabel.SetTextSize(abcd.planecuts.size()>=10 ? 0.030 : 0.040);
+        //klabel.SetTextSize(abcd.planecuts.size()>=10 ? 0.025 : 0.035);
       klabel.DrawLatex(bin, 0.85*maxy, text);
       //// Printing stat uncertainty of kappa_mm/kappa
       float kapUp = k_ordered[iplane][ibin][1], kapDown = k_ordered[iplane][ibin][2];
@@ -1312,7 +1313,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
       if (HigUtilities::is_in_string_options(string_options, "paper_style") && (sample != "search"))
         klabel.SetTextSize(0.032);
       else
-        klabel.SetTextSize(abcd.planecuts.size()>=10 ? 0.025 : 0.035);
+        klabel.SetTextSize(abcd.planecuts.size()>=10 ? 0.030 : 0.040);
       
       if (sample=="search" || sample=="ttbar") text = ibin%2==0 ? "3b/2b" : "4b/2b"; 
       else if (sample=="zll") text = do_midnb ? "2b/1b" : "1b/0b"; 

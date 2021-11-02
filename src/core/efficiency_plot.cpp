@@ -494,13 +494,13 @@ void EfficiencyPlot::Print(double luminosity,
   legend->SetFillStyle(0);
   legend->SetBorderSize(0);
   if (backgrounds_.size() > 0) {
-    legend->AddEntry(background_ratio_plot_.get(),"Background","l");
+    legend->AddEntry(background_ratio_plot_.get()," Background","l");
   }
   for (unsigned int signal_idx = 0; signal_idx < signals_.size(); signal_idx++) {
-    legend->AddEntry(signal_ratio_plots_.at(signal_idx).get(),signal_names_.at(signal_idx).c_str(),"l");
+    legend->AddEntry(signal_ratio_plots_.at(signal_idx).get(),(" "+signal_names_.at(signal_idx)).c_str(),"l");
   }
   for (unsigned int data_idx = 0; data_idx < datas_.size(); data_idx++) {
-    legend->AddEntry(data_ratio_plots_.at(data_idx).get(),data_names_.at(data_idx).c_str(),"l");
+    legend->AddEntry(data_ratio_plots_.at(data_idx).get(),(" "+data_names_.at(data_idx)).c_str(),"l");
   }
   if (number_legend_entries < 12) {
     for (unsigned int extra_entries_idx = number_legend_entries; extra_entries_idx < 12; extra_entries_idx++) {

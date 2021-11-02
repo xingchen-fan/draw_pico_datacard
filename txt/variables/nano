@@ -719,6 +719,11 @@ bool HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ
 bool HLT_Photon175
 bool HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass3p8
 bool HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ_Mass8
+#trigger studies
+bool HLT_Photon50
+bool HLT_Photon33
+bool HLT_Photon25
+bool HLT_Photon20_HoverELoose
 
 #ZGamma L1 Triggers (2017 only so far)
 bool L1_SingleEG24
