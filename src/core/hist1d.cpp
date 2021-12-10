@@ -1328,6 +1328,7 @@ std::vector<TH1D> Hist1D::GetBottomPlots(double &the_min, double &the_max) const
       }
       h.GetYaxis()->CenterTitle();
       h.GetYaxis()->SetTitle(("#frac{"+num+"}{"+den+"}").c_str());
+      h.GetYaxis()->SetTickLength(0.075);
       h.SetTitleSize(h.GetTitleSize("y")/1.25,"y");
       h.SetTitleOffset(h.GetTitleOffset("y")/1.25, "y");
       h.SetMinimum(the_min);

@@ -425,9 +425,12 @@ int main(int argc, char *argv[])
   samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/SMS-TChiHH_2D_fastSimJmeCorrection/skim_higsys/";
   samplePaths["data_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/data/merged_higdata_preselect/";
   //temporary for isotk studies (higsys skim has track veto)
-  samplePaths["signal_2016"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath/2016/SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/";
-  samplePaths["signal_2017"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath/2017/SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/";
-  samplePaths["signal_2018"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath/2018/SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/";
+  //samplePaths["signal_2016"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath/2016/SMS-TChiHH_HToAllSeparated_fastSimJmeCorrection/unskimmed/";
+  //samplePaths["signal_2017"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath/2017/SMS-TChiHH_HToAllSeparated_fastSimJmeCorrection/unskimmed/";
+  //samplePaths["signal_2018"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath/2018/SMS-TChiHH_HToAllSeparated_fastSimJmeCorrection/unskimmed/";
+  samplePaths["signal_2016"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v3/2016/SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/";
+  samplePaths["signal_2017"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v3/2017/SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/";
+  samplePaths["signal_2018"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v3/2018/SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/";
   if (higgsino_model=="T5HH") {
     //if (do_fullsim) {
     //  samplePaths["signal_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2016/SMS-T5qqqqZH_FullSimJmeVariations/skim_higsys/";
@@ -439,9 +442,9 @@ int main(int argc, char *argv[])
     //  samplePaths["signal_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2017/SMS-T5qqqqZH_fastSimJmeCorrection/skim_higsys/";
     //  samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/SMS-T5qqqqZH_fastSimJmeCorrection/skim_higsys/";
     //}
-    samplePaths["signal_2016"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2016/SMS-T5qqqqZH_FullSimJmeVariations/unskimmed/";
-    samplePaths["signal_2017"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2017/SMS-T5qqqqZH_FullSimJmeVariations/unskimmed/";
-    samplePaths["signal_2018"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2018/SMS-T5qqqqZH_FullSimJmeVariations/unskimmed/";
+    samplePaths["signal_2016"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2016/SMS-T5qqqqZH_HToAllSeparated_FullSimJmeVariations/unskimmed/";
+    samplePaths["signal_2017"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2017/SMS-T5qqqqZH_HToAllSeparated_FullSimJmeVariations/unskimmed/";
+    samplePaths["signal_2018"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2018/SMS-T5qqqqZH_HToAllSeparated_FullSimJmeVariations/unskimmed/";
   }
 
   //// massPoints = { {"1000","1"} }
@@ -756,7 +759,7 @@ int main(int argc, char *argv[])
       vector<NamedFunc>({weight_genmet,weight_genmet})));
   systematics_vector_genmet.push_back(make_pair(string("SignalJER"),
       vector<NamedFunc>({weight_genmet,weight_genmet})));
-  systematics_vector.push_back(make_pair(string("IsoTk"),
+  systematics_vector_genmet.push_back(make_pair(string("IsoTk"),
       vector<NamedFunc>({weight_genmet})));
   //if (true) {
   //  //apply isolated track systematic
@@ -1270,7 +1273,7 @@ namespace HigWriteDataCards{
           }
         }
         else if (sys.first == "IsoTk") {
-          //normal up/down systematic
+          //Isolated track systematic
           string label = processName + "_" + signalAverageGenMetTag + "_" + sampleBins[bin_idx].first;
           float nominal_value = mYields.at(label).first.Yield();
           if (nominal_value == 0 || std::isnan(nominal_value) || std::isinf(nominal_value)) {
@@ -1284,6 +1287,7 @@ namespace HigWriteDataCards{
             if (syst_up > 1.0 || std::isnan(syst_up) || std::isinf(syst_up)) syst_up = 1.0;
             if (syst_up <= -1.0) syst_up = -0.99;
             float syst_down = -1.0*syst_up;
+            if (syst_down < -0.99) syst_down = -0.99;
             row[2+2*bin_idx] = to_string(syst_down+1.0)+"/"+to_string(syst_up+1.0);
           }
         }

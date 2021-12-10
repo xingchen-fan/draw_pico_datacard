@@ -368,14 +368,16 @@ if not plot_pulls:
     htopdummy.GetXaxis().SetBinLabel(22,ptmiss+'>700 GeV')
     hgopdummy.LabelsOption('v')
 
-leg = TLegend(0.35, 0.9, 0.75, 0.98)
+leg = TLegend(0.32, 0.9, 0.72, 0.98)
 #leg = TLegend(0.3, 0.9, 0.7, 0.98) #w/ signal
 # leg.SetTextSize(30)
 leg.SetFillColor(0)
 leg.SetFillStyle(0)
 leg.SetBorderSize(0)
 leg.SetTextFont(42)
-leg.SetNColumns(4)
+leg.SetNColumns(3)
+if plot_sig:
+  leg.SetNColumns(4)
 
 grbkg_pre.SetLineColor(tag1_color)
 grbkg_pre.SetLineWidth(1)

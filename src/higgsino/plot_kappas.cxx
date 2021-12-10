@@ -182,7 +182,8 @@ int main(int argc, char *argv[]){
   // trigger_version: 0: old, 1: new
   int trigger_version = !HigUtilities::is_in_string_options(string_options, "use_old_trigger");
 
-  string base_dir(string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/");
+  //string base_dir(string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/");
+  string base_dir = "/net/cms17/cms17r0/pico/NanoAODv7/higgsino_klamath_v3/";
   string mc_skim_dir("mc/merged_higmc_higloose/"), data_skim_dir("data/merged_higdata_higloose/"), sig_skim_dir("SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higloose/");
   if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "data/merged_higdata_higlep1T/"; sig_skim_dir = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep1T/";} 
   else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "data/merged_higdata_higlep2T/"; sig_skim_dir = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep2T/";} 
@@ -1159,6 +1160,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
     markerSize = 1.5;
   }
   setPlotStyle(opts);
+  gStyle->SetPadTickX(0);
 
   //// k_ordered has all the kappas, k[plane][bin][value_index]
   // value_index: 0 = central value, 1 = up value, 2 = down value
@@ -1195,11 +1197,12 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
 
   float minx = 0, maxx = nbins+1.0, miny = 0;
   float maxy = 3;
-  if (extend_axis) maxy=5;
+  if (extend_axis) maxy=4.6;
   TH1D histo("histo", "", nbins+1, minx, maxx);
   histo.SetMinimum(miny);
   histo.SetMaximum(maxy);
   histo.GetYaxis()->CenterTitle(true);
+  histo.GetXaxis()->SetTickLength(0.0);
   TString ytitle = "#kappa";
   if(alt_scen!="data" && alt_scen!="mc") ytitle += " (Scen. = "+alt_scen+")";
   histo.SetTitleOffset(0.35,"y");
@@ -1331,7 +1334,7 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
     // All the labels on the X-axis...
     TLatex label; label.SetTextSize(0.05); label.SetTextFont(42); label.SetTextAlign(23);
     double met_label_text_size = 0.05;
-    double drmax_label_text_size = 0.035;
+    double drmax_label_text_size = 0.042;
     if (HigUtilities::is_in_string_options(string_options, "paper_style") && sample != "search") {
       label.SetTextSize(0.04);
       met_label_text_size = 0.04;
@@ -1355,12 +1358,13 @@ void plotKappa(abcd_def &abcd, vector<vector<vector<float> > > &kappas,
       string plabel = abcd.planecuts[iplane].Data();
       string drlabel = plabel.substr(plabel.find("hig_cand_drmax"), plabel.length());
       drlabel = CodeToRootTex(drlabel);
+      ReplaceAll(drlabel," < ","<"); 
       label.SetTextSize(drmax_label_text_size);
       if ((sample == "zll" || sample == "qcd")) //1 bin per plane
         label.DrawLatex(iplane+1.0, 0.4, drlabel.c_str());
       else
         if (extend_axis)
-          label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/abcd.planecuts.size()*(iplane+0.5), 0.23, drlabel.c_str());
+          label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/abcd.planecuts.size()*(iplane+0.5), 0.225, drlabel.c_str());
         else
           label.DrawLatexNDC(lmargin+(1-rmargin-lmargin)/abcd.planecuts.size()*(iplane+0.5), 0.25, drlabel.c_str());
 
