@@ -1213,43 +1213,43 @@ void makeTransparent(TCanvas & canvas) {
 // Returns fractional systematics
 vector<float> get_kappa_systematics(bool fractional) {
   vector<float> kappa(16);
-  kappa[0] = 1.24878;
-  kappa[1] = 1.22935;
-  kappa[2] = 1.07006;
-  kappa[3] = 1.07059;
-  kappa[4] = 1.08211;
-  kappa[5] = 1.10397;
-  kappa[6] = 0.919397;
-  kappa[7] = 0.929219;
-  kappa[8] = 0.852653;
-  kappa[9] = 2.40327;
-  kappa[10] = 0.939968;
-  kappa[11] = 0.905643;
-  kappa[12] = 1.22588;
-  kappa[13] = 0.964878;
-  kappa[14] = 0.988554;
-  kappa[15] = 1.02952;
+  kappa[0] = 1.04805;
+  kappa[1] = 1.26201;
+  kappa[2] = 1.08626;
+  kappa[3] = 1.13387;
+  kappa[4] = 1.04333;
+  kappa[5] = 1.21014;
+  kappa[6] = 0.922012;
+  kappa[7] = 0.955641;
+  kappa[8] = 0.715363;
+  kappa[9] = 2.35375;
+  kappa[10] = 0.944108;
+  kappa[11] = 0.891454;
+  kappa[12] = 1.23673;
+  kappa[13] = 0.938487;
+  kappa[14] = 0.975312;
+  kappa[15] = 0.918603;
 
 
 
   // controlSystematics[iPlane][control] = fractional systematic
   vector<map<string, float> > controlSystematics(16);
-  controlSystematics[0]["ttbar"] = 1.12; 
-  controlSystematics[1]["ttbar"] = 1.17;
+  controlSystematics[0]["ttbar"] = 1.11; 
+  controlSystematics[1]["ttbar"] = 1.18;
   controlSystematics[2]["ttbar"] = 1.02;
-  controlSystematics[3]["ttbar"] = 1.09;
+  controlSystematics[3]["ttbar"] = 1.07;
   controlSystematics[4]["ttbar"] = 1.10;
-  controlSystematics[5]["ttbar"] = 1.16;
+  controlSystematics[5]["ttbar"] = 1.17;
   controlSystematics[6]["ttbar"] = 1.02;
-  controlSystematics[7]["ttbar"] = 1.09;
+  controlSystematics[7]["ttbar"] = 1.07;
   controlSystematics[8]["ttbar"] = 1.06;
-  controlSystematics[9]["ttbar"] = 1.12;
+  controlSystematics[9]["ttbar"] = 1.13;
   controlSystematics[10]["ttbar"] = 1.01;
-  controlSystematics[11]["ttbar"] = 1.08;
+  controlSystematics[11]["ttbar"] = 1.06;
   controlSystematics[12]["ttbar"] = 1.06;
-  controlSystematics[13]["ttbar"] = 1.08;
+  controlSystematics[13]["ttbar"] = 1.09;
   controlSystematics[14]["ttbar"] = 1.01;
-  controlSystematics[15]["ttbar"] = 1.08;
+  controlSystematics[15]["ttbar"] = 1.07;
 
   controlSystematics[0]["vjets"] = 1.01; 
   controlSystematics[1]["vjets"] = 1.01;
@@ -1268,7 +1268,7 @@ vector<float> get_kappa_systematics(bool fractional) {
   controlSystematics[14]["vjets"] = 1.02;
   controlSystematics[15]["vjets"] = 1.02;
 
-  controlSystematics[0]["qcd"] = 1.00; 
+  controlSystematics[0]["qcd"] = 1.01; 
   controlSystematics[1]["qcd"] = 1.00;
   controlSystematics[2]["qcd"] = 1.00;
   controlSystematics[3]["qcd"] = 1.00;
@@ -1308,8 +1308,9 @@ int main(/* int argc, char *argv[] */){
   // Can generate counts_in_bins.txt by two methods
   // 1. scripts/datacard_to_counts.py
   // 2. ./run/higgsino/plot_kappas.exe --sample search --year run2 --unblind --scen data --string_options save_entries_weights_to_file 
-  string count_in_bins_filename = "./txt/counts_in_bins/counts_in_bins.txt";
+  //string count_in_bins_filename = "./txt/counts_in_bins/counts_in_bins.txt";
   //string count_in_bins_filename = "./txt/counts_in_bins/counts_in_bins_mc.txt";
+  string count_in_bins_filename = "./txt/counts_in_bins/counts_in_bins_correctBTagSF.txt";
   load_counts(count_in_bins_filename, counts);
   //print_counts(counts);
 
@@ -1383,7 +1384,7 @@ int main(/* int argc, char *argv[] */){
   }
 
   // Generate toys
-  bool generate_toys = false;
+  bool generate_toys = true;
   bool use_threads = true;
   unsigned nToys = 10000;
   float histNBin = 10000;
