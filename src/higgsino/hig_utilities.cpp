@@ -937,22 +937,22 @@ namespace HigUtilities {
   }
 
   void getControlSystematics(map<string, map<string, float> > & controlSystematics) {
-    controlSystematics["xsig0_ybkg_met0_drmax0"]["ttbar"] = 1.12; 
-    controlSystematics["xsig1_ybkg_met0_drmax0"]["ttbar"] = 1.17;
+    controlSystematics["xsig0_ybkg_met0_drmax0"]["ttbar"] = 1.11; 
+    controlSystematics["xsig1_ybkg_met0_drmax0"]["ttbar"] = 1.18;
     controlSystematics["xsig0_ybkg_met0_drmax1"]["ttbar"] = 1.02;
-    controlSystematics["xsig1_ybkg_met0_drmax1"]["ttbar"] = 1.09;
+    controlSystematics["xsig1_ybkg_met0_drmax1"]["ttbar"] = 1.07;
     controlSystematics["xsig0_ybkg_met1_drmax0"]["ttbar"] = 1.10;
-    controlSystematics["xsig1_ybkg_met1_drmax0"]["ttbar"] = 1.16;
+    controlSystematics["xsig1_ybkg_met1_drmax0"]["ttbar"] = 1.17;
     controlSystematics["xsig0_ybkg_met1_drmax1"]["ttbar"] = 1.02;
-    controlSystematics["xsig1_ybkg_met1_drmax1"]["ttbar"] = 1.09;
+    controlSystematics["xsig1_ybkg_met1_drmax1"]["ttbar"] = 1.07;
     controlSystematics["xsig0_ybkg_met2_drmax0"]["ttbar"] = 1.06;
-    controlSystematics["xsig1_ybkg_met2_drmax0"]["ttbar"] = 1.12;
+    controlSystematics["xsig1_ybkg_met2_drmax0"]["ttbar"] = 1.13;
     controlSystematics["xsig0_ybkg_met2_drmax1"]["ttbar"] = 1.01;
-    controlSystematics["xsig1_ybkg_met2_drmax1"]["ttbar"] = 1.08;
+    controlSystematics["xsig1_ybkg_met2_drmax1"]["ttbar"] = 1.06;
     controlSystematics["xsig0_ybkg_met3_drmax0"]["ttbar"] = 1.06;
-    controlSystematics["xsig1_ybkg_met3_drmax0"]["ttbar"] = 1.08;
+    controlSystematics["xsig1_ybkg_met3_drmax0"]["ttbar"] = 1.09;
     controlSystematics["xsig0_ybkg_met3_drmax1"]["ttbar"] = 1.01;
-    controlSystematics["xsig1_ybkg_met3_drmax1"]["ttbar"] = 1.08;
+    controlSystematics["xsig1_ybkg_met3_drmax1"]["ttbar"] = 1.07;
 
     controlSystematics["xsig0_ybkg_met0_drmax0"]["vjets"] = 1.01; 
     controlSystematics["xsig1_ybkg_met0_drmax0"]["vjets"] = 1.01;
@@ -971,7 +971,7 @@ namespace HigUtilities {
     controlSystematics["xsig0_ybkg_met3_drmax1"]["vjets"] = 1.02;
     controlSystematics["xsig1_ybkg_met3_drmax1"]["vjets"] = 1.02;
 
-    controlSystematics["xsig0_ybkg_met0_drmax0"]["qcd"] = 1.00; 
+    controlSystematics["xsig0_ybkg_met0_drmax0"]["qcd"] = 1.01; 
     controlSystematics["xsig1_ybkg_met0_drmax0"]["qcd"] = 1.00;
     controlSystematics["xsig0_ybkg_met0_drmax1"]["qcd"] = 1.00;
     controlSystematics["xsig1_ybkg_met0_drmax1"]["qcd"] = 1.00;
