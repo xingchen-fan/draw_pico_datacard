@@ -208,8 +208,8 @@ const NamedFunc wgt_syst_ttx("wgt_syst_ttx",[](const Baby &b) -> NamedFunc::Scal
         if ((*b.hig_cand_drmax())[0]<=1.1) return 0.13; // low dr
         else return 0.02; // high dr
       } else if (b.nbt()>=2 && b.nbm()>=3 && b.nbl()>=4) {// 4b
-        if ((*b.hig_cand_drmax())[0]<=1.1) return 0.18; // low dr 
-        else return 0.10; // high dr
+        if ((*b.hig_cand_drmax())[0]<=1.1) return 0.19; // low dr 
+        else return 0.08; // high dr
       }
     }
   }
@@ -233,7 +233,7 @@ const NamedFunc wgt_syst_qcd("wgt_syst_qcd",[](const Baby &b) -> NamedFunc::Scal
   if ( (b.type()>=7000 && b.type()<8000)) { // qcd
     if ((*b.hig_cand_am())[0]<=100 || ((*b.hig_cand_am())[0]>140 && (*b.hig_cand_am())[0]<=200))
       if (b.nbt()>=2 && b.nbm()>=3) { // high b
-        if ((*b.hig_cand_drmax())[0]<=1.1) return 0.7; // low dr
+        if ((*b.hig_cand_drmax())[0]<=1.1) return 0.07; // low dr
         else return 0.09; // high dr
       }
   }
