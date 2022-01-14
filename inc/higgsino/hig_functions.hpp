@@ -94,6 +94,8 @@ namespace Higfuncs{
   extern const NamedFunc h1_mass;
   extern const NamedFunc h2_mass;
 
+  extern const NamedFunc mll_cut;
+
   extern const NamedFunc lead_signal_lepton_pt;
   extern const NamedFunc lead_signal_muon_pt;
   extern const NamedFunc lead_signal_electron_pt;

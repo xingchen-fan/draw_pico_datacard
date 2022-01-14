@@ -548,10 +548,10 @@ def make_efficiency_table(datacard_dir, higgsino_mass, lsp_mass):
   print('open tables/CMS-SUS-20-004_aux_Table_001.root')
 
 if __name__ == "__main__":
-  onedim_datacard_dir = 'datacards/tchihh_onedim_lumifix'
+  onedim_datacard_dir = 'datacards/tchihh_onedim_btagfix'
   #onedim_datacard_dir = 'datacards/combined_1DTChiHH'
   #onedim_datacard_dir = 'datacards/combined_2DTChiHH'
-  twodim_datacard_dir = 'datacards/tchihh_twodim_lumifix'
+  twodim_datacard_dir = 'datacards/tchihh_twodim_btagfix'
 
   #make 1D plot
   #onedim_tchihh_efficiency = ROOT.TGraph(44)

@@ -122,8 +122,9 @@ int main(int argc, char *argv[]){
                                "*_WWTo*.root", "*_WZ*.root", "*_ZZ_*.root", "*DYJetsToLL*.root"
   });
 
-  string mc_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
-  string sig_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/";
+  string mc_base_folder = "/net/cms17/cms17r0/pico/NanoAODv7/higgsino_klamath_v3/";
+  //string data_base_folder = "/net/cms17/cms17r0/pico/NanoAODv7/higgsino_klamath/";
+  string sig_base_folder = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v3/";
   string mc_skim_folder = "mc/merged_higmc_higloose/";
   string sig_unskimmed_folder = "SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/";
 

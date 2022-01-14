@@ -53,12 +53,16 @@ int main(int argc, char *argv[]){
   if(Contains(hostname, "cms") || Contains(hostname, "compute-") || Contains(hostname, "physics.ucsb.edu"))
     bfolder = "/net/cms29"; // In laptops, you can't create a /net folder
 
-  string foldermc_base("/cms29r0/pico/NanoAODv5/higgsino_eldorado/");
+  //string foldermc_base("/cms29r0/pico/NanoAODv5/higgsino_eldorado/");
+  //string foldermc_skim("mc/merged_higmc_preselect/");
+  string foldermc_base("/net/cms17/cms17r0/pico/NanoAODv7/higgsino_klamath_v3/");
   string foldermc_skim("mc/merged_higmc_preselect/");
   // string foldermc_base("/cms29r0/pico/NanoAODv5/higgsino_angeles/");
   // string foldermc_skim("mc/merged_higmc_higloose/");
-  //string foldersig("/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/TChiHH/merged_higmc_unskimmed/");
-  string foldersig("/cms29r0/pico/NanoAODv5/higgsino_eldorado/2016/SMS-TChiHH_2D/merged_higmc_preselect/");
+  string foldersig("/cms29r0/pico/NanoAODv5/higgsino_angeles/2016/TChiHH/merged_higmc_unskimmed/");
+  //string foldersig("/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v3/2016/SMS-TChiHH_2D/merged_higmc_preselect/");
+  string foldersig_base("/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v3/");
+  string foldersig_skim("SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/");
   set<int> years = {2016, 2017, 2018};
   // set<int> years = {2016};
 
@@ -75,9 +79,10 @@ int main(int argc, char *argv[]){
 
   //    Baseline definitions
   //-----------------------------------------
-  NamedFunc wgt = "w_lumi*w_isr"*Higfuncs::eff_higtrig;
-  if (years.size()==1 && *years.begin()==2016) wgt *= "137.";
-  else wgt *= Higfuncs::w_years;
+  //NamedFunc wgt = "w_lumi*w_isr"*Higfuncs::eff_higtrig;
+  //if (years.size()==1 && *years.begin()==2016) wgt *= "137.";
+  //else wgt *= Higfuncs::w_years;
+  NamedFunc wgt = Higfuncs::final_weight;
   string baseline = "stitch && nvlep==0 && ntk==0 && !low_dphi_met";
   string higtrim = "hig_cand_drmax[0]<=2.2 && hig_cand_dm[0] <= 40 && hig_cand_am[0]<=200";
   if (resolved) {
@@ -86,6 +91,12 @@ int main(int argc, char *argv[]){
     baseline += "&& nfjet>1 && fjet_pt[0]>300 && fjet_pt[1]>300 && ht>600";
     baseline += " && fjet_msoftdrop[0]>50 && fjet_msoftdrop[0]<=250 && fjet_msoftdrop[1]>50 && fjet_msoftdrop[1]<=250";
   }
+  NamedFunc search_filters = Higfuncs::final_pass_filters; //pass_filters&& "met/mht<2 && met/met_calo<2&&weight<1.5"
+  NamedFunc search_resolved_cuts = 
+                         "met/mht<2 && met/met_calo<2&&weight<1.5&&"
+                         "ntk==0&&!low_dphi_met&&nvlep==0&&met>150&&njet>=4&&njet<=5&&"
+                         "hig_cand_drmax[0]<=2.2&&hig_cand_am[0]<=200&&hig_cand_dm[0]<=40&&"
+                         "((nbt==2&&nbm==2)||(nbt>=2&&nbm==3&&nbl==3)||(nbt>=2&&nbm>=3&&nbl>=4))";
 
   //    Define processes, including intersections
   //--------------------------------------------------
@@ -95,19 +106,19 @@ int main(int argc, char *argv[]){
 
   vector<shared_ptr<Process> > procs;
   procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGray+2,
-                  attach_folder(foldermc_base,years,foldermc_skim, mctags["other"]), base_filters && baseline));
+                  attach_folder(foldermc_base,years,foldermc_skim, mctags["other"]), "stitch"));
   procs.push_back(Process::MakeShared<Baby_pico>("V+jets", Process::Type::background, kGreen+1,
-                  attach_folder(foldermc_base,years,foldermc_skim,mctags["vjets"]), base_filters && baseline));
+                  attach_folder(foldermc_base,years,foldermc_skim,mctags["vjets"]), "stitch"));
   procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X", Process::Type::background,colors("tt_1l"),
-                  attach_folder(foldermc_base,years,foldermc_skim, mctags["ttx"]), base_filters && baseline));
+                  attach_folder(foldermc_base,years,foldermc_skim, mctags["ttx"]), "stitch"));
   procs.push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background, colors("other"),
-                  attach_folder(foldermc_base,years,foldermc_skim, mctags["qcd"]), base_filters && baseline)); 
+                  attach_folder(foldermc_base,years,foldermc_skim, mctags["qcd"]), "stitch")); 
 
   if (doSignal) {
     vector<string> sigm = {"175", "400", "650"};
     for (unsigned isig(0); isig<sigm.size(); isig++){
-      procs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigm[isig]+",1)", Process::Type::signal, 
-        1, {foldersig+"*TChiHH_mChi-"+sigm[isig]+"_mLSP-0*.root"}, base_filters && baseline));
+      procs.push_back(Process::MakeShared<Baby_pico>("TChiHH-G("+sigm[isig]+",1)", Process::Type::signal, 
+        1, {foldersig_base+"2016/"+foldersig_skim+"*TChiHH_mChi-"+sigm[isig]+"_mLSP-0*.root"}, "stitch"));
       cout<<foldersig+"*TChiHH_mChi-"+sigm[isig]+"_mLSP-0*.root"<<endl;
     }
   }
@@ -160,6 +171,7 @@ int main(int argc, char *argv[]){
         for (auto &iabcd: res_abcd) {
           // Cut for row
           NamedFunc res_reg_ = imet+"&&"+idrmax+"&&"+iabcd;
+          res_reg_ = search_filters && search_resolved_cuts && res_reg_;
           // Add row to table
           tablerows.push_back(TableRow("$"+CodeToLatex(iabcd)+"$", res_reg_, 0,0, wgt));
           nbins++;
@@ -177,7 +189,7 @@ int main(int argc, char *argv[]){
     }
   }
   TString tabname = "table_"; tabname += (resolved ? "resolved" : "boosted");
-  pm.Push<Table>(tabname.Data(), tablerows, procs, 0);
+  pm.Push<Table>(tabname.Data(), tablerows, procs, 0).Precision(2);
 
   pm.min_print_ = true;
   pm.MakePlots(lumi);

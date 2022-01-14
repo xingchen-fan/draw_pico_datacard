@@ -221,7 +221,7 @@ if __name__ == "__main__":
   # Generate inverse datacard if not exist
   if not os.path.exists(args.inverse_datacard):
     print(args.inverse_datacard+' does not exists. Will generate inverse datacard from '+args.datacard)
-    convert_to_inverse_abcd_datacard(args.input_datacard, args.output_inverse_datacard)
+    convert_to_inverse_abcd_datacard(args.datacard, args.inverse_datacard)
 
   # Do prefit
   print("\n\n****************Doing prefit****************")

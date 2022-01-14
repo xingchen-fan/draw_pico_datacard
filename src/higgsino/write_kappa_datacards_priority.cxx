@@ -415,15 +415,21 @@ int main(int argc, char *argv[])
   //samplePaths["mc_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_klamath/2018/mc/merged_higmc_preselect/";
   //samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7/higgsino_klamath/2018/SMS-TChiHH_2D/merged_higmc_preselect/";
 
-  samplePaths["mc_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2016/mc/merged_higmc_preselect/";
-  samplePaths["signal_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2016/SMS-TChiHH_2D_fastSimJmeCorrection/skim_higsys/";
-  samplePaths["data_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2016/data/merged_higdata_preselect/";
-  samplePaths["mc_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2017/mc/merged_higmc_preselect/";
-  samplePaths["signal_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2017/SMS-TChiHH_2D_fastSimJmeCorrection/skim_higsys/";
-  samplePaths["data_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2017/data/merged_higdata_preselect/";
-  samplePaths["mc_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/mc/merged_higmc_preselect/";
-  samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/SMS-TChiHH_2D_fastSimJmeCorrection/skim_higsys/";
-  samplePaths["data_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/data/merged_higdata_preselect/";
+  //samplePaths["mc_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2016/mc/merged_higmc_preselect/";
+  //samplePaths["mc_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2017/mc/merged_higmc_preselect/";
+  //samplePaths["mc_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/mc/merged_higmc_preselect/";
+  //samplePaths["signal_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2016/SMS-TChiHH_2D_fastSimJmeCorrection/skim_higsys/";
+  //samplePaths["signal_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2017/SMS-TChiHH_2D_fastSimJmeCorrection/skim_higsys/";
+  //samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/SMS-TChiHH_2D_fastSimJmeCorrection/skim_higsys/";
+  samplePaths["mc_2016"] = "/net/cms17/cms17r0/pico/NanoAODv7/higgsino_klamath_v3/2016/mc/merged_higmc_preselect/";
+  samplePaths["mc_2017"] = "/net/cms17/cms17r0/pico/NanoAODv7/higgsino_klamath_v3/2017/mc/merged_higmc_preselect/";
+  samplePaths["mc_2018"] = "/net/cms17/cms17r0/pico/NanoAODv7/higgsino_klamath_v3/2018/mc/merged_higmc_preselect/";
+  //samplePaths["data_2016"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2016/data/merged_higdata_preselect/";
+  //samplePaths["data_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2017/data/merged_higdata_preselect/";
+  //samplePaths["data_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/data/merged_higdata_preselect/";
+  samplePaths["data_2016"] = "/net/cms17/cms17r0/pico/NanoAODv7/higgsino_klamath/2016/data/merged_higdata_preselect/";
+  samplePaths["data_2017"] = "/net/cms17/cms17r0/pico/NanoAODv7/higgsino_klamath/2017/data/merged_higdata_preselect/";
+  samplePaths["data_2018"] = "/net/cms17/cms17r0/pico/NanoAODv7/higgsino_klamath/2018/data/merged_higdata_preselect/";
   //temporary for isotk studies (higsys skim has track veto)
   //samplePaths["signal_2016"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath/2016/SMS-TChiHH_HToAllSeparated_fastSimJmeCorrection/unskimmed/";
   //samplePaths["signal_2017"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath/2017/SMS-TChiHH_HToAllSeparated_fastSimJmeCorrection/unskimmed/";
@@ -442,9 +448,12 @@ int main(int argc, char *argv[])
     //  samplePaths["signal_2017"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2017/SMS-T5qqqqZH_fastSimJmeCorrection/skim_higsys/";
     //  samplePaths["signal_2018"] = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/2018/SMS-T5qqqqZH_fastSimJmeCorrection/skim_higsys/";
     //}
-    samplePaths["signal_2016"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2016/SMS-T5qqqqZH_HToAllSeparated_FullSimJmeVariations/unskimmed/";
-    samplePaths["signal_2017"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2017/SMS-T5qqqqZH_HToAllSeparated_FullSimJmeVariations/unskimmed/";
-    samplePaths["signal_2018"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2018/SMS-T5qqqqZH_HToAllSeparated_FullSimJmeVariations/unskimmed/";
+    //samplePaths["signal_2016"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2016/SMS-T5qqqqZH_HToAllSeparated_FullSimJmeVariations/unskimmed/";
+    //samplePaths["signal_2017"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2017/SMS-T5qqqqZH_HToAllSeparated_FullSimJmeVariations/unskimmed/";
+    //samplePaths["signal_2018"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v2/2018/SMS-T5qqqqZH_HToAllSeparated_FullSimJmeVariations/unskimmed/";
+    samplePaths["signal_2016"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v3/2016/SMS-T5qqqqZH_FullSimJmeVariations/unskimmed/";
+    samplePaths["signal_2017"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v3/2017/SMS-T5qqqqZH_FullSimJmeVariations/unskimmed/";
+    samplePaths["signal_2018"] = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v3/2018/SMS-T5qqqqZH_FullSimJmeVariations/unskimmed/";
   }
 
   //// massPoints = { {"1000","1"} }

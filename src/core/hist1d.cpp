@@ -1198,7 +1198,7 @@ std::vector<TH1D> Hist1D::GetBottomPlots(double &the_min, double &the_max) const
     out.push_back(h->scaled_hist_);
     out.back().SetName(("bot_plot_data_"+h->process_->name_+"_"+counter()).c_str());
   }
-  if(!stacked || this_opt_.Bottom() == BottomType::sorb || this_opt_.Bottom() == BottomType::sorb_cut_upper){
+  if(!stacked || this_opt_.Bottom() == BottomType::sorb || this_opt_.Bottom() == BottomType::sorb_cut_upper || datas_.size()==0){
     for(const auto &h: signals_){
       out.push_back(h->scaled_hist_);
       out.back().SetName(("bot_plot_sig_"+h->process_->name_+"_"+counter()).c_str());
@@ -1211,7 +1211,7 @@ std::vector<TH1D> Hist1D::GetBottomPlots(double &the_min, double &the_max) const
   }
   out.back() = band;
   out.back().SetFillStyle(1001);
-  out.back().SetFillColorAlpha(backgrounds_.front()->scaled_hist_.GetLineColor(),0.2);
+  out.back().SetFillColorAlpha(denom.GetLineColor(),0.2);
   out.back().SetLineWidth(0);
   out.back().SetMarkerStyle(0);
   out.back().SetMarkerSize(0);
@@ -1322,9 +1322,12 @@ std::vector<TH1D> Hist1D::GetBottomPlots(double &the_min, double &the_max) const
       if(datas_.size() != 0){
         if(num == "") num = "Data";
         if(den == "") den = "MC";
-      }else{
+      }else if (backgrounds_.size() != 0){
         if(num == "") num = "MC";
         if(den == "") den = backgrounds_.front()->process_->name_;
+      }else{
+        if(num == "") num = "MC";
+        if(den == "") den = "MC";
       }
       h.GetYaxis()->CenterTitle();
       h.GetYaxis()->SetTitle(("#frac{"+num+"}{"+den+"}").c_str());

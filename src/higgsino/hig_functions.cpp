@@ -1879,6 +1879,15 @@ const NamedFunc h2_mass("h2_mass",[](const Baby &b) -> NamedFunc::ScalarType{
   return higgs2.M();
 });
 
+const NamedFunc mll_cut("mll_cut",[](const Baby &b) -> NamedFunc::ScalarType{
+    for (unsigned ill = 0; ill < b.ll_m()->size(); ill++) {
+      if (b.ll_m()->at(ill) > 80 && b.ll_m()->at(ill) < 100) {
+        return 1;
+      }
+    }
+    return 0;
+});
+
 const NamedFunc lead_signal_lepton_pt("lead_signal_lepton_pt",[](const Baby &b) -> NamedFunc::ScalarType{
   // Search for signal electrons
   float lead_electron_pt_event = -1;

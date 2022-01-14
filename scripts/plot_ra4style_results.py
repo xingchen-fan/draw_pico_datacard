@@ -6,14 +6,15 @@ import sys
 import gc
 
 def read_datacard_results(bkg_pre, ebkg_pre_up, ebkg_pre_dn, bkg_post, ebkg_post_up, ebkg_post_dn, data, signal_500_raw):
-  fit_bin_ordering = [50,52,54,56,58,60,62,64,49,51,53,55,57,59,61,63]
+  #fit_bin_ordering = [50,52,54,56,58,60,62,64,49,51,53,55,57,59,61,63]
+  fit_bin_ordering = [51,53,55,57,59,61,63,65,50,52,54,56,58,60,62,64]
   #data_bin_ordering = [11,23,35,47,12,24,36,48,5,17,29,41,6,18,30,42]
   data_bin_ordering = [24,36,48,60,25,37,49,61,18,30,42,54,19,31,43,55,4,5,6,1,2,3]
   input_dir = 'input'
   prefit_filename = 'multidimfit_prefit.root'
   postfit_filename = 'multidimfit_postfit.root'
   boosted_filename = 'boosted_results.root'
-  datacard_filename = 'datacard_500.txt'
+  datacard_filename = '1DTChiHH450_LSP1_Data_Combo.txt'
   prefit_file = TFile.Open(input_dir+'/'+prefit_filename,'READ')
   postfit_file = TFile.Open(input_dir+'/'+postfit_filename,'READ')
   boosted_file = TFile.Open(input_dir+'/'+boosted_filename,'READ')

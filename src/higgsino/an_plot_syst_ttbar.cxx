@@ -114,16 +114,20 @@ int main(int argc, char *argv[]){
   string higgsino_version = "";
 
   // Set options
-  string mc_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
+  //string mc_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
+  string mc_base_folder = "/net/cms17/cms17r0/pico/NanoAODv7/higgsino_klamath_v3/";
   string mc_skim_folder = "mc/merged_higmc_higloose/";
   string ttbar_mc_skim_folder = "mc/merged_higmc_higlep1T/";
 
-  string data_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
+  //string data_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
+  string data_base_folder = "/net/cms17/cms17r0/pico/NanoAODv7/higgsino_klamath/";
   string data_skim_folder = "data/merged_higdata_higloose/";
   string ttbar_data_skim_folder = "data/merged_higdata_higlep1T/";
 
-  string sig_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
-  string ttbar_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higlep1T/";
+  //string sig_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
+  string sig_base_folder = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v3/";
+  //string ttbar_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higlep1T/";
+  string ttbar_sig_skim_folder = "SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/";
 
   //years = {2016, 2017, 2018};
   set<int> years;

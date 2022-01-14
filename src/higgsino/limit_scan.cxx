@@ -319,15 +319,16 @@ void MakeLimitPlot(vector<double> vmx,
   c.SetLogz();
   glim.Draw("colz");
 
-  TGraph cup = DrawContours(gup, 2, 2, 5, num_smooth_);
-  TGraph cdown = DrawContours(gdown, 2, 2, 5, num_smooth_);
-  TGraph cexp = DrawContours(gexp, 2, 1, 5, num_smooth_, 1.);
+  float limit_width = 2.0; //was 5.0
+  TGraph cup = DrawContours(gup, 2, 2, limit_width, num_smooth_);
+  TGraph cdown = DrawContours(gdown, 2, 2, limit_width, num_smooth_);
+  TGraph cexp = DrawContours(gexp, 2, 1, limit_width, num_smooth_, 1.);
   TGraph cobsup, cobsdown, cobs;
   if (unblind) {
     std::cout << "DEBUG: unblinding" << std::endl;
-    cobsup = DrawContours(gobsup, 1, 2, 5, num_smooth_);
-    cobsdown = DrawContours(gobsdown, 1, 2, 5, num_smooth_);
-    cobs = DrawContours(gobs, 1, 1, 5, num_smooth_, 1.);
+    cobsup = DrawContours(gobsup, 1, 2, limit_width, num_smooth_);
+    cobsdown = DrawContours(gobsdown, 1, 2, limit_width, num_smooth_);
+    cobs = DrawContours(gobs, 1, 1, limit_width, num_smooth_, 1.);
   }
 
   l.AddEntry(&cexp, "Expected", "l");

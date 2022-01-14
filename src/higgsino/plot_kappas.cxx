@@ -183,11 +183,16 @@ int main(int argc, char *argv[]){
   int trigger_version = !HigUtilities::is_in_string_options(string_options, "use_old_trigger");
 
   //string base_dir(string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/");
+  string data_base_dir = "/net/cms17/cms17r0/pico/NanoAODv7/higgsino_klamath/";
+  string sig_base_dir = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v3/";
   string base_dir = "/net/cms17/cms17r0/pico/NanoAODv7/higgsino_klamath_v3/";
   string mc_skim_dir("mc/merged_higmc_higloose/"), data_skim_dir("data/merged_higdata_higloose/"), sig_skim_dir("SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higloose/");
-  if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "data/merged_higdata_higlep1T/"; sig_skim_dir = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep1T/";} 
-  else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "data/merged_higdata_higlep2T/"; sig_skim_dir = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep2T/";} 
-  else if (sample=="qcd") {mc_skim_dir = "mc/merged_higmc_higqcd/";  data_skim_dir = "data/merged_higdata_higqcd/"; sig_skim_dir = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higqcd/";} 
+  //if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "data/merged_higdata_higlep1T/"; sig_skim_dir = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep1T/";} 
+  //else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "data/merged_higdata_higlep2T/"; sig_skim_dir = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep2T/";} 
+  //else if (sample=="qcd") {mc_skim_dir = "mc/merged_higmc_higqcd/";  data_skim_dir = "data/merged_higdata_higqcd/"; sig_skim_dir = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higqcd/";} 
+  if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "data/merged_higdata_higlep1T/"; sig_skim_dir = "SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/";} 
+  else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "data/merged_higdata_higlep2T/"; sig_skim_dir = "SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/";} 
+  else if (sample=="qcd") {mc_skim_dir = "mc/merged_higmc_higqcd/";  data_skim_dir = "data/merged_higdata_higqcd/"; sig_skim_dir = "SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/";} 
 
   map<string, set<string>> mctags; 
   mctags["ttx"]     = set<string>({
@@ -232,7 +237,7 @@ int main(int argc, char *argv[]){
   NamedFunc baseline = baseline_s; 
   if (sample=="search") baseline = baseline && Higfuncs::final_pass_filters;
   else if (sample=="ttbar") baseline = baseline && Higfuncs::final_ttbar_pass_filters && Higfuncs::lead_signal_lepton_pt>30;
-  else if (sample=="zll") baseline = baseline && Higfuncs::final_zll_pass_filters;
+  else if (sample=="zll") baseline = baseline && Higfuncs::final_zll_pass_filters && Higfuncs::lead_signal_lepton_pt>30 && Higfuncs::mll_cut;
   else if (sample=="qcd") baseline = baseline && Higfuncs::final_qcd_pass_filters;
 
   if (sample=="search") do_incl_met = false;
@@ -247,7 +252,7 @@ int main(int argc, char *argv[]){
   vector<shared_ptr<Process> > proc_sigs;
   for (unsigned isig(0); isig<sigMasses.size(); isig++)
     proc_sigs.push_back(Process::MakeShared<Baby_pico>("TChiHH("+sigMasses[isig]+",1)", Process::Type::signal, 1, 
-      attach_folder(base_dir, years, sig_skim_dir,{"*TChiHH_mChi-"+sigMasses[isig]+"*mLSP-0_*.root"}), baseline));
+      attach_folder(sig_base_dir, years, sig_skim_dir,{"*TChiHH_mChi-"+sigMasses[isig]+"*mLSP-0_*.root"}), baseline));
 
   // define background processes
   auto proc_ttx = Process::MakeShared<Baby_pico>("tt+X", Process::Type::background, colors("tt_1l"),
@@ -258,7 +263,7 @@ int main(int argc, char *argv[]){
     attach_folder(base_dir, years, mc_skim_dir, mctags["other"]), baseline && "stitch");
 
   // define data or pseudo-data process
-  set<string> names_data(attach_folder(base_dir, years, data_skim_dir, {"*.root"}));
+  set<string> names_data(attach_folder(data_base_dir, years, data_skim_dir, {"*.root"}));
   if(alt_scen != "data") { 
     if (quick_test) {
       names_data = {base_dir+"/2016/"+mc_skim_dir+"/*TTJets_SingleLeptFromT_Tune*"};

@@ -272,14 +272,22 @@ void addProcess(string const & processName, Process::Type type, int color, Named
   else folderDict.insert("qcd_data_skim_folder","data/merged_higdata_higqcd/");
 
   folderDict.insert("signal_production_folder", signalProductionFolder);
-  if (use_unskimmed) folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_2D/unskimmed/");
-  else folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higloose/");
-  if (use_unskimmed) folderDict.insert("ttbar_signal_skim_folder", "SMS-TChiHH_2D/unskimmed/");
-  else folderDict.insert("ttbar_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higlep1T/");
-  if (use_unskimmed) folderDict.insert("zll_signal_skim_folder", "SMS-TChiHH_2D/unskimmed/");
-  else folderDict.insert("zll_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higlep2T/");
-  if (use_unskimmed) folderDict.insert("qcd_signal_skim_folder", "SMS-TChiHH_2D/unskimmed/");
-  else folderDict.insert("qcd_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higqcd/");
+  //if (use_unskimmed) folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_2D/unskimmed/");
+  //else folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higloose/");
+  //if (use_unskimmed) folderDict.insert("ttbar_signal_skim_folder", "SMS-TChiHH_2D/unskimmed/");
+  //else folderDict.insert("ttbar_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higlep1T/");
+  //if (use_unskimmed) folderDict.insert("zll_signal_skim_folder", "SMS-TChiHH_2D/unskimmed/");
+  //else folderDict.insert("zll_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higlep2T/");
+  //if (use_unskimmed) folderDict.insert("qcd_signal_skim_folder", "SMS-TChiHH_2D/unskimmed/");
+  //else folderDict.insert("qcd_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higqcd/");
+  if (use_unskimmed) folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/");
+  else folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higloose/");
+  if (use_unskimmed) folderDict.insert("ttbar_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/");
+  else folderDict.insert("ttbar_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep1T/");
+  if (use_unskimmed) folderDict.insert("zll_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/");
+  else folderDict.insert("zll_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep2T/");
+  if (use_unskimmed) folderDict.insert("qcd_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/");
+  else folderDict.insert("qcd_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higqcd/");
 
   // Set paths
   set<string> pathNames;
@@ -654,17 +662,17 @@ int main(int argc, char *argv[]){
   ////////////////////////////////////////// Defining processes //////////////////////////////////////////
 
   bool doSignal = true;
-  bool doMc = true;
+  bool doMc = false;
   bool doMcDetail = false;
   bool doData = false; // [TODO] for data didn't implement zll and qcd yet for table_mode==cutflow
   //NamedFunc study_cut = Higfuncs::lead_signal_lepton_pt>20 && Higfuncs::lead_signal_lepton_pt<25;
   NamedFunc study_cut = "1";
   // table_mode = regions, cutflow
-  string table_mode = "regions";
+  string table_mode = "cutflow";
   // Only for regions table_mode
   bool bin_met = true;
   bool bin_drmax = true;
-  bool use_unskimmed = false;
+  bool use_unskimmed = true;
 
   // dataType: mc/data/signal
   // fileTag: (tt, single_t, zjets, wjets, qcd, other, all), (all), (200_1, 600_1, 950_1, ...)
@@ -672,10 +680,11 @@ int main(int argc, char *argv[]){
   // year_string: 2016/2017/2018/run2
   //string production_a = "higgsino_eldorado"; string nanoAodFolder_a = "/net/cms29/cms29r0/pico/NanoAODv5";
   //string production_a = "higgsino_humboldt"; string nanoAodFolder_a = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv5";
-  string production_a = "higgsino_klamath"; string nanoAodFolder_a = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7";
+  //string production_a = "higgsino_klamath"; string nanoAodFolder_a = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7";
+  string production_a = "higgsino_klamath"; string nanoAodFolder_a = "/net/cms24/cms24r0/pico/NanoAODv7";
   //string production_a = "higgsino_inyo"; string nanoAodFolder_a = "/cms29r0/pico/NanoAODv7";
   string sample_a = "search";
-  string year_string_a = "2016";
+  string year_string_a = "2016,2017,2018";
   TString tablename_a = "FixName:table_resolved_"+production_a+"_"+sample_a+"_"+CopyReplaceAll(year_string_a, ",","_")+"_a";
   // trigger_version: 0 or 1
   int trigger_version_a = 1;
@@ -710,9 +719,10 @@ int main(int argc, char *argv[]){
   //string production_b = "higgsino_humboldt"; string nanoAodFolder_b = "/net/cms25/cms25r5/pico/NanoAODv5";
   //string production_b = "higgsino_inyo"; string nanoAodFolder_b = "/net/cms25/cms25r5/pico/NanoAODv7";
   //string production_b = "higgsino_inyo"; string nanoAodFolder_b = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r5/pico/NanoAODv7";
-  string production_b = "higgsino_klamath"; string nanoAodFolder_b = "/net/cms25/cms25r0/pico/NanoAODv7";
+  //string production_b = "higgsino_klamath"; string nanoAodFolder_b = "/net/cms25/cms25r0/pico/NanoAODv7";
+  string production_b = "higgsino_klamath_v3"; string nanoAodFolder_b = "/net/cms24/cms24r0/pico/NanoAODv7";
   string sample_b = "search";
-  string year_string_b = "2016";
+  string year_string_b = "2016,2017,2018";
   TString tablename_b = "FixName:table_resolved_"+production_b+"_"+sample_b+"_"+CopyReplaceAll(year_string_b, ",","_")+"_b";
   // trigger_version: 0 or 1
   int trigger_version_b = 1;

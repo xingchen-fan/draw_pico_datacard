@@ -142,9 +142,13 @@ void setProcsDict(string const & production, string const & nanoAodFolder, strin
   else  triggers_data = met_triggers;
 
   // Set folders
+  //string mc_production_folder = nanoAodFolder+"/"+production;
   string mc_production_folder = nanoAodFolder+"/"+production;
-  string data_production_folder = nanoAodFolder+"/"+production;
-  string signal_production_folder = nanoAodFolder+"/"+production;
+  //string pc_production_folder = "/net/cms17/cms17r0/pico/NanoAODv7/"+production;
+  //string data_production_folder = "/data/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath";
+  string data_production_folder = "/net/cms17/cms17r0/pico/NanoAODv7/higgsino_klamath";
+  //string signal_production_folder = nanoAodFolder+"/"+production;
+  string signal_production_folder = "/net/cms24/cms24r0/pico/NanoAODv7/"+production;
   string mc_skim_folder, data_skim_folder, signal_skim_folder;
   if (sample_name == "search") {
     //mc_skim_folder = "mc/merged_higmc_higloose/";
@@ -152,7 +156,8 @@ void setProcsDict(string const & production, string const & nanoAodFolder, strin
     //signal_skim_folder = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higloose/";
     mc_skim_folder = "mc/merged_higmc_preselect/";
     data_skim_folder = "data/merged_higdata_preselect/";
-    signal_skim_folder = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_preselect/";
+    //signal_skim_folder = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_preselect/";
+    signal_skim_folder = "SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/";
   } else if (sample_name == "ttbar") {
     mc_skim_folder = "mc/merged_higmc_higlep1T/";
     data_skim_folder = "data/merged_higdata_higlep1T/";
@@ -534,14 +539,16 @@ int main(int argc, char *argv[]){
   // production, nanoAODFolder, sample_name, year_string, 
   // Set procs
   // Set baseline, filter according: sample_name
-  string production = "higgsino_klamath"; 
-  string nanoAodFolder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7";
+  //string production = "higgsino_klamath"; 
+  string production = "higgsino_klamath_v3"; 
+  //string nanoAodFolder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7";
+  string nanoAodFolder = "/net/cms17/cms17r0/pico/NanoAODv7";
 
   // [mc, mcTtbar, mc_and_sig, mc_and_sig_and_data, mc_btag, mc_nisr, mcTtbar_met, mcTtbar_lowmet, mc_and_data, data_3btag]
   map<string, vector<shared_ptr<Process> > > procs_search;
   setProcsDict(production, nanoAodFolder, year_string, "search", procs_search); 
-  map<string, vector<shared_ptr<Process> > > procs_ttbar;
-  setProcsDict(production, nanoAodFolder, year_string, "ttbar", procs_ttbar); 
+  //map<string, vector<shared_ptr<Process> > > procs_ttbar;
+  //setProcsDict(production, nanoAodFolder, year_string, "ttbar", procs_ttbar); 
 
   NamedFunc weight = Higfuncs::final_weight; //"weight"*eff_higtrig_run2*w_years*Functions::w_pileup;
   NamedFunc weight_notrgeff = Higfuncs::final_weight_notrgeff; //"weight"*w_years*Functions::w_pileup
