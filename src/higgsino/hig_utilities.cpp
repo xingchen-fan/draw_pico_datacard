@@ -987,7 +987,6 @@ namespace HigUtilities {
     //controlSystematics["xsig1_ybkg_met3_drmax0"]["qcd"] = 1.00;
     //controlSystematics["xsig0_ybkg_met3_drmax1"]["qcd"] = 1.00;
     //controlSystematics["xsig1_ybkg_met3_drmax1"]["qcd"] = 1.00;
-
     controlSystematics["xsig0_ybkg_met0_drmax0"]["ttbar"] = 1.11; 
     controlSystematics["xsig1_ybkg_met0_drmax0"]["ttbar"] = 1.18;
     controlSystematics["xsig0_ybkg_met0_drmax1"]["ttbar"] = 1.02;

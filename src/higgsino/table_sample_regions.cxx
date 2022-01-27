@@ -52,6 +52,7 @@ namespace{
   // Options: make_event_list,make_event_list_for_excess
   // Options: process_event_list_data,process_event_list_mc,process_event_list_signal
   // Options: sigscan_points,no_weight
+  // Options: TChiHH_HToAll
   string string_options = "";
 }
 
@@ -229,7 +230,8 @@ void addProcess(string const & processName, Process::Type type, int color, Named
   folderDict.insert("qcd_data_skim_folder","data/merged_higdata_higqcd/");
 
   folderDict.insert("signal_production_folder", signalProductionFolder);
-  folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higloose/");
+  if (HigUtilities::is_in_string_options(string_options, "TChiHH_HToAll")) folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_HToAll_fastSimJmeCorrection/merged_higmc_higloose/");
+  else folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higloose/");
   //folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_2D/skim_met150/");
   folderDict.insert("ttbar_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep1T/");
   folderDict.insert("zll_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep2T/");
@@ -335,7 +337,7 @@ void addMultipleSignalProcesses(string const & processName_postfix, NamedFunc co
     }
   }
   else {
-    vector<string> sigm = {"175", "500", "950"};
+    vector<string> sigm = {"200", "500", "950"};
     for (unsigned isig(0); isig<sigm.size(); isig++){
       addProcess("TChiHH("+sigm[isig]+",0) "+processName_postfix, Process::Type::signal, 1, additionalCut,
         nanoAodFolder, production, "signal", sigm[isig]+"_0", sample_name, year_string,
@@ -388,7 +390,8 @@ int main(int argc, char *argv[]){
   // sample: search/ttbar/zll/qcd
   // year_string: 2016/2017/2018/run2
   string production_a = "higgsino_klamath"; 
-  string nanoAodFolder_a = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7";
+  string nanoAodFolder_a;
+  nanoAodFolder_a = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7";
   string sample_a = sample_name;
   string year_string_a = year_string;
 
@@ -461,79 +464,82 @@ int main(int argc, char *argv[]){
   HigUtilities::parseYears(year_string, years);
   // For event list
   vector<shared_ptr<Process> > procs_all;
-  if (years.count(2016)==1) {
-    if (!no_mc) {addProcess("MC_2016", Process::Type::background, 1, base_filters&&resolved_cuts,
-        nanoAodFolder_a, production_a, "mc", "all", sample_a, "2016",
-        procs_all);
+  bool make_event_list = HigUtilities::is_in_string_options(string_options, "make_event_list");
+  if (make_event_list) {
+    if (years.count(2016)==1) {
+      if (!no_mc) {addProcess("MC_2016", Process::Type::background, 1, base_filters&&resolved_cuts,
+          nanoAodFolder_a, production_a, "mc", "all", sample_a, "2016",
+          procs_all);
+      }
+      if (!no_signal) {addProcess("TChiHH1D_2016", Process::Type::signal, 1, base_filters&&resolved_cuts,
+          nanoAodFolder_a, production_a, "signal", "1D", sample_a, "2016",
+          procs_all);
+        addProcess("TChiHH2D_2016", Process::Type::signal, 1, base_filters&&resolved_cuts,
+          nanoAodFolder_a, production_a, "signal", "2D", sample_a, "2016",
+          procs_all);
+        addProcess("T5HH1D_2016", Process::Type::signal, 1, base_filters&&resolved_cuts,
+          nanoAodFolder_a, production_a, "t5hh", "1D", sample_a, "2016",
+          procs_all);
+        addProcess("T5HH2D_2016", Process::Type::signal, 1, base_filters&&resolved_cuts,
+          nanoAodFolder_a, production_a, "t5hh", "2D", sample_a, "2016",
+          procs_all);
+      }
+      if (unblind) {
+        addDataProcess("_2016", base_filters&&resolved_cuts,
+          nanoAodFolder_a, production_a, 
+          sample_a, "2016",
+          procs_all);
+      }
     }
-    if (!no_signal) {addProcess("TChiHH1D_2016", Process::Type::signal, 1, base_filters&&resolved_cuts,
-        nanoAodFolder_a, production_a, "signal", "1D", sample_a, "2016",
+    if (years.count(2017)==1) {
+      if (!no_mc) {addProcess("MC_2017", Process::Type::background, 1, base_filters&&resolved_cuts,
+        nanoAodFolder_a, production_a, "mc", "all", sample_a, "2017",
         procs_all);
-      addProcess("TChiHH2D_2016", Process::Type::signal, 1, base_filters&&resolved_cuts,
-        nanoAodFolder_a, production_a, "signal", "2D", sample_a, "2016",
-        procs_all);
-      addProcess("T5HH1D_2016", Process::Type::signal, 1, base_filters&&resolved_cuts,
-        nanoAodFolder_a, production_a, "t5hh", "1D", sample_a, "2016",
-        procs_all);
-      addProcess("T5HH2D_2016", Process::Type::signal, 1, base_filters&&resolved_cuts,
-        nanoAodFolder_a, production_a, "t5hh", "2D", sample_a, "2016",
-        procs_all);
+      }
+      if (!no_signal) {addProcess("TChiHH1D_2017", Process::Type::signal, 1, base_filters&&resolved_cuts,
+          nanoAodFolder_a, production_a, "signal", "1D", sample_a, "2017",
+          procs_all);
+        addProcess("TChiHH2D_2017", Process::Type::signal, 1, base_filters&&resolved_cuts,
+          nanoAodFolder_a, production_a, "signal", "2D", sample_a, "2017",
+          procs_all);
+        addProcess("T5HH1D_2017", Process::Type::signal, 1, base_filters&&resolved_cuts,
+          nanoAodFolder_a, production_a, "t5hh", "1D", sample_a, "2017",
+          procs_all);
+        addProcess("T5HH2D_2017", Process::Type::signal, 1, base_filters&&resolved_cuts,
+          nanoAodFolder_a, production_a, "t5hh", "2D", sample_a, "2017",
+          procs_all);
+      }
+      if (unblind) {
+        addDataProcess("_2017", base_filters&&resolved_cuts,
+          nanoAodFolder_a, production_a, 
+          sample_a, "2017",
+          procs_all);
+      }
     }
-    if (unblind) {
-      addDataProcess("_2016", base_filters&&resolved_cuts,
-        nanoAodFolder_a, production_a, 
-        sample_a, "2016",
+    if (years.count(2018)==1) {
+      if (!no_mc) {addProcess("MC_2018", Process::Type::background, 1, base_filters&&resolved_cuts,
+        nanoAodFolder_a, production_a, "mc", "all", sample_a, "2018",
         procs_all);
-    }
-  }
-  if (years.count(2017)==1) {
-    if (!no_mc) {addProcess("MC_2017", Process::Type::background, 1, base_filters&&resolved_cuts,
-      nanoAodFolder_a, production_a, "mc", "all", sample_a, "2017",
-      procs_all);
-    }
-    if (!no_signal) {addProcess("TChiHH1D_2017", Process::Type::signal, 1, base_filters&&resolved_cuts,
-        nanoAodFolder_a, production_a, "signal", "1D", sample_a, "2017",
-        procs_all);
-      addProcess("TChiHH2D_2017", Process::Type::signal, 1, base_filters&&resolved_cuts,
-        nanoAodFolder_a, production_a, "signal", "2D", sample_a, "2017",
-        procs_all);
-      addProcess("T5HH1D_2017", Process::Type::signal, 1, base_filters&&resolved_cuts,
-        nanoAodFolder_a, production_a, "t5hh", "1D", sample_a, "2017",
-        procs_all);
-      addProcess("T5HH2D_2017", Process::Type::signal, 1, base_filters&&resolved_cuts,
-        nanoAodFolder_a, production_a, "t5hh", "2D", sample_a, "2017",
-        procs_all);
-    }
-    if (unblind) {
-      addDataProcess("_2017", base_filters&&resolved_cuts,
-        nanoAodFolder_a, production_a, 
-        sample_a, "2017",
-        procs_all);
-    }
-  }
-  if (years.count(2018)==1) {
-    if (!no_mc) {addProcess("MC_2018", Process::Type::background, 1, base_filters&&resolved_cuts,
-      nanoAodFolder_a, production_a, "mc", "all", sample_a, "2018",
-      procs_all);
-    }
-    if (!no_signal) {addProcess("TChiHH1D_2018", Process::Type::signal, 1, base_filters&&resolved_cuts,
-        nanoAodFolder_a, production_a, "signal", "1D", sample_a, "2018",
-        procs_all);
-      addProcess("TChiHH2D_2018", Process::Type::signal, 1, base_filters&&resolved_cuts,
-        nanoAodFolder_a, production_a, "signal", "2D", sample_a, "2018",
-        procs_all);
-      addProcess("T5HH1D_2018", Process::Type::signal, 1, base_filters&&resolved_cuts,
-        nanoAodFolder_a, production_a, "t5hh", "1D", sample_a, "2018",
-        procs_all);
-      addProcess("T5HH2D_2018", Process::Type::signal, 1, base_filters&&resolved_cuts,
-        nanoAodFolder_a, production_a, "t5hh", "2D", sample_a, "2018",
-        procs_all);
-    }
-    if (unblind) {
-      addDataProcess("_2018", base_filters&&resolved_cuts,
-        nanoAodFolder_a, production_a, 
-        sample_a, "2018",
-        procs_all);
+      }
+      if (!no_signal) {addProcess("TChiHH1D_2018", Process::Type::signal, 1, base_filters&&resolved_cuts,
+          nanoAodFolder_a, production_a, "signal", "1D", sample_a, "2018",
+          procs_all);
+        addProcess("TChiHH2D_2018", Process::Type::signal, 1, base_filters&&resolved_cuts,
+          nanoAodFolder_a, production_a, "signal", "2D", sample_a, "2018",
+          procs_all);
+        addProcess("T5HH1D_2018", Process::Type::signal, 1, base_filters&&resolved_cuts,
+          nanoAodFolder_a, production_a, "t5hh", "1D", sample_a, "2018",
+          procs_all);
+        addProcess("T5HH2D_2018", Process::Type::signal, 1, base_filters&&resolved_cuts,
+          nanoAodFolder_a, production_a, "t5hh", "2D", sample_a, "2018",
+          procs_all);
+      }
+      if (unblind) {
+        addDataProcess("_2018", base_filters&&resolved_cuts,
+          nanoAodFolder_a, production_a, 
+          sample_a, "2018",
+          procs_all);
+      }
     }
   }
 
@@ -676,10 +682,13 @@ int main(int argc, char *argv[]){
     pm.min_print_ = true;
     pm.multithreaded_ = !single_thread;
 
-    bool make_event_list = HigUtilities::is_in_string_options(string_options, "make_event_list");
     if (make_event_list) {
       pm.Push<EventScan>("resolved_list_SR", base_filters&&search_resolved_cuts&&signalRegion,vector<NamedFunc>{"SampleType","run","lumiblock","event", "met"}, procs_all, 10, true);
       pm.Push<EventScan>("resolved_list_CR", base_filters&&search_resolved_cuts&&!signalRegion,vector<NamedFunc>{"SampleType", "run","lumiblock","event", "met"}, procs_all, 10, true);
+      //pm.Push<EventScan>("resolved_list_SR_met300", "met>300"&&base_filters&&search_resolved_cuts&&signalRegion,vector<NamedFunc>{"SampleType","run","lumiblock","event", "met"}, procs_all, 10, true);
+      //pm.Push<EventScan>("resolved_list_CR_met300", "met>300"&&base_filters&&search_resolved_cuts&&!signalRegion,vector<NamedFunc>{"SampleType", "run","lumiblock","event", "met"}, procs_all, 10, true);
+      ////pm.Push<EventScan>("resolved_list_SR_met300", base_filters&&search_resolved_cuts&&signalRegion,vector<NamedFunc>{"SampleType","run","lumiblock","event", "met"}, procs_all, 10, true);
+      ////pm.Push<EventScan>("resolved_list_CR_met300", base_filters&&search_resolved_cuts&&!signalRegion,vector<NamedFunc>{"SampleType", "run","lumiblock","event", "met"}, procs_all, 10, true);
       //pm.Push<EventScan>("resolved_list_SR_met300", "met>300"&&base_filters&&search_resolved_cuts&&signalRegion,vector<NamedFunc>{"SampleType","run","lumiblock","event", "met"}, procs_all, 10, true);
       //pm.Push<EventScan>("resolved_list_CR_met300", "met>300"&&base_filters&&search_resolved_cuts&&!signalRegion,vector<NamedFunc>{"SampleType", "run","lumiblock","event", "met"}, procs_all, 10, true);
     }
@@ -703,6 +712,9 @@ int main(int argc, char *argv[]){
     eventListNames.insert("resolved_list_CR_SCAN_Data_2016.txt");eventListNames.insert("resolved_list_SR_SCAN_Data_2016.txt");
     eventListNames.insert("resolved_list_CR_SCAN_Data_2017.txt");eventListNames.insert("resolved_list_SR_SCAN_Data_2017.txt");
     eventListNames.insert("resolved_list_CR_SCAN_Data_2018.txt");eventListNames.insert("resolved_list_SR_SCAN_Data_2018.txt");
+    //eventListNames.insert("resolved_list_CR_met300_SCAN_Data_2016.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_Data_2016.txt");
+    //eventListNames.insert("resolved_list_CR_met300_SCAN_Data_2017.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_Data_2017.txt");
+    //eventListNames.insert("resolved_list_CR_met300_SCAN_Data_2018.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_Data_2018.txt");
   }
   if (process_event_list_mc) {
     //eventListNames.insert("resolved_list_CR_met300_SCAN_MC_2016.txt");eventListNames.insert("resolved_list_SR_met300_SCAN_MC_2016.txt");

@@ -36,6 +36,7 @@ void GetOptions(int argc, char *argv[]);
 namespace{
   float lumi = 1;
   string tag = "";
+  //string signalName = "TChiHH_HToAll";
 }
 
 NamedFunc add_cut(NamedFunc & current_cut, NamedFunc additional_cut) {
@@ -180,7 +181,7 @@ string getLuminosityString(string const & year_string) {
 void addProcess(string const & processName, Process::Type type, int color, NamedFunc const & additionalCut, 
   string const & nanoAodFolder, string const & production, string const & dataType, string const & fileTag, 
   string const & sample, string const & year_string, 
-  vector<shared_ptr<Process> > & procs, bool use_unskimmed) {
+  vector<shared_ptr<Process> > & procs, bool use_unskimmed, string const & signal_name="") {
   set<int> years;
   //years_a = {2016};
   if (year_string == "run2") years = {2016, 2017, 2018};
@@ -272,22 +273,25 @@ void addProcess(string const & processName, Process::Type type, int color, Named
   else folderDict.insert("qcd_data_skim_folder","data/merged_higdata_higqcd/");
 
   folderDict.insert("signal_production_folder", signalProductionFolder);
-  //if (use_unskimmed) folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_2D/unskimmed/");
-  //else folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higloose/");
-  //if (use_unskimmed) folderDict.insert("ttbar_signal_skim_folder", "SMS-TChiHH_2D/unskimmed/");
-  //else folderDict.insert("ttbar_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higlep1T/");
-  //if (use_unskimmed) folderDict.insert("zll_signal_skim_folder", "SMS-TChiHH_2D/unskimmed/");
-  //else folderDict.insert("zll_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higlep2T/");
-  //if (use_unskimmed) folderDict.insert("qcd_signal_skim_folder", "SMS-TChiHH_2D/unskimmed/");
-  //else folderDict.insert("qcd_signal_skim_folder", "SMS-TChiHH_2D/merged_higmc_higqcd/");
-  if (use_unskimmed) folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/");
-  else folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higloose/");
-  if (use_unskimmed) folderDict.insert("ttbar_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/");
-  else folderDict.insert("ttbar_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep1T/");
-  if (use_unskimmed) folderDict.insert("zll_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/");
-  else folderDict.insert("zll_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep2T/");
-  if (use_unskimmed) folderDict.insert("qcd_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/");
-  else folderDict.insert("qcd_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higqcd/");
+  if (signal_name == "TChiHH") {
+    if (use_unskimmed) folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/");
+    else folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higloose/");
+    if (use_unskimmed) folderDict.insert("ttbar_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/");
+    else folderDict.insert("ttbar_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep1T/");
+    if (use_unskimmed) folderDict.insert("zll_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/");
+    else folderDict.insert("zll_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep2T/");
+    if (use_unskimmed) folderDict.insert("qcd_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/");
+    else folderDict.insert("qcd_signal_skim_folder", "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higqcd/");
+  } else if (signal_name == "TChiHH_HToAll") {
+    if (use_unskimmed) folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_HToAll_fastSimJmeCorrection/unskimmed/");
+    else folderDict.insert("search_signal_skim_folder", "SMS-TChiHH_HToAll_fastSimJmeCorrection/merged_higmc_higloose/");
+    if (use_unskimmed) folderDict.insert("ttbar_signal_skim_folder", "SMS-TChiHH_HToAll_fastSimJmeCorrection/unskimmed/");
+    else folderDict.insert("ttbar_signal_skim_folder", "SMS-TChiHH_HToAll_fastSimJmeCorrection/merged_higmc_higlep1T/");
+    if (use_unskimmed) folderDict.insert("zll_signal_skim_folder", "SMS-TChiHH_HToAll_fastSimJmeCorrection/unskimmed/");
+    else folderDict.insert("zll_signal_skim_folder", "SMS-TChiHH_HToAll_fastSimJmeCorrection/merged_higmc_higlep2T/");
+    if (use_unskimmed) folderDict.insert("qcd_signal_skim_folder", "SMS-TChiHH_HToAll_fastSimJmeCorrection/unskimmed/");
+    else folderDict.insert("qcd_signal_skim_folder", "SMS-TChiHH_HToAll_fastSimJmeCorrection/merged_higmc_higqcd/");
+  }
 
   // Set paths
   set<string> pathNames;
@@ -399,13 +403,13 @@ void addAllMcDetailProcesses(string const & processName_postfix, NamedFunc const
 
 void addMultipleSignalProcesses(string const & processName_postfix, NamedFunc const & additionalCut, 
   string const & nanoAodFolder, string const & production, string const & sample, string const & year_string, 
-  vector<shared_ptr<Process> > & procs, bool use_unskimmed) 
+  vector<shared_ptr<Process> > & procs, bool use_unskimmed, string const & signal_name) 
 {
-  vector<pair<string, string> > sigm = {{"175", "0"}, {"500", "0"}, {"900", "0"}, {"250", "50"}, {"350", "200"}, {"450", "100"}};
+  vector<pair<string, string> > sigm = {{"200", "0"}, {"500", "0"}, {"900", "0"}, {"250", "50"}, {"350", "200"}, {"450", "100"}};
   for (unsigned isig(0); isig<sigm.size(); isig++){
     addProcess("TChiHH("+sigm[isig].first+","+sigm[isig].second+") "+processName_postfix, Process::Type::signal, 1, additionalCut,
       nanoAodFolder, production, "signal", sigm[isig].first+"_"+sigm[isig].second, sample, year_string,
-      procs, use_unskimmed);
+      procs, use_unskimmed, signal_name);
   }
 }
 
@@ -519,7 +523,7 @@ void constructRegionTable(vector<TableRow> & tablerows,
 }
 
 void constructCutflowTable(vector<TableRow> & tablerows, 
-  NamedFunc weight, string const & sample) {
+  NamedFunc weight, string const & sample, bool do_htobb) {
 
   if (sample=="search") {
     //tablerows = vector<TableRow>{
@@ -556,8 +560,12 @@ void constructCutflowTable(vector<TableRow> & tablerows,
     //};
 
     NamedFunc current_cut = "1";
+    NamedFunc lumi_weight = "w_lumi"*Higfuncs::w_years_search;
+    if (do_htobb) lumi_weight *= Higfuncs::htobb;
     tablerows = vector<TableRow>{
-    TableRow("No selection", add_cut(current_cut,"met>0"),0,0, weight),
+    TableRow("No selection(lumi)", add_cut(current_cut,"met>0"),0,0, lumi_weight),
+    TableRow("No selection(weights)", add_cut(current_cut,"met>0"),0,0, weight),
+    TableRow("Filter", add_cut(current_cut, Higfuncs::final_pass_filters), 0,0, weight),
     TableRow("$p_\\text{t}^\\text{miss}>150 \\text{ GeV}$", add_cut(current_cut,"met>150"),0,0,weight),
     TableRow("$N_\\text{vl}=0$, $4\\leq N_\\text{j}\\leq 5$", add_cut(current_cut,"nvlep==0 && njet>=4 && njet<=5"),0,0,weight),
     TableRow("$N_\\text{b}\\geq 2$", add_cut(current_cut,"nbt>=2"),0,0,weight),
@@ -665,6 +673,7 @@ int main(int argc, char *argv[]){
   bool doMc = false;
   bool doMcDetail = false;
   bool doData = false; // [TODO] for data didn't implement zll and qcd yet for table_mode==cutflow
+  bool use_unskimmed = true;
   //NamedFunc study_cut = Higfuncs::lead_signal_lepton_pt>20 && Higfuncs::lead_signal_lepton_pt<25;
   NamedFunc study_cut = "1";
   // table_mode = regions, cutflow
@@ -672,7 +681,6 @@ int main(int argc, char *argv[]){
   // Only for regions table_mode
   bool bin_met = true;
   bool bin_drmax = true;
-  bool use_unskimmed = true;
 
   // dataType: mc/data/signal
   // fileTag: (tt, single_t, zjets, wjets, qcd, other, all), (all), (200_1, 600_1, 950_1, ...)
@@ -684,10 +692,13 @@ int main(int argc, char *argv[]){
   string production_a = "higgsino_klamath"; string nanoAodFolder_a = "/net/cms24/cms24r0/pico/NanoAODv7";
   //string production_a = "higgsino_inyo"; string nanoAodFolder_a = "/cms29r0/pico/NanoAODv7";
   string sample_a = "search";
-  string year_string_a = "2016,2017,2018";
+  string year_string_a = "run2";
   TString tablename_a = "FixName:table_resolved_"+production_a+"_"+sample_a+"_"+CopyReplaceAll(year_string_a, ",","_")+"_a";
   // trigger_version: 0 or 1
   int trigger_version_a = 1;
+  string signal_name_a = "TChiHH";
+  // Only for cutflow
+  bool do_htobb_a = true;
 
   string total_luminosity_string_a = HigUtilities::getLuminosityString(year_string_a);
 
@@ -699,8 +710,8 @@ int main(int argc, char *argv[]){
   //NamedFunc base_filters_a = Functions::hem_veto && "pass && met/mht<2 && met/met_calo<2";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
   //NamedFunc base_filters_a = Functions::hem_veto && "pass";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
   //NamedFunc base_filters_a = Higfuncs::pass_filters&&"met/met_calo<5";
-  //NamedFunc base_filters_a = "1";
-  NamedFunc base_filters_a = Higfuncs::final_pass_filters;
+  NamedFunc base_filters_a = "1";
+  //NamedFunc base_filters_a = Higfuncs::final_pass_filters;
   //NamedFunc base_filters_a = Higfuncs::final_ttbar_pass_filters;
 
   //NamedFunc weight_a = "w_lumi*w_isr"*Higfuncs::eff_higtrig*Higfuncs::w_years;
@@ -712,7 +723,9 @@ int main(int argc, char *argv[]){
   //NamedFunc weight_a = "w_lumi*w_isr"*Higfuncs::eff_higtrig_run2_v0*Higfuncs::w_years;
   //NamedFunc weight_a = "weight"*Higfuncs::eff_higtrig*Higfuncs::w_years;
   //NamedFunc weight = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
-  NamedFunc weight_a = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;;
+  //NamedFunc weight_a = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;;
+  NamedFunc weight_a = Higfuncs::final_weight;
+  if (do_htobb_a) weight_a *= Higfuncs::htobb;
   if (trigger_version_a==0) weight_a = "weight"*Higfuncs::eff_higtrig_run2_v0*Higfuncs::w_years;
 
 
@@ -722,10 +735,13 @@ int main(int argc, char *argv[]){
   //string production_b = "higgsino_klamath"; string nanoAodFolder_b = "/net/cms25/cms25r0/pico/NanoAODv7";
   string production_b = "higgsino_klamath_v3"; string nanoAodFolder_b = "/net/cms24/cms24r0/pico/NanoAODv7";
   string sample_b = "search";
-  string year_string_b = "2016,2017,2018";
+  string year_string_b = "run2";
   TString tablename_b = "FixName:table_resolved_"+production_b+"_"+sample_b+"_"+CopyReplaceAll(year_string_b, ",","_")+"_b";
   // trigger_version: 0 or 1
   int trigger_version_b = 1;
+  string signal_name_b = "TChiHH_HToAll";
+  // Only for cutflow
+  bool do_htobb_b = true;
 
   string total_luminosity_string_b = HigUtilities::getLuminosityString(year_string_b);
 
@@ -739,8 +755,8 @@ int main(int argc, char *argv[]){
   //NamedFunc base_filters_b = Functions::hem_veto && "pass";//HigUtilities::pass_2016; //since pass_fsjets is not quite usable...
   //NamedFunc base_filters_b = Higfuncs::pass_filters&&"met/met_calo<5";
   //NamedFunc base_filters_b = Higfuncs::final_ttbar_pass_filters;
-  //NamedFunc base_filters_b = "1";
-  NamedFunc base_filters_b = Higfuncs::final_pass_filters;
+  NamedFunc base_filters_b = "1";
+  //NamedFunc base_filters_b = Higfuncs::final_pass_filters;
 
   //NamedFunc weight_b = "w_lumi*w_isr"*Higfuncs::eff_higtrig*Higfuncs::w_years;
   //NamedFunc weight_b = "w_lumi*w_isr"*Higfuncs::eff_higtrig_run2_v0*Higfuncs::w_years;
@@ -748,7 +764,9 @@ int main(int argc, char *argv[]){
   //NamedFunc weight_b = "weight"*Higfuncs::eff_higtrig_run2_v0*Higfuncs::w_years;
   //NamedFunc weight_b = "1";
   //NamedFunc weight_b = Higfuncs::final_weight;
-  NamedFunc weight_b = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
+  //NamedFunc weight_b = "weight"*Higfuncs::eff_higtrig_run2*Higfuncs::w_years;
+  NamedFunc weight_b = Higfuncs::final_weight;
+  if (do_htobb_b) weight_b *= Higfuncs::htobb;
   if (trigger_version_b==0) weight_b = "weight"*Higfuncs::eff_higtrig_run2_v0*Higfuncs::w_years;
   /////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////// Setup plotMaker    //////////////////////////////////////////
@@ -784,7 +802,7 @@ int main(int argc, char *argv[]){
     addMultipleSignalProcesses("", base_filters_a&&resolved_cuts_a,
       nanoAodFolder_a, production_a, 
       sample_a, year_string_a,
-      procs_a, use_unskimmed);
+      procs_a, use_unskimmed, signal_name_a);
   }
   if (doData) {
     addDataProcess("", base_filters_a&&resolved_cuts_a,
@@ -806,7 +824,7 @@ int main(int argc, char *argv[]){
     addMultipleSignalProcesses("", base_filters_b&&resolved_cuts_b,
       nanoAodFolder_b, production_b, 
       sample_b, year_string_b,
-      procs_b, use_unskimmed);
+      procs_b, use_unskimmed, signal_name_b);
   }
   if (doData) {
     addDataProcess("", base_filters_b&&resolved_cuts_b,
@@ -823,8 +841,8 @@ int main(int argc, char *argv[]){
     constructRegionTable(tablerows_a, sample_a, weight_a,  bin_met, bin_drmax);
     constructRegionTable(tablerows_b, sample_b, weight_b,  bin_met, bin_drmax);
   } else if (table_mode == "cutflow") {
-    constructCutflowTable(tablerows_a, weight_a, sample_a);
-    constructCutflowTable(tablerows_b, weight_b, sample_b);
+    constructCutflowTable(tablerows_a, weight_a, sample_a, do_htobb_a);
+    constructCutflowTable(tablerows_b, weight_b, sample_b, do_htobb_b);
   }
 
   PlotMaker pm;

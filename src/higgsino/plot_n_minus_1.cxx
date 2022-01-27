@@ -176,6 +176,47 @@ const NamedFunc weight_ht("weight_ht", [](const Baby &b) -> NamedFunc::ScalarTyp
   return weight;
 });
 
+const NamedFunc hhb1_btag("hhb1_btag",[](const Baby &b) -> NamedFunc::ScalarType{
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
+  vector<float> btags (4);
+  btags[0] = (*b.jet_deepcsv())[bbjet_indices.at(0)];
+  btags[1] = (*b.jet_deepcsv())[bbjet_indices.at(1)];
+  btags[2] = (*b.jet_deepcsv())[bbjet_indices.at(2)];
+  btags[3] = (*b.jet_deepcsv())[bbjet_indices.at(3)];
+  sort(btags.begin(), btags.end(), greater<float>());
+  return btags[0];
+});
+const NamedFunc hhb2_btag("hhb2_btag",[](const Baby &b) -> NamedFunc::ScalarType{
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
+  vector<float> btags (4);
+  btags[0] = (*b.jet_deepcsv())[bbjet_indices.at(0)];
+  btags[1] = (*b.jet_deepcsv())[bbjet_indices.at(1)];
+  btags[2] = (*b.jet_deepcsv())[bbjet_indices.at(2)];
+  btags[3] = (*b.jet_deepcsv())[bbjet_indices.at(3)];
+  sort(btags.begin(), btags.end(), greater<float>());
+  return btags[1];
+});
+const NamedFunc hhb3_btag("hhb3_btag",[](const Baby &b) -> NamedFunc::ScalarType{
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
+  vector<float> btags (4);
+  btags[0] = (*b.jet_deepcsv())[bbjet_indices.at(0)];
+  btags[1] = (*b.jet_deepcsv())[bbjet_indices.at(1)];
+  btags[2] = (*b.jet_deepcsv())[bbjet_indices.at(2)];
+  btags[3] = (*b.jet_deepcsv())[bbjet_indices.at(3)];
+  sort(btags.begin(), btags.end(), greater<float>());
+  return btags[2];
+});
+const NamedFunc hhb4_btag("hhb4_btag",[](const Baby &b) -> NamedFunc::ScalarType{
+  vector<unsigned> bbjet_indices = get_higgs_bbjet_indices(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_isgood());
+  vector<float> btags (4);
+  btags[0] = (*b.jet_deepcsv())[bbjet_indices.at(0)];
+  btags[1] = (*b.jet_deepcsv())[bbjet_indices.at(1)];
+  btags[2] = (*b.jet_deepcsv())[bbjet_indices.at(2)];
+  btags[3] = (*b.jet_deepcsv())[bbjet_indices.at(3)];
+  sort(btags.begin(), btags.end(), greater<float>());
+  return btags[3];
+});
+
 void combine_bins(vector<pair<string, NamedFunc> > & combined_bins, vector<pair<string, NamedFunc> > const & bins_a,  vector<pair<string, NamedFunc> > const & bins_b) {
   for (auto const & bin_a : bins_a) {
     for (auto const & bin_b : bins_b) {
@@ -408,24 +449,27 @@ int main(int argc, char *argv[]){
 
   vector<shared_ptr<Process> > procs;
   // Set mc processes
-  //procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X", Process::Type::background,colors("tt_1l"),
-  //                attach_folder(mc_base_folder, years, mc_skim_folder, mctags["tt"]),"stitch"));
-  procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X (#tau_{had}>0)", Process::Type::background,colors("tt_htau"),
-                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["tt"]),"stitch&&ntrutauh>0"));
-  procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X (#tau_{had}=0)", Process::Type::background,colors("tt_1l"),
-                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["tt"]),"stitch&&ntrutauh==0"));
-  //procs.push_back(Process::MakeShared<Baby_pico>("V+jets", Process::Type::background, kOrange+1,
-  //                attach_folder(mc_base_folder, years, mc_skim_folder,mctags["vjets"]),"stitch"));
-  procs.push_back(Process::MakeShared<Baby_pico>("Z+jets", Process::Type::background, kOrange+1,
-                  attach_folder(mc_base_folder, years, mc_skim_folder,mctags["zjets"]),"stitch"));
-  procs.push_back(Process::MakeShared<Baby_pico>("W+jets", Process::Type::background, kGreen+1,
-                  attach_folder(mc_base_folder, years, mc_skim_folder,mctags["wjets"]),"stitch"));
-  procs.push_back(Process::MakeShared<Baby_pico>("Single t", Process::Type::background,colors("single_t"),
-                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["single_t"]),"stitch"));
-  procs.push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background, colors("other"),
-                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["qcd"]),"stitch")); 
-  procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGray+2,
-                  attach_folder(mc_base_folder, years, mc_skim_folder, mctags["other"]),"stitch"));
+  bool use_mc = false;
+  if (use_mc) {
+    //procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X", Process::Type::background,colors("tt_1l"),
+    //                attach_folder(mc_base_folder, years, mc_skim_folder, mctags["tt"]),"stitch"));
+    procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X (#tau_{had}>0)", Process::Type::background,colors("tt_htau"),
+                    attach_folder(mc_base_folder, years, mc_skim_folder, mctags["tt"]),"stitch&&ntrutauh>0"));
+    procs.push_back(Process::MakeShared<Baby_pico>("t#bar{t}+X (#tau_{had}=0)", Process::Type::background,colors("tt_1l"),
+                    attach_folder(mc_base_folder, years, mc_skim_folder, mctags["tt"]),"stitch&&ntrutauh==0"));
+    //procs.push_back(Process::MakeShared<Baby_pico>("V+jets", Process::Type::background, kOrange+1,
+    //                attach_folder(mc_base_folder, years, mc_skim_folder,mctags["vjets"]),"stitch"));
+    procs.push_back(Process::MakeShared<Baby_pico>("Z+jets", Process::Type::background, kOrange+1,
+                    attach_folder(mc_base_folder, years, mc_skim_folder,mctags["zjets"]),"stitch"));
+    procs.push_back(Process::MakeShared<Baby_pico>("W+jets", Process::Type::background, kGreen+1,
+                    attach_folder(mc_base_folder, years, mc_skim_folder,mctags["wjets"]),"stitch"));
+    procs.push_back(Process::MakeShared<Baby_pico>("Single t", Process::Type::background,colors("single_t"),
+                    attach_folder(mc_base_folder, years, mc_skim_folder, mctags["single_t"]),"stitch"));
+    procs.push_back(Process::MakeShared<Baby_pico>("QCD", Process::Type::background, colors("other"),
+                    attach_folder(mc_base_folder, years, mc_skim_folder, mctags["qcd"]),"stitch")); 
+    procs.push_back(Process::MakeShared<Baby_pico>("Other", Process::Type::background, kGray+2,
+                    attach_folder(mc_base_folder, years, mc_skim_folder, mctags["other"]),"stitch"));
+  }
 
   vector<string> sigm = {"175", "500", "950"};
   //vector<string> sigm = {"400"};
@@ -485,6 +529,10 @@ int main(int argc, char *argv[]){
   axis_dict.insert("h1b2_pt",Axis(16, 0, 480., h1b2_pt, "p_{T} lead higgs low-tag b jet [GeV]", {}));
   axis_dict.insert("h2b1_pt",Axis(16, 0, 480., h2b1_pt, "p_{T} sublead higgs high-tag b jet [GeV]", {}));
   axis_dict.insert("h2b2_pt",Axis(16, 0, 480., h2b2_pt, "p_{T} sublead higgs low-tag b jet [GeV]", {}));
+  axis_dict.insert("hhb1_btag",Axis(10, 0, 1., hhb1_btag, "Highest b tag jet's btag", {}));
+  axis_dict.insert("hhb2_btag",Axis(10, 0, 1., hhb2_btag, "Second highest b tag jet's btag", {}));
+  axis_dict.insert("hhb3_btag",Axis(10, 0, 1., hhb3_btag, "Third highest b tag jet's btag", {}));
+  axis_dict.insert("hhb4_btag",Axis(10, 0, 1., hhb4_btag, "Fourth highest b tag jet's btag", {}));
   axis_dict.insert("h1_dr",Axis(20,0,3.2,h1_dr, "Lead higgs #DeltaR", {1.1, 2.2}));
   axis_dict.insert("h2_dr",Axis(20,0,3.2,h2_dr, "Sublead higgs #DeltaR", {1.1, 2.2}));
   axis_dict.insert("h1_mass",Axis(10, 0, 200, h1_mass, "Lead m_{bb} [GeV]", {100, 140}));
@@ -529,7 +577,8 @@ int main(int argc, char *argv[]){
   axis_dict.insert("mht_filter",Axis(10, 0, 10, "met/mht", "MET/MHT", {2}));
   axis_dict.insert("met_calo_filter",Axis(10, 0, 10, "met/met_calo", "MET/MET_calo", {2,5}));
   axis_dict.insert("weight",Axis(80, 0, 20, "weight", "weight", {1.5}));
-  vector<string> log_plots = {"met", "btags", "weight", "h1b1_jetid", "h1b2_jetid", "h2b1_jetid", "h1b2_jetid", "noniso_lep_pt"};
+  //vector<string> log_plots = {"met", "btags", "weight", "h1b1_jetid", "h1b2_jetid", "h2b1_jetid", "h1b2_jetid", "noniso_lep_pt", "h1b1_pt","h1b2_pt","h2b1_pt","h2b2_pt", "hhb1_btag","hhb2_btag","hhb3_btag","hhb4_btag"};
+  vector<string> log_plots = {"met", "btags", "weight", "h1b1_jetid", "h1b2_jetid", "h2b1_jetid", "h1b2_jetid", "noniso_lep_pt", "h1b1_pt","h1b2_pt","h2b1_pt","h2b2_pt"};
 
 
   // Draw n-1
@@ -586,6 +635,10 @@ int main(int argc, char *argv[]){
     target_variables.insert("h2b2_jetid");
     target_variables.insert("h1_dr");
     target_variables.insert("h2_dr");
+    target_variables.insert("hhb1_btag");
+    target_variables.insert("hhb2_btag");
+    target_variables.insert("hhb3_btag");
+    target_variables.insert("hhb4_btag");
     target_variables.insert("h1_mass");
     target_variables.insert("h2_mass");
     target_variables.insert("mht_filter");

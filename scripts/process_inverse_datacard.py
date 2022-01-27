@@ -196,7 +196,7 @@ def get_limit(root_filename):
   return tree.limit
   
 
-# process_inverse_datacard.py -d cards_1d_kappa_priority1/datacard-TChiHH_mChi-400_mLSP-0_Tune_2016,2017,2018_priority1_resolved.txt -n abcd_inverse_datacard.txt -o datacard_results.json
+# process_inverse_datacard.py -d cards_1d_kappa_priority1/datacard-TChiHH_mChi-400_mLSP-0_Tune_2016,2017,2018_priority1_resolved.txt -i abcd_inverse_datacard.txt -o datacard_results.json
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description='Processes a inverse ABCD datacard. \n'\
   +'Outputs a JSON with following format: \n'\
@@ -206,7 +206,7 @@ if __name__ == "__main__":
   +'    POI_result = json.load(POI_result_file)'
   ,formatter_class=argparse.RawTextHelpFormatter)
   parser.add_argument('-d', '--datacard', required=True, help='ABCD datacard')
-  parser.add_argument('-i', '--inverse_datacard', help='Set the inverse ABCD datacard or if it does not exist will make datacard')
+  parser.add_argument('-i', '--inverse_datacard', required=True, help='Set the inverse ABCD datacard. If filename does not exist, will make datacard')
   parser.add_argument('-o', '--output_json', required=True, help='Processed output')
   parser.add_argument('-f', '--fakeRun', action="store_true", help='Do not run commands. Commands are only printed.')
   args = parser.parse_args()
