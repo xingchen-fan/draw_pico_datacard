@@ -183,16 +183,13 @@ int main(int argc, char *argv[]){
   int trigger_version = !HigUtilities::is_in_string_options(string_options, "use_old_trigger");
 
   //string base_dir(string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/");
-  string data_base_dir = "/net/cms17/cms17r0/pico/NanoAODv7/higgsino_klamath/";
-  string sig_base_dir = "/net/cms24/cms24r0/pico/NanoAODv7/higgsino_klamath_v3/";
-  string base_dir = "/net/cms17/cms17r0/pico/NanoAODv7/higgsino_klamath_v3/";
+  string data_base_dir = "/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath_v3/";
+  string sig_base_dir = "/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath_v3/";
+  string base_dir = "/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath_v3/";
   string mc_skim_dir("mc/merged_higmc_higloose/"), data_skim_dir("data/merged_higdata_higloose/"), sig_skim_dir("SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higloose/");
-  //if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "data/merged_higdata_higlep1T/"; sig_skim_dir = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep1T/";} 
-  //else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "data/merged_higdata_higlep2T/"; sig_skim_dir = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep2T/";} 
-  //else if (sample=="qcd") {mc_skim_dir = "mc/merged_higmc_higqcd/";  data_skim_dir = "data/merged_higdata_higqcd/"; sig_skim_dir = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higqcd/";} 
-  if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "data/merged_higdata_higlep1T/"; sig_skim_dir = "SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/";} 
-  else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "data/merged_higdata_higlep2T/"; sig_skim_dir = "SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/";} 
-  else if (sample=="qcd") {mc_skim_dir = "mc/merged_higmc_higqcd/";  data_skim_dir = "data/merged_higdata_higqcd/"; sig_skim_dir = "SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/";} 
+  if (sample=="ttbar")    {mc_skim_dir = "mc/merged_higmc_higlep1T/"; data_skim_dir = "data/merged_higdata_higlep1T/"; sig_skim_dir = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep1T/";} 
+  else if (sample=="zll") {mc_skim_dir = "mc/merged_higmc_higlep2T/"; data_skim_dir = "data/merged_higdata_higlep2T/"; sig_skim_dir = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep2T/";} 
+  else if (sample=="qcd") {mc_skim_dir = "mc/merged_higmc_higqcd/";  data_skim_dir = "data/merged_higdata_higqcd/"; sig_skim_dir = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higdata_higqcd/";} 
 
   map<string, set<string>> mctags; 
   mctags["ttx"]     = set<string>({
@@ -626,7 +623,7 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
   //// Setting output file name
   TString lumi_s = RoundNumber(total_luminosity, 0);
   if (lumi_s=="1") lumi_s = "137";
-  TString outname = "tables/table_pred_"+sample+"_lumi"+lumi_s+(do_highnb?"_highnb":"")+(do_midnb?"_midnb":""); 
+  TString outname = "tables/table_nocombine_pred_"+sample+"_lumi"+lumi_s+(do_highnb?"_highnb":"")+(do_midnb?"_midnb":""); 
   outname += "_"+abcd.scenario+".tex";
   ofstream out(outname);
 
@@ -752,7 +749,7 @@ TString printTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
   out.close();
 
   //// Copying header and table to the compilable file
-  TString fullname = outname; fullname.ReplaceAll("table_","fulltable_");
+  TString fullname = outname; fullname.ReplaceAll("table_nocombine_","fulltable_nocombine_");
   ofstream full(fullname);
   ifstream header("txt/header.tex");
   full<<header.rdbuf();
@@ -958,7 +955,7 @@ TString printPaperTableWithCombine(abcd_def &abcd, vector<vector<GammaParams> > 
 
   //// Setting output file name
   TString lumi_s = RoundNumber(total_luminosity, 0);
-  TString outname = "tables/table_pred_"+sample+"_lumi"+lumi_s+(do_highnb?"_highnb":"")+(do_midnb?"_midnb":""); 
+  TString outname = "tables/table_paper_pred_"+sample+"_lumi"+lumi_s+(do_highnb?"_highnb":"")+(do_midnb?"_midnb":""); 
   outname += "_"+abcd.scenario+".tex";
   ofstream out(outname);
 
@@ -1006,7 +1003,7 @@ TString printPaperTableWithCombine(abcd_def &abcd, vector<vector<GammaParams> > 
   out.close();
 
   //// Copying header and table to the compilable file
-  TString fullname = outname; fullname.ReplaceAll("table_","paper_table_combine_");
+  TString fullname = outname; fullname.ReplaceAll("table_paper_","paper_table_combine_");
   ofstream full(fullname);
   ifstream header("txt/header.tex");
   full<<header.rdbuf();
@@ -1706,6 +1703,8 @@ void plotTable(abcd_def &abcd, vector<vector<GammaParams> > &allyields,
   TCanvas cTest("cTest", "cTest", 500, 500);
   TPad *pad1 = new TPad("top", "top", 0.0, 0.5, 1.0, 1.0);
   TPad *pad2 = new TPad("bot", "bot", 0.0, 0.0, 1.0, 0.5);
+  pad1->SetMargin(0.1,0.02,0.16,0.1);
+  pad2->SetMargin(0.1,0.02,0.16,0.1);
   pad1->Draw();
   pad2->Draw();
   pad1->cd();

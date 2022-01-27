@@ -146,9 +146,9 @@ void setProcsDict(string const & production, string const & nanoAodFolder, strin
   string mc_production_folder = nanoAodFolder+"/"+production;
   //string pc_production_folder = "/net/cms17/cms17r0/pico/NanoAODv7/"+production;
   //string data_production_folder = "/data/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath";
-  string data_production_folder = "/net/cms17/cms17r0/pico/NanoAODv7/higgsino_klamath";
+  string data_production_folder = "/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath_v3";
   //string signal_production_folder = nanoAodFolder+"/"+production;
-  string signal_production_folder = "/net/cms24/cms24r0/pico/NanoAODv7/"+production;
+  string signal_production_folder = "/net/cms25/cms25r0/pico/NanoAODv7/"+production;
   string mc_skim_folder, data_skim_folder, signal_skim_folder;
   if (sample_name == "search") {
     //mc_skim_folder = "mc/merged_higmc_higloose/";
@@ -157,7 +157,7 @@ void setProcsDict(string const & production, string const & nanoAodFolder, strin
     mc_skim_folder = "mc/merged_higmc_preselect/";
     data_skim_folder = "data/merged_higdata_preselect/";
     //signal_skim_folder = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_preselect/";
-    signal_skim_folder = "SMS-TChiHH_2D_fastSimJmeCorrection/unskimmed/";
+    signal_skim_folder = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_preselect/";
   } else if (sample_name == "ttbar") {
     mc_skim_folder = "mc/merged_higmc_higlep1T/";
     data_skim_folder = "data/merged_higdata_higlep1T/";
@@ -542,7 +542,7 @@ int main(int argc, char *argv[]){
   //string production = "higgsino_klamath"; 
   string production = "higgsino_klamath_v3"; 
   //string nanoAodFolder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7";
-  string nanoAodFolder = "/net/cms17/cms17r0/pico/NanoAODv7";
+  string nanoAodFolder = "/net/cms25/cms25r0/pico/NanoAODv7/";
 
   // [mc, mcTtbar, mc_and_sig, mc_and_sig_and_data, mc_btag, mc_nisr, mcTtbar_met, mcTtbar_lowmet, mc_and_data, data_3btag]
   map<string, vector<shared_ptr<Process> > > procs_search;

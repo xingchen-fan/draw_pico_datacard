@@ -77,16 +77,24 @@ cat datacards/t5hh_twodim/scan_point*/limit*txt | sort >> t5hh_twodim_resolved_l
 ./run/higgsino/limit_scan.exe -f t5hh_twodim_resolved_limits.txt -m T5HH -t t5hh_twodim_resolved --unblind
 ~~~~
 
-### To generate AN plots:
+### To generate AN tables/plots:
 
 ~~~~bash
 ./run/higgsino/an_plot_triggers.exe --unblind --year 2016 --string_options systematic,efficiency,cr
 ./run/higgsino/an_plot_triggers.exe --unblind --year 2017 --string_options systematic,efficiency,cr
 ./run/higgsino/an_plot_triggers.exe --unblind --year 2018 --string_options systematic,efficiency,cr
 ./run/higgsino/an_plot_triggers.exe --unblind --year run2
+./run/higgsino/an_plot_selection.exe --unblind --year run2
+./run/higgsino/an_plot_backgroundEstimation.exe --unblind --year run2
+./run/higgsino/plot_kappas.exe -s search --scen mc -y run2 -o paper_style
 ./run/higgsino/an_plot_syst_ttbar.exe --unblind --year run2
 ./run/higgsino/an_plot_syst_zll.exe --unblind --year run2
 ./run/higgsino/an_plot_syst_qcd.exe --unblind --year run2
+./scripts/datacard_syst_utils.py
+./run/higgsino/plot_n_minus_1.exe --unblind --year run2 --sample search
+./run/higgsino/plot_search_unblind.exe -u -a -o plot_baseline,paper_style,plot_in_btags,plot_in_btags_with_met_split
+./run/higgsino/plot_kappas.exe -s search --scen data -y run2 -o paper_style,use_datacard_results,do_zbi --unblind
+./scripts/plot_ra4style_results.py
 ~~~~
 
 ### To generate paper plots:
@@ -94,6 +102,7 @@ cat datacards/t5hh_twodim/scan_point*/limit*txt | sort >> t5hh_twodim_resolved_l
 ~~~~bash
 ./run/higgsino/plot_search_unblind.exe -u -a -o plot_baseline,paper_style,plot_in_btags,plot_in_btags_with_met_split
 ./run/higgsino/plot_kappas.exe -s search --scen mc -y run2 -o paper_style
+./run/higgsino/plot_kappas.exe -s search --scen data -y run2 -o paper_style,use_datacard_results,do_zbi --unblind
 ./scripts/plot_ra4style_results.py
 ~~~~
 

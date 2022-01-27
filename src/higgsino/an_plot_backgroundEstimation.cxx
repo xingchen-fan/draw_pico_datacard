@@ -66,13 +66,13 @@ int main(int argc, char *argv[]){
   vector<PlotOpt> plt_shapes_info = {lin_shapes_info};
 
   // Set options
-  string mc_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
+  string mc_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath_v3/";
   string mc_skim_folder = "mc/merged_higmc_higloose/";
 
-  string data_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
+  string data_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath_v3/";
   string data_skim_folder = "data/merged_higdata_higloose/";
 
-  string sig_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
+  string sig_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath_v3/";
   string sig_skim_folder = "SMS-TChiHH_2D_fastSimJmeCorrections/merged_higmc_higloose/";
 
   //years = {2016, 2017, 2018};
@@ -211,7 +211,7 @@ int main(int argc, char *argv[]){
 
   // kappa plot
   if (HigUtilities::is_in_string_options(string_options,"plot_kappa")) {
-    system(("./run/higgsino/plot_kappas.exe --sample search --scen mc --year "+year_string).c_str());
+    system(("./run/higgsino/plot_kappas.exe --sample search --scen mc -o paper_style --year "+year_string).c_str());
   }
 
   pm.multithreaded_ = !single_thread;

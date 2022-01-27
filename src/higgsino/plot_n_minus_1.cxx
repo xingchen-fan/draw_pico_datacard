@@ -236,7 +236,7 @@ int main(int argc, char *argv[]){
   bool plot_additional_variables = HigUtilities::is_in_string_options(string_options, "plot_additional_variables");
 
   // Set options
-  string mc_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath";
+  string mc_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath_v3";
   // preselect:
   //   ((nbt>=2 && njet>=4 && njet<=5)||(Sum$(fjet_pt>300 && fjet_msoftdrop>50)>1))
   //   nvlep==0 && ntk==0 && !low_dphi_met && met>150 && 
@@ -260,7 +260,7 @@ int main(int argc, char *argv[]){
   //   met>150  // Since applied to met150 skim
   string qcd_mc_skim_folder = "mc/merged_higmc_higqcd/";
 
-  string data_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
+  string data_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath_v3/";
   //string search_data_skim_folder = "data/merged_higdata_higloose/";
   string search_data_skim_folder = "data/merged_higdata_preselect/";
   string ttbar_data_skim_folder = "data/merged_higdata_higlep1T/";
@@ -269,7 +269,7 @@ int main(int argc, char *argv[]){
   //string zll_data_skim_folder = "data/skim_higlep2T/";
   string qcd_data_skim_folder = "data/merged_higdata_higqcd/";
 
-  string sig_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath/";
+  string sig_base_folder = string(getenv("LOCAL_PICO_DIR"))+"/net/cms25/cms25r0/pico/NanoAODv7/higgsino_klamath_v3/";
   //string search_sig_skim_folder = "SMS-TChiHH_2D/merged_higmc_higloose/";
   string search_sig_skim_folder = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_preselect/";
   string ttbar_sig_skim_folder = "SMS-TChiHH_2D_fastSimJmeCorrection/merged_higmc_higlep1T/";
