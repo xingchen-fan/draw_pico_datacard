@@ -303,9 +303,17 @@ void Hist2D::MakeOnePlot(const string &subdir){
 
 TH2D Hist2D::GetBkgHist(bool bkg_is_hist) const{
   string units = (xaxis_.units_ == yaxis_.units_) ? (xaxis_.units_+"^{2}") : (xaxis_.units_+"*"+yaxis_.units_);
-  string z_title = bkg_is_hist
-    ? ("Simulated Events/(" + ToString(xaxis_.AvgBinWidth()*yaxis_.AvgBinWidth())+" "+units+")")
-    : "";
+  if (xaxis_.units_ == "" || yaxis_.units_ == "") units = "";
+  //string z_title = bkg_is_hist
+  //  ? ("Simulated Events/(" + ToString(xaxis_.AvgBinWidth()*yaxis_.AvgBinWidth())+" "+units+")")
+  //  : "";
+  string z_title = "";
+  if (bkg_is_hist) {
+    if (units == "") z_title = "Simulated Events/(" + ToString(xaxis_.AvgBinWidth()*yaxis_.AvgBinWidth())+")";
+    else z_title = "Simulated Events/(" + ToString(xaxis_.AvgBinWidth()*yaxis_.AvgBinWidth())+" "+units+")";
+  } else {
+    z_title = "";
+  }
   string title = ";"+xaxis_.Title()+";"+yaxis_.Title()+";"+z_title;
   TH2D h;
   if(bkg_is_hist && backgrounds_.size() > 0){
