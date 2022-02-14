@@ -7,9 +7,9 @@ For examples of functionality see: [src/core/test.cxx](src/core/test.cxx)
 
 ## Setup
 
-Prerequisites: 
-- ROOT
-- Scons (optional) for building library. Can also use the `compile.py` script.
+Prerequisites: (Note, on UCSB servers, cmssw can be used to fulfill these prerequisites, which is described below in the UCSB server section.)
+- ROOT 
+- (Optional) Scons for building the library. Can also use the `compile.py` script instead.
 
 Please run the below command to clone the repository
 
@@ -30,8 +30,11 @@ or
 scons
 ~~~~
 
-If you use the USCB servers and to use the batch system on UCSB,
+### Setup on UCSB servers
+
+If you use the USCB servers,
 you can use the below commands for the setup.
+This also sets up the environment for the batch system at UCSB
 
 ~~~~bash
 git clone --recurse-submodules git@github.com:richstu/draw_pico.git
