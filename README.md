@@ -7,7 +7,7 @@ For examples of functionality see: [src/core/test.cxx](src/core/test.cxx)
 
 ## Setup
 
-Prerequisites: (Note, on UCSB servers, cmssw can be used to fulfill these prerequisites, which is described below in the UCSB server section.)
+Prerequisites: (Note, on UCSB servers, `source set_env.sh` can be used to fulfill these prerequisites, which is described below in the UCSB server section.)
 - ROOT 
 - (Optional) Scons for building the library. Can also use the `compile.py` script instead.
 
