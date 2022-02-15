@@ -416,9 +416,9 @@ int main(int argc, char *argv[]){
 
   // kappa plot
   if (unblind) {
-    system(("./run/higgsino/plot_kappas.exe --sample qcd --scen data --unblind -o paper_style --year "+year_string).c_str());
+    (void)!system(("./run/higgsino/plot_kappas.exe --sample qcd --scen data --unblind -o paper_style --year "+year_string).c_str());
   } else {
-    system(("./run/higgsino/plot_kappas.exe --sample qcd --scen mc_as_data --year "+year_string).c_str());
+    (void)!system(("./run/higgsino/plot_kappas.exe --sample qcd --scen mc_as_data --year "+year_string).c_str());
   }
 
   pm.multithreaded_ = !single_thread;

@@ -650,9 +650,9 @@ int main(int argc, char *argv[]){
   bool plot_kappa = HigUtilities::is_in_string_options(string_options, "plot_kappa");
   if (plot_kappa) {
     if (unblind) {
-      system(("./run/higgsino/plot_kappas.exe --sample ttbar --scen data --unblind -o paper_style --year "+year_string).c_str());
+      (void)!system(("./run/higgsino/plot_kappas.exe --sample ttbar --scen data --unblind -o paper_style --year "+year_string).c_str());
     } else {
-      system(("./run/higgsino/plot_kappas.exe --sample ttbar --scen mc_as_data --year "+year_string).c_str());
+      (void)!system(("./run/higgsino/plot_kappas.exe --sample ttbar --scen mc_as_data --year "+year_string).c_str());
     }
   }
 

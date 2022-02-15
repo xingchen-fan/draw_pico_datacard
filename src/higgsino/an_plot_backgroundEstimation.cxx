@@ -211,7 +211,7 @@ int main(int argc, char *argv[]){
 
   // kappa plot
   if (HigUtilities::is_in_string_options(string_options,"plot_kappa")) {
-    system(("./run/higgsino/plot_kappas.exe --sample search --scen mc -o paper_style --year "+year_string).c_str());
+    (void)!system(("./run/higgsino/plot_kappas.exe --sample search --scen mc -o paper_style --year "+year_string).c_str());
   }
 
   pm.multithreaded_ = !single_thread;

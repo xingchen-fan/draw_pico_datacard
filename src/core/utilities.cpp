@@ -276,7 +276,7 @@ string MakeDir(string prefix){
   char *dir_name = new char[prefix.size()];
   if(dir_name == nullptr) ERROR("Could not allocate directory name");
   strcpy(dir_name, prefix.c_str());
-  mkdtemp(dir_name);
+  (void)! mkdtemp(dir_name);
   prefix = dir_name;
   delete[] dir_name;
   return prefix;
@@ -287,7 +287,7 @@ string MakeTemp(string prefix){
   char *file_name = new char[prefix.size()];
   if(file_name == nullptr) ERROR("Could not allocate file name");
   strcpy(file_name, prefix.c_str());
-  mkstemp(file_name);
+  (void)! mkstemp(file_name);
   prefix = file_name;
   delete[] file_name;
   return prefix;

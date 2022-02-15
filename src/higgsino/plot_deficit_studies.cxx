@@ -842,7 +842,7 @@ int main(int argc, char *argv[]){
         .Tag("FixName:deficit__drmax_wpt_lowam_1lcr_"+year_string)
         .LuminosityTag(total_luminosity_string);
 
-      system("./run/higgsino/plot_kappas.exe --scen syst_ttpt");
+      (void)!system("./run/higgsino/plot_kappas.exe --scen syst_ttpt");
     }
 
     if (HigUtilities::is_in_string_options(string_options,"plot_reweight_sig")) {
