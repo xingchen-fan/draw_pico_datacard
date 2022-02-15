@@ -28,7 +28,7 @@
 #include "core/utilities.hpp"
 #include "zgamma/script_utilities.hpp"
 
-namespace script_utilities { 
+namespace zgamma_script_utilities { 
 
   ArgStruct get_options(int argc, char* argv[], std::string default_string_options) {
     //

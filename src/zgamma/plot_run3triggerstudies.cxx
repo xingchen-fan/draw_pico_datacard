@@ -61,12 +61,12 @@ int main(int argc, char *argv[]){
   time_t begtime, endtime;
   time(&begtime);
   Palette colors("txt/colors.txt","default");
-  script_utilities::ArgStruct options = script_utilities::get_options(
+  zgamma_script_utilities::ArgStruct options = zgamma_script_utilities::get_options(
       argc, argv, "");
-  std::vector<PlotOpt> plt_lin = script_utilities::plot_lin(options.unblind);
-  std::vector<PlotOpt> plt_log = script_utilities::plot_log(options.unblind);
-  std::vector<PlotOpt> plt_shapes = script_utilities::plot_shapes();
-  std::vector<PlotOpt> plt_log_shapes = script_utilities::plot_log_shapes();
+  std::vector<PlotOpt> plt_lin = zgamma_script_utilities::plot_lin(options.unblind);
+  std::vector<PlotOpt> plt_log = zgamma_script_utilities::plot_log(options.unblind);
+  std::vector<PlotOpt> plt_shapes = zgamma_script_utilities::plot_shapes();
+  std::vector<PlotOpt> plt_log_shapes = zgamma_script_utilities::plot_log_shapes();
 
   //set<int> years;
   //HigUtilities::parseYears(options.year_string, years);

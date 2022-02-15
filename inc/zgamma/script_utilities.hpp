@@ -27,7 +27,7 @@
 #include "core/table.hpp"
 #include "core/utilities.hpp"
 
-namespace script_utilities { 
+namespace zgamma_script_utilities { 
 
   //struct for holding options passed via command line arguments
   struct ArgStruct {
