@@ -988,7 +988,7 @@ void WriteBaseSource(const set<Variable> &vars){
       file << "    vec_" << var.Name() << "_ = " << var.Type() << "(arr_" 
            << var.Name() << "_.begin(), arr_" << var.Name() << "_.begin()"
            << "+bytes/sizeof(arr_" << var.Name() << "_[0]));\n";
-      file << "    " << var.Name() << "_ = const_cast<" << var.Type() << "* const>(&vec_" << var.Name() << "_);\n";
+      file << "    " << var.Name() << "_ = const_cast<" << var.Type() << "* >(&vec_" << var.Name() << "_);\n";
     }
     else {
       file << "    b_" << var.Name() << "_->GetEntry(entry_);\n";
@@ -1181,7 +1181,7 @@ void WriteSpecializedSource(const set<Variable> &vars, const string &type, const
         file << "    vec_" << var.Name() << "_ = " << var.Type(type) << "(arr_" 
              << var.Name() << "_.begin(), arr_" << var.Name() << "_.begin()"
              << "+bytes/sizeof(arr_" << var.Name() << "_[0]));\n";
-        file << "    " << var.Name() << "_ = const_cast<" << var.Type(type) << "* const>(&vec_" << var.Name() << "_);\n";
+        file << "    " << var.Name() << "_ = const_cast<" << var.Type(type) << "* >(&vec_" << var.Name() << "_);\n";
       }
       else {
         file << "    b_" << var.Name() << "_->GetEntry(entry_);\n";
