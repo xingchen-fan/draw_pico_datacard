@@ -7,19 +7,50 @@ For examples of functionality see: [src/core/test.cxx](src/core/test.cxx)
 
 ## Setup
 
-Many scripts require one to first source the `set_env.sh` script.
+Prerequisites: (Note, on UCSB servers, cmssw can be used to fulfill these prerequisites, which is described below in the UCSB server section.)
+- ROOT 
+- (Optional) Scons for building the library. Can also use the `compile.py` script instead.
 
-To use the batch system:
+Please run the below command to clone the repository
+
 ~~~~bash
-git clone --recurse-submodules https://github.com/richstu/draw_pico
+git clone git@github.com:richstu/draw_pico.git
+cd draw_pico
+~~~~
+
+Please run the below command to build the libraries.
+
+~~~~bash
+./compile.py
+~~~~
+
+or
+
+~~~~bash
+scons
+~~~~
+
+### Setup on UCSB servers
+
+If you use the USCB servers,
+you can use the below commands for the setup.
+This also sets up the environment for the batch system at UCSB
+
+~~~~bash
+git clone --recurse-submodules git@github.com:richstu/draw_pico.git
+cd draw_pico
 source set_env.sh
+./compile.py or scons
 ~~~~
 
 An alternative method is shown below:
+
 ~~~~bash
-git clone https://github.com/richstu/draw_pico
+git clone git@github.com:richstu/draw_pico.git
+cd draw_pico
 git submodule update --init --remote --recursive
 source set_env.sh
+./compile.py or scons
 ~~~~
 
 ## Higgsino useful commands
