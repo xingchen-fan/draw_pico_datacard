@@ -4,7 +4,7 @@ RUN_KERNEL=$(uname -r | cut -d '-' -f1)
 
 # Setting up root using cmssw at ucsb servers. 
 # Please setup ROOT yourself if you are not working on a ucsb server.
-if [[ $HOSTNAME =~ .*physics.ucsb.edu ]]; then
+if [[ $HOSTNAME =~ .*physics.ucsb.edu || $HOSTNAME =~ compute.*.local ]]; then
 
   . /cvmfs/cms.cern.ch/cmsset_default.sh
 
