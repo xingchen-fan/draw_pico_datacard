@@ -20,6 +20,7 @@ cd -
 ## Scons setup
 # Multicore build
 export SCONSFLAGS="-j $(nproc --all)"
+export SET_ENV_PATH=set_env.sh # environment to use for build
 # For shared built libraries
 export LD_LIBRARY_PATH=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/lib/$RUN_KERNEL${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
 
