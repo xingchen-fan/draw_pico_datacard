@@ -12,7 +12,6 @@ if len(source_directories) == 0:
 envClone.Append(CPPPATH = ['#/inc'])
 
 # Determine names for trees
-# tree_variable_filenames = ['pico']
 tree_variable_filenames = [os.path.basename(str(x)) for x in Glob('#/txt/variables/*')]
 tree_variable_files = []
 tree_generated_files = ['src/core/baby.cpp','inc/core/baby.hpp']
@@ -32,23 +31,52 @@ tree_generator = envClone.Program('#/'+tree_generator_exe, Glob(tree_generator_f
 
 # Run tree generator
 run_tree_generator = envClone.Command(tree_generated_files_mark, [], './'+tree_generator_exe+' '+' '.join(tree_variable_filenames))
-# input: tree_generator, tree_variable_file
+envClone.Depends(run_tree_generator, tree_generator_file)
 envClone.Depends(run_tree_generator, tree_variable_files)
 envClone.Depends(run_tree_generator, tree_generator)
-envClone.SideEffect(tree_generated_files, run_tree_generator)
+
+# Make libraries
+libraries = {}
+envClone.Append(LINKFLAGS='-L'+'lib/'+envClone['kernel'])
+
+# Make core library
+core_objects = []
+# Build baby objects
+for source_file in tree_generated_files:
+  if 'hpp' in source_file: continue
+  source_object = envClone.SharedObject(source_file.replace('cpp','os'), '#/'+source_file)
+  core_objects.append(source_object)
+# Build non-baby core objects
+for lib_file in Glob("src/core/*.cpp", exclude=tree_generated_files): 
+  source_object = envClone.SharedObject(lib_file)
+  core_objects.append(source_object)
+# Make core library
+libraryName = "DrawPicoCore"
+library = envClone.SharedLibrary(target='#/lib/'+envClone['kernel']+'/'+libraryName, source=core_objects)
+libraries[libraryName]= library
+
+# Make other libraries
+for source_directory in source_directories:
+  if source_directory == "core": continue # already made a library for core
+  libraryName = "DrawPico"+source_directory.capitalize()
+  source_files = set()
+  for lib_file in Glob("src/"+source_directory+"/*.cpp"): source_files.add(lib_file)
+  library = envClone.SharedLibrary(target='#/lib/'+envClone['kernel']+'/'+libraryName, source=sorted(source_files), LIBS=["DrawPicoCore"])
+  envClone.Depends(library, libraries["DrawPicoCore"])
+  libraries[libraryName]= library
 
 # Make binaries for every directory
 exclude_files = [tree_generator_file] + tree_generated_files
 for source_directory in source_directories: # source_directories = 'core'
   for source_file in Glob("src/"+source_directory+"/*.cxx", exclude=exclude_files):
-    source_directory_name = source_directory if source_directory != './' else 'base'
-    source_files = set()
-    for lib_file in Glob("src/"+source_directory+"/*.cpp"): source_files.add(lib_file)
-    for core_lib_file in Glob("src/core/*.cpp"): source_files.add(core_lib_file)
-    source_files = [source_file] + sorted(source_files)
-    # Make binary
-    program = envClone.Program('#/kernel/'+envClone['kernel']+'/run/'+source_directory+'/${SOURCE.filebase}.exe', list(source_files))
-    envClone.Depends(program, run_tree_generator)
+    # Build object
+    source_object = envClone.Object(source_file)
+    if source_directory!='core': envClone.Depends(source_object, libraries['DrawPicoCore'])
+    libraryName = "DrawPico"+source_directory.capitalize()
+    # Make program
+    program = envClone.Program('#/kernel/'+envClone['kernel']+'/run/'+source_directory+'/${SOURCE.filebase}.exe', source_object, LIBS=["DrawPicoCore", libraryName])
+    envClone.Depends(program, libraries["DrawPicoCore"])
+    envClone.Depends(program, libraries[libraryName])
     # Make script that links to binary
     source_basename = os.path.splitext(os.path.basename(str(source_file)))[0]
     source_script_path = 'run/'+source_directory+'/'+source_basename+'.exe'

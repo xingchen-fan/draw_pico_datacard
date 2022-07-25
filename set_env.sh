@@ -1,35 +1,33 @@
 #!/bin/bash
+# Script that sets up enviornment on UCSB servers
 
-RUN_KERNEL=$(uname -r | cut -d '-' -f1)
+# Environment variable for different Linux versions
+export RUN_KERNEL=$(uname -r | cut -d '-' -f1)
 
-# Setting up root using cmssw at ucsb servers. 
+# Setting up ROOT using cmssw at ucsb servers. 
 # Please setup ROOT yourself if you are not working on a ucsb server.
-if [[ $HOSTNAME =~ .*physics.ucsb.edu || $HOSTNAME =~ compute.*.local ]]; then
-
-  . /cvmfs/cms.cern.ch/cmsset_default.sh
-
-  if [ "$RUN_KERNEL" == "3.10.0" ]; then
-    export SCRAM_ARCH=slc7_amd64_gcc700
-    cd /net/cms29/cms29r0/pico/cc7/CMSSW_10_2_11_patch1/src
-  elif [ "$RUN_KERNEL" == "2.6.32" ]; then
-    cd /net/cms29/cms29r0/pico/CMSSW_10_2_11_patch1/src
-  fi
-  
-  . /cvmfs/cms.cern.ch/cmsset_default.sh
-  eval `scramv1 runtime -sh`
-  cd -
+. /cvmfs/cms.cern.ch/cmsset_default.sh
+if [ "$RUN_KERNEL" == "3.10.0" ]; then
+  export SCRAM_ARCH=slc7_amd64_gcc700
+  cd /net/cms29/cms29r0/pico/cc7/CMSSW_10_2_11_patch1/src
+elif [ "$RUN_KERNEL" == "2.6.32" ]; then
+  cd /net/cms29/cms29r0/pico/CMSSW_10_2_11_patch1/src
 fi
+. /cvmfs/cms.cern.ch/cmsset_default.sh
+eval `scramv1 runtime -sh`
+cd -
 
-if [ -z ${ROOTSYS} ]; then
-  echo "Please setup ROOT"
-fi
-
+## Scons setup
+# Multicore build
 export SCONSFLAGS="-j $(nproc --all)"
+# For shared built libraries
+export LD_LIBRARY_PATH=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/lib/$RUN_KERNEL${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
 
+# Setup job environment, sometimes used for running combine
 source $(dirname $(readlink -e "$BASH_SOURCE"))/modules/jb_utils/set_env.sh
 source $(dirname $(readlink -e "$BASH_SOURCE"))/modules/queue_system/set_env.sh
 
-# Example: usernames=("jbkim ana")
+# Setup for automatically using different folders in scripts for certain users.
 usernames=("jbkim oshiro")
 if [[ "${usernames[@]}" =~ "$USER" ]]; then
   if [ "$HOSTNAME" = cms37.physics.ucsb.edu ]; then
