@@ -72,10 +72,10 @@ vector<pair<int, int> > parseMassPoints(string const & mass_points_string) {
 //   (Sum$(fjet_pt>300 && fjet_msoftdrop>50)>1 || (njet>=4 && njet<=5))
 //   nvlep==0 && ntk==0 && low_dphi_met &&
 //   met>150  // Since applied to met150 skim
-void setProcsDict(string const & production, string const & nanoAodFolder, string const & year_string, string const & sample_name, map<string, vector<shared_ptr<Process> > > & procsDict) {
+void setProcsDict(string const & production, string const & nanoAodFolder, string const & local_year_string, string const & sample_name, map<string, vector<shared_ptr<Process> > > & procsDict) {
   set<int> years;
   //years_a = {2016};
-  HigUtilities::parseYears(year_string, years);
+  HigUtilities::parseYears(local_year_string, years);
 
   // Data cuts
   NamedFunc lepton_triggers = Higfuncs::el_trigger || Higfuncs::mu_trigger;

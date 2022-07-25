@@ -521,7 +521,7 @@ int main(int argc, char *argv[]){
     return min_dm_drmax;
   });
 
-  const NamedFunc pass_filters = "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet&&pass_htratio_dphi_tight" && pass_ecalnoisejet;
+  const NamedFunc local_pass_filters = "npv_good>0&&pass_cschalo_tight&&pass_hbhe&&pass_hbheiso&&pass_ecaldeadcell&&pass_badpfmu&&pass_eebadsc&&pass_muon_jet&&(met/met_calo<2.0)&&(met/mht<2.0)&&pass_low_neutral_jet&&pass_htratio_dphi_tight" && pass_ecalnoisejet;
 
   //----------------------------------------------------------------------------------
   //                                plots n stuff
@@ -574,7 +574,7 @@ int main(int argc, char *argv[]){
   //various plots with all jets
   //met
   pm.Push<Hist1D>(Axis(10, 0, 600, "met", "p_{T}^{miss} [GeV]", {150,200,300,400}),
-    pass_filters &&
+    local_pass_filters &&
     "!low_dphi_met&&"
     "nlep==1&&mt<=100&&4<=njet&&njet<=5&&2<=nbt&&"
     "hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200"
@@ -582,7 +582,7 @@ int main(int argc, char *argv[]){
     ttbar_procs, plt_log).Weight(weight).Tag("FixName:jetid_studies_met_alljets").LuminosityTag(total_luminosity_string);
   //ht
   pm.Push<Hist1D>(Axis(10, 0, 800, "ht", "H_{T} [GeV]", {}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met&&!low_dphi_met&&"
     "nlep==1&&mt<=100&&4<=njet&&njet<=5&&2<=nbt&&"
     "hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200"
@@ -590,7 +590,7 @@ int main(int argc, char *argv[]){
     ttbar_procs, plt_log).Weight(weight).Tag("FixName:jetid_studies_ht_alljets").LuminosityTag(total_luminosity_string);
   //nb
   pm.Push<Hist1D>(Axis(3, 1.5, 4.5, nb, "N_{b}", {2.5}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met&&!low_dphi_met&&"
     "nlep==1&&mt<=100&&4<=njet&&njet<=5&&2<=nbt&&"
     "hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200"
@@ -598,7 +598,7 @@ int main(int argc, char *argv[]){
     ttbar_procs, plt_log).Weight(weight).Tag("FixName:jetid_studies_nb_alljets").LuminosityTag(total_luminosity_string);
   //ambb
   pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "#LT m_{bb} #GT [GeV]", {100,140}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met&&!low_dphi_met&&"
     "nlep==1&&mt<=100&&4<=njet&&njet<=5&&2<=nbt&&"
     "hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200"
@@ -606,7 +606,7 @@ int main(int argc, char *argv[]){
     ttbar_procs, plt_lin).Weight(weight).Tag("FixName:jetid_studies_ambb_alljets").LuminosityTag(total_luminosity_string);
   //dm
   pm.Push<Hist1D>(Axis(10, 0, 100, "hig_cand_dm[0]", "#Delta m [GeV]", {40}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met&&!low_dphi_met&&"
     "nlep==1&&mt<=100&&4<=njet&&njet<=5&&2<=nbt&&"
     "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200"
@@ -614,7 +614,7 @@ int main(int argc, char *argv[]){
     ttbar_procs, plt_lin).Weight(weight).Tag("FixName:jetid_studies_dm_alljets").LuminosityTag(total_luminosity_string);
   //drmax
   pm.Push<Hist1D>(Axis(16, 0, 4, "hig_cand_drmax[0]", "#Delta R_{max}", {1.1,2.2}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met&&!low_dphi_met&&"
     "nlep==1&&mt<=100&&4<=njet&&njet<=5&&2<=nbt&&"
     "hig_cand_dm[0]<=40&&hig_cand_am[0]<=200"
@@ -622,7 +622,7 @@ int main(int argc, char *argv[]){
     ttbar_procs, plt_lin).Weight(weight).Tag("FixName:jetid_studies_drmax_alljets").LuminosityTag(total_luminosity_string);
   //ambb - nb2
   pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "#LT m_{bb} #GT [GeV]", {100,140}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met&&!low_dphi_met&&"
     "nlep==1&&mt<=100&&4<=njet&&njet<=5&&nbt==2&&nbm==2&&"
     "hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200"
@@ -630,7 +630,7 @@ int main(int argc, char *argv[]){
     ttbar_procs, plt_lin).Weight(weight).Tag("FixName:jetid_studies_ambb_nb2_alljets").LuminosityTag(total_luminosity_string);
   //ambb - nb>=3
   pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "#LT m_{bb} #GT [GeV]", {100,140}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met&&!low_dphi_met&&"
     "nlep==1&&mt<=100&&4<=njet&&njet<=5&&2<=nbt&&nbm>=3&&"
     "hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200"
@@ -640,7 +640,7 @@ int main(int argc, char *argv[]){
   //various plots with only ID'd jets
   //met
   pm.Push<Hist1D>(Axis(10, 0, 600, "met", "p_{T}^{miss} [GeV]", {150,200,300,400}),
-    pass_filters &&
+    local_pass_filters &&
     !jetidmod_low_dphi_met &&
     "nlep==1&&mt<=100" && (4<=jetidmod_njet) && (jetidmod_njet<=5) && (2<=jetidmod_nb) &&
     (jetidmod_hig_cand_dm<=40) && (jetidmod_hig_cand_drmax<2.2) && (jetidmod_hig_cand_am <= 200) &&
@@ -648,7 +648,7 @@ int main(int argc, char *argv[]){
     ttbar_procs, plt_log).Weight(weight).Tag("FixName:jetid_studies_met_idjets").LuminosityTag(total_luminosity_string);
   //ht
   pm.Push<Hist1D>(Axis(10, 0, 800, "ht", "H_{T} [GeV]", {}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met" && !jetidmod_low_dphi_met &&
     "nlep==1&&mt<=100" && (4<=jetidmod_njet) && (jetidmod_njet<=5) && (2<=jetidmod_nb) &&
     (jetidmod_hig_cand_dm<=40) && (jetidmod_hig_cand_drmax<2.2) && (jetidmod_hig_cand_am <= 200) &&
@@ -656,7 +656,7 @@ int main(int argc, char *argv[]){
     ttbar_procs, plt_log).Weight(weight).Tag("FixName:jetid_studies_ht_idjets").LuminosityTag(total_luminosity_string);
   //nb
   pm.Push<Hist1D>(Axis(3, 1.5, 4.5, jetidmod_nb, "N_{b}", {2.5}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met" && !jetidmod_low_dphi_met &&
     "nlep==1&&mt<=100" && (4<=jetidmod_njet) && (jetidmod_njet<=5) && (2<=jetidmod_nb) &&
     (jetidmod_hig_cand_dm<=40) && (jetidmod_hig_cand_drmax<2.2) && (jetidmod_hig_cand_am <= 200) &&
@@ -664,7 +664,7 @@ int main(int argc, char *argv[]){
     ttbar_procs, plt_log).Weight(weight).Tag("FixName:jetid_studies_nb_idjets").LuminosityTag(total_luminosity_string);
   //ambb
   pm.Push<Hist1D>(Axis(10, 0, 200, jetidmod_hig_cand_am, "#LT m_{bb} #GT [GeV]", {100,140}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met" && !jetidmod_low_dphi_met &&
     "nlep==1&&mt<=100" && (4<=jetidmod_njet) && (jetidmod_njet<=5) && (2<=jetidmod_nb) &&
     (jetidmod_hig_cand_dm<=40) && (jetidmod_hig_cand_drmax<2.2) && (jetidmod_hig_cand_am <= 200) &&
@@ -672,7 +672,7 @@ int main(int argc, char *argv[]){
     ttbar_procs, plt_lin).Weight(weight).Tag("FixName:jetid_studies_ambb_idjets").LuminosityTag(total_luminosity_string);
   //dm
   pm.Push<Hist1D>(Axis(10, 0, 100, jetidmod_hig_cand_dm, "#Delta m [GeV]", {40}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met" && !jetidmod_low_dphi_met &&
     "nlep==1&&mt<=100" && (4<=jetidmod_njet) && (jetidmod_njet<=5) && (2<=jetidmod_nb) &&
     (jetidmod_hig_cand_drmax<2.2) && (jetidmod_hig_cand_am <= 200) &&
@@ -680,7 +680,7 @@ int main(int argc, char *argv[]){
     ttbar_procs, plt_lin).Weight(weight).Tag("FixName:jetid_studies_dm_idjets").LuminosityTag(total_luminosity_string);
   //drmax
   pm.Push<Hist1D>(Axis(16, 0, 4, jetidmod_hig_cand_drmax, "#Delta R_{max}", {1.1,2.2}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met" && !jetidmod_low_dphi_met &&
     "nlep==1&&mt<=100" && (4<=jetidmod_njet) && (jetidmod_njet<=5) && (2<=jetidmod_nb) &&
     (jetidmod_hig_cand_dm<=40) && (jetidmod_hig_cand_am <= 200) &&
@@ -688,7 +688,7 @@ int main(int argc, char *argv[]){
     ttbar_procs, plt_lin).Weight(weight).Tag("FixName:jetid_studies_drmax_idjets").LuminosityTag(total_luminosity_string);
   //ambb - nb2
   pm.Push<Hist1D>(Axis(10, 0, 200, jetidmod_hig_cand_am, "#LT m_{bb} #GT [GeV]", {100,140}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met" && !jetidmod_low_dphi_met &&
     "nlep==1&&mt<=100" && (4<=jetidmod_njet) && (jetidmod_njet<=5) && (2==jetidmod_nb) &&
     (jetidmod_hig_cand_dm<=40) && (jetidmod_hig_cand_drmax<2.2) && (jetidmod_hig_cand_am <= 200) &&
@@ -696,7 +696,7 @@ int main(int argc, char *argv[]){
     ttbar_procs, plt_lin).Weight(weight).Tag("FixName:jetid_studies_ambb_nb2_idjets").LuminosityTag(total_luminosity_string);
   //ambb - nb>=3
   pm.Push<Hist1D>(Axis(10, 0, 200, jetidmod_hig_cand_am, "#LT m_{bb} #GT [GeV]", {100,140}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met" && !jetidmod_low_dphi_met &&
     "nlep==1&&mt<=100" && (4<=jetidmod_njet) && (jetidmod_njet<=5) && (2<jetidmod_nb) &&
     (jetidmod_hig_cand_dm<=40) && (jetidmod_hig_cand_drmax<2.2) && (jetidmod_hig_cand_am <= 200) &&
@@ -706,7 +706,7 @@ int main(int argc, char *argv[]){
   //various ratio plots with all jets
   //met
   pm.Push<Hist1D>(Axis(10, 0, 600, "met", "p_{T}^{miss} [GeV]", {150,200,300,400}),
-    pass_filters &&
+    local_pass_filters &&
     "!low_dphi_met&&"
     "nlep==1&&mt<=100&&4<=njet&&njet<=5&&2<=nbt&&"
     "hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200"
@@ -714,7 +714,7 @@ int main(int argc, char *argv[]){
     ttbar_procs_ratio, plt_shapes).Weight(weight).Tag("FixName:jetid_studies_shapes_met_alljets").LuminosityTag(total_luminosity_string);
   //ht
   pm.Push<Hist1D>(Axis(10, 0, 800, "ht", "H_{T} [GeV]", {}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met&&!low_dphi_met&&"
     "nlep==1&&mt<=100&&4<=njet&&njet<=5&&2<=nbt&&"
     "hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200"
@@ -722,7 +722,7 @@ int main(int argc, char *argv[]){
     ttbar_procs_ratio, plt_shapes).Weight(weight).Tag("FixName:jetid_studies_shapes_ht_alljets").LuminosityTag(total_luminosity_string);
   //nb
   pm.Push<Hist1D>(Axis(3, 1.5, 4.5, nb, "N_{b}", {2.5}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met&&!low_dphi_met&&"
     "nlep==1&&mt<=100&&4<=njet&&njet<=5&&2<=nbt&&"
     "hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200"
@@ -730,7 +730,7 @@ int main(int argc, char *argv[]){
     ttbar_procs_ratio, plt_shapes).Weight(weight).Tag("FixName:jetid_studies_shapes_nb_alljets").LuminosityTag(total_luminosity_string);
   //ambb
   pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "#LT m_{bb} #GT [GeV]", {100,140}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met&&!low_dphi_met&&"
     "nlep==1&&mt<=100&&4<=njet&&njet<=5&&2<=nbt&&"
     "hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200"
@@ -738,7 +738,7 @@ int main(int argc, char *argv[]){
     ttbar_procs_ratio, plt_shapes).Weight(weight).Tag("FixName:jetid_studies_shapes_ambb_alljets").LuminosityTag(total_luminosity_string);
   //dm
   pm.Push<Hist1D>(Axis(10, 0, 100, "hig_cand_dm[0]", "#Delta m [GeV]", {40}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met&&!low_dphi_met&&"
     "nlep==1&&mt<=100&&4<=njet&&njet<=5&&2<=nbt&&"
     "hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200"
@@ -746,7 +746,7 @@ int main(int argc, char *argv[]){
     ttbar_procs_ratio, plt_shapes).Weight(weight).Tag("FixName:jetid_studies_shapes_dm_alljets").LuminosityTag(total_luminosity_string);
   //drmax
   pm.Push<Hist1D>(Axis(16, 0, 4, "hig_cand_drmax[0]", "#Delta R_{max}", {1.1,2.2}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met&&!low_dphi_met&&"
     "nlep==1&&mt<=100&&4<=njet&&njet<=5&&2<=nbt&&"
     "hig_cand_dm[0]<=40&&hig_cand_am[0]<=200"
@@ -754,7 +754,7 @@ int main(int argc, char *argv[]){
     ttbar_procs_ratio, plt_shapes).Weight(weight).Tag("FixName:jetid_studies_shapes_drmax_alljets").LuminosityTag(total_luminosity_string);
   //ambb - nb2
   pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "#LT m_{bb} #GT [GeV]", {100,140}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met&&!low_dphi_met&&"
     "nlep==1&&mt<=100&&4<=njet&&njet<=5&&nbt==2&&nbm==2&&"
     "hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200"
@@ -762,7 +762,7 @@ int main(int argc, char *argv[]){
     ttbar_procs_ratio, plt_shapes).Weight(weight).Tag("FixName:jetid_studies_shapes_ambb_nb2_alljets").LuminosityTag(total_luminosity_string);
   //ambb - nb>=3
   pm.Push<Hist1D>(Axis(10, 0, 200, "hig_cand_am[0]", "#LT m_{bb} #GT [GeV]", {100,140}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met&&!low_dphi_met&&"
     "nlep==1&&mt<=100&&4<=njet&&njet<=5&&2<=nbt&&nbm>=3&&"
     "hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200"
@@ -772,7 +772,7 @@ int main(int argc, char *argv[]){
   //various ratio plots with only ID'd jets
   //met
   pm.Push<Hist1D>(Axis(10, 0, 600, "met", "p_{T}^{miss} [GeV]", {150,200,300,400}),
-    pass_filters &&
+    local_pass_filters &&
     !jetidmod_low_dphi_met &&
     "nlep==1&&mt<=100" && (4<=jetidmod_njet) && (jetidmod_njet<=5) && (2<=jetidmod_nb) &&
     (jetidmod_hig_cand_dm<=40) && (jetidmod_hig_cand_drmax<2.2) && (jetidmod_hig_cand_am <= 200) &&
@@ -780,7 +780,7 @@ int main(int argc, char *argv[]){
     ttbar_procs_ratio, plt_shapes).Weight(weight).Tag("FixName:jetid_studies_shapes_met_idjets").LuminosityTag(total_luminosity_string);
   //ht
   pm.Push<Hist1D>(Axis(10, 0, 800, "ht", "H_{T} [GeV]", {}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met" && !jetidmod_low_dphi_met &&
     "nlep==1&&mt<=100" && (4<=jetidmod_njet) && (jetidmod_njet<=5) && (2<=jetidmod_nb) &&
     (jetidmod_hig_cand_dm<=40) && (jetidmod_hig_cand_drmax<2.2) && (jetidmod_hig_cand_am <= 200) &&
@@ -788,7 +788,7 @@ int main(int argc, char *argv[]){
     ttbar_procs_ratio, plt_shapes).Weight(weight).Tag("FixName:jetid_studies_shapes_ht_idjets").LuminosityTag(total_luminosity_string);
   //nb
   pm.Push<Hist1D>(Axis(3, 1.5, 4.5, jetidmod_nb, "N_{b}", {2.5}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met" && !jetidmod_low_dphi_met &&
     "nlep==1&&mt<=100" && (4<=jetidmod_njet) && (jetidmod_njet<=5) && (2<=jetidmod_nb) &&
     (jetidmod_hig_cand_dm<=40) && (jetidmod_hig_cand_drmax<2.2) && (jetidmod_hig_cand_am <= 200) &&
@@ -796,7 +796,7 @@ int main(int argc, char *argv[]){
     ttbar_procs_ratio, plt_shapes).Weight(weight).Tag("FixName:jetid_studies_shapes_nb_idjets").LuminosityTag(total_luminosity_string);
   //ambb
   pm.Push<Hist1D>(Axis(10, 0, 200, jetidmod_hig_cand_am, "#LT m_{bb} #GT [GeV]", {100,140}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met" && !jetidmod_low_dphi_met &&
     "nlep==1&&mt<=100" && (4<=jetidmod_njet) && (jetidmod_njet<=5) && (2<=jetidmod_nb) &&
     (jetidmod_hig_cand_dm<=40) && (jetidmod_hig_cand_drmax<2.2) && (jetidmod_hig_cand_am <= 200) &&
@@ -804,7 +804,7 @@ int main(int argc, char *argv[]){
     ttbar_procs_ratio, plt_shapes).Weight(weight).Tag("FixName:jetid_studies_shapes_ambb_idjets").LuminosityTag(total_luminosity_string);
   //dm
   pm.Push<Hist1D>(Axis(10, 0, 100, jetidmod_hig_cand_dm, "#Delta m [GeV]", {40}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met" && !jetidmod_low_dphi_met &&
     "nlep==1&&mt<=100" && (4<=jetidmod_njet) && (jetidmod_njet<=5) && (2<=jetidmod_nb) &&
     (jetidmod_hig_cand_drmax<2.2) && (jetidmod_hig_cand_am <= 200) &&
@@ -812,7 +812,7 @@ int main(int argc, char *argv[]){
     ttbar_procs_ratio, plt_shapes).Weight(weight).Tag("FixName:jetid_studies_shapes_dm_idjets").LuminosityTag(total_luminosity_string);
   //drmax
   pm.Push<Hist1D>(Axis(16, 0, 4, jetidmod_hig_cand_drmax, "#Delta R_{max}", {1.1,2.2}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met" && !jetidmod_low_dphi_met &&
     "nlep==1&&mt<=100" && (4<=jetidmod_njet) && (jetidmod_njet<=5) && (2<=jetidmod_nb) &&
     (jetidmod_hig_cand_dm<=40) && (jetidmod_hig_cand_am <= 200) &&
@@ -820,7 +820,7 @@ int main(int argc, char *argv[]){
     ttbar_procs_ratio, plt_shapes).Weight(weight).Tag("FixName:jetid_studies_shapes_drmax_idjets").LuminosityTag(total_luminosity_string);
   //ambb - nb2
   pm.Push<Hist1D>(Axis(10, 0, 200, jetidmod_hig_cand_am, "#LT m_{bb} #GT [GeV]", {100,140}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met" && !jetidmod_low_dphi_met &&
     "nlep==1&&mt<=100" && (4<=jetidmod_njet) && (jetidmod_njet<=5) && (2==jetidmod_nb) &&
     (jetidmod_hig_cand_dm<=40) && (jetidmod_hig_cand_drmax<2.2) && (jetidmod_hig_cand_am <= 200) &&
@@ -828,7 +828,7 @@ int main(int argc, char *argv[]){
     ttbar_procs_ratio, plt_shapes).Weight(weight).Tag("FixName:jetid_studies_shapes_ambb_nb2_idjets").LuminosityTag(total_luminosity_string);
   //ambb - nb>=3
   pm.Push<Hist1D>(Axis(10, 0, 200, jetidmod_hig_cand_am, "#LT m_{bb} #GT [GeV]", {100,140}),
-    pass_filters &&
+    local_pass_filters &&
     "150<=met" && !jetidmod_low_dphi_met &&
     "nlep==1&&mt<=100" && (4<=jetidmod_njet) && (jetidmod_njet<=5) && (2<jetidmod_nb) &&
     (jetidmod_hig_cand_dm<=40) && (jetidmod_hig_cand_drmax<2.2) && (jetidmod_hig_cand_am <= 200) &&

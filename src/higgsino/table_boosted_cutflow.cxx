@@ -401,7 +401,7 @@ int main(int argc, char *argv[]){
   });
 
   //requires all MC Higgs to decay to bb
-  const NamedFunc htobb("htobb", [](const Baby &b) -> NamedFunc::ScalarType{
+  const NamedFunc local_htobb("htobb", [](const Baby &b) -> NamedFunc::ScalarType{
     //if ((b.type() % 1000 != 107) && (b.type() % 1000 != 106)) return true; //non SUSY model
     //int num_bs = 0;
     for (unsigned int mc_idx(0); mc_idx < b.mc_id()->size(); mc_idx++) {
@@ -440,21 +440,21 @@ int main(int argc, char *argv[]){
 
   pm.Push<Table>("boo_cutflow_"+year_string, vector<TableRow>{
   TableRow("$p_\\text{T}^\\text{miss}\\text{ and }H_\\text{T}^\\text{miss}>200\\text{ GeV}$, $N_{j}\\geq 1$, $N_{tk}=N_{l}=0$, high $\\Delta \\phi$", 
-    htobb && "njet>=1&&met>200&&mht>200&&ntk==0&&nvlep==0&&!low_dphi_met",0,0,Higfuncs::final_weight),
+    local_htobb && "njet>=1&&met>200&&mht>200&&ntk==0&&nvlep==0&&!low_dphi_met",0,0,Higfuncs::final_weight),
   TableRow("filters", 
-    Higfuncs::pass_filters && htobb && "njet>=1&&met>200&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met",0,0,Higfuncs::final_weight),
+    Higfuncs::pass_filters && local_htobb && "njet>=1&&met>200&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met",0,0,Higfuncs::final_weight),
   TableRow("$p_\\text{T}^\\text{miss}>300$~GeV, $H_{T}>600$~GeV", 
-    Higfuncs::pass_filters && htobb && "njet>=1&&met>300&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met&&ht>600",0,0,Higfuncs::final_weight),
+    Higfuncs::pass_filters && local_htobb && "njet>=1&&met>300&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met&&ht>600",0,0,Higfuncs::final_weight),
   TableRow("$N_{Ak8j}\\geq 2$", 
-    Higfuncs::pass_filters && htobb && "njet>=1&&met>300&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met&&ht>600" && (nfatjet>=2),0,0,Higfuncs::final_weight),
+    Higfuncs::pass_filters && local_htobb && "njet>=1&&met>300&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met&&ht>600" && (nfatjet>=2),0,0,Higfuncs::final_weight),
   TableRow("$p_{TAk8j1,2}>300$~GeV", 
-    Higfuncs::pass_filters && htobb && "njet>=1&&met>300&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met&&ht>600" && (nfatjet>=2) && fatjet_ptcut,0,0,Higfuncs::final_weight),
+    Higfuncs::pass_filters && local_htobb && "njet>=1&&met>300&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met&&ht>600" && (nfatjet>=2) && fatjet_ptcut,0,0,Higfuncs::final_weight),
   TableRow("$m_{sdAk8j1,2}\\in [60,260]$~GeV", 
-    Higfuncs::pass_filters && htobb && "njet>=1&&met>300&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met&&ht>600" && (nfatjet>=2) && fatjet_ptcut && fatjet_masscut_loose,0,0,Higfuncs::final_weight),
+    Higfuncs::pass_filters && local_htobb && "njet>=1&&met>300&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met&&ht>600" && (nfatjet>=2) && fatjet_ptcut && fatjet_masscut_loose,0,0,Higfuncs::final_weight),
   TableRow("$m_{sdAk8j1,2}\\in [95,145]$~GeV", 
-    Higfuncs::pass_filters && htobb && "njet>=1&&met>300&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met&&ht>600" && (nfatjet>=2) && fatjet_ptcut && fatjet_masscut_tight,0,0,Higfuncs::final_weight),
+    Higfuncs::pass_filters && local_htobb && "njet>=1&&met>300&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met&&ht>600" && (nfatjet>=2) && fatjet_ptcut && fatjet_masscut_tight,0,0,Higfuncs::final_weight),
   TableRow("$D_{bbAk8j1,2}>0.7$", 
-    Higfuncs::pass_filters && htobb && "njet>=1&&met>300&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met&&ht>600" && (nfatjet>=2) && fatjet_ptcut && fatjet_masscut_tight && fatjet_htagcut,0,0,Higfuncs::final_weight)
+    Higfuncs::pass_filters && local_htobb && "njet>=1&&met>300&&mht>=200&&ntk==0&&nvlep==0&&!low_dphi_met&&ht>600" && (nfatjet>=2) && fatjet_ptcut && fatjet_masscut_tight && fatjet_htagcut,0,0,Higfuncs::final_weight)
   },cutflow_procs,false,true,false,true,false,true).LuminosityTag(total_luminosity_string);
 
   //pm.Push<Table>("FixName:boo_baseline_pie"  , vector<TableRow> ({TableRow("", 

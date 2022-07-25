@@ -79,7 +79,7 @@ string getPartialDatasetName(string filename) {
 }
 
 pair<int, int> getSignalMassValues(string filename) {
-  pair<int, int> nlsp_lsp_mass;
+  //pair<int, int> nlsp_lsp_mass;
   string baseFilename = filename.substr(filename.find_last_of("/\\")+1);
   string datasetName = regSearch(baseFilename, "[A-Z].*|ttHTobb.*");
   if (datasetName.find("SMS-TChiHH") == string::npos) return {-1,-1};
@@ -112,9 +112,9 @@ const NamedFunc eventNumberVeto("eventNumberVeto", [](const Baby &b) -> NamedFun
   return !found;
 });
 
-string getLuminosityString(string const & year_string) {
+string getLuminosityString(string const & local_year_string) {
   set<int> years;
-  HigUtilities::parseYears(year_string, years);
+  HigUtilities::parseYears(local_year_string, years);
   float total_luminosity = 0;
   for (auto const & year : years) {
     if (year == 2016) total_luminosity += 35.9;
@@ -133,11 +133,11 @@ string getLuminosityString(string const & year_string) {
 // sample: search/ttbar/zll/qcd
 // year_string: 2016/2017/2018/run2
 void addProcess(string const & processName, Process::Type type, int color, NamedFunc const & additionalCut, 
-  string const & nanoAodFolder, string const & production, string const & dataType, string const & fileTag, string const & sample_name, string const & year_string, 
+  string const & nanoAodFolder, string const & production, string const & dataType, string const & fileTag, string const & local_sample_name, string const & local_year_string, 
   vector<shared_ptr<Process> > & procs) {
   set<int> years;
   //years_a = {2016};
-  HigUtilities::parseYears(year_string, years);
+  HigUtilities::parseYears(local_year_string, years);
 
   // Set base tags
   map<string, set<string>> mctags; 
@@ -253,77 +253,77 @@ void addProcess(string const & processName, Process::Type type, int color, Named
 
   // Set paths
   set<string> pathNames;
-  pathNames = attach_folder(folderDict[dataType+"_production_folder"], years, folderDict[sample_name+"_"+dataType+"_skim_folder"], fileNames);
+  pathNames = attach_folder(folderDict[dataType+"_production_folder"], years, folderDict[local_sample_name+"_"+dataType+"_skim_folder"], fileNames);
 
   if (dataType == "data") procs.push_back(Process::MakeShared<Baby_pico>(processName, type, color, pathNames, additionalCut));
   else procs.push_back(Process::MakeShared<Baby_pico>(processName, type, color, pathNames,"stitch"&&additionalCut)); // mc, signal
 }
 
 void addAllMcProcesses(string const & processName_postfix, NamedFunc const & additionalCut, 
-  string const & nanoAodFolder, string const & production, string const & sample_name, string const & year_string, 
+  string const & nanoAodFolder, string const & production, string const & local_sample_name, string const & local_year_string, 
   vector<shared_ptr<Process> > & procs) {
   Palette colors("txt/colors.txt", "default");
   addProcess("t#bar{t}+X (#tau_{had}>0) "+processName_postfix, Process::Type::background, colors("tt_htau"), "ntrutauh>0"&&additionalCut,
-    nanoAodFolder, production, "mc", "tt", sample_name, year_string,
+    nanoAodFolder, production, "mc", "tt", local_sample_name, local_year_string,
     procs);
   addProcess("t#bar{t}+X (#tau_{had}=0) "+processName_postfix, Process::Type::background, colors("tt_1l"), "ntrutauh==0"&&additionalCut,
-    nanoAodFolder, production, "mc", "tt", sample_name, year_string,
+    nanoAodFolder, production, "mc", "tt", local_sample_name, local_year_string,
     procs);
   addProcess("Z+Jets "+processName_postfix, Process::Type::background, kOrange+1, additionalCut,
-    nanoAodFolder, production, "mc", "zjets", sample_name, year_string,
+    nanoAodFolder, production, "mc", "zjets", local_sample_name, local_year_string,
     procs);
   addProcess("W+Jets "+processName_postfix, Process::Type::background, kGreen+1, additionalCut,
-    nanoAodFolder, production, "mc", "wjets", sample_name, year_string,
+    nanoAodFolder, production, "mc", "wjets", local_sample_name, local_year_string,
     procs);
   addProcess("Single t "+processName_postfix, Process::Type::background, colors("single_t"), additionalCut,
-    nanoAodFolder, production, "mc", "single_t", sample_name, year_string,
+    nanoAodFolder, production, "mc", "single_t", local_sample_name, local_year_string,
     procs);
   addProcess("QCD "+processName_postfix, Process::Type::background, colors("other"), additionalCut,
-    nanoAodFolder, production, "mc", "qcd", sample_name, year_string,
+    nanoAodFolder, production, "mc", "qcd", local_sample_name, local_year_string,
     procs);
   addProcess("Other "+processName_postfix, Process::Type::background, kGray+2, additionalCut,
-    nanoAodFolder, production, "mc", "other", sample_name, year_string,
+    nanoAodFolder, production, "mc", "other", local_sample_name, local_year_string,
     procs);
 }
 
 void addAllMcDetailProcesses(string const & processName_postfix, NamedFunc const & additionalCut, 
-  string const & nanoAodFolder, string const & production, string const & sample_name, string const & year_string, 
+  string const & nanoAodFolder, string const & production, string const & local_sample_name, string const & local_year_string, 
   vector<shared_ptr<Process> > & procs) {
   Palette colors("txt/colors.txt", "default");
   addProcess("t#bar{t} "+processName_postfix, Process::Type::background, colors("tt_htau"), additionalCut,
-    nanoAodFolder, production, "mc", "ttonly", sample_name, year_string,
+    nanoAodFolder, production, "mc", "ttonly", local_sample_name, local_year_string,
     procs);
   addProcess("t#bar{t}W "+processName_postfix, Process::Type::background, colors("tt_htau"), additionalCut,
-    nanoAodFolder, production, "mc", "ttw", sample_name, year_string,
+    nanoAodFolder, production, "mc", "ttw", local_sample_name, local_year_string,
     procs);
   addProcess("t#bar{t}Z "+processName_postfix, Process::Type::background, colors("tt_htau"), additionalCut,
-    nanoAodFolder, production, "mc", "ttz", sample_name, year_string,
+    nanoAodFolder, production, "mc", "ttz", local_sample_name, local_year_string,
     procs);
   addProcess("t#bar{t}H "+processName_postfix, Process::Type::background, colors("tt_htau"), additionalCut,
-    nanoAodFolder, production, "mc", "tth", sample_name, year_string,
+    nanoAodFolder, production, "mc", "tth", local_sample_name, local_year_string,
     procs);
   addProcess("tt#bar{t}#bar{t} "+processName_postfix, Process::Type::background, colors("tt_htau"), additionalCut,
-    nanoAodFolder, production, "mc", "tttt", sample_name, year_string,
+    nanoAodFolder, production, "mc", "tttt", local_sample_name, local_year_string,
     procs);
   addProcess("Z+Jets "+processName_postfix, Process::Type::background, kOrange+1, additionalCut,
-    nanoAodFolder, production, "mc", "zjets", sample_name, year_string,
+    nanoAodFolder, production, "mc", "zjets", local_sample_name, local_year_string,
     procs);
   addProcess("W+Jets "+processName_postfix, Process::Type::background, kGreen+1, additionalCut,
-    nanoAodFolder, production, "mc", "wjets", sample_name, year_string,
+    nanoAodFolder, production, "mc", "wjets", local_sample_name, local_year_string,
     procs);
   addProcess("Single t "+processName_postfix, Process::Type::background, colors("single_t"), additionalCut,
-    nanoAodFolder, production, "mc", "single_t", sample_name, year_string,
+    nanoAodFolder, production, "mc", "single_t", local_sample_name, local_year_string,
     procs);
   addProcess("QCD "+processName_postfix, Process::Type::background, colors("other"), additionalCut,
-    nanoAodFolder, production, "mc", "qcd", sample_name, year_string,
+    nanoAodFolder, production, "mc", "qcd", local_sample_name, local_year_string,
     procs);
   addProcess("Other "+processName_postfix, Process::Type::background, kGray+2, additionalCut,
-    nanoAodFolder, production, "mc", "other", sample_name, year_string,
+    nanoAodFolder, production, "mc", "other", local_sample_name, local_year_string,
     procs);
 }
 
 void addMultipleSignalProcesses(string const & processName_postfix, NamedFunc const & additionalCut, 
-  string const & nanoAodFolder, string const & production, string const & sample_name, string const & year_string, 
+  string const & nanoAodFolder, string const & production, string const & local_sample_name, string const & local_year_string, 
   vector<shared_ptr<Process> > & procs) 
 {
   //special case for checking bright point on significance scan
@@ -332,7 +332,7 @@ void addMultipleSignalProcesses(string const & processName_postfix, NamedFunc co
     vector<string> sigmlsp = {"100", "100", "100"};
     for (unsigned isig(0); isig<sigm.size(); isig++){
       addProcess("TChiHH("+sigm[isig]+","+sigmlsp[isig]+") "+processName_postfix, Process::Type::signal, 1, additionalCut,
-        nanoAodFolder, production, "signal", sigm[isig]+"_"+sigmlsp[isig], sample_name, year_string,
+        nanoAodFolder, production, "signal", sigm[isig]+"_"+sigmlsp[isig], local_sample_name, local_year_string,
         procs);
     }
   }
@@ -340,7 +340,7 @@ void addMultipleSignalProcesses(string const & processName_postfix, NamedFunc co
     vector<string> sigm = {"200", "500", "950"};
     for (unsigned isig(0); isig<sigm.size(); isig++){
       addProcess("TChiHH("+sigm[isig]+",0) "+processName_postfix, Process::Type::signal, 1, additionalCut,
-        nanoAodFolder, production, "signal", sigm[isig]+"_0", sample_name, year_string,
+        nanoAodFolder, production, "signal", sigm[isig]+"_0", local_sample_name, local_year_string,
         procs);
     }
     if (!no_t5hh) {
@@ -350,7 +350,7 @@ void addMultipleSignalProcesses(string const & processName_postfix, NamedFunc co
       //vector<string> model_names = {"T5HH(1200_400)","T5HH(1600_0)","T5HH(2000_0)"};
       for (unsigned isig(0); isig<sigm_t5hh.size(); isig++){
         addProcess(model_names[isig]+processName_postfix, Process::Type::signal, 1, additionalCut,
-            nanoAodFolder, production, "t5hh", sigm_t5hh[isig], sample_name, year_string,
+            nanoAodFolder, production, "t5hh", sigm_t5hh[isig], local_sample_name, local_year_string,
             procs);
       }
     }
@@ -358,7 +358,7 @@ void addMultipleSignalProcesses(string const & processName_postfix, NamedFunc co
 }
 
 void addDataProcess(string const & processName_postfix, NamedFunc const & additionalCut, 
-  string const & nanoAodFolder, string const & production, string const & sample, string const & year_string, 
+  string const & nanoAodFolder, string const & production, string const & sample, string const & local_year_string, 
   vector<shared_ptr<Process> > & procs) 
 {
     //NamedFunc lepton_triggers = "(HLT_IsoMu24 || HLT_IsoMu27 || HLT_Mu50 || HLT_Ele27_WPTight_Gsf || HLT_Ele35_WPTight_Gsf || HLT_Ele115_CaloIdVT_GsfTrkIdT)";
@@ -373,7 +373,7 @@ void addDataProcess(string const & processName_postfix, NamedFunc const & additi
     else  triggers_data = met_triggers;
 
     addProcess("Data"+processName_postfix, Process::Type::data, kBlack, triggers_data && additionalCut,
-      nanoAodFolder, production, "data", "", sample, year_string,
+      nanoAodFolder, production, "data", "", sample, local_year_string,
       procs);
 }
 

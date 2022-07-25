@@ -46,7 +46,7 @@
 #include "core/functions.hpp"
 #include "higgsino/hig_functions.hpp"
 #include "higgsino/hig_utilities.hpp"
-#include "higgsino/json.hpp"
+#include "json.hpp"
 
 #include "TVector2.h"
 #include "TMath.h"

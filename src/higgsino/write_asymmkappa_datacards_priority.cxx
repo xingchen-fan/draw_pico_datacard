@@ -91,7 +91,7 @@ bool findStringIC(const std::string & strHaystack, const std::string & strNeedle
 }
 
 pair<int, int> getSignalMassValues(string filename) {
-  pair<int, int> nlsp_lsp_mass;
+  //pair<int, int> nlsp_lsp_mass;
   string baseFilename = filename.substr(filename.find_last_of("/\\")+1);
   string datasetName = regSearch(baseFilename, "[A-Z].*|ttHTobb.*");
   if (datasetName.find("SMS-TChiHH") == string::npos) return {-1,-1};

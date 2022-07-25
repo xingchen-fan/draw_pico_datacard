@@ -131,7 +131,7 @@ namespace HigUtilities {
       std::vector<std::pair<std::string, std::string>> sample_bins, std::string sys_idx) {
     std::vector<std::pair<std::string, std::string>> sys_bins;
     for (unsigned bin_idx = 0; bin_idx < sample_bins.size(); bin_idx++) {
-      sys_bins.push_back(std::pair(sample_bins[bin_idx].first, nom2sys_string(sample_bins[bin_idx].second, sys_idx)));
+      sys_bins.push_back(std::make_pair(sample_bins[bin_idx].first, nom2sys_string(sample_bins[bin_idx].second, sys_idx)));
     }
     return sys_bins;
   }
@@ -515,10 +515,10 @@ namespace HigUtilities {
           if (label.find("xsig")!=string::npos && label.find("ysig")!=string::npos) isSignalRegion = true;
           // Apply cut according to SR,CR and priority
           string cut = xBin.second+"&&"+yBin.second+"&&"+(dimension->second)[iBin].second;
-          if (priority==1) cut = cut;
+          if (priority==1) ;//cut = cut;
           else if (priority==2) cut = cut+"&&!boostSignalRegion&&!boostControlRegion";
           else if (priority==3) {
-            if (isSignalRegion) cut = cut;
+            if (isSignalRegion) ;//cut = cut;
             else cut = cut+"&&!boostSignalRegion";
           } else if (priority==4) {
             if (isSignalRegion) cut = cut+"&&!boostSignalRegion";
@@ -570,10 +570,10 @@ namespace HigUtilities {
           if (label.find("xsig")!=string::npos && label.find("ysig")!=string::npos) isSignalRegion = true;
           // Apply cut according to SR,CR and priority
           NamedFunc cut = xBin.second&&yBin.second&&(dimension->second)[iBin].second;
-          if (priority==1) cut = cut;
+          if (priority==1) ;//cut = cut;
           else if (priority==2) cut = cut&&"!boostSignalRegion&&!boostControlRegion";
           else if (priority==3) {
-            if (isSignalRegion) cut = cut;
+            if (isSignalRegion) ;//cut = cut;
             else cut = cut&&"!boostSignalRegion";
           } else if (priority==4) {
             if (isSignalRegion) cut = cut&&"!boostSignalRegion";

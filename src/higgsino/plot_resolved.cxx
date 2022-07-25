@@ -158,11 +158,11 @@ extern const NamedFunc higgs_min_dr("higgs_min_dr", [](const Baby &b) -> NamedFu
   vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());
   ROOT::Math::PtEtaPhiMVector h1b1 ((*b.jet_pt())[bbjet_indices.at(0)], (*b.jet_eta())[bbjet_indices.at(0)], (*b.jet_phi())[bbjet_indices.at(0)], (*b.jet_m())[bbjet_indices.at(0)]);
   ROOT::Math::PtEtaPhiMVector h1b2 ((*b.jet_pt())[bbjet_indices.at(1)], (*b.jet_eta())[bbjet_indices.at(1)], (*b.jet_phi())[bbjet_indices.at(1)], (*b.jet_m())[bbjet_indices.at(1)]);
-  float h1_dr = DeltaR(h1b1, h1b2);
+  float local_h1_dr = DeltaR(h1b1, h1b2);
   ROOT::Math::PtEtaPhiMVector h2b1 ((*b.jet_pt())[bbjet_indices.at(2)], (*b.jet_eta())[bbjet_indices.at(2)], (*b.jet_phi())[bbjet_indices.at(2)], (*b.jet_m())[bbjet_indices.at(2)]);
   ROOT::Math::PtEtaPhiMVector h2b2 ((*b.jet_pt())[bbjet_indices.at(3)], (*b.jet_eta())[bbjet_indices.at(3)], (*b.jet_phi())[bbjet_indices.at(3)], (*b.jet_m())[bbjet_indices.at(3)]);
-  float h2_dr = DeltaR(h2b1, h2b2);
-  return min(h1_dr, h2_dr);
+  float local_h2_dr = DeltaR(h2b1, h2b2);
+  return min(local_h1_dr, local_h2_dr);
 });
 extern const NamedFunc higgs_h1_mass("higgs_h1_mass", [](const Baby &b) -> NamedFunc::ScalarType{
   vector<unsigned> bbjet_indices = get_higgs_bbjet_indices_islep(*b.jet_m(), *b.jet_deepcsv(), *b.jet_pt(), *b.jet_eta(), *b.jet_phi(), *b.jet_islep());

@@ -370,10 +370,12 @@ void MakeLimitPlot(vector<double> vmx,
   cexp.Write((model_+"ExpectedLimit").c_str());
   cup.Write((model_+"ExpectedLimitUp").c_str());
   cdown.Write((model_+"ExpectedLimitDown").c_str());
-  if(false){ // Significances not saved together with limits as per recommendations
-    hsigobs.Write("ObservedSignificance");
-    hsigexp.Write("ExpectedSignificance");
-  }
+  (void) hsigobs;
+  (void) hsigexp;
+  //if(false){ // Significances not saved together with limits as per recommendations
+  //  hsigobs.Write("ObservedSignificance");
+  //  hsigexp.Write("ExpectedSignificance");
+  //}
   file.Close();
   cout << "\nSaved limit curves in " << filebase << "_"<<tag<<".root\n" << endl;
 }

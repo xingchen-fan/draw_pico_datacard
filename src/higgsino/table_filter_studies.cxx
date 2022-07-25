@@ -240,13 +240,13 @@ int main(int argc, char *argv[]){
     return 0.645;
   });
 
-  const NamedFunc el_trigger("el_trigger", [](const Baby &b) -> NamedFunc::ScalarType{
+  const NamedFunc local_el_trigger("el_trigger", [](const Baby &b) -> NamedFunc::ScalarType{
     //can't used string-based named func because name being too long causes histograms to crash
     bool r_el_trigger = b.HLT_Ele25_WPTight_Gsf()||b.HLT_Ele27_WPTight_Gsf()||b.HLT_Ele28_WPTight_Gsf()||b.HLT_Ele32_WPTight_Gsf_L1DoubleEG()||b.HLT_Ele32_WPTight_Gsf()||b.HLT_Ele35_WPTight_Gsf()||b.HLT_Ele45_WPLoose_Gsf()||b.HLT_Ele105_CaloIdVT_GsfTrkIdT()||b.HLT_Ele115_CaloIdVT_GsfTrkIdT()||b.HLT_Ele135_CaloIdVT_GsfTrkIdT()||b.HLT_Ele145_CaloIdVT_GsfTrkIdT()||b.HLT_Ele25_eta2p1_WPTight_Gsf()||b.HLT_Ele27_eta2p1_WPTight_Gsf()||b.HLT_Ele27_eta2p1_WPLoose_Gsf()||b.HLT_Ele20_WPLoose_Gsf()||b.HLT_Ele20_eta2p1_WPLoose_Gsf()||b.HLT_Ele25_eta2p1_WPLoose_Gsf()||b.HLT_Ele15_IsoVVVL_PFHT350()||b.HLT_Ele15_IsoVVVL_PFHT400()||b.HLT_Ele15_IsoVVVL_PFHT450()||b.HLT_Ele15_IsoVVVL_PFHT600()||b.HLT_Ele50_IsoVVVL_PFHT450();
     return r_el_trigger;
   });
 
-  const NamedFunc mu_trigger("mu_trigger", [](const Baby &b) -> NamedFunc::ScalarType{
+  const NamedFunc local_mu_trigger("mu_trigger", [](const Baby &b) -> NamedFunc::ScalarType{
     //can't used string-based named func because name being too long causes histograms to crash
     bool r_mu_trigger = b.HLT_IsoMu20()||b.HLT_IsoMu22()||b.HLT_IsoMu24()||b.HLT_IsoMu27()||b.HLT_IsoTkMu20()||b.HLT_IsoTkMu22()||b.HLT_IsoTkMu24()||b.HLT_Mu50()||b.HLT_Mu55()||b.HLT_TkMu50()||b.HLT_IsoMu22_eta2p1()||b.HLT_IsoMu24_eta2p1()||b.HLT_Mu45_eta2p1()||b.HLT_Mu15_IsoVVVL_PFHT350()||b.HLT_Mu15_IsoVVVL_PFHT400()||b.HLT_Mu15_IsoVVVL_PFHT450()||b.HLT_Mu15_IsoVVVL_PFHT600()||b.HLT_Mu50_IsoVVVL_PFHT400()||b.HLT_Mu50_IsoVVVL_PFHT450();
     return r_mu_trigger;
@@ -323,10 +323,10 @@ int main(int argc, char *argv[]){
   NamedFunc baseline = "stitch&&150<=met&&nvlep==0&&ntk==0&&4<=njet&&njet<=5&&2<=nbt&&!low_dphi_met&&hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200";
   NamedFunc baseline_metquality = "stitch&&150<=met&&nvlep==0&&ntk==0&&4<=njet&&njet<=5&&2<=nbt&&!low_dphi_met&&hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200&&(met/met_calo<2.0)&&(met/mht<2.0)";
   NamedFunc baseline_jetid = "stitch&&150<=met&&nvlep==0&&ntk==0" && jetid_modified_cuts;
-  NamedFunc singleele_baseline = el_trigger && "stitch&&150<=met&&nlep==1&&nel==1&&4<=njet&&njet<=5&&2<=nbt&&!low_dphi_met&&hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200";
-  NamedFunc singleele_baseline_jetid = el_trigger && "stitch&&150<=met&&nlep==1&&nel==1" && jetid_modified_cuts;
-  NamedFunc singlemu_baseline = mu_trigger && "stitch&&150<=met&&nlep==1&&nmu==1&&4<=njet&&njet<=5&&2<=nbt&&!low_dphi_met&&hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200";
-  NamedFunc singlemu_baseline_jetid = mu_trigger && "stitch&&150<=met&&nlep==1&&nmu==1" && jetid_modified_cuts;
+  NamedFunc singleele_baseline = local_el_trigger && "stitch&&150<=met&&nlep==1&&nel==1&&4<=njet&&njet<=5&&2<=nbt&&!low_dphi_met&&hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200";
+  NamedFunc singleele_baseline_jetid = local_el_trigger && "stitch&&150<=met&&nlep==1&&nel==1" && jetid_modified_cuts;
+  NamedFunc singlemu_baseline = local_mu_trigger && "stitch&&150<=met&&nlep==1&&nmu==1&&4<=njet&&njet<=5&&2<=nbt&&!low_dphi_met&&hig_cand_dm[0]<=40&&hig_cand_drmax[0]<2.2&&hig_cand_am[0]<=200";
+  NamedFunc singlemu_baseline_jetid = local_mu_trigger && "stitch&&150<=met&&nlep==1&&nmu==1" && jetid_modified_cuts;
 
   PlotMaker pm;
 
@@ -341,7 +341,7 @@ int main(int argc, char *argv[]){
     //1e region with baseline selection
     pm.Push<Table>("cutflow_oneele_baseline_"+year_string, vector<TableRow>{
     TableRow("Events passing single electron triggers", 
-      el_trigger,0,0, mixed_model_weight),
+      local_el_trigger,0,0, mixed_model_weight),
     TableRow("Baseline, $p_\\text{T}^\\text{miss} \\geq 150$ GeV, $\\Delta \\phi$ cuts", 
       singleele_baseline,0,0, mixed_model_weight),
     TableRow("goodVerticesFilter", 
@@ -378,7 +378,7 @@ int main(int argc, char *argv[]){
 
     pm.Push<Table>("cutflow_oneele_baseline_jetid_"+year_string, vector<TableRow>{
     TableRow("Events passing single electron triggers", 
-      el_trigger,0,0, mixed_model_weight),
+      local_el_trigger,0,0, mixed_model_weight),
     TableRow("Baseline, $p_\\text{T}^\\text{miss} \\geq 150 GeV$, $\\Delta \\phi$ cuts, with Jet ID", 
       singleele_baseline_jetid,0,0, mixed_model_weight),
     TableRow("goodVerticesFilter", 
@@ -417,7 +417,7 @@ int main(int argc, char *argv[]){
     //1mu region with baseline selection
     pm.Push<Table>("cutflow_onemu_baseline_"+year_string, vector<TableRow>{
     TableRow("Events passing single electron triggers", 
-      mu_trigger,0,0, mixed_model_weight),
+      local_mu_trigger,0,0, mixed_model_weight),
     TableRow("Baseline, $p_\\text{T}^\\text{miss} \\geq 150$ GeV, $\\Delta \\phi$ cuts", 
       singlemu_baseline,0,0, mixed_model_weight),
     TableRow("goodVerticesFilter", 
@@ -454,7 +454,7 @@ int main(int argc, char *argv[]){
 
     pm.Push<Table>("cutflow_onemu_baseline_jetid_"+year_string, vector<TableRow>{
     TableRow("Events passing single electron triggers", 
-      mu_trigger,0,0, mixed_model_weight),
+      local_mu_trigger,0,0, mixed_model_weight),
     TableRow("Baseline, $p_\\text{T}^\\text{miss} \\geq 150$ GeV, $\\Delta \\phi$ cuts, with Jet ID", 
       singlemu_baseline_jetid,0,0, mixed_model_weight),
     TableRow("goodVerticesFilter", 

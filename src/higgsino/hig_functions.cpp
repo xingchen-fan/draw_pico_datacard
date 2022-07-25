@@ -1958,14 +1958,14 @@ const NamedFunc lead_signal_electron_pt("lead_signal_electron_pt",[](const Baby 
 const NamedFunc lead_lepton_pt("lead_lepton_pt",[](const Baby &b) -> NamedFunc::ScalarType{
   // Search for electrons
   float lead_electron_pt_event = -1;
-  for (unsigned iEl = 0; iEl < b.el_pt()->size(); ++iEl) {
+  for (unsigned iEl = 0; iEl < b.el_pt()->size(); ) {
     //if (b.el_miniso()->at(iEl) >= 0.1) continue;
     lead_electron_pt_event = b.el_pt()->at(iEl); 
     break;
   }
   // Search for muons
   float lead_muon_pt_event = -1;
-  for (unsigned iMu = 0; iMu < b.mu_pt()->size(); ++iMu) {
+  for (unsigned iMu = 0; iMu < b.mu_pt()->size(); ) {
     //if (b.mu_miniso()->at(iMu) >= 0.2) continue;
     lead_muon_pt_event = b.mu_pt()->at(iMu); 
     break;
@@ -1987,7 +1987,7 @@ const NamedFunc lead_lepton_pt("lead_lepton_pt",[](const Baby &b) -> NamedFunc::
 const NamedFunc lead_muon_pt("lead_muon_pt",[](const Baby &b) -> NamedFunc::ScalarType{
   // Search for signal muons
   float lead_muon_pt_event = -1;
-  for (unsigned iMu = 0; iMu < b.mu_pt()->size(); ++iMu) {
+  for (unsigned iMu = 0; iMu < b.mu_pt()->size(); ) {
     lead_muon_pt_event = b.mu_pt()->at(iMu); 
     break;
   }
@@ -2003,7 +2003,7 @@ const NamedFunc lead_muon_pt("lead_muon_pt",[](const Baby &b) -> NamedFunc::Scal
 const NamedFunc lead_electron_pt("lead_electron_pt",[](const Baby &b) -> NamedFunc::ScalarType{
   // Search for signal electrons
   float lead_electron_pt_event = -1;
-  for (unsigned iEl = 0; iEl < b.el_pt()->size(); ++iEl) {
+  for (unsigned iEl = 0; iEl < b.el_pt()->size(); ) {
     lead_electron_pt_event = b.el_pt()->at(iEl); 
     break;
   }
