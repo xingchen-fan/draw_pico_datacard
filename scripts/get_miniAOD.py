@@ -19,8 +19,8 @@ def find_nanoaod_file(nanoaod_folder, run, event, log_file):
     #print(nanoaod_filename)
     #print(tree_nanoaod.GetEntries("run=="+str(run)+"&&event=="+str(event)))
     if (tree_nanoaod.GetEntries("run=="+str(run)+"&&event=="+str(event)) != 0):
-      print("  "+nanoaod_filename)
-      log_file.write("  "+nanoaod_filename+"\n")
+      print("  Found: "+nanoaod_filename)
+      log_file.write("  Found: "+nanoaod_filename+"\n")
       found_nanoaod.append(nanoaod_filename)
   return found_nanoaod
 
@@ -105,6 +105,7 @@ def get_miniaod(run, event, dataset, nanoaod_folder, pico_folder, pico_prefix, o
   nanoaod_dasname = "/store/mc/"+nanoaod_ucsbname_split[1]+"/"+nanoaod_ucsbname_split[0]+"/NANOAODSIM/"+nanoaod_ucsbname_split[2]+"/"+nanoaod_ucsbname_split[3]+"/"+nanoaod_ucsbname_split[4]
   #print(nanoaod_dasname)
   command = 'dasgoclient -query="parent file='+nanoaod_dasname+'"'
+  print('Running: '+command)
   miniaod_dasnames = subprocess.check_output(command, shell=True).split()
   print("[Info] Finding miniAOD with lumi")
   log_file.write("[Info] Finding miniAOD with lumi"+'\n')
@@ -112,6 +113,7 @@ def get_miniaod(run, event, dataset, nanoaod_folder, pico_folder, pico_prefix, o
   found_miniaods = []
   for miniaod_dasname in miniaod_dasnames:
     command = 'dasgoclient -query="lumi file='+miniaod_dasname+'" -json'
+    print('Running: '+command)
     result = subprocess.check_output(command, shell=True)
     result_dict = json.loads(result)
     lumis = result_dict[0]['lumi'][0]['number']
@@ -137,7 +139,6 @@ def get_miniaod(run, event, dataset, nanoaod_folder, pico_folder, pico_prefix, o
   print("[Info] Running below commands to get event")
   log_file.write("[Info] Running below commands to get event"+'\n')
   edm_command = "edmCopyPickMerge inputFiles="+found_miniaods[0]+" eventsToProcess="+str(run)+":"+str(event)+" outputFile="+output_filename
-  #print("  "+edm_command)
   print('')
   #print('  ssh uaf-8;voms-proxy-init -voms cms -valid 168:0')
   print('  ssh uaf-8 "source setCMSEnv &&'+edm_command+'" && scp uaf-8:'+output_filename+" "+output_filename+" && ssh uaf-8 rm "+output_filename)

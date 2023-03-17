@@ -154,6 +154,7 @@ void Table::Print(double luminosity,
   if(!print_table_) return;
   if(subdir != "") mkdir(("tables/"+subdir).c_str(), 0777);
   string fmt_lumi = CopyReplaceAll(RoundNumber(luminosity,1).Data(),".","p");
+  if (luminosity_tag_ != "") fmt_lumi = CopyReplaceAll(luminosity_tag_,".","p");
   string file_name = subdir != ""
     ? "tables/"+subdir+"/"+name_+"_lumi_"+fmt_lumi+".tex"
     : "tables/"+name_+"_lumi_"+fmt_lumi+".tex";
@@ -404,7 +405,10 @@ void Table::PrintRow(ofstream &file, size_t irow, double luminosity) const{
         else file << " & " << setw(10) << totyield; // << "$\\pm$" << luminosity*GetError(backgrounds_, irow);
       }
     }else if(backgrounds_.size() == 1){
-      file << " & " << luminosity*GetYield(backgrounds_, irow) << "$\\pm$" << luminosity*GetError(backgrounds_, irow);
+      if(do_unc_) {
+        file << " & " << luminosity*GetYield(backgrounds_, irow) << "$\\pm$" << luminosity*GetError(backgrounds_, irow);
+      } else
+        file << " & " << luminosity*GetYield(backgrounds_, irow);
     }
 
     if(datas_.size() > 1){

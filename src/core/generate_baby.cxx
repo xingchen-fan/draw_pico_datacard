@@ -579,6 +579,8 @@ void WriteBaseHeader(const set<Variable> &vars,
   file << "  const std::set<std::string> & FileNames() const;\n\n";
   file << "  int SampleType() const;\n";
   file << "  int SetSampleType(const TString &filename);\n\n";
+  file << "  TString SampleTypeString() const;\n";
+  file << "  TString SetSampleTypeString(const TString &filename);\n\n";
 
   file << "  int FastSim() const;\n";
   file << "  int SetFastSim(const TString &filename);\n\n";
@@ -623,6 +625,7 @@ void WriteBaseHeader(const set<Variable> &vars,
 
   file << "  std::set<std::string> file_names_;//!<Files loaded into TChain\n";
   file << "  int sample_type_;//!< Integer indicating what kind of sample the first file has\n";
+  file << "  TString sample_type_string_;//!< TString indicating what kind of sample the first file has\n";
   file << "  bool fast_sim_;//!< Boolean indicating whether or not a sample is fastSIM\n";
   file << "  mutable long total_entries_;//!<Cached number of events in TChain\n";
   file << "  mutable bool cached_total_entries_;//!<Flag if cached event count up to date\n\n";
@@ -824,6 +827,7 @@ void WriteBaseSource(const set<Variable> &vars){
   file << "  TString filename=\"\";\n";
   file << "  if(file_names_.size()) filename = *file_names_.cbegin();\n";
   file << "  sample_type_ = SetSampleType(filename);\n";
+  file << "  sample_type_string_ = SetSampleTypeString(filename);\n";
   file << "  fast_sim_ = SetFastSim(filename);\n";
   file << "}\n";
 
@@ -862,6 +866,11 @@ void WriteBaseSource(const set<Variable> &vars){
   file << "  return sample_type_;\n";
   file << "}\n\n";
 
+  file << "// Return string with sample type\n";
+  file << "TString Baby::SampleTypeString() const{\n";
+  file << "  return sample_type_string_;\n";
+  file << "}\n\n";
+
   file << "// Return bool indicating if sample is fastSIM\n";
   file << "int Baby::FastSim() const{\n";
   file << "  return fast_sim_;\n";
@@ -887,6 +896,18 @@ void WriteBaseSource(const set<Variable> &vars){
 //   file << "  if(filename.Contains(\"_TTWJets\"))samp_type = 70;\n";
 //   file << "  if(filename.Contains(\"_TTZ\"))    samp_type = 71;\n";
 //   file << "  if(filename.Contains(\"_TTG\"))    samp_type = 72;\n";
+  file << "  return samp_type;\n";
+  file << "}\n\n";
+
+  file << "TString Baby::SetSampleTypeString(const TString &filename){\n";
+  file << "  TString samp_type;\n";
+  file << "  if(filename.Contains(\"2016\") && !filename.Contains(\"2016APV\"))     samp_type = \"2016\";\n";
+  file << "  if(filename.Contains(\"2016APV\"))     samp_type = \"2016APV\";\n";
+  file << "  if(filename.Contains(\"2017\"))     samp_type = \"2017\";\n";
+  file << "  if(filename.Contains(\"2018\") && !filename.Contains(\"2017\"))     samp_type = \"2018\";\n";
+  file << "  // Ignore string left to pico\n";
+  file << "  TString t_filename = filename;\n";
+  file << "  if(t_filename.Remove(0,t_filename.Index(\"/pico\")).Contains(\"data\"))     samp_type.Prepend(\"-\");\n";
   file << "  return samp_type;\n";
   file << "}\n\n";
 
