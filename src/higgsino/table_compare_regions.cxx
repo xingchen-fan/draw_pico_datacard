@@ -26,7 +26,7 @@
 #include "core/functions.hpp"
 #include "higgsino/hig_functions.hpp"
 #include "higgsino/hig_utilities.hpp"
-#include "higgsino/ordered_dict.hpp"
+#include "core/ordered_dict.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;

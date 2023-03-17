@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "higgsino/ordered_dict.hpp"
+#include "core/ordered_dict.hpp"
 
 #include <unistd.h>
 #include <getopt.h>

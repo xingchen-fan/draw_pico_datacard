@@ -82,7 +82,8 @@ const NamedFunc pass_susyCleanFastsimJets("pass_susyCleanFastsimJets", [](const 
 //  else return 1;
 //});
 const NamedFunc pass_ra4MuonJet("pass_ra4MuonJet", [](const Baby &b) -> NamedFunc::ScalarType{
-  return (b.pass_ra2_badmu() || b.pass_muon_jet());
+  //return (b.pass_ra2_badmu() || b.pass_muon_jet());
+  return (b.pass_muon_jet()); // pass_ra2_badmu was removed.
 });
 const NamedFunc pass_ra4MetMetCalo("pass_ra4MetMetCalo", [](const Baby &b) -> NamedFunc::ScalarType{
   return b.met()/b.met_calo()<5;

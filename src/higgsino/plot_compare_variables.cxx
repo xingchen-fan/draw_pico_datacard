@@ -26,7 +26,7 @@
 #include "core/functions.hpp"
 #include "higgsino/hig_functions.hpp"
 #include "higgsino/hig_utilities.hpp"
-#include "higgsino/ordered_dict.hpp"
+#include "core/ordered_dict.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;
@@ -437,6 +437,7 @@ int main(int argc, char *argv[]){
       n_minus_1_cut_b = n_minus_1_cut_b && cut_item.value();
     }
 
+    set<string> pathNames; 
     vector<shared_ptr<Process> > procs;
     addProcess(CopyReplaceAll(production_a,"higgsino_","")+"_"+dataType_a+"_"+fileTag_a+"_"+sample_a+"_"+year_string_a, kGreen, n_minus_1_cut_a,
       nanoAodFolder_a, production_a, 
