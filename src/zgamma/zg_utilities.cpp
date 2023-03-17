@@ -17,13 +17,16 @@ namespace ZgUtilities {
     if(gen) {
       for(size_t i = 0; i < b.mc_id()->size(); i++)
         if(b.mc_id()->at(i) == 11 || 
-           b.mc_id()->at(i) == 13 ||
-           b.mc_id()->at(i) == 15) {
-            l1.SetPtEtaPhiM(b.mc_pt()->at(i),
-                            b.mc_eta()->at(i),
-                            b.mc_phi()->at(i),
-                            b.mc_mass()->at(i));
-            if(b.mc_mom()->at(i) == 23) break;
+           b.mc_id()->at(i) == 13
+           //|| b.mc_id()->at(i) == 15
+           ) {
+            if(b.mc_mom()->at(i) == 23) {
+              l1.SetPtEtaPhiM(b.mc_pt()->at(i),
+                              b.mc_eta()->at(i),
+                              b.mc_phi()->at(i),
+                              b.mc_mass()->at(i));
+              break;
+            }
           }
     }
     else{
@@ -46,19 +49,45 @@ namespace ZgUtilities {
     return l1;
   }
 
+/*  TLorentzVector AssignJJ(const Baby &b, bool gen){
+    TLorentzVector jj;
+    double  jj_m = 100000;
+    int r_idx = -1;
+
+    for(size_t i; i < b.dijet_m()->size(); i++){
+      if( fabs( jj_m - 91.2 ) < fabs( (b.dijet_m() -> at(i)) - 91.2)){
+        jj_m = b.dijet_m()->at(i);
+        r_idx = i;
+      }
+
+    }
+   
+   jj.SetPtEtaPhiM(b.dijet_pt() ->at(r_idx),
+                   b.dijet_eta()->at(r_idx),
+                   b.dijet_phi()->at(r_idx),
+   return jj;    
+  }
+*/
   // Returns positive lepton 4-momentum
   TLorentzVector AssignL2(const Baby &b, bool gen) {
     TLorentzVector l2;
     if(gen) {
       for(size_t i = 0; i < b.mc_id()->size(); i++)
         if(b.mc_id()->at(i) == -11 || 
-           b.mc_id()->at(i) == -13 ||
-           b.mc_id()->at(i) == -15) {
-            l2.SetPtEtaPhiM(b.mc_pt()->at(i),
-                            b.mc_eta()->at(i),
-                            b.mc_phi()->at(i),
-                            b.mc_mass()->at(i));
-            if(b.mc_mom()->at(i) == 23) break;
+           b.mc_id()->at(i) == -13
+           //|| b.mc_id()->at(i) == -15
+           ) {
+            if(b.mc_mom()->at(i) == 23) {
+              //cout<<"AssignL2 Z index: "<<b.mc_momidx()->at(i)<<endl;
+              //cout<<"AssignL2 Z mom index: "<<b.mc_momidx()->at(b.mc_momidx()->at(i))<<endl;
+              //cout<<"AssignL2 Z mom pid: "<<b.mc_id()->at(b.mc_momidx()->at(b.mc_momidx()->at(i)))<<endl;
+              //cout<<"AssignL2 Z mom pt: "<<b.mc_pt()->at(b.mc_momidx()->at(b.mc_momidx()->at(i)))<<endl;
+              l2.SetPtEtaPhiM(b.mc_pt()->at(i),
+                              b.mc_eta()->at(i),
+                              b.mc_phi()->at(i),
+                              b.mc_mass()->at(i));
+              break;
+            }
           }
     }
     else{
@@ -98,46 +127,106 @@ namespace ZgUtilities {
   TLorentzVector AssignGamma(const Baby &b, bool gen) {
     TLorentzVector gamma;
     bool FoundGamma(false);
-    if(gen) 
+    if(gen) {
       for(size_t i = 0; i < b.mc_id()->size(); i++)
         if(b.mc_id()->at(i) == 22 && b.mc_pt()->at(i) > 5) {
-          gamma.SetPtEtaPhiM(b.mc_pt()->at(i),
-                             b.mc_eta()->at(i),
-                             b.mc_phi()->at(i),
-                             b.mc_mass()->at(i));
+          if (!FoundGamma) gamma.SetPtEtaPhiM(b.mc_pt()->at(i),
+                                              b.mc_eta()->at(i),
+                                              b.mc_phi()->at(i),
+                                              b.mc_mass()->at(i));
           FoundGamma = true;
-          if(b.mc_mom()->at(i) == 25) break;
+          if(b.mc_mom()->at(i) == 25) {
+            //cout<<"Higgs pt:"<<b.mc_pt()->at(b.mc_momidx()->at(i))<<endl;
+            //cout<<"AssignGamma H index: "<<b.mc_momidx()->at(i)<<endl;
+            //cout<<"AssignGamma H pt: "<<b.mc_pt()->at(b.mc_momidx()->at(i))<<endl;
+            gamma.SetPtEtaPhiM(b.mc_pt()->at(i),
+                               b.mc_eta()->at(i),
+                               b.mc_phi()->at(i),
+                               b.mc_mass()->at(i));
+            break;
+          }
       }
-    if(!FoundGamma) 
+    } else {
       gamma.SetPtEtaPhiM(b.photon_pt() ->at(0),
                          b.photon_eta()->at(0),
                          b.photon_phi()->at(0), 0);
+    }
     return gamma;
   }
-      
+
+  TLorentzVector FindGamma(const Baby &b, bool gen) {
+    TLorentzVector gamma;
+
+    if(gen){
+    			gamma.SetPtEtaPhiM(b.photon_pt()->at(0), b.photon_eta()->at(0), b.photon_phi()->at(0), 0);
+    }
+
+    if(!gen){
+      for(unsigned int i = 0; i < b.photon_pt()->size(); i++) {
+	  	  if(b.photon_pt() -> at(i) > 10 && fabs(b.photon_eta() -> at(i) < 2.6)){ 
+         			gamma.SetPtEtaPhiM(b.photon_pt()->at(i), b.photon_eta()->at(i), b.photon_phi()->at(i), 0);
+              break;
+
+        }
+	    }
+      //gamma.SetPtEtaPhiM(0,0,0,0); -- See if this helps seg faults
+    }
+    return gamma;
+
+  }
+     
+  double Findlly(const Baby &b) { 
+    TLorentzVector photon,ll;
+    if(b.nllphoton() > 0){
+      return (b.llphoton_m() -> at(0));
+    } else {
+      photon = FindGamma(b);
+      ll = AssignZ(b);
+    }
+      return (ll + photon).M();
+  }
+
+
+
   // Returns Higgs 4-momentum
   TLorentzVector AssignH(const Baby &b, bool gen) {
-    TLorentzVector h;
+    TLorentzVector h, y;
     if(gen) {
       bool FoundH(false);
-      for(size_t i = 0; i < b.mc_id()->size(); i++) 
+      for(size_t i = 0; i < b.mc_id()->size(); i++) {
         if(b.mc_id()->at(i) == 25) {
+          //cout<<"AssignH index:"<<i<<endl;
+          //cout<<"AssignH pt:"<<b.mc_pt()->at(i)<<endl;
           FoundH = true;
           h.SetPtEtaPhiM(b.mc_pt()->at(i),
                          b.mc_eta()->at(i),
                          b.mc_phi()->at(i),
                          b.mc_mass()->at(i));
         }
-      if(!FoundH)
-        h = AssignZ(b,gen) + AssignGamma(b,gen);
+      }
+      if(!FoundH) h = AssignZ(b,gen) + AssignGamma(b,gen);
     }
     else {  
-      h.SetPtEtaPhiM(b.llphoton_pt()->at(0),
-                     b.llphoton_eta()->at(0),
-                     b.llphoton_phi()->at(0),
-                     b.llphoton_m()->at(0));
-    }
-    return h;
+	 TLorentzVector z = AssignZ(b);
+	 TLorentzVector photon;
+
+   if(b.llphoton_m() -> size() > 0){
+  	 //for(unsigned int i = 0; i < b.llphoton_pt()->size(); i++) {
+	
+        h.SetPtEtaPhiM(b.llphoton_pt()->at(0),
+                       b.llphoton_eta()->at(0),
+                       b.llphoton_phi()->at(0),
+                       b.llphoton_m()->at(0));
+      //}
+   } else if ( (b.photon_pt() -> size() > 0) && (b.ll_m() -> size() > 0) && (b.llphoton_m() -> size() == 0) ){
+        h = AssignZ(b,gen) + AssignGamma(b,gen);
+
+   } else {
+        h.SetPtEtaPhiM(0,0,0,0);
+   }
+  
+  }
+   return h;  
   }
 
   //
@@ -209,9 +298,11 @@ namespace ZgUtilities {
     TLorentzVector Z  = AssignZ(b,gen);
     TLorentzVector q1 = AssignQ1(b,gen);
     TLorentzVector q2 = AssignQ2(b,gen);
+    //cout<<"a H: "<<H.Pt()<<" Z: "<<Z.Pt()<<endl;
     double M = H.M();
     double lZ = lambdaZ(b,gen);
     double cosTheta = Z.Dot(q1-q2)/(M*lZ);
+    //cout<<"a q1: "<<q1.Pt()<<" q2: "<<q2.Pt()<<" M: "<<M<<" lZ:"<<lZ<<" cosT: "<<cosTheta<<endl;
     if(abs(cosTheta) > 1.01) cout << "ERROR: cTheta = " << cosTheta <<  endl;
     return cosTheta;
   }

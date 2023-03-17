@@ -830,6 +830,17 @@ set<string> attach_folder(string base_folder, set<int> years, string sample_fold
   return fset; 
 }
 
+set<string> attach_folder(string base_folder, set<string> years, string sample_folder, set<string> fileset) {
+  set<string> fset = set<string>();
+  for (auto & year: years) {
+    for (auto &ifile: fileset) {
+      fset.insert(base_folder+"/"+year+"/"+sample_folder+"/"+ifile);
+       cout<<base_folder+"/"+year+"/"+sample_folder+"/"+ifile<<endl;
+    }
+  }
+  return fset; 
+}
+
 
 void parseMasses(const string &prs, int &mglu, int &mlsp){
   mglu = stoi(prs.substr(prs.find("Chi-")+4,prs.find("_mLSP")-prs.find("ino-")-4));

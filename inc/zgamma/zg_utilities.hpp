@@ -27,7 +27,10 @@ namespace ZgUtilities {
   TLorentzVector AssignH (const Baby &b, bool gen = false);
   TLorentzVector AssignQ1(const Baby &b, bool gen = false);
   TLorentzVector AssignQ2(const Baby &b, bool gen = false);
+  TLorentzVector AssignJJ(const Baby &b, bool gen = false);
   TLorentzVector AssignGamma (const Baby &b, bool gen = false);
+  TLorentzVector FindGamma (const Baby &b, bool gen = false);
+  double Findlly(const Baby &b);
   double lambdaZ(const Baby &b, bool gen = false);
   double cos_theta(const Baby &b, bool gen = false);
   double cos_Theta(const Baby &b, bool gen = false);
