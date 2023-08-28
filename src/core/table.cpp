@@ -608,3 +608,7 @@ double Table::GetError(const vector<unique_ptr<TableColumn> > &columns,
   }
   return sqrt(error);
 }
+
+void Table::SetLuminosityTag(const string &tag) {
+  this->LuminosityTag(tag);
+}
