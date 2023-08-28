@@ -27,6 +27,7 @@ float met_tru_phi
 float mt
 float mt_tru
 float ht_isr_me
+float vbf_mva
 
 ###################   Higgsinos   ##################
 std::vector<float> hig_cand_dm

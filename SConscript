@@ -58,12 +58,27 @@ libraries[libraryName]= library
 # Make other libraries
 for source_directory in source_directories:
   if source_directory == "core": continue # already made a library for core
+  if source_directory == "pythonbindings": continue # do this separately
   libraryName = "DrawPico"+source_directory.capitalize()
   source_files = set()
   for lib_file in Glob("src/"+source_directory+"/*.cpp"): source_files.add(lib_file)
   library = envClone.SharedLibrary(target='#/lib/'+envClone['kernel']+'/'+libraryName, source=sorted(source_files), LIBS=["DrawPicoCore"])
   envClone.Depends(library, libraries["DrawPicoCore"])
   libraries[libraryName]= library
+
+#Make python bindings library 
+#this depends on all the others so must be done last
+libraryName = "DrawPicoPythonbindings"
+source_files = set()
+for lib_file in Glob("src/pythonbindings/*.cpp"): source_files.add(lib_file)
+allLibraryNames = []
+for source_directory in source_directories:
+  if source_directory == "pythonbindings": continue # do this separately
+  allLibraryNames.append("DrawPico"+source_directory.capitalize())
+library = envClone.SharedLibrary(target='#/lib/'+envClone['kernel']+'/'+libraryName, source=sorted(source_files), LIBS=allLibraryNames)
+for libraryName in allLibraryNames:
+  envClone.Depends(library, libraries[libraryName])
+libraries[libraryName]= library
 
 # Make binaries for every directory
 exclude_files = [tree_generator_file] + tree_generated_files

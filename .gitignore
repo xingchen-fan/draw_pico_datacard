@@ -38,7 +38,9 @@
 *.pdf
 *.fdb_latexmk
 *.fls
+*.pyc
 run/
+build/
 !txt/variables/*
 !txt/colors.txt
 !txt/plot_styles.txt
