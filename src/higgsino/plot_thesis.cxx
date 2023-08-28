@@ -16,6 +16,7 @@
 #include "core/baby.hpp"
 #include "core/process.hpp"
 #include "core/named_func.hpp"
+#include "core/ordered_dict.hpp"
 #include "core/plot_maker.hpp"
 #include "core/plot_opt.hpp"
 #include "core/palette.hpp"
@@ -26,7 +27,6 @@
 #include "core/functions.hpp"
 #include "higgsino/hig_functions.hpp"
 #include "higgsino/hig_utilities.hpp"
-#include "higgsino/ordered_dict.hpp"
 
 using namespace std;
 using namespace PlotOptTypes;
