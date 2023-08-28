@@ -873,6 +873,8 @@ void WriteBaseSource(const set<Variable> &vars){
   file << "// Return string with sample type\n";
   file << "TString Baby::SampleTypeString() const{\n";
   file << "  return sample_type_string_;\n";
+  file << "}\n\n";
+
   file << "// Return first file name\n";
   file << "std::string Baby::FirstFileName() const{\n";
   file << "  return first_file_name_;\n";

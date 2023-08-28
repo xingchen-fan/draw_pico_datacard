@@ -224,7 +224,7 @@ std::vector<float> mu_sip3d
 std::vector<bool>  mu_id
 std::vector<bool>  mu_mediumid
 std::vector<bool>  mu_tightid
-std::vector<int>  mu_highptid
+std::vector<int>   mu_highptid
 std::vector<bool>  mu_sig
 std::vector<int>   mu_charge
 std::vector<int>   mu_pflavor
