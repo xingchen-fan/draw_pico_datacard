@@ -7,13 +7,13 @@
 #include "TStyle.h"
 #include <iostream>
 #include <set>
+#include <string>
 
 using std::string;
 using std::to_string;
 using std::set;
 using std::cout;
 using std::endl;
-
 
 void setMaximum(float max)
 {

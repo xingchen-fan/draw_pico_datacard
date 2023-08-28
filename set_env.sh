@@ -23,6 +23,10 @@ export SCONSFLAGS="-j $(nproc --all)"
 export SET_ENV_PATH=set_env.sh # environment to use for build
 # For shared built libraries
 export LD_LIBRARY_PATH=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/lib/$RUN_KERNEL${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+#for python bindings
+#ldconfig -n $(dirname $(readlink -e "$BASH_SOURCE"))/lib
+#export LD_LIBRARY_PATH=$(dirname $(readlink -e "$BASH_SOURCE"))/lib:$LD_LIBRARY_PATH
+export PYTHONPATH=$(dirname $(readlink -e "$BASH_SOURCE"))/bindings:$PYTHONPATH
 
 # Setup job environment, sometimes used for running combine
 source $(dirname $(readlink -e "$BASH_SOURCE"))/modules/jb_utils/set_env.sh

@@ -31,6 +31,7 @@ def addRootEnv(_env):
   _env.Append (LINKFLAGS = '`root-config --glibs`') 
   _env.Append (LINKFLAGS = '`root-config --ldflags`')
   _env.Append (LINKFLAGS = ['-lRooFit', '-lGenVector', '-lRooStats', '-lRooFitCore', '-lMathMore', '-lTMVA'])
+  #_env.Append (LINKFLAGS = ['-lRooFit', '-lGenVector', '-lRooStats', '-lRooFitCore', '-lTMVA']) #MathMore not in ROOT 6.18??
 
 def addWarningEnv(_env):
   _env.Append (CCFLAGS = ['-pedantic', 
