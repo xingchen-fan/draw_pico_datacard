@@ -52,7 +52,6 @@ sftp-config.json
 .DS_Store
 datacard_*
 datacards_*
-datacards/*
 !scripts/datacard*
 cards_*
 sys_*.txt

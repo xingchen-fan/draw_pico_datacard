@@ -43,13 +43,35 @@ namespace ZgFunctions {
 
   //year integrated lumi weights
   const NamedFunc w_years("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
-    if (b.SampleType()<0) return 1.; //data
-    if (b.SampleType()==2016)
-      return 36.32264; 
-    else if (b.SampleType()==2017)
-      return 41.52756;
-    return 59.67377;
+    if (b.SampleTypeString().Contains("-")) 
+      return 1.; //data
+    if (b.SampleTypeString()=="2016APV")
+      return 19.51; //from brilcalc 
+    if (b.SampleTypeString()=="2016")
+      return 16.80; //from brilcalc
+    else if (b.SampleTypeString()=="2017")
+      return 41.48;
+    else if (b.SampleTypeString()=="2018")
+      return 59.83;
+    else if (b.SampleTypeString()=="2022")
+      return 8.17;
+    else if (b.SampleTypeString()=="2022EE")
+      return 27.01;
+    else if (b.SampleTypeString()=="2023")
+      return 17.61;
+    //else if (b.SampleTypeString()=="2023BPix")
+    return 9.53;
   });
+
+  //year integrated lumi weights
+  //const NamedFunc w_years_noapv("w_years", [](const Baby &b) -> NamedFunc::ScalarType{
+  //  if (b.SampleType()<0) return 1.; //data
+  //  if (b.SampleType()==2016)
+  //    return 36.32264; 
+  //  else if (b.SampleType()==2017)
+  //    return 41.52756;
+  //  return 59.67377;
+  //});
 
   //Run 3 weight-up
   const NamedFunc w_run3("w_run3", [](const Baby &b) -> NamedFunc::ScalarType{
