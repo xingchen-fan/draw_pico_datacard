@@ -86,7 +86,7 @@ public:
            const NamedFunc &weight,
            const Axis &axis);
   Datacard& AddParametricProcess(const std::string &name, 
-                                 RooAbsPdf &pdf); //this will likely not suffice for more complicated procedures like discrete profiling
+                                 std::vector<RooAbsPdf*> &pdf); //this will likely not suffice for more complicated procedures like discrete profiling
   Datacard(Datacard &&) = default;
   Datacard& operator=(Datacard &&) = default;
   ~Datacard() = default;
@@ -113,7 +113,7 @@ public:
   std::vector<std::vector<NamedFunc>> systematic_weight_;
   std::vector<std::unique_ptr<DatacardProcess>> datacard_process_;
   std::vector<std::string> param_process_name_;
-  std::vector<RooAbsPdf*> param_process_;
+  std::vector<std::vector<RooAbsPdf*>> param_process_;
 
 private:
 

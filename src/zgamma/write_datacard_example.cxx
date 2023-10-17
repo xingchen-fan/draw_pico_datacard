@@ -64,14 +64,21 @@ int main() {
   NamedFunc weight(w_years*"w_lumi"); //no ewkzgamma sample for now
 
   //Define channels
-  SelectionList category_inclusive("inclusive");
-  category_inclusive.AddSelection("objectreq","nphoton>=1&&nlep>=2");
-  category_inclusive.AddSelection("zmassreq","ll_m[0]>81&&ll_m[0]<101");
-  category_inclusive.AddSelection("photonptreq","(photon_pt[0]/llphoton_m[0])>=15.0/110.0");
-  category_inclusive.AddSelection("mllmllgreq","(llphoton_m[0]+ll_m[0])>=185");
-  category_inclusive.AddSelection("photonidcut","photon_id80[0]");
-  category_inclusive.AddSelection("lepptcuts",zg_el_cuts||zg_mu_cuts);
-  vector<SelectionList> channels = {category_inclusive};
+  SelectionList category_electron("cat_el");
+  category_electron.AddSelection("objectreq","nphoton>=1&&nlep>=2");
+  category_electron.AddSelection("zmassreq","ll_m[0]>81&&ll_m[0]<101");
+  category_electron.AddSelection("photonptreq","(photon_pt[0]/llphoton_m[0])>=15.0/110.0");
+  category_electron.AddSelection("mllmllgreq","(llphoton_m[0]+ll_m[0])>=185");
+  category_electron.AddSelection("photonidcut","photon_id80[0]");
+  category_electron.AddSelection("lepptcuts",zg_el_cuts);
+  SelectionList category_muon("cat_mu");
+  category_muon.AddSelection("objectreq","nphoton>=1&&nlep>=2");
+  category_muon.AddSelection("zmassreq","ll_m[0]>81&&ll_m[0]<101");
+  category_muon.AddSelection("photonptreq","(photon_pt[0]/llphoton_m[0])>=15.0/110.0");
+  category_muon.AddSelection("mllmllgreq","(llphoton_m[0]+ll_m[0])>=185");
+  category_muon.AddSelection("photonidcut","photon_id80[0]");
+  category_muon.AddSelection("lepptcuts",zg_mu_cuts);
+  vector<SelectionList> channels = {category_electron,category_muon};
 
   //Define systematics
   Systematic syst_altweight("altw",weight*"w_photon");
@@ -82,7 +89,11 @@ int main() {
   RooRealVar rrv_mllg("mllg","llgamma invariant mass",114.0,150.0);
   RooRealVar c0("c0","exponential coefficient",0.0,10.0);
   c0.setVal(1.0);
-  RooGenericPdf exp_pdf("pdf_background_inclusive","exp_pdf","exp(-1.0*c0*(mllg-114.0)/36.0)",RooArgSet(rrv_mllg,c0));
+  RooGenericPdf exp_pdf_el("pdf_background_cat_el","exp_pdf","exp(-1.0*c0*(mllg-114.0)/36.0)",RooArgSet(rrv_mllg,c0));
+  RooGenericPdf exp_pdf_mu("pdf_background_cat_mu","exp_pdf","exp(-1.0*c0*(mllg-114.0)/36.0)",RooArgSet(rrv_mllg,c0));
+  vector<RooAbsPdf*> background_pdfs;
+  background_pdfs.push_back(&exp_pdf_el);
+  background_pdfs.push_back(&exp_pdf_mu);
   //currently, must hard code parametric name correctly. TODO: generalize parametric process
   //and fix this
 
@@ -93,7 +104,7 @@ int main() {
 
   pm.Push<Datacard>("test_datacard", channels, systematics, processes, weight,
       Axis(18, 114.0, 150.0, mllg, "m_{ll#gamma} [GeV]", {}))
-      .AddParametricProcess("background",exp_pdf);
+      .AddParametricProcess("background",background_pdfs);
 
   pm.MakePlots(1.0);
 

@@ -309,7 +309,7 @@ void Datacard::Print(double luminosity, const std::string &subdir) {
         RooRealVar norm((pdf_name+"_norm").c_str(),"",data_norm[ichan],
             0,3.0*data_norm[ichan]);
         RooWorkspace ws(("WS_"+proc_name+"_"+channel_name_[ichan]).c_str());
-        ws.import(*param_process_[iproc_eff]);
+        ws.import(*param_process_[iproc_eff][ichan]);
         ws.import(norm);
         ws.Write();
       }
@@ -397,9 +397,9 @@ void Datacard::Print(double luminosity, const std::string &subdir) {
   }
   datacard_file << "\n";
   datacard_file << std::left << std::setw(33) << "process";
-  int signal_number = -1;
-  int background_number = 1;
   for (unsigned ichan = 0; ichan < n_channels_; ichan++) {
+    int signal_number = -1;
+    int background_number = 1;
     for (unsigned iproc = 0; iproc < n_processes_; iproc++) {
       if (iproc < datacard_process_.size()) {
         if (datacard_process_[iproc]->process_->type_ == Process::Type::data)
@@ -468,10 +468,17 @@ void Datacard::Print(double luminosity, const std::string &subdir) {
   \param[in] name   Name of process
   \param[in] pdf    PDF for process
 */
-Datacard& Datacard::AddParametricProcess(const std::string &name, RooAbsPdf &pdf) {
+Datacard& Datacard::AddParametricProcess(const std::string &name, std::vector<RooAbsPdf*> &pdf) {
+  if (pdf.size() != n_channels_) 
+    throw std::invalid_argument(("Insufficient PDFs for parametric process "+name).c_str());
+  for (unsigned ichan = 0; ichan < n_channels_; ichan++) {
+    if (pdf[ichan]->GetName() != "pdf_"+name+"_"+channel_name_[ichan]) {
+      throw std::invalid_argument("PDF name error. Pleas use pdf_<process>_<channel>");
+    }
+  }
   n_processes_++;
   param_process_name_.push_back(name);
-  param_process_.push_back(&pdf);
+  param_process_.push_back(pdf);
   return *this;
 }
 
