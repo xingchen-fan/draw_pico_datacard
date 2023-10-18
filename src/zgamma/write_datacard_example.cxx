@@ -82,7 +82,7 @@ int main() {
 
   //Define systematics
   Systematic syst_altweight("altw",weight*"w_photon");
-  Systematic syst_altselection("altsel","zmassreq","ll_m[0]>80&&ll_m[0]<101");
+  Systematic syst_altselection("altsel","zmassreq","ll_m[0]>80&&ll_m[0]<101"); //can make namedfunc that selects signal only using type
   vector<Systematic> systematics = {syst_altweight, syst_altselection};
 
   //Define parametric PDFs
@@ -94,8 +94,6 @@ int main() {
   vector<RooAbsPdf*> background_pdfs;
   background_pdfs.push_back(&exp_pdf_el);
   background_pdfs.push_back(&exp_pdf_mu);
-  //currently, must hard code parametric name correctly. TODO: generalize parametric process
-  //and fix this
 
   //Make datacard
   PlotMaker pm;

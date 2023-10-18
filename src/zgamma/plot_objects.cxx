@@ -39,13 +39,27 @@
 #include "core/utilities.hpp"
 #include "zgamma/apply_zg_trigeffs.hpp"
 #include "zgamma/zg_functions.hpp"
+#include "zgamma/zg_utilities.hpp"
 
-using namespace NamedFuncUtilities;
-using namespace ZgFunctions;
-using namespace std;
-using namespace PlotOptTypes;
+using NamedFuncUtilities::FilterNamedFunc;
+using NamedFuncUtilities::MultiReduceNamedFunc;
+using NamedFuncUtilities::ReduceNamedFunc;
+using NamedFuncUtilities::reduce_max;
+using NamedFuncUtilities::reduce_maxfirst;
+using NamedFuncUtilities::reduce_sublead;
+using NamedFuncUtilities::reduce_subleadfirst;
+using NamedFuncUtilities::reduce_sum;
+using PlotOptTypes::BottomType;
+using PlotOptTypes::OverflowType;
+using PlotOptTypes::StackType;
+using PlotOptTypes::TitleType;
+using PlotOptTypes::YAxisType;
+using std::set;
+using std::shared_ptr;
+using std::string;
+using std::vector;
+using ZgFunctions::w_years;
 
-//int main(int argc, char *argv[]){
 int main(){
   //------------------------------------------------------------------------------------
   //                                   NamedFuncs
@@ -55,6 +69,17 @@ int main(){
     if(b.type() >= 200000 && b.type() <= 205000)
       return 20.0;
     return 1.0;
+  });
+
+  const NamedFunc w_ewkzgamma("w_ewkzgamma",[](const Baby &b) -> NamedFunc::ScalarType{
+    if (b.FirstFileName().find("ZGamma2JToGamma2L2J_EWK") != std::string::npos) {
+      float xs = 0.1145*1000.0; //fb
+      float year_nevts = 230000.0; //2016
+      if (abs(b.SampleType())==2016) year_nevts = 500000.0;
+      if (abs(b.SampleType())==2017) year_nevts = 498000.0;
+      return xs/year_nevts;
+    }
+    return b.w_lumi();
   });
 
   const NamedFunc mc_mu_pt = FilterNamedFunc("mc_pt","mc_id==13||mc_id==-13");
@@ -199,17 +224,17 @@ int main(){
   Process::Type sig =  Process::Type::signal;
 
   string prod_folder("/net/cms17/cms17r0/pico/NanoAODv9/htozgamma_deathvalley_v2/");
-  //std::set<int> years = {2016,2017,2018};
-  //std::string lumi_string = "138";
-  std::set<int> years = {2016};
-  std::string lumi_string = "36";
+  std::set<int> years = {2016,2017,2018};
+  std::string lumi_string = "138";
+  //std::set<int> years = {2016};
+  //std::string lumi_string = "36";
 
   bool multiply_sig = true;
   std::string sig_name = "gg#rightarrow H#rightarrow Z#gamma";
-  NamedFunc weight = NamedFunc("w_lumi"*w_years).Name("weight");
+  NamedFunc weight = NamedFunc(w_ewkzgamma*w_years).Name("weight");
   if (multiply_sig) {
     sig_name = "gg#rightarrow H#rightarrow Z#gamma (x20)";
-    weight = "w_lumi"*w_sigx20*w_years;
+    weight = w_ewkzgamma*w_sigx20*w_years;
     weight.Name("weight_sigx20");
   }
   Palette mc_colors("txt/colors_zgamma.txt","default");
@@ -232,6 +257,8 @@ int main(){
                            {"*GluGluHToZG*M-125*"}), "1");
   vector<shared_ptr<Process>> procs = {proc_dy, proc_tt, proc_smzg, proc_tt1l, proc_hzg};
 
+  vector<shared_ptr<Process>> procs_all = ZgUtilities::ZgSampleLoader().LoadSamples("txt/samples_zgamma.txt","AllMoreTrigs");
+
   PlotOpt lin_lumi("txt/plot_styles.txt","CMSPaper");
   lin_lumi.Title(TitleType::info)
           .Stack(StackType::signal_overlay)
@@ -242,10 +269,10 @@ int main(){
           .ShowBackgroundError(false)
           .FileExtensions({"pdf"});
   PlotOpt shapes_norm("txt/plot_styles.txt", "CMSPaper");
-  shapes_norm.Title(PlotOptTypes::TitleType::info)   
-             .Bottom(PlotOptTypes::BottomType::off)
-             .YAxis(PlotOptTypes::YAxisType::linear)
-             .Stack(PlotOptTypes::StackType::shapes)
+  shapes_norm.Title(TitleType::info)   
+             .Bottom(BottomType::off)
+             .YAxis(YAxisType::linear)
+             .Stack(StackType::shapes)
              .LegendColumns(3);
   std::vector<PlotOpt> ops = {lin_lumi, shapes_norm};
 
