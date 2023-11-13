@@ -117,8 +117,8 @@ public:
   std::vector<std::vector<std::string>> param_func_name_;
   std::vector<bool> param_process_profile_dec;
   std::vector<std::vector<RooAbsPdf*>> param_process_;
-  std::vector<std::vector<RooMultiPdf>> param_profile_process_;
-  std::vector<std::vector<RooCategory>> param_profile_ind_process_;
+  std::vector<std::vector<std::vector<RooAbsPdf*>>> param_profile_process_;
+  //  std::vector<std::vector<RooCategory*>> param_profile_ind_process_;
 
 
 private:
